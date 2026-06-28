@@ -1,0 +1,114 @@
+"use client"
+import { useState } from "react"
+import { supabase } from "@/lib/supabase"
+
+export default function NouveauProjet() {
+  const [titre, setTitre] = useState("")
+  const [description, setDescription] = useState("")
+  const [categorie, setCategorie] = useState("")
+  const [revolut, setRevolut] = useState("")
+  const [objectif, setObjectif] = useState("")
+  const [echeance, setEcheance] = useState("")
+  const [message, setMessage] = useState("")
+
+  async function publier() {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) { window.location.href = "/connexion"; return }
+    const { error } = await supabase.from("projets").insert({
+      user_id: user.id,
+      titre,
+      description,
+      categorie,
+      image_url: revolut,
+    })
+    if (error) {
+      setMessage("Erreur : " + error.message)
+    } else {
+      setMessage("Projet publié ! 🎉")
+      setTimeout(() => window.location.href = "/profile", 1500)
+    }
+  }
+
+  return (
+    <main className="min-h-screen bg-white">
+      <div className="bg-white border-b border-blue-50 px-5 py-3 flex items-center gap-3">
+        <a href="/profile" className="text-gray-400 text-sm">← Retour</a>
+        <h1 className="text-base font-medium text-gray-900">Nouveau projet</h1>
+      </div>
+
+      <div className="px-5 py-5 flex flex-col gap-4">
+
+        <div>
+          <label className="text-sm font-medium text-gray-700 mb-1 block">Nom du projet</label>
+          <input type="text" placeholder="Restaurant le Coin" value={titre} onChange={e => setTitre(e.target.value)}
+            className="w-full border border-blue-100 rounded-xl px-4 py-3 text-sm text-gray-900 bg-blue-50 focus:outline-none focus:border-blue-400"/>
+        </div>
+
+        <div>
+          <label className="text-sm font-medium text-gray-700 mb-1 block">Description</label>
+          <textarea placeholder="Décris ton projet, ce que tu fais, ce dont tu as besoin..." value={description} onChange={e => setDescription(e.target.value)} rows={4}
+            className="w-full border border-blue-100 rounded-xl px-4 py-3 text-sm text-gray-900 bg-blue-50 focus:outline-none focus:border-blue-400 resize-none"/>
+        </div>
+
+        <div>
+          <label className="text-sm font-medium text-gray-700 mb-1 block">Catégorie</label>
+          <select value={categorie} onChange={e => setCategorie(e.target.value)}
+            className="w-full border border-blue-100 rounded-xl px-4 py-3 text-sm text-gray-900 bg-blue-50 focus:outline-none focus:border-blue-400">
+            <option value="">Choisir une catégorie</option>
+            <option value="restauration">Restauration</option>
+            <option value="commerce">Commerce</option>
+            <option value="musique">Musique</option>
+            <option value="art">Art</option>
+            <option value="technologie">Technologie</option>
+            <option value="sport">Sport</option>
+            <option value="education">Éducation</option>
+            <option value="autre">Autre</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="text-sm font-medium text-gray-700 mb-1 block">Objectif de la cagnotte</label>
+          <div className="flex items-center border border-blue-100 rounded-xl bg-blue-50 overflow-hidden focus-within:border-blue-400">
+            <input type="number" placeholder="500" value={objectif} onChange={e => setObjectif(e.target.value)}
+              className="flex-1 py-3 pl-4 text-sm text-gray-900 bg-transparent focus:outline-none"/>
+            <span className="text-sm text-gray-400 pr-4">€ / CHF</span>
+          </div>
+          {objectif && (
+            <div className="mt-2 bg-blue-50 rounded-xl p-3 border border-blue-100">
+              <div className="flex justify-between text-xs mb-1">
+                <span className="text-gray-500">Cagnotte</span>
+                <span className="font-medium text-gray-900"><span className="text-blue-500">0</span> / {objectif} €</span>
+              </div>
+              <div className="h-2 bg-blue-100 rounded-full overflow-hidden">
+                <div className="h-full rounded-full w-0" style={{background:'linear-gradient(90deg,#2B7FFF,#D4A843)'}}></div>
+              </div>
+              <p className="text-xs text-blue-500 font-medium mt-1 text-right">0% atteint</p>
+            </div>
+          )}
+        </div>
+
+        <div>
+          <label className="text-sm font-medium text-gray-700 mb-1 block">Date limite</label>
+          <input type="date" value={echeance} onChange={e => setEcheance(e.target.value)}
+            className="w-full border border-blue-100 rounded-xl px-4 py-3 text-sm text-gray-900 bg-blue-50 focus:outline-none focus:border-blue-400"/>
+        </div>
+
+        <div>
+          <label className="text-sm font-medium text-gray-700 mb-1 block">Lien Revolut</label>
+          <div className="flex items-center border border-blue-100 rounded-xl bg-blue-50 overflow-hidden focus-within:border-blue-400">
+            <span className="text-sm text-gray-400 pl-4">revolut.me/</span>
+            <input type="text" placeholder="tonpseudo" value={revolut} onChange={e => setRevolut(e.target.value)}
+              className="flex-1 py-3 pr-4 text-sm text-gray-900 bg-transparent focus:outline-none"/>
+          </div>
+        </div>
+
+        <button onClick={publier}
+          className="w-full bg-blue-500 text-white font-medium py-3 rounded-xl text-sm hover:bg-blue-600">
+          Publier le projet ✦
+        </button>
+
+        {message && <p className="text-sm text-center text-green-500 font-medium">{message}</p>}
+      </div>
+    </main>
+  )
+}
