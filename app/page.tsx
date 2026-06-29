@@ -50,7 +50,6 @@ export default function Home() {
   const totalDep = depenses.filter(d => { const dt = new Date(d.date); return dt.getMonth() === moisActuel && dt.getFullYear() === anneeActuelle }).reduce((s,d) => s + parseFloat(d.montant), 0)
   const totalRev = revenus.filter(r => { const dt = new Date(r.date); return dt.getMonth() === moisActuel && dt.getFullYear() === anneeActuelle }).reduce((s,r) => s + parseFloat(r.montant), 0)
   const solde = totalRev - totalDep
-
   const prochainEvt = evenements.filter(e => new Date(e.date) >= today).sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0]
 
   return (
@@ -61,6 +60,7 @@ export default function Home() {
           <a href="/groupes" style={{fontSize:'12px',color:'#aaa',textDecoration:'none'}}>Groupes</a>
           <a href="/semaine" style={{fontSize:'12px',color:'#aaa',textDecoration:'none'}}>Calendrier</a>
           <a href="/finances" style={{fontSize:'12px',color:'#aaa',textDecoration:'none'}}>Finances</a>
+          <a href="/scanner" style={{fontSize:'12px',color:'#aaa',textDecoration:'none'}}>📄 Scanner</a>
           {user ? (
             <a href="/profile" style={{fontSize:'12px',fontWeight:'500',background:'#2B7FFF',color:'#fff',padding:'6px 14px',borderRadius:'99px',textDecoration:'none'}}>Mon profil</a>
           ) : (
@@ -124,19 +124,31 @@ export default function Home() {
       )}
 
       {user && (
-        <div style={{display:'flex',gap:'8px',padding:'16px 14px 8px'}}>
-          <a href="/finances" style={{flex:1,textDecoration:'none'}}>
-            <div style={{background:'linear-gradient(135deg,#EEF5FF,#DCE9FF)',borderRadius:'14px',padding:'12px',border:'0.5px solid #DCE9FF'}}>
-              <div style={{fontSize:'11px',color:'#2B7FFF',fontWeight:'500',marginBottom:'4px'}}>💸 Finances</div>
-              <div style={{fontSize:'18px',fontWeight:'500',color: solde >= 0 ? '#10B981' : '#F43F5E'}}>{solde >= 0 ? '+' : ''}{solde.toFixed(0)} CHF</div>
-              <div style={{fontSize:'11px',color:'#aaa',marginTop:'2px'}}>Solde ce mois</div>
-            </div>
-          </a>
-          <a href="/semaine" style={{flex:1,textDecoration:'none'}}>
-            <div style={{background:'linear-gradient(135deg,#FDF8EC,#F0D88A33)',borderRadius:'14px',padding:'12px',border:'0.5px solid #F0D88A'}}>
-              <div style={{fontSize:'11px',color:'#D4A843',fontWeight:'500',marginBottom:'4px'}}>📅 Prochain événement</div>
-              <div style={{fontSize:'14px',fontWeight:'500',color:'#1a1a2e'}}>{prochainEvt?.titre || 'Aucun'}</div>
-              <div style={{fontSize:'11px',color:'#aaa',marginTop:'2px'}}>{prochainEvt ? new Date(prochainEvt.date).toLocaleDateString('fr-FR',{day:'numeric',month:'short'}) : 'Ajoute un événement'}</div>
+        <div style={{padding:'12px 14px 0'}}>
+          <div style={{display:'flex',gap:'8px',marginBottom:'8px'}}>
+            <a href="/finances" style={{flex:1,textDecoration:'none'}}>
+              <div style={{background:'linear-gradient(135deg,#EEF5FF,#DCE9FF)',borderRadius:'14px',padding:'12px',border:'0.5px solid #DCE9FF'}}>
+                <div style={{fontSize:'11px',color:'#2B7FFF',fontWeight:'500',marginBottom:'4px'}}>💸 Finances</div>
+                <div style={{fontSize:'18px',fontWeight:'500',color: solde >= 0 ? '#10B981' : '#F43F5E'}}>{solde >= 0 ? '+' : ''}{solde.toFixed(0)} CHF</div>
+                <div style={{fontSize:'11px',color:'#aaa',marginTop:'2px'}}>Solde ce mois</div>
+              </div>
+            </a>
+            <a href="/semaine" style={{flex:1,textDecoration:'none'}}>
+              <div style={{background:'linear-gradient(135deg,#FDF8EC,#F0D88A33)',borderRadius:'14px',padding:'12px',border:'0.5px solid #F0D88A'}}>
+                <div style={{fontSize:'11px',color:'#D4A843',fontWeight:'500',marginBottom:'4px'}}>📅 Prochain événement</div>
+                <div style={{fontSize:'14px',fontWeight:'500',color:'#1a1a2e'}}>{prochainEvt?.titre || 'Aucun'}</div>
+                <div style={{fontSize:'11px',color:'#aaa',marginTop:'2px'}}>{prochainEvt ? new Date(prochainEvt.date).toLocaleDateString('fr-FR',{day:'numeric',month:'short'}) : 'Ajoute un événement'}</div>
+              </div>
+            </a>
+          </div>
+          <a href="/scanner" style={{textDecoration:'none',display:'block',marginBottom:'8px'}}>
+            <div style={{background:'linear-gradient(135deg,#1a1a2e,#2B7FFF)',borderRadius:'14px',padding:'12px',display:'flex',alignItems:'center',gap:'12px'}}>
+              <div style={{fontSize:'28px'}}>📄</div>
+              <div>
+                <div style={{fontSize:'13px',fontWeight:'500',color:'#fff'}}>Scanner un document</div>
+                <div style={{fontSize:'11px',color:'rgba(255,255,255,0.6)',marginTop:'2px'}}>Facture, relevé, contrat, assurance...</div>
+              </div>
+              <div style={{marginLeft:'auto',fontSize:'16px',color:'rgba(255,255,255,0.5)'}}>›</div>
             </div>
           </a>
         </div>
@@ -174,9 +186,7 @@ export default function Home() {
                     <span style={{color:'#666'}}>Cagnotte</span>
                     <span style={{fontWeight:'500',color:'#2B7FFF'}}>0 CHF</span>
                   </div>
-                  <div style={{height:'5px',background:'#DCE9FF',borderRadius:'99px',overflow:'hidden'}}>
-                    <div style={{height:'100%',width:'0%',background:'linear-gradient(90deg,#2B7FFF,#D4A843)',borderRadius:'99px'}}></div>
-                  </div>
+                  <div style={{height:'5px',background:'#DCE9FF',borderRadius:'99px'}}></div>
                 </div>
                 <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',paddingTop:'8px',borderTop:'0.5px solid #E8F1FF'}}>
                   <div style={{display:'flex',gap:'10px'}}>
