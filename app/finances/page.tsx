@@ -423,6 +423,34 @@ export default function Finances() {
                 </div>
               )
             })()}
+
+            {montantEpargne && duree && (() => {
+              const cible = parseFloat(montantEpargne)
+              const mois = parseInt(duree)
+              const parMois = cible / mois
+              const projections = Array.from({length: mois}, (_, i) => ({
+                mois: i + 1,
+                cumul: parMois * (i + 1)
+              }))
+              const max = cible
+              return (
+                <div style={{marginTop:'14px'}}>
+                  <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',marginBottom:'10px'}}>📈 Projection mois par mois</div>
+                  <div style={{display:'flex',alignItems:'flex-end',gap:'3px',height:'100px',marginBottom:'8px'}}>
+                    {projections.map((p, i) => (
+                      <div key={i} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:'2px'}}>
+                        <div style={{width:'100%',height:Math.max((p.cumul/max)*90, 4) + 'px',borderRadius:'3px 3px 0 0',background: p.cumul >= cible ? '#10B981' : '#2B7FFF',opacity: 0.7 + (i/mois)*0.3}}></div>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{display:'flex',justifyContent:'space-between'}}>
+                    <span style={{fontSize:'10px',color:'#aaa'}}>Mois 1</span>
+                    <span style={{fontSize:'10px',color:'#10B981',fontWeight:'500'}}>🎯 {cible.toFixed(0)} CHF</span>
+                    <span style={{fontSize:'10px',color:'#aaa'}}>Mois {mois}</span>
+                  </div>
+                </div>
+              )
+            })()}
           </div>
 
           <div style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'16px',padding:'14px',marginBottom:'12px'}}>
