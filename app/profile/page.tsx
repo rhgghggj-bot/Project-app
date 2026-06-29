@@ -53,12 +53,12 @@ export default function Profile() {
 
   return (
     <main className="min-h-screen bg-white" style={{overflowY:"auto",WebkitOverflowScrolling:"touch"}}>
-      <div className="h-44 relative" style={{background:`linear-gradient(135deg,${couleurProfil},#87CEEB)`}}>
+      <div className="h-28 relative" style={{background:`linear-gradient(135deg,${couleurProfil},#87CEEB)`}}>
         <a href="/" className="absolute top-3 left-4 text-white text-sm opacity-80">← Accueil</a>
       </div>
 
       <div style={{padding:"0 18px 100px 18px"}}>
-        <div style={{display:'flex',alignItems:'flex-end',justifyContent:'space-between',marginTop:'-32px',marginBottom:'12px'}}>
+        <div style={{display:'flex',alignItems:'flex-end',justifyContent:'space-between',marginTop:'-28px',marginBottom:'12px'}}>
           <div style={{width:'64px',height:'64px',borderRadius:'50%',background:couleurProfil,border:'4px solid #fff',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:'22px',fontWeight:'500'}}>
             {initiale}
           </div>
