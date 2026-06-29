@@ -95,9 +95,12 @@ export default function GroupePage() {
           <p className="text-base font-medium text-gray-900">{groupe.nom}</p>
           <p className="text-xs text-gray-400">{membres.length} membres</p>
         </div>
-        <button onClick={genererInvitation} className="text-xs bg-yellow-400 text-white px-3 py-2 rounded-full font-medium">
-          Inviter
-        </button>
+        <div style={{display:'flex',gap:'8px'}}>
+          <a href={'/groupes/' + id + '/appel'}>
+            <button className="text-xs bg-green-500 text-white px-3 py-2 rounded-full font-medium">📞 Appel</button>
+          </a>
+          <button onClick={genererInvitation} className="text-xs bg-yellow-400 text-white px-3 py-2 rounded-full font-medium">Inviter</button>
+        </div>
       </div>
 
       {lienInvitation && (
