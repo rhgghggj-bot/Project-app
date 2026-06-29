@@ -4,6 +4,7 @@ import { supabase } from "@/lib/supabase"
 
 export default function Groupes() {
   const [groupes, setGroupes] = useState<any[]>([])
+  const [mesGroupes, setMesGroupes] = useState<string[]>([])
   const [user, setUser] = useState<any>(null)
   const [nom, setNom] = useState("")
   const [description, setDescription] = useState("")
@@ -16,6 +17,10 @@ export default function Groupes() {
       setUser(user)
       const { data } = await supabase.from("groupes").select("*").order("created_at", { ascending: false })
       setGroupes(data || [])
+      if (user) {
+        const { data: membres } = await supabase.from("membres_groupe").select("groupe_id").eq("user_id", user.id)
+        setMesGroupes(membres?.map((m: any) => m.groupe_id) || [])
+      }
     }
     charger()
   }, [])
@@ -36,12 +41,6 @@ export default function Groupes() {
       setShowForm(false)
       window.location.href = `/groupes/${data.id}`
     }
-  }
-
-  async function rejoindre(groupe_id: string) {
-    if (!user) { window.location.href = "/connexion"; return }
-    await supabase.from("membres_groupe").insert({ groupe_id, user_id: user.id })
-    window.location.href = `/groupes/${groupe_id}`
   }
 
   return (
@@ -75,27 +74,41 @@ export default function Groupes() {
           </div>
         )}
 
-        {groupes.map((groupe: any) => (
-          <div key={groupe.id} className="bg-white border border-blue-100 rounded-2xl p-4 mb-3">
-            <div className="flex items-center justify-between">
-              <a href={`/groupes/${groupe.id}`} className="flex items-center gap-3 flex-1">
-                <div className="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center text-white font-medium text-lg">
-                  {groupe.nom?.[0]?.toUpperCase()}
-                </div>
-                <div>
-                  <p className="font-medium text-gray-900">{groupe.nom}</p>
-                  <p className="text-xs text-gray-400">{groupe.description}</p>
-                </div>
-              </a>
-              <button onClick={() => rejoindre(groupe.id)}
-                className="text-xs bg-yellow-400 text-white px-3 py-2 rounded-full font-medium ml-3">
-                Rejoindre
-              </button>
+        {groupes.map((groupe: any) => {
+          const estMembre = mesGroupes.includes(groupe.id)
+          return (
+            <div key={groupe.id} className="bg-white border border-blue-100 rounded-2xl p-4 mb-3">
+              <div className="flex items-center justify-between">
+                {estMembre ? (
+                  <a href={`/groupes/${groupe.id}`} className="flex items-center gap-3 flex-1">
+                    <div className="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center text-white font-medium text-lg">
+                      {groupe.nom?.[0]?.toUpperCase()}
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900">{groupe.nom}</p>
+                      <p className="text-xs text-gray-400">{groupe.description}</p>
+                    </div>
+                  </a>
+                ) : (
+                  <div className="flex items-center gap-3 flex-1">
+                    <div className="w-10 h-10 rounded-xl bg-gray-200 flex items-center justify-center text-gray-400 font-medium text-lg">
+                      🔒
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900">{groupe.nom}</p>
+                      <p className="text-xs text-gray-400">Groupe privé · invitation requise</p>
+                    </div>
+                  </div>
+                )}
+                {estMembre && (
+                  <span className="text-xs bg-blue-50 text-blue-500 px-3 py-1 rounded-full font-medium ml-3">
+                    Membre ✓
+                  </span>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
-
-        {message && !showForm && <p className="text-sm text-center mt-2 text-green-500">{message}</p>}
+          )
+        })}
       </div>
     </main>
   )
