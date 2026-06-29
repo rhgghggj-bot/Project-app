@@ -13,17 +13,12 @@ export default function Home() {
       const { data } = await supabase
         .from("projets")
         .select("*")
+        .is("groupe_id", null)
         .order("created_at", { ascending: false })
       setProjets(data || [])
     }
     charger()
   }, [])
-
-  const evenements = [
-    { nom: "Échéance — Permis de conduire", date: "6 juil.", couleur: "#D4A843" },
-    { nom: "Ouverture — Restaurant le Coin", date: "14 juil.", couleur: "#2B7FFF" },
-    { nom: "Réunion groupe Entrepreneurs", date: "29 juil.", couleur: "#10B981" },
-  ]
 
   return (
     <main className="min-h-screen bg-white">
@@ -51,37 +46,16 @@ export default function Home() {
       </div>
 
       <div className="px-5 py-4">
-        <a href="/calendrier">
-          <div className="bg-white border border-blue-100 rounded-2xl p-4 mb-5 cursor-pointer hover:border-blue-300">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center text-white text-sm">📅</div>
-                <div>
-                  <p className="text-sm font-medium text-gray-900">Calendrier</p>
-                  <p className="text-xs text-gray-400">3 échéances ce mois</p>
-                </div>
-              </div>
-              <span className="text-xs text-blue-500 font-medium">Voir tout →</span>
-            </div>
-            <div className="flex flex-col gap-2">
-              {evenements.map((e, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full flex-shrink-0" style={{background: e.couleur}}></div>
-                  <p className="text-xs text-gray-600 flex-1">{e.nom}</p>
-                  <p className="text-xs text-gray-400">{e.date}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </a>
-
-        <p className="text-xs text-gray-400 uppercase tracking-wider font-medium mb-4">Projets en cours</p>
+        <p className="text-xs text-gray-400 uppercase tracking-wider font-medium mb-4">Projets publics</p>
 
         {projets.length === 0 && (
-          <div className="text-center py-12 text-gray-400">
-            <p className="text-4xl mb-3">📭</p>
-            <p className="text-sm mb-2">Aucun projet pour l'instant</p>
-            <a href="/nouveau-projet" className="text-blue-500 text-sm font-medium">Publier le premier projet →</a>
+          <div className="text-center py-16 text-gray-400">
+            <p className="text-5xl mb-4">🚀</p>
+            <p className="text-lg font-medium text-gray-600 mb-2">Soyez les premiers !</p>
+            <p className="text-sm mb-4">Aucun projet pour l'instant. Lance le tien !</p>
+            <a href="/nouveau-projet">
+              <button className="bg-blue-500 text-white font-medium text-sm px-6 py-3 rounded-full">Publier mon projet</button>
+            </a>
           </div>
         )}
 
@@ -101,7 +75,7 @@ export default function Home() {
                 <div className="bg-blue-50 rounded-xl p-3 mb-3">
                   <div className="flex justify-between text-xs mb-1">
                     <span className="text-gray-500">Cagnotte</span>
-                    <span className="font-medium text-gray-900"><span className="text-blue-500">0€</span> / objectif</span>
+                    <span className="font-medium"><span className="text-blue-500">0€</span> / objectif</span>
                   </div>
                   <div className="h-2 bg-blue-100 rounded-full overflow-hidden">
                     <div className="h-full rounded-full w-0" style={{background:'linear-gradient(90deg,#2B7FFF,#D4A843)'}}></div>
