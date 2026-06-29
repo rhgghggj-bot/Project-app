@@ -4,9 +4,12 @@ import { supabase } from "@/lib/supabase"
 
 export default function Home() {
   const [projets, setProjets] = useState<any[]>([])
+  const [user, setUser] = useState<any>(null)
 
   useEffect(() => {
     async function charger() {
+      const { data: { user } } = await supabase.auth.getUser()
+      setUser(user)
       const { data } = await supabase
         .from("projets")
         .select("*")
@@ -27,8 +30,13 @@ export default function Home() {
       <nav className="bg-white border-b border-blue-50 px-5 py-3 flex items-center justify-between">
         <span className="text-lg font-medium text-gray-900">Pro<span className="text-yellow-500">ject</span></span>
         <div className="flex items-center gap-3">
-          <a href="/connexion" className="text-sm text-gray-500">Connexion</a>
-          <a href="/inscription" className="text-sm font-medium bg-blue-500 text-white px-4 py-2 rounded-full">S'inscrire</a>
+          <a href="/groupes" className="text-sm text-gray-500">Groupes</a>
+          <a href="/calendrier" className="text-sm text-gray-500">Calendrier</a>
+          {user ? (
+            <a href="/profile" className="text-sm font-medium bg-blue-500 text-white px-4 py-2 rounded-full">Mon profil</a>
+          ) : (
+            <a href="/connexion" className="text-sm font-medium bg-blue-500 text-white px-4 py-2 rounded-full">Connexion</a>
+          )}
         </div>
       </nav>
 
@@ -38,7 +46,7 @@ export default function Home() {
         <p className="text-sm text-gray-500 mb-5 leading-relaxed">Partagez votre projet avec votre groupe et recevez conseils et dons directement.</p>
         <div className="flex gap-3">
           <a href="/nouveau-projet"><button className="bg-blue-500 text-white font-medium text-sm px-5 py-2 rounded-full">Publier un projet</button></a>
-          <a href="/inscription"><button className="bg-yellow-50 text-yellow-700 font-medium text-sm px-5 py-2 rounded-full border border-yellow-200">Rejoindre</button></a>
+          <a href="/groupes"><button className="bg-yellow-50 text-yellow-700 font-medium text-sm px-5 py-2 rounded-full border border-yellow-200">Rejoindre un groupe</button></a>
         </div>
       </div>
 
