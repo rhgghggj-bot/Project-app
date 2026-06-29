@@ -165,7 +165,7 @@ export default function GroupePage() {
                 <div className={`max-w-xs px-4 py-2 rounded-2xl text-sm ${m.user_id === user?.id ? "bg-blue-500 text-white" : "bg-gray-100 text-gray-900"}`}>
                   {m.contenu}
                   <div className={`text-xs mt-1 ${m.user_id === user?.id ? "text-blue-100" : "text-gray-400"}`}>
-                    {new Date(m.created_at).toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit', timeZone:'Europe/Zurich'})}
+                    {(() => { const d = new Date(m.created_at); d.setHours(d.getHours() + 2); return d.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'}) })()}
                   </div>
                 </div>
               </div>
