@@ -24,7 +24,6 @@ export default function Profile() {
       if (user) {
         const { data: p } = await supabase.from("profiles").select("*").eq("id", user.id).single()
         setProfil(p)
-        if (p?.avatar_url) setProfil(p)
         setNom(p?.nom || "")
         setBio(p?.bio || "")
         setVille(p?.ville || "")
@@ -40,7 +39,7 @@ export default function Profile() {
     const { error } = await supabase.from("profiles").update({ nom, bio, ville, couleur }).eq("id", user.id)
     if (!error) {
       setMessage("Profil mis à jour !")
-      setProfil({ ...profil, nom, bio, ville, couleur })
+      setProfil({ ...profil, nom, bio, ville, couleur, avatar_url: profil?.avatar_url })
       setTimeout(() => setMessage(""), 2000)
     }
   }
