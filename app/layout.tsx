@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import Navigation from "./components/Navigation";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -21,11 +22,6 @@ export const metadata: Metadata = {
     statusBarStyle: "black-translucent",
     title: "Project",
   },
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 1,
-  },
 };
 
 export default function RootLayout({
@@ -40,9 +36,11 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="Project" />
         <meta name="theme-color" content="#2B7FFF" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
         <link rel="apple-touch-icon" href="/icon-192.png" />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <Navigation />
         {children}
       </body>
     </html>

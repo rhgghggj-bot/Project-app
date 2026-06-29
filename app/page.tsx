@@ -53,21 +53,7 @@ export default function Home() {
   const prochainEvt = evenements.filter(e => new Date(e.date) >= today).sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0]
 
   return (
-    <main className="min-h-screen bg-white">
-      <nav style={{background:'#fff',borderBottom:'0.5px solid #E8F1FF',padding:'0 18px',height:'52px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-        <span style={{fontSize:'18px',fontWeight:'500',color:'#1a1a2e'}}>Pro<span style={{color:'#D4A843'}}>ject</span></span>
-        <div style={{display:'flex',alignItems:'center',gap:'10px'}}>
-          <a href="/groupes" style={{fontSize:'12px',color:'#aaa',textDecoration:'none'}}>Groupes</a>
-          <a href="/semaine" style={{fontSize:'12px',color:'#aaa',textDecoration:'none'}}>Calendrier</a>
-          <a href="/finances" style={{fontSize:'12px',color:'#aaa',textDecoration:'none'}}>Finances</a>
-          <a href="/scanner" style={{fontSize:'12px',color:'#aaa',textDecoration:'none'}}>📄 Scanner</a>
-          {user ? (
-            <a href="/profile" style={{fontSize:'12px',fontWeight:'500',background:'#2B7FFF',color:'#fff',padding:'6px 14px',borderRadius:'99px',textDecoration:'none'}}>Mon profil</a>
-          ) : (
-            <a href="/connexion" style={{fontSize:'12px',fontWeight:'500',background:'#2B7FFF',color:'#fff',padding:'6px 14px',borderRadius:'99px',textDecoration:'none'}}>Connexion</a>
-          )}
-        </div>
-      </nav>
+    <main style={{paddingBottom:'80px'}} className="min-h-screen bg-white">
 
       {user ? (
         <div style={{background:'linear-gradient(160deg,#0A1628 0%,#1a3a6e 50%,#2B7FFF 100%)',padding:'20px 18px 32px',position:'relative',overflow:'hidden'}}>
@@ -115,7 +101,6 @@ export default function Home() {
                       {e.titre}
                     </div>
                   ))}
-                  {evts.length === 0 && <div style={{width:'4px',height:'4px',borderRadius:'50%',background:'transparent'}}></div>}
                 </a>
               )
             })}
