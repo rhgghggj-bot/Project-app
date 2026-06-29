@@ -72,6 +72,7 @@ export default function AppelGroupe() {
   const params = useParams() as { id: string }
   const router = useRouter()
   const [token, setToken] = useState('')
+  const [facingMode, setFacingMode] = useState<'user'|'environment'>('user')
   const [groupe, setGroupe] = useState<any>(null)
   const [loading, setLoading] = useState(true)
 
@@ -112,7 +113,7 @@ export default function AppelGroupe() {
       <div style={{padding:'12px 16px',background:'rgba(0,0,0,0.3)',display:'flex',alignItems:'center',gap:'12px',flexShrink:0}}>
         <span style={{color:'#fff',fontWeight:'500',fontSize:'15px'}}>📞 {groupe?.nom}</span>
       </div>
-      <LiveKitRoom video={true} audio={true} token={token} serverUrl={process.env.NEXT_PUBLIC_LIVEKIT_URL} style={{flex:1,display:'flex',flexDirection:'column'}}>
+      <LiveKitRoom video={{facingMode:"environment"}} audio={true} token={token} serverUrl={process.env.NEXT_PUBLIC_LIVEKIT_URL} style={{flex:1,display:'flex',flexDirection:'column'}}>
         <VideoGrid />
         <RoomAudioRenderer />
         <Controls onLeave={handleLeave} />
