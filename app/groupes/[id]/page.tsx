@@ -13,7 +13,6 @@ export default function GroupePage() {
   const [contenu, setContenu] = useState("")
   const [onglet, setOnglet] = useState("discussion")
   const [estMembre, setEstMembre] = useState(false)
-  const [estCreateur, setEstCreateur] = useState(false)
   const [lienInvitation, setLienInvitation] = useState("")
   const [copie, setCopie] = useState(false)
   const messagesEndRef = useRef<any>(null)
@@ -24,7 +23,6 @@ export default function GroupePage() {
       setUser(user)
       const { data: g } = await supabase.from("groupes").select("*").eq("id", id).single()
       setGroupe(g)
-      if (user && g) setEstCreateur(g.created_by === user.id)
       const { data: m } = await supabase.from("messages_groupe").select("*").eq("groupe_id", id).order("created_at", { ascending: true })
       setMessages(m || [])
       const { data: mb } = await supabase.from("membres_groupe").select("*").eq("groupe_id", id)
@@ -97,12 +95,9 @@ export default function GroupePage() {
           <p className="text-base font-medium text-gray-900">{groupe.nom}</p>
           <p className="text-xs text-gray-400">{membres.length} membres</p>
         </div>
-        {estCreateur && (
-          <button onClick={genererInvitation} className="text-xs bg-yellow-400 text-white px-3 py-2 rounded-full font-medium">
-            Inviter
-          </button>
-        )}
-        {!estCreateur && <div className="w-16"></div>}
+        <button onClick={genererInvitation} className="text-xs bg-yellow-400 text-white px-3 py-2 rounded-full font-medium">
+          Inviter
+        </button>
       </div>
 
       {lienInvitation && (
