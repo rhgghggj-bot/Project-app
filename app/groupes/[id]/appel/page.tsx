@@ -130,7 +130,8 @@ export default function AppelGroupe() {
       if (!user) { router.push('/connexion'); return }
       const { data: g } = await supabase.from('groupes').select('*').eq('id', params.id).single()
       setGroupe(g)
-      const username = user.email.split('@')[0]
+      const { data: profil } = await supabase.from('profiles').select('nom').eq('id', user.id).single()
+      const username = profil?.nom || user.email.split('@')[0]
       await supabase.from('messages_groupe').insert({
         groupe_id: String(params.id),
         user_id: user.id,

@@ -9,6 +9,7 @@ export default function GroupePage() {
   const [messages, setMessages] = useState<any[]>([])
   const [projets, setProjets] = useState<any[]>([])
   const [membres, setMembres] = useState<any[]>([])
+  const [profils, setProfils] = useState<any>({}) 
   const [user, setUser] = useState<any>(null)
   const [contenu, setContenu] = useState("")
   const [onglet, setOnglet] = useState("discussion")
@@ -28,6 +29,13 @@ export default function GroupePage() {
       setMessages(m || [])
       const { data: mb } = await supabase.from("membres_groupe").select("*").eq("groupe_id", id)
       setMembres(mb || [])
+      if (mb && mb.length > 0) {
+        const ids = mb.map((m: any) => m.user_id)
+        const { data: profs } = await supabase.from("profiles").select("id,nom,avatar_url").in("id", ids)
+        const profilsMap: any = {}
+        profs?.forEach((p: any) => { profilsMap[p.id] = p })
+        setProfils(profilsMap)
+      }
       if (user) {
         const membre = mb?.find((m: any) => m.user_id === user.id)
         setEstMembre(!!membre)
@@ -160,7 +168,7 @@ export default function GroupePage() {
             {messages.map((m: any) => (
               <div key={m.id} className={`flex gap-2 mb-3 ${m.user_id === user?.id ? "flex-row-reverse" : ""}`}>
                 <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-medium flex-shrink-0">
-                  {m.user_id.slice(0,1).toUpperCase()}
+                  {(profils[m.user_id]?.nom || m.user_id).slice(0,1).toUpperCase()}
                 </div>
                 <div className={`max-w-xs px-4 py-2 rounded-2xl text-sm ${m.user_id === user?.id ? "bg-blue-500 text-white" : "bg-gray-100 text-gray-900"}`}>
                   {m.contenu}
@@ -215,7 +223,7 @@ export default function GroupePage() {
                 {m.user_id.slice(0,1).toUpperCase()}
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-900">Membre</p>
+                <p className="text-sm font-medium text-gray-900">{profils[m.user_id]?.nom || "Membre"}</p>
                 <p className="text-xs text-gray-400">Rejoint le {new Date(m.created_at).toLocaleDateString('fr-FR')}</p>
               </div>
             </div>
