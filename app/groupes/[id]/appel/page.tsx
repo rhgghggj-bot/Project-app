@@ -43,17 +43,17 @@ function Controls({ onLeave }: { onLeave: () => void }) {
   }
 
   return (
-    <div style={{position:'fixed',bottom:'90px',left:0,right:0,display:'flex',justifyContent:'center',gap:'16px',zIndex:100,padding:'0 20px'}}>
-      <button onClick={toggleMic} style={{width:'56px',height:'56px',borderRadius:'50%',border:'none',cursor:'pointer',fontSize:'22px',background: micOn ? 'rgba(255,255,255,0.2)' : '#F43F5E',color:'#fff',backdropFilter:'blur(10px)'}}>
+    <div style={{position:'fixed',bottom:'100px',left:0,right:0,display:'flex',justifyContent:'center',alignItems:'center',gap:'20px',zIndex:100,padding:'16px 24px',background:'rgba(20,20,40,0.6)',backdropFilter:'blur(20px)',WebkitBackdropFilter:'blur(20px)',borderTop:'0.5px solid rgba(255,255,255,0.1)'}}>
+      <button onClick={toggleMic} style={{width:'60px',height:'60px',borderRadius:'50%',border:'1.5px solid rgba(255,255,255,0.2)',cursor:'pointer',fontSize:'22px',background: micOn ? 'rgba(255,255,255,0.15)' : 'rgba(244,63,94,0.8)',color:'#fff',backdropFilter:'blur(10px)',WebkitBackdropFilter:'blur(10px)',display:'flex',alignItems:'center',justifyContent:'center',transition:'all 0.2s'}}>
         {micOn ? '🎙️' : '🔇'}
       </button>
-      <button onClick={onLeave} style={{width:'64px',height:'64px',borderRadius:'50%',border:'none',cursor:'pointer',fontSize:'24px',background:'#F43F5E',color:'#fff'}}>
+      <button onClick={onLeave} style={{width:'68px',height:'68px',borderRadius:'50%',border:'none',cursor:'pointer',fontSize:'26px',background:'linear-gradient(135deg,#F43F5E,#e11d48)',color:'#fff',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 4px 20px rgba(244,63,94,0.5)'}}>
         📵
       </button>
-      <button onClick={toggleCam} style={{width:'56px',height:'56px',borderRadius:'50%',border:'none',cursor:'pointer',fontSize:'22px',background: camOn ? 'rgba(255,255,255,0.2)' : '#F43F5E',color:'#fff',backdropFilter:'blur(10px)'}}>
+      <button onClick={toggleCam} style={{width:'60px',height:'60px',borderRadius:'50%',border:'1.5px solid rgba(255,255,255,0.2)',cursor:'pointer',fontSize:'22px',background: camOn ? 'rgba(255,255,255,0.15)' : 'rgba(244,63,94,0.8)',color:'#fff',backdropFilter:'blur(10px)',WebkitBackdropFilter:'blur(10px)',display:'flex',alignItems:'center',justifyContent:'center',transition:'all 0.2s'}}>
         {camOn ? '📹' : '🚫'}
       </button>
-      <button onClick={switchCam} style={{width:'56px',height:'56px',borderRadius:'50%',border:'none',cursor:'pointer',fontSize:'22px',background:'rgba(255,255,255,0.2)',color:'#fff',backdropFilter:'blur(10px)'}}>
+      <button onClick={switchCam} style={{width:'60px',height:'60px',borderRadius:'50%',border:'1.5px solid rgba(255,255,255,0.2)',cursor:'pointer',fontSize:'22px',background:'rgba(255,255,255,0.15)',color:'#fff',backdropFilter:'blur(10px)',WebkitBackdropFilter:'blur(10px)',display:'flex',alignItems:'center',justifyContent:'center'}}>
         🔄
       </button>
     </div>
