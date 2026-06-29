@@ -12,6 +12,10 @@ export default function GroupePage() {
   const [user, setUser] = useState<any>(null)
   const [contenu, setContenu] = useState("")
   const [onglet, setOnglet] = useState("discussion")
+  const [estMembre, setEstMembre] = useState(false)
+  const [estCreateur, setEstCreateur] = useState(false)
+  const [lienInvitation, setLienInvitation] = useState("")
+  const [copie, setCopie] = useState(false)
   const messagesEndRef = useRef<any>(null)
 
   useEffect(() => {
@@ -20,10 +24,15 @@ export default function GroupePage() {
       setUser(user)
       const { data: g } = await supabase.from("groupes").select("*").eq("id", id).single()
       setGroupe(g)
+      if (user && g) setEstCreateur(g.created_by === user.id)
       const { data: m } = await supabase.from("messages_groupe").select("*").eq("groupe_id", id).order("created_at", { ascending: true })
       setMessages(m || [])
       const { data: mb } = await supabase.from("membres_groupe").select("*").eq("groupe_id", id)
       setMembres(mb || [])
+      if (user) {
+        const membre = mb?.find((m: any) => m.user_id === user.id)
+        setEstMembre(!!membre)
+      }
       const { data: p } = await supabase.from("projets").select("*").eq("groupe_id", id).order("created_at", { ascending: false })
       setProjets(p || [])
     }
@@ -33,6 +42,23 @@ export default function GroupePage() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
+
+  async function genererInvitation() {
+    const { data, error } = await supabase.from("invitations").insert({
+      groupe_id: id,
+      created_by: user.id
+    }).select().single()
+    if (!error) {
+      const lien = `${window.location.origin}/rejoindre/${data.code}`
+      setLienInvitation(lien)
+    }
+  }
+
+  async function copierLien() {
+    await navigator.clipboard.writeText(lienInvitation)
+    setCopie(true)
+    setTimeout(() => setCopie(false), 2000)
+  }
 
   async function envoyer() {
     if (!contenu || !user) return
@@ -50,6 +76,19 @@ export default function GroupePage() {
 
   if (!groupe) return <div className="p-8 text-center text-gray-400">Chargement...</div>
 
+  if (!estMembre) {
+    return (
+      <main className="min-h-screen bg-white flex flex-col items-center justify-center px-5">
+        <div className="text-center">
+          <p className="text-5xl mb-4">🔒</p>
+          <h1 className="text-lg font-medium text-gray-900 mb-2">{groupe.nom}</h1>
+          <p className="text-sm text-gray-400 mb-6">Ce groupe est privé. Tu as besoin d'une invitation pour y accéder.</p>
+          <a href="/groupes" className="text-blue-500 text-sm font-medium">← Retour aux groupes</a>
+        </div>
+      </main>
+    )
+  }
+
   return (
     <main className="min-h-screen bg-white flex flex-col">
       <div className="bg-white border-b border-blue-50 px-5 py-3 flex items-center justify-between">
@@ -58,8 +97,25 @@ export default function GroupePage() {
           <p className="text-base font-medium text-gray-900">{groupe.nom}</p>
           <p className="text-xs text-gray-400">{membres.length} membres</p>
         </div>
-        <div className="w-10"></div>
+        {estCreateur && (
+          <button onClick={genererInvitation} className="text-xs bg-yellow-400 text-white px-3 py-2 rounded-full font-medium">
+            Inviter
+          </button>
+        )}
+        {!estCreateur && <div className="w-16"></div>}
       </div>
+
+      {lienInvitation && (
+        <div className="mx-5 mt-3 bg-blue-50 border border-blue-100 rounded-xl p-3">
+          <p className="text-xs font-medium text-gray-700 mb-2">Lien d'invitation :</p>
+          <div className="flex gap-2 items-center">
+            <p className="text-xs text-blue-500 flex-1 truncate">{lienInvitation}</p>
+            <button onClick={copierLien} className="text-xs bg-blue-500 text-white px-3 py-1 rounded-full flex-shrink-0">
+              {copie ? "Copié !" : "Copier"}
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="flex border-b border-blue-50">
         <button onClick={() => setOnglet("discussion")}
