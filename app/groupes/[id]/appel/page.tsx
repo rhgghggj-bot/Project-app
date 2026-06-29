@@ -17,7 +17,7 @@ function VideoGrid() {
   const tracks = useTracks([Track.Source.Camera])
 
   return (
-    <div style={{flex:1,display:'grid',gridTemplateColumns: participants.length > 1 ? '1fr 1fr' : '1fr',gap:'3px',padding:'3px',background:'rgba(255,255,255,0.1)'}}>
+    <div style={{flex:1,display:'grid',gridTemplateColumns: participants.length > 1 ? '1fr 1fr' : '1fr',gap:'3px',padding:'3px',background:'rgba(255,255,255,0.1)',minHeight:0}}>
       {participants.map((participant, i) => {
         const track = tracks.find(t => t.participant.identity === participant.identity)
         const isBig = i === 0
@@ -25,7 +25,7 @@ function VideoGrid() {
           <div key={participant.identity}
             style={{
               gridColumn: isBig && participants.length > 1 ? '1/3' : 'auto',
-              height: isBig ? '200px' : '130px',
+              height: participants.length === 1 ? '100%' : isBig ? '220px' : '140px',
               background:'rgba(255,255,255,0.15)',
               borderRadius:'10px',
               border:'1px solid rgba(255,255,255,0.25)',
@@ -113,9 +113,15 @@ export default function AppelGroupe() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const nav = document.querySelector('nav.md\\:hidden') as HTMLElement
-    if (nav) nav.style.display = 'none'
-    return () => { if (nav) nav.style.display = '' }
+    const navMobile = document.querySelector('nav.md\\:hidden') as HTMLElement
+    const navDesktop = document.querySelector('nav.hidden') as HTMLElement
+    if (navMobile) navMobile.style.display = 'none'
+    if (navDesktop) navDesktop.style.display = 'none'
+    return () => {
+      if (navMobile) navMobile.style.display = ''
+      if (navDesktop) navDesktop.style.display = ''
+    }
+    
   }, [])
 
   useEffect(() => {
