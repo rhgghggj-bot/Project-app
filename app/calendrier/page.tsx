@@ -8,11 +8,7 @@ export default function Calendrier() {
   const today = new Date()
   const [mois, setMois] = useState(today.getMonth())
   const [annee, setAnnee] = useState(today.getFullYear())
-  const [evenements, setEvenements] = useState([
-    { id:1, nom:"Échéance — Permis de conduire", date:"2026-07-06", couleur:"#D4A843" },
-    { id:2, nom:"Ouverture — Restaurant le Coin", date:"2026-07-14", couleur:"#2B7FFF" },
-    { id:3, nom:"Réunion groupe Entrepreneurs", date:"2026-07-29", couleur:"#10B981" },
-  ])
+  const [evenements, setEvenements] = useState<any[]>([])
   const [showForm, setShowForm] = useState(false)
   const [newNom, setNewNom] = useState("")
   const [newDate, setNewDate] = useState("")
@@ -56,19 +52,10 @@ export default function Calendrier() {
       {showForm && (
         <div className="mx-5 mt-4 bg-blue-50 rounded-2xl p-4 border border-blue-100">
           <p className="text-sm font-medium text-gray-900 mb-3">Nouvelle échéance</p>
-          <input
-            type="text"
-            placeholder="Nom de l'événement"
-            value={newNom}
-            onChange={e => setNewNom(e.target.value)}
-            className="w-full border border-blue-100 rounded-xl px-4 py-2 text-sm text-gray-900 bg-white mb-2 focus:outline-none focus:border-blue-400"
-          />
-          <input
-            type="date"
-            value={newDate}
-            onChange={e => setNewDate(e.target.value)}
-            className="w-full border border-blue-100 rounded-xl px-4 py-2 text-sm text-gray-900 bg-white mb-3 focus:outline-none focus:border-blue-400"
-          />
+          <input type="text" placeholder="Nom de l'événement" value={newNom} onChange={e => setNewNom(e.target.value)}
+            className="w-full border border-blue-100 rounded-xl px-4 py-2 text-sm text-gray-900 bg-white mb-2 focus:outline-none focus:border-blue-400"/>
+          <input type="date" value={newDate} onChange={e => setNewDate(e.target.value)}
+            className="w-full border border-blue-100 rounded-xl px-4 py-2 text-sm text-gray-900 bg-white mb-3 focus:outline-none focus:border-blue-400"/>
           <button onClick={ajouterEvt} className="w-full bg-blue-500 text-white text-sm font-medium py-2 rounded-xl">Ajouter</button>
         </div>
       )}
@@ -107,35 +94,43 @@ export default function Calendrier() {
           </div>
         </div>
 
-        <p className="text-xs text-gray-400 uppercase tracking-wider font-medium mb-3">Échéances de ce mois</p>
+        {evtDuMois.length > 0 && (
+          <>
+            <p className="text-xs text-gray-400 uppercase tracking-wider font-medium mb-3">Échéances de ce mois</p>
+            {evtDuMois.map(e => (
+              <div key={e.id} className="flex items-center gap-3 bg-white border border-blue-100 rounded-xl px-4 py-3 mb-2">
+                <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{background:e.couleur}}></div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-900">{e.nom}</p>
+                  <p className="text-xs text-gray-400">{new Date(e.date).toLocaleDateString('fr-FR', {day:'numeric', month:'long', year:'numeric'})}</p>
+                </div>
+              </div>
+            ))}
+          </>
+        )}
 
-        {evtDuMois.length === 0 && (
+        {evenements.length === 0 && (
           <div className="text-center py-8 text-gray-400">
             <p className="text-3xl mb-2">📅</p>
-            <p className="text-sm">Aucune échéance ce mois-ci</p>
+            <p className="text-sm">Aucune échéance pour l'instant</p>
+            <button onClick={() => setShowForm(true)} className="text-blue-500 text-sm font-medium mt-2">Ajouter une échéance →</button>
           </div>
         )}
 
-        {evtDuMois.map(e => (
-          <div key={e.id} className="flex items-center gap-3 bg-white border border-blue-100 rounded-xl px-4 py-3 mb-2">
-            <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{background:e.couleur}}></div>
-            <div className="flex-1">
-              <p className="text-sm font-medium text-gray-900">{e.nom}</p>
-              <p className="text-xs text-gray-400">{new Date(e.date).toLocaleDateString('fr-FR', {day:'numeric', month:'long', year:'numeric'})}</p>
-            </div>
-          </div>
-        ))}
-
-        <p className="text-xs text-gray-400 uppercase tracking-wider font-medium mb-3 mt-4">Toutes les échéances</p>
-        {evenements.map(e => (
-          <div key={e.id} className="flex items-center gap-3 bg-white border border-blue-100 rounded-xl px-4 py-3 mb-2">
-            <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{background:e.couleur}}></div>
-            <div className="flex-1">
-              <p className="text-sm font-medium text-gray-900">{e.nom}</p>
-              <p className="text-xs text-gray-400">{new Date(e.date).toLocaleDateString('fr-FR', {day:'numeric', month:'long', year:'numeric'})}</p>
-            </div>
-          </div>
-        ))}
+        {evenements.length > 0 && (
+          <>
+            <p className="text-xs text-gray-400 uppercase tracking-wider font-medium mb-3 mt-4">Toutes les échéances</p>
+            {evenements.map(e => (
+              <div key={e.id} className="flex items-center gap-3 bg-white border border-blue-100 rounded-xl px-4 py-3 mb-2">
+                <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{background:e.couleur}}></div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-900">{e.nom}</p>
+                  <p className="text-xs text-gray-400">{new Date(e.date).toLocaleDateString('fr-FR', {day:'numeric', month:'long', year:'numeric'})}</p>
+                </div>
+              </div>
+            ))}
+          </>
+        )}
       </div>
     </main>
   )
