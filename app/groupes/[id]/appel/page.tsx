@@ -39,12 +39,12 @@ function VideoGrid() {
               <VideoTrack trackRef={track} style={{width:'100%',height:'100%',objectFit:'cover'}}/>
             ) : (
               <div style={{width: isBig ? '75px' : '52px',height: isBig ? '75px' : '52px',borderRadius:'50%',background:'linear-gradient(135deg,#fff,#D4A843)',border:'3px solid rgba(255,255,255,0.6)',display:'flex',alignItems:'center',justifyContent:'center',color:'#1a3a6e',fontSize: isBig ? '28px' : '20px',fontWeight:'500'}}>
-                {participant.identity[0].toUpperCase()}
+                {(participant.identity || "?")[0].toUpperCase()}
               </div>
             )}
             <div style={{position:'absolute',bottom:'8px',left:'8px',background:'rgba(255,255,255,0.25)',border:'0.5px solid rgba(255,255,255,0.4)',color:'#fff',fontSize:'10px',padding:'2px 8px',borderRadius:'99px',display:'flex',alignItems:'center',gap:'4px'}}>
               <div style={{width:'5px',height:'5px',borderRadius:'50%',background: participant.isMicrophoneEnabled ? '#D4A843' : '#F43F5E'}}></div>
-              {participant.identity} {!participant.isCameraEnabled ? '· cam off' : ''}
+              {participant.identity || "Participant"} {!participant.isCameraEnabled ? '· cam off' : ''}
             </div>
           </div>
         )
