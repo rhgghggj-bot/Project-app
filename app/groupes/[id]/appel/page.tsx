@@ -28,10 +28,18 @@ function Controls({ onLeave }: { onLeave: () => void }) {
 
   const [facingMode, setFacingMode] = useState<'user'|'environment'>('user')
   const switchCam = async () => {
-    const newMode = facingMode === 'user' ? 'environment' : 'user'
-    setFacingMode(newMode)
-    await localParticipant.setCameraEnabled(false)
-    await localParticipant.setCameraEnabled(true, { facingMode: newMode })
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices()
+      const cameras = devices.filter(d => d.kind === 'videoinput')
+      if (cameras.length > 1) {
+        const newMode = facingMode === 'user' ? 'environment' : 'user'
+        setFacingMode(newMode)
+        await localParticipant.setCameraEnabled(false)
+        setTimeout(async () => {
+          await localParticipant.setCameraEnabled(true, { facingMode: newMode })
+        }, 500)
+      }
+    } catch(e) { console.log(e) }
   }
 
   return (
@@ -113,7 +121,7 @@ export default function AppelGroupe() {
       <div style={{padding:'12px 16px',background:'rgba(0,0,0,0.3)',display:'flex',alignItems:'center',gap:'12px',flexShrink:0}}>
         <span style={{color:'#fff',fontWeight:'500',fontSize:'15px'}}>📞 {groupe?.nom}</span>
       </div>
-      <LiveKitRoom video={{facingMode:"environment"}} audio={true} token={token} serverUrl={process.env.NEXT_PUBLIC_LIVEKIT_URL} style={{flex:1,display:'flex',flexDirection:'column'}}>
+      <LiveKitRoom video={true} audio={true} token={token} serverUrl={process.env.NEXT_PUBLIC_LIVEKIT_URL} style={{flex:1,display:'flex',flexDirection:'column'}}>
         <VideoGrid />
         <RoomAudioRenderer />
         <Controls onLeave={handleLeave} />
