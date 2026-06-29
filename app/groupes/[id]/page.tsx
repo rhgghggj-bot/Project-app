@@ -24,7 +24,7 @@ export default function GroupePage() {
       setMessages(m || [])
       const { data: mb } = await supabase.from("membres_groupe").select("*").eq("groupe_id", id)
       setMembres(mb || [])
-      const { data: p } = await supabase.from("projets").select("*").order("created_at", { ascending: false })
+      const { data: p } = await supabase.from("projets").select("*").eq("groupe_id", id).order("created_at", { ascending: false })
       setProjets(p || [])
     }
     charger()
@@ -62,23 +62,17 @@ export default function GroupePage() {
       </div>
 
       <div className="flex border-b border-blue-50">
-        <button
-          onClick={() => setOnglet("discussion")}
-          className={`flex-1 py-3 text-sm font-medium ${onglet === "discussion" ? "text-blue-500 border-b-2 border-blue-500" : "text-gray-400"}`}
-        >
+        <button onClick={() => setOnglet("discussion")}
+          className={`flex-1 py-3 text-sm font-medium ${onglet === "discussion" ? "text-blue-500 border-b-2 border-blue-500" : "text-gray-400"}`}>
           💬 Discussion
         </button>
-        <button
-          onClick={() => setOnglet("projets")}
-          className={`flex-1 py-3 text-sm font-medium ${onglet === "projets" ? "text-blue-500 border-b-2 border-blue-500" : "text-gray-400"}`}
-        >
-          📌 Projets
+        <button onClick={() => setOnglet("projets")}
+          className={`flex-1 py-3 text-sm font-medium ${onglet === "projets" ? "text-blue-500 border-b-2 border-blue-500" : "text-gray-400"}`}>
+          📌 Projets ({projets.length})
         </button>
-        <button
-          onClick={() => setOnglet("membres")}
-          className={`flex-1 py-3 text-sm font-medium ${onglet === "membres" ? "text-blue-500 border-b-2 border-blue-500" : "text-gray-400"}`}
-        >
-          👥 Membres
+        <button onClick={() => setOnglet("membres")}
+          className={`flex-1 py-3 text-sm font-medium ${onglet === "membres" ? "text-blue-500 border-b-2 border-blue-500" : "text-gray-400"}`}>
+          👥 Membres ({membres.length})
         </button>
       </div>
 
@@ -107,25 +101,24 @@ export default function GroupePage() {
             <div ref={messagesEndRef}></div>
           </div>
           <div className="px-5 py-3 border-t border-blue-50 flex gap-3 items-center">
-            <input
-              type="text"
-              placeholder="Écrire un message..."
-              value={contenu}
+            <input type="text" placeholder="Écrire un message..." value={contenu}
               onChange={e => setContenu(e.target.value)}
               onKeyDown={e => e.key === "Enter" && envoyer()}
-              className="flex-1 border border-blue-100 rounded-full px-4 py-2 text-sm text-gray-900 bg-blue-50 focus:outline-none focus:border-blue-400"
-            />
-            <button onClick={envoyer} className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white text-lg">
-              ↑
-            </button>
+              className="flex-1 border border-blue-100 rounded-full px-4 py-2 text-sm text-gray-900 bg-blue-50 focus:outline-none focus:border-blue-400"/>
+            <button onClick={envoyer} className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white text-lg">↑</button>
           </div>
         </div>
       )}
 
       {onglet === "projets" && (
         <div className="px-5 py-4">
+          <a href="/nouveau-projet">
+            <button className="w-full bg-blue-50 border border-blue-100 text-blue-500 text-sm font-medium py-3 rounded-xl mb-4">
+              + Partager un projet dans ce groupe
+            </button>
+          </a>
           {projets.length === 0 && (
-            <div className="text-center py-12 text-gray-400">
+            <div className="text-center py-8 text-gray-400">
               <p className="text-3xl mb-2">📭</p>
               <p className="text-sm">Aucun projet partagé dans ce groupe</p>
             </div>
@@ -144,12 +137,6 @@ export default function GroupePage() {
 
       {onglet === "membres" && (
         <div className="px-5 py-4">
-          {membres.length === 0 && (
-            <div className="text-center py-12 text-gray-400">
-              <p className="text-3xl mb-2">👥</p>
-              <p className="text-sm">Aucun membre pour l'instant</p>
-            </div>
-          )}
           {membres.map((m: any) => (
             <div key={m.id} className="flex items-center gap-3 bg-white border border-blue-100 rounded-xl p-3 mb-2">
               <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium">
