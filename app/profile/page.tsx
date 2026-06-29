@@ -53,7 +53,7 @@ export default function Profile() {
 
   return (
     <main className="min-h-screen bg-white" style={{overflowY:"auto",WebkitOverflowScrolling:"touch"}}>
-      <div className="h-28 relative" style={{background:`linear-gradient(135deg,${couleurProfil},#87CEEB)`}}>
+      <div className="relative" style={{height:"140px",paddingTop:"env(safe-area-inset-top)"}} style={{background:`linear-gradient(135deg,${couleurProfil},#87CEEB)`}}>
         <a href="/" className="absolute top-3 left-4 text-white text-sm opacity-80">← Accueil</a>
       </div>
 
