@@ -26,9 +26,12 @@ function Controls({ onLeave }: { onLeave: () => void }) {
     setCamOn(!camOn)
   }
 
-  const switchCam = () => {
-    const facingMode = camOn ? 'environment' : 'user'
-    localParticipant.setCameraEnabled(true, { facingMode: facingMode as any })
+  const [facingMode, setFacingMode] = useState<'user'|'environment'>('user')
+  const switchCam = async () => {
+    const newMode = facingMode === 'user' ? 'environment' : 'user'
+    setFacingMode(newMode)
+    await localParticipant.setCameraEnabled(false)
+    await localParticipant.setCameraEnabled(true, { facingMode: newMode })
   }
 
   return (
