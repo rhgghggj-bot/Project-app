@@ -19,8 +19,6 @@ export default function QuizPage() {
   const [loading, setLoading] = useState(false)
   const [titre, setTitre] = useState('')
   const [questions, setQuestions] = useState([{ question: '', options: ['','','',''], reponse: 0 }])
-  const [genSujet, setGenSujet] = useState('')
-  const [generating, setGenerating] = useState(false)
 
   const bg = '#46178f'
   const card = 'rgba(255,255,255,0.1)'
@@ -36,21 +34,7 @@ export default function QuizPage() {
     init()
   }, [])
 
-  async function genererAvecIA() {
-    if (!genSujet) return
-    setGenerating(true)
-    try {
-      const res = await fetch('/api/quiz-ia', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sujet: genSujet })
-      })
-      const parsed = await res.json()
-      setTitre(parsed.titre)
-      setQuestions(parsed.questions)
-    } catch(e) { console.error(e) }
-    setGenerating(false)
-  }
+
 
   async function sauvegarderQuiz() {
     if (!titre) return
@@ -90,65 +74,6 @@ export default function QuizPage() {
     const pct = (questionIndex / quizActif.questions.length) * 100
     return (
       <main style={s.main}>
-        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'16px'}}>
-          <button onClick={() => setMode('liste')} style={{color:'rgba(255,255,255,0.6)',background:'none',border:'none',fontSize:'20px',cursor:'pointer'}}>←</button>
-          <span style={{background:'rgba(255,255,255,0.15)',color:'#fff',fontSize:'12px',padding:'4px 12px',borderRadius:'99px'}}>{questionIndex+1} / {quizActif.questions.length}</span>
-        </div>
-        <div style={{background:'rgba(255,255,255,0.15)',borderRadius:'99px',height:'8px',marginBottom:'20px',overflow:'hidden'}}>
-          <div style={{height:'100%',width:pct+'%',background:'linear-gradient(90deg,#7c3aed,#a855f7)',borderRadius:'99px',transition:'width 0.3s'}}></div>
-        </div>
-        <div style={{background:'rgba(255,255,255,0.12)',border,borderRadius:'20px',padding:'24px',marginBottom:'20px',textAlign:'center'}}>
-          <div style={{color:'rgba(255,255,255,0.5)',fontSize:'11px',marginBottom:'8px',textTransform:'uppercase',letterSpacing:'0.05em'}}>Question {questionIndex+1}</div>
-          <div style={{color:'#fff',fontSize:'18px',fontWeight:'500',lineHeight:'1.4'}}>{q.question}</div>
-        </div>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'10px'}}>
-          {q.options.map((opt: string, i: number) => (
-            <button key={i} onClick={() => repondre(i)}
-              style={{background:COULEURS[i],borderRadius:'14px',padding:'16px',display:'flex',alignItems:'center',gap:'8px',cursor:'pointer',border:'none',textAlign:'left'}}>
-              <span style={{fontSize:'18px',color:'#fff'}}>{FORMES[i]}</span>
-              <span style={{color:'#fff',fontSize:'13px',fontWeight:'500'}}>{opt}</span>
-            </button>
-          ))}
-        </div>
-      </main>
-    )
-  }
-
-  if (mode === 'resultats') {
-    const total = quizActif.questions.length
-    const pct = Math.round((score! / total) * 100)
-    return (
-      <main style={{...s.main,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center'}}>
-        <div style={{fontSize:'64px',marginBottom:'16px'}}>{pct>=80?'🏆':pct>=60?'🎉':pct>=40?'👍':'💪'}</div>
-        <div style={{color:'#fff',fontSize:'28px',fontWeight:'500',marginBottom:'4px'}}>{score}/{total}</div>
-        <div style={{color:'#a855f7',fontSize:'15px',marginBottom:'32px'}}>{pct}% de bonnes reponses</div>
-        <div style={{width:'100%',background:'rgba(255,255,255,0.1)',border,borderRadius:'20px',padding:'20px',marginBottom:'24px'}}>
-          {quizActif.questions.map((q: any, i: number) => (
-            <div key={i} style={{display:'flex',gap:'10px',marginBottom:'12px',alignItems:'flex-start'}}>
-              <span style={{fontSize:'18px',flexShrink:0}}>{reponses[i]===q.reponse?'✅':'❌'}</span>
-              <div>
-                <div style={{color:'rgba(255,255,255,0.8)',fontSize:'13px',marginBottom:'3px'}}>{q.question}</div>
-                {reponses[i]!==q.reponse&&<div style={{color:'#4ade80',fontSize:'12px'}}>Bonne reponse: {q.options[q.reponse]}</div>}
-              </div>
-            </div>
-          ))}
-        </div>
-        <button onClick={() => setMode('liste')} style={{background:'#26890c',color:'#fff',border:'none',borderRadius:'14px',padding:'14px 32px',fontSize:'15px',fontWeight:'500',cursor:'pointer'}}>
-          Retour aux quiz
-        </button>
-      </main>
-    )
-  }
-
-  if (mode === 'creer') {
-    return (
-      <main style={{...s.main}}>
-        <div style={{display:'flex',alignItems:'center',gap:'12px',marginBottom:'20px'}}>
-          <button onClick={() => setMode('liste')} style={{color:'rgba(255,255,255,0.6)',background:'none',border:'none',fontSize:'20px',cursor:'pointer'}}>←</button>
-          <span style={{color:'#fff',fontWeight:'500',fontSize:'16px'}}>Créer un quiz</span>
-        </div>
-        <div style={{background:'rgba(255,255,255,0.08)',border:'1px dashed rgba(255,255,255,0.3)',borderRadius:'16px',padding:'16px',marginBottom:'16px'}}>
-          <div style={{color:'#a855f7',fontSize:'13px',fontWeight:'500',marginBottom:'8px'}}>✨ Générer avec l'IA</div>
           <div style={{display:'flex',gap:'8px'}}>
             <input value={genSujet} onChange={e=>setGenSujet(e.target.value)} placeholder="Ex: Histoire de France, Foot..."
               style={{flex:1,background:'rgba(255,255,255,0.1)',border:'1px solid rgba(255,255,255,0.2)',borderRadius:'10px',padding:'8px 12px',fontSize:'13px',color:'#fff'}}/>
