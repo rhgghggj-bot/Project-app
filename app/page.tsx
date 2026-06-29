@@ -2,91 +2,188 @@
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 
+const JOURS = ["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"]
+
 export default function Home() {
   const [projets, setProjets] = useState<any[]>([])
   const [user, setUser] = useState<any>(null)
+  const [evenements, setEvenements] = useState<any[]>([])
+  const [depenses, setDepenses] = useState<any[]>([])
+  const [revenus, setRevenus] = useState<any[]>([])
 
   useEffect(() => {
     async function charger() {
       const { data: { user } } = await supabase.auth.getUser()
       setUser(user)
-      const { data } = await supabase
-        .from("projets")
-        .select("*")
-        .is("groupe_id", null)
-        .order("created_at", { ascending: false })
-      setProjets(data || [])
+      const { data: p } = await supabase.from("projets").select("*").is("groupe_id", null).eq("prive", false).order("created_at", { ascending: false })
+      setProjets(p || [])
+      if (user) {
+        const { data: e } = await supabase.from("evenements_calendrier").select("*").eq("user_id", user.id)
+        setEvenements(e || [])
+        const { data: d } = await supabase.from("depenses").select("*").eq("user_id", user.id)
+        setDepenses(d || [])
+        const { data: r } = await supabase.from("revenus").select("*").eq("user_id", user.id)
+        setRevenus(r || [])
+      }
     }
     charger()
   }, [])
 
+  const today = new Date()
+  const getLundi = () => {
+    const d = new Date(today)
+    const day = d.getDay() || 7
+    d.setDate(d.getDate() - day + 1)
+    d.setHours(0,0,0,0)
+    return d
+  }
+  const lundi = getLundi()
+  const jours = Array.from({length:7}, (_, i) => {
+    const d = new Date(lundi)
+    d.setDate(lundi.getDate() + i)
+    return d
+  })
+  const evtDuJour = (date: Date) => evenements.filter(e => new Date(e.date).toDateString() === date.toDateString())
+
+  const moisActuel = today.getMonth()
+  const anneeActuelle = today.getFullYear()
+  const totalDep = depenses.filter(d => { const dt = new Date(d.date); return dt.getMonth() === moisActuel && dt.getFullYear() === anneeActuelle }).reduce((s,d) => s + parseFloat(d.montant), 0)
+  const totalRev = revenus.filter(r => { const dt = new Date(r.date); return dt.getMonth() === moisActuel && dt.getFullYear() === anneeActuelle }).reduce((s,r) => s + parseFloat(r.montant), 0)
+  const solde = totalRev - totalDep
+
+  const prochainEvt = evenements.filter(e => new Date(e.date) >= today).sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0]
+
   return (
     <main className="min-h-screen bg-white">
-      <nav className="bg-white border-b border-blue-50 px-5 py-3 flex items-center justify-between">
-        <span className="text-lg font-medium text-gray-900">Pro<span className="text-yellow-500">ject</span></span>
-        <div className="flex items-center gap-3">
-          <a href="/groupes" className="text-sm text-gray-500">Groupes</a>
-          <a href="/calendrier" className="text-sm text-gray-500">Calendrier</a>
+      <nav style={{background:'#fff',borderBottom:'0.5px solid #E8F1FF',padding:'0 18px',height:'52px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+        <span style={{fontSize:'18px',fontWeight:'500',color:'#1a1a2e'}}>Pro<span style={{color:'#D4A843'}}>ject</span></span>
+        <div style={{display:'flex',alignItems:'center',gap:'10px'}}>
+          <a href="/groupes" style={{fontSize:'12px',color:'#aaa',textDecoration:'none'}}>Groupes</a>
+          <a href="/semaine" style={{fontSize:'12px',color:'#aaa',textDecoration:'none'}}>Calendrier</a>
+          <a href="/finances" style={{fontSize:'12px',color:'#aaa',textDecoration:'none'}}>Finances</a>
           {user ? (
-            <a href="/profile" className="text-sm font-medium bg-blue-500 text-white px-4 py-2 rounded-full">Mon profil</a>
+            <a href="/profile" style={{fontSize:'12px',fontWeight:'500',background:'#2B7FFF',color:'#fff',padding:'6px 14px',borderRadius:'99px',textDecoration:'none'}}>Mon profil</a>
           ) : (
-            <a href="/connexion" className="text-sm font-medium bg-blue-500 text-white px-4 py-2 rounded-full">Connexion</a>
+            <a href="/connexion" style={{fontSize:'12px',fontWeight:'500',background:'#2B7FFF',color:'#fff',padding:'6px 14px',borderRadius:'99px',textDecoration:'none'}}>Connexion</a>
           )}
         </div>
       </nav>
 
-      <div className="px-5 py-8 bg-gradient-to-br from-blue-50 to-yellow-50 border-b border-blue-100">
-        <div className="inline-flex items-center gap-2 bg-yellow-50 text-yellow-700 text-xs font-medium px-3 py-1 rounded-full border border-yellow-200 mb-4">✦ Réseau de projets</div>
-        <h1 className="text-2xl font-medium text-gray-900 leading-tight mb-2">Lancez vos projets,<br /><span className="text-blue-500">trouvez votre soutien</span></h1>
-        <p className="text-sm text-gray-500 mb-5 leading-relaxed">Partagez votre projet avec votre groupe et recevez conseils et dons directement.</p>
-        <div className="flex gap-3">
-          <a href="/nouveau-projet"><button className="bg-blue-500 text-white font-medium text-sm px-5 py-2 rounded-full">Publier un projet</button></a>
-          <a href="/groupes"><button className="bg-yellow-50 text-yellow-700 font-medium text-sm px-5 py-2 rounded-full border border-yellow-200">Rejoindre un groupe</button></a>
+      {user ? (
+        <div style={{background:'linear-gradient(160deg,#0A1628 0%,#1a3a6e 50%,#2B7FFF 100%)',padding:'20px 18px 32px',position:'relative',overflow:'hidden'}}>
+          <div style={{position:'absolute',top:'-40px',right:'-40px',width:'180px',height:'180px',borderRadius:'50%',background:'rgba(43,127,255,0.15)'}}></div>
+          <div style={{fontSize:'12px',color:'rgba(255,255,255,0.5)',marginBottom:'4px'}}>{today.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</div>
+          <div style={{fontSize:'22px',fontWeight:'500',color:'#fff',marginBottom:'6px'}}>Bonjour 👋</div>
+          <div style={{display:'flex',gap:'12px'}}>
+            <div style={{fontSize:'13px',color:'rgba(255,255,255,0.7)'}}>📈 <span style={{color:'#4ade80',fontWeight:'500'}}>{totalRev.toFixed(0)} CHF</span></div>
+            <div style={{fontSize:'13px',color:'rgba(255,255,255,0.7)'}}>📉 <span style={{color:'#F43F5E',fontWeight:'500'}}>{totalDep.toFixed(0)} CHF</span></div>
+            <div style={{fontSize:'13px',color:'rgba(255,255,255,0.7)'}}>Solde : <span style={{color: solde >= 0 ? '#4ade80' : '#F43F5E',fontWeight:'500'}}>{solde >= 0 ? '+' : ''}{solde.toFixed(0)} CHF</span></div>
+          </div>
         </div>
-      </div>
+      ) : (
+        <div style={{padding:'28px 18px',background:'linear-gradient(135deg,#EEF5FF,#FDF8EC)',borderBottom:'0.5px solid #E8F1FF'}}>
+          <div style={{display:'inline-flex',alignItems:'center',gap:'6px',background:'#FDF8EC',color:'#D4A843',fontSize:'11px',fontWeight:'500',padding:'4px 10px',borderRadius:'99px',border:'1px solid #F0D88A',marginBottom:'12px'}}>✦ Réseau de projets</div>
+          <h1 style={{fontSize:'22px',fontWeight:'500',color:'#1a1a2e',lineHeight:'1.3',marginBottom:'6px'}}>Lancez vos projets,<br/><span style={{color:'#2B7FFF'}}>trouvez votre soutien</span></h1>
+          <p style={{fontSize:'13px',color:'#aaa',marginBottom:'16px',lineHeight:'1.6'}}>Partagez votre projet avec votre groupe et recevez conseils et dons directement.</p>
+          <div style={{display:'flex',gap:'8px'}}>
+            <a href="/nouveau-projet"><button style={{background:'#2B7FFF',color:'#fff',fontWeight:'500',fontSize:'13px',padding:'9px 18px',borderRadius:'99px',border:'none',cursor:'pointer'}}>Publier un projet</button></a>
+            <a href="/groupes"><button style={{background:'#FDF8EC',color:'#D4A843',fontWeight:'500',fontSize:'13px',padding:'9px 18px',borderRadius:'99px',border:'1.5px solid #F0D88A',cursor:'pointer'}}>Rejoindre un groupe</button></a>
+          </div>
+        </div>
+      )}
 
-      <div className="px-5 py-4">
-        <p className="text-xs text-gray-400 uppercase tracking-wider font-medium mb-4">Projets publics</p>
+      {user && (
+        <div style={{margin:'-16px 14px 0',borderRadius:'18px',padding:'14px',position:'relative',zIndex:2,background:'rgba(255,255,255,0.9)',backdropFilter:'blur(20px)',border:'0.5px solid rgba(255,255,255,0.9)',boxShadow:'0 4px 24px rgba(43,127,255,0.1)',marginBottom:'4px'}}>
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'12px'}}>
+            <span style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e'}}>Cette semaine</span>
+            <a href="/semaine" style={{fontSize:'12px',color:'#2B7FFF',fontWeight:'500',textDecoration:'none'}}>Voir tout →</a>
+          </div>
+          <div style={{display:'flex',gap:'4px'}}>
+            {jours.map((jour, i) => {
+              const isToday = jour.toDateString() === today.toDateString()
+              const evts = evtDuJour(jour)
+              return (
+                <a key={i} href="/semaine" style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:'3px',textDecoration:'none'}}>
+                  <div style={{fontSize:'10px',color:'#aaa',fontWeight:'500'}}>{JOURS[i]}</div>
+                  <div style={{width:'28px',height:'28px',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'13px',fontWeight:'500',
+                    background: isToday ? '#2B7FFF' : 'transparent',
+                    color: isToday ? '#fff' : '#1a1a2e'}}>
+                    {jour.getDate()}
+                  </div>
+                  {evts.slice(0,1).map((e,j) => (
+                    <div key={j} style={{width:'100%',borderRadius:'4px',padding:'2px 3px',fontSize:'8px',fontWeight:'500',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',background:`${e.couleur}22`,color:e.couleur}}>
+                      {e.titre}
+                    </div>
+                  ))}
+                  {evts.length === 0 && <div style={{width:'4px',height:'4px',borderRadius:'50%',background:'transparent'}}></div>}
+                </a>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {user && (
+        <div style={{display:'flex',gap:'8px',padding:'16px 14px 8px'}}>
+          <a href="/finances" style={{flex:1,textDecoration:'none'}}>
+            <div style={{background:'linear-gradient(135deg,#EEF5FF,#DCE9FF)',borderRadius:'14px',padding:'12px',border:'0.5px solid #DCE9FF'}}>
+              <div style={{fontSize:'11px',color:'#2B7FFF',fontWeight:'500',marginBottom:'4px'}}>💸 Finances</div>
+              <div style={{fontSize:'18px',fontWeight:'500',color: solde >= 0 ? '#10B981' : '#F43F5E'}}>{solde >= 0 ? '+' : ''}{solde.toFixed(0)} CHF</div>
+              <div style={{fontSize:'11px',color:'#aaa',marginTop:'2px'}}>Solde ce mois</div>
+            </div>
+          </a>
+          <a href="/semaine" style={{flex:1,textDecoration:'none'}}>
+            <div style={{background:'linear-gradient(135deg,#FDF8EC,#F0D88A33)',borderRadius:'14px',padding:'12px',border:'0.5px solid #F0D88A'}}>
+              <div style={{fontSize:'11px',color:'#D4A843',fontWeight:'500',marginBottom:'4px'}}>📅 Prochain événement</div>
+              <div style={{fontSize:'14px',fontWeight:'500',color:'#1a1a2e'}}>{prochainEvt?.titre || 'Aucun'}</div>
+              <div style={{fontSize:'11px',color:'#aaa',marginTop:'2px'}}>{prochainEvt ? new Date(prochainEvt.date).toLocaleDateString('fr-FR',{day:'numeric',month:'short'}) : 'Ajoute un événement'}</div>
+            </div>
+          </a>
+        </div>
+      )}
+
+      <div style={{padding:'8px 18px 16px'}}>
+        <div style={{fontSize:'11px',color:'#aaa',textTransform:'uppercase',letterSpacing:'0.07em',fontWeight:'500',marginBottom:'12px'}}>Projets publics</div>
 
         {projets.length === 0 && (
-          <div className="text-center py-16 text-gray-400">
-            <p className="text-5xl mb-4">🚀</p>
-            <p className="text-lg font-medium text-gray-600 mb-2">Soyez les premiers !</p>
-            <p className="text-sm mb-4">Aucun projet pour l'instant. Lance le tien !</p>
+          <div style={{textAlign:'center',padding:'40px 0',color:'#aaa'}}>
+            <div style={{fontSize:'40px',marginBottom:'12px'}}>🚀</div>
+            <div style={{fontSize:'16px',fontWeight:'500',color:'#666',marginBottom:'8px'}}>Soyez les premiers !</div>
+            <div style={{fontSize:'13px',marginBottom:'16px'}}>Aucun projet pour l'instant. Lance le tien !</div>
             <a href="/nouveau-projet">
-              <button className="bg-blue-500 text-white font-medium text-sm px-6 py-3 rounded-full">Publier mon projet</button>
+              <button style={{background:'#2B7FFF',color:'#fff',fontWeight:'500',fontSize:'13px',padding:'10px 20px',borderRadius:'99px',border:'none',cursor:'pointer'}}>Publier mon projet</button>
             </a>
           </div>
         )}
 
         {projets.map((projet: any) => (
-          <a key={projet.id} href={`/projet/${projet.id}`}>
-            <div className="bg-white border border-blue-100 rounded-2xl overflow-hidden mb-3 cursor-pointer hover:border-blue-300">
-              <div className="h-24 bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center text-4xl">📌</div>
-              <div className="p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-medium">
-                    {projet.titre?.[0]?.toUpperCase() || "P"}
+          <a key={projet.id} href={`/projet/${projet.id}`} style={{textDecoration:'none'}}>
+            <div style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'16px',overflow:'hidden',marginBottom:'12px',cursor:'pointer'}}>
+              <div style={{height:'90px',background:'linear-gradient(135deg,#EEF5FF,#DCE9FF)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'36px'}}>📌</div>
+              <div style={{padding:'12px 14px'}}>
+                <div style={{display:'flex',alignItems:'center',gap:'6px',marginBottom:'6px'}}>
+                  <div style={{width:'20px',height:'20px',borderRadius:'50%',background:'#2B7FFF',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:'10px',fontWeight:'500'}}>
+                    {projet.titre?.[0]?.toUpperCase() || 'P'}
                   </div>
-                  <span className="ml-auto text-xs bg-blue-50 text-blue-500 px-2 py-0.5 rounded-full font-medium">{projet.categorie}</span>
+                  <span style={{marginLeft:'auto',fontSize:'11px',background:'#EEF5FF',color:'#2B7FFF',padding:'2px 8px',borderRadius:'99px',fontWeight:'500'}}>{projet.categorie}</span>
                 </div>
-                <p className="font-medium text-gray-900 mb-1">{projet.titre}</p>
-                <p className="text-xs text-gray-400 mb-3">{projet.description}</p>
-                <div className="bg-blue-50 rounded-xl p-3 mb-3">
-                  <div className="flex justify-between text-xs mb-1">
-                    <span className="text-gray-500">Cagnotte</span>
-                    <span className="font-medium"><span className="text-blue-500">0€</span> / objectif</span>
+                <div style={{fontSize:'14px',fontWeight:'500',color:'#1a1a2e',marginBottom:'4px'}}>{projet.titre}</div>
+                <div style={{fontSize:'12px',color:'#aaa',marginBottom:'10px'}}>{projet.description}</div>
+                <div style={{background:'#EEF5FF',borderRadius:'10px',padding:'8px 12px',marginBottom:'10px'}}>
+                  <div style={{display:'flex',justifyContent:'space-between',fontSize:'12px',marginBottom:'4px'}}>
+                    <span style={{color:'#666'}}>Cagnotte</span>
+                    <span style={{fontWeight:'500',color:'#2B7FFF'}}>0 CHF</span>
                   </div>
-                  <div className="h-2 bg-blue-100 rounded-full overflow-hidden">
-                    <div className="h-full rounded-full w-0" style={{background:'linear-gradient(90deg,#2B7FFF,#D4A843)'}}></div>
+                  <div style={{height:'5px',background:'#DCE9FF',borderRadius:'99px',overflow:'hidden'}}>
+                    <div style={{height:'100%',width:'0%',background:'linear-gradient(90deg,#2B7FFF,#D4A843)',borderRadius:'99px'}}></div>
                   </div>
-                  <p className="text-xs text-blue-500 font-medium mt-1 text-right">0% atteint</p>
                 </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex gap-3 text-xs text-gray-400">
-                    <span>❤️ 0</span><span>💬 0</span>
+                <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',paddingTop:'8px',borderTop:'0.5px solid #E8F1FF'}}>
+                  <div style={{display:'flex',gap:'10px'}}>
+                    <span style={{fontSize:'12px',color:'#aaa'}}>❤️ 0</span>
+                    <span style={{fontSize:'12px',color:'#aaa'}}>💬 0</span>
                   </div>
-                  <button className="bg-yellow-400 text-white text-xs font-medium px-4 py-2 rounded-full">✦ Soutenir</button>
+                  <button style={{background:'#D4A843',color:'#fff',fontSize:'11px',fontWeight:'500',padding:'5px 12px',borderRadius:'99px',border:'none',cursor:'pointer'}}>✦ Soutenir</button>
                 </div>
               </div>
             </div>
