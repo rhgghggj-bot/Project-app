@@ -27,6 +27,14 @@ export default function AppelGroupe() {
       const { data: g } = await supabase.from('groupes').select('*').eq('id', params.id).single()
       setGroupe(g)
 
+      // Envoyer un message dans le chat du groupe
+      const username = user.email.split('@')[0]
+      await supabase.from('messages_groupe').insert({
+        groupe_id: params.id,
+        user_id: user.id,
+        contenu: '📞 ' + username + ' a lancé un appel — Clique sur 📞 pour rejoindre'
+      })
+
       const username = user.email.split('@')[0]
       const res = await fetch(`/api/livekit?room=groupe-${params.id}&username=${username}`)
       const data = await res.json()
