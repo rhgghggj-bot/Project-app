@@ -50,7 +50,7 @@ export default function AppelGroupe() {
         <button onClick={() => router.back()} style={{color:'#fff',background:'none',border:'none',fontSize:'20px',cursor:'pointer'}}>←</button>
         <span style={{color:'#fff',fontWeight:'500',fontSize:'15px'}}>Appel — {groupe?.nom}</span>
       </div>
-      <LiveKitRoom video={true} audio={true} token={token} serverUrl={process.env.NEXT_PUBLIC_LIVEKIT_URL} style={{height:'calc(100vh - 52px)'}}>
+      <LiveKitRoom video={true} audio={true} token={token} serverUrl={process.env.NEXT_PUBLIC_LIVEKIT_URL} style={{height:'calc(100vh - 52px)',paddingBottom:'80px'}}>
         <VideoConference />
         <RoomAudioRenderer />
       </LiveKitRoom>
