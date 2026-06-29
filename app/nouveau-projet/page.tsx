@@ -10,6 +10,7 @@ export default function NouveauProjet() {
   const [objectif, setObjectif] = useState("")
   const [echeance, setEcheance] = useState("")
   const [groupeId, setGroupeId] = useState("")
+  const [prive, setPrive] = useState(false)
   const [groupes, setGroupes] = useState<any[]>([])
   const [message, setMessage] = useState("")
 
@@ -36,7 +37,8 @@ export default function NouveauProjet() {
       description,
       categorie,
       image_url: revolut,
-      groupe_id: groupeId || null
+      groupe_id: groupeId || null,
+      prive
     })
     if (error) {
       setMessage("Erreur : " + error.message)
@@ -54,6 +56,34 @@ export default function NouveauProjet() {
       </div>
 
       <div className="px-5 py-5 flex flex-col gap-4">
+
+        <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <p className="text-sm font-medium text-gray-900">{prive ? "🔒 Publication privée" : "🌍 Publication publique"}</p>
+              <p className="text-xs text-gray-400 mt-1">{prive ? "Visible uniquement par toi" : "Visible par tout le monde"}</p>
+            </div>
+            <button onClick={() => setPrive(!prive)}
+              style={{width:'48px',height:'28px',borderRadius:'99px',border:'none',cursor:'pointer',
+                background: prive ? '#2B7FFF' : '#E2E8F0',position:'relative',transition:'background 0.2s'}}>
+              <div style={{width:'22px',height:'22px',borderRadius:'50%',background:'#fff',position:'absolute',
+                top:'3px',transition:'left 0.2s',left: prive ? '23px' : '3px',boxShadow:'0 1px 3px rgba(0,0,0,0.2)'}}></div>
+            </button>
+          </div>
+          {!prive && groupes.length > 0 && (
+            <div className="mt-3 pt-3 border-t border-blue-100">
+              <label className="text-xs text-gray-500 mb-1 block">Partager dans un groupe (optionnel)</label>
+              <select value={groupeId} onChange={e => setGroupeId(e.target.value)}
+                className="w-full border border-blue-100 rounded-xl px-3 py-2 text-sm text-gray-900 bg-white focus:outline-none focus:border-blue-400">
+                <option value="">Visible par tous (public)</option>
+                {groupes.map((g: any) => (
+                  <option key={g.id} value={g.id}>{g.nom}</option>
+                ))}
+              </select>
+            </div>
+          )}
+        </div>
+
         <div>
           <label className="text-sm font-medium text-gray-700 mb-1 block">Nom du projet</label>
           <input type="text" placeholder="Restaurant le Coin" value={titre} onChange={e => setTitre(e.target.value)}
@@ -80,18 +110,6 @@ export default function NouveauProjet() {
             <option value="education">Éducation</option>
             <option value="autre">Autre</option>
           </select>
-        </div>
-
-        <div>
-          <label className="text-sm font-medium text-gray-700 mb-1 block">Partager dans un groupe</label>
-          <select value={groupeId} onChange={e => setGroupeId(e.target.value)}
-            className="w-full border border-blue-100 rounded-xl px-4 py-3 text-sm text-gray-900 bg-blue-50 focus:outline-none focus:border-blue-400">
-            <option value="">Visible par tous (public)</option>
-            {groupes.map((g: any) => (
-              <option key={g.id} value={g.id}>{g.nom}</option>
-            ))}
-          </select>
-          <p className="text-xs text-gray-400 mt-1">Si tu choisis un groupe, seuls ses membres verront ce projet.</p>
         </div>
 
         <div>
@@ -130,8 +148,9 @@ export default function NouveauProjet() {
           </div>
         </div>
 
-        <button onClick={publier} className="w-full bg-blue-500 text-white font-medium py-3 rounded-xl text-sm hover:bg-blue-600">
-          Publier le projet ✦
+        <button onClick={publier} className="w-full text-white font-medium py-3 rounded-xl text-sm"
+          style={{background: prive ? '#1a1a2e' : '#2B7FFF'}}>
+          {prive ? "🔒 Publier en privé" : "🌍 Publier en public"} ✦
         </button>
 
         {message && <p className="text-sm text-center text-green-500 font-medium">{message}</p>}
