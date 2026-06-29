@@ -11,7 +11,7 @@ import {
 } from '@livekit/components-react'
 
 export default function AppelGroupe() {
-  const params = useParams()
+  const params = useParams() as { id: string }
   const router = useRouter()
   const [token, setToken] = useState('')
   const [user, setUser] = useState(null)
@@ -30,9 +30,9 @@ export default function AppelGroupe() {
       // Envoyer un message dans le chat du groupe
       const username = user.email.split('@')[0]
       await supabase.from('messages_groupe').insert({
-        groupe_id: params.id,
+        groupe_id: String(params.id),
         user_id: user.id,
-        contenu: '📞 ' + username + ' a lancé un appel — Clique sur 📞 pour rejoindre'
+        contenu: '📞 ' + username + ' a lance un appel — Clique sur 📞 pour rejoindre'
       })
 
       const username = user.email.split('@')[0]
