@@ -36,7 +36,7 @@ function VideoGrid() {
               overflow:'hidden'
             }}>
             {track && participant.isCameraEnabled ? (
-              <VideoTrack trackRef={track} style={{width:'100%',height:'100%',objectFit:'cover'}}/>
+              <VideoTrack trackRef={track} style={{width:'100%',height:'100%',objectFit:'cover',transform: track.participant.isLocal ? 'scaleX(-1)' : 'none'}}/>
             ) : (
               <div style={{width: isBig ? '75px' : '52px',height: isBig ? '75px' : '52px',borderRadius:'50%',background:'linear-gradient(135deg,#fff,#D4A843)',border:'3px solid rgba(255,255,255,0.6)',display:'flex',alignItems:'center',justifyContent:'center',color:'#1a3a6e',fontSize: isBig ? '28px' : '20px',fontWeight:'500'}}>
                 {(participant.identity || "?")[0].toUpperCase()}
@@ -69,7 +69,7 @@ function Controls({ onLeave }: { onLeave: () => void }) {
   })
 
   return (
-    <div style={{padding:'18px 24px 24px',background:'rgba(255,255,255,0.15)',borderTop:'1px solid rgba(255,255,255,0.25)',display:'flex',justifyContent:'center',alignItems:'center',gap:'20px'}}>
+    <div style={{padding:'16px 24px 20px',background:'rgba(10,22,40,0.85)',borderTop:'0.5px solid rgba(255,255,255,0.15)',display:'flex',justifyContent:'center',alignItems:'center',gap:'20px'}}>
       <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:'6px'}}>
         <button onClick={toggleMic} style={btnStyle(micOn) as any}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8">
