@@ -3,18 +3,12 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import '@livekit/components-styles'
-import {
-  LiveKitRoom,
-  VideoConference,
-  RoomAudioRenderer,
-  ControlBar,
-} from '@livekit/components-react'
+import { LiveKitRoom, VideoConference, RoomAudioRenderer } from '@livekit/components-react'
 
 export default function AppelGroupe() {
   const params = useParams() as { id: string }
   const router = useRouter()
   const [token, setToken] = useState('')
-  const [user, setUser] = useState(null)
   const [groupe, setGroupe] = useState(null)
   const [loading, setLoading] = useState(true)
 
@@ -22,24 +16,21 @@ export default function AppelGroupe() {
     async function init() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/connexion'); return }
-      setUser(user)
-      
-      // Attendre que la session soit bien etablie
-      await new Promise(resolve => setTimeout(resolve, 500))
 
       const { data: g } = await supabase.from('groupes').select('*').eq('id', params.id).single()
       setGroupe(g)
 
-      // Envoyer un message dans le chat du groupe
       const username = user.email.split('@')[0]
-      await supabase.from('messages_groupe').insert({
+
+      const { error } = await supabase.from('messages_groupe').insert({
         groupe_id: String(params.id),
         user_id: user.id,
         contenu: '📞 ' + username + ' a lance un appel — Clique sur 📞 pour rejoindre'
       })
 
-      const username = user.email.split('@')[0]
-      const res = await fetch(`/api/livekit?room=groupe-${params.id}&username=${username}`)
+      console.log('Message insert error:', error)
+
+      const res = await fetch('/api/livekit?room=groupe-' + params.id + '&username=' + username)
       const data = await res.json()
       setToken(data.token)
       setLoading(false)
@@ -59,13 +50,7 @@ export default function AppelGroupe() {
         <button onClick={() => router.back()} style={{color:'#fff',background:'none',border:'none',fontSize:'20px',cursor:'pointer'}}>←</button>
         <span style={{color:'#fff',fontWeight:'500',fontSize:'15px'}}>Appel — {groupe?.nom}</span>
       </div>
-      <LiveKitRoom
-        video={true}
-        audio={true}
-        token={token}
-        serverUrl={process.env.NEXT_PUBLIC_LIVEKIT_URL}
-        style={{height:'calc(100vh - 52px)'}}
-      >
+      <LiveKitRoom video={true} audio={true} token={token} serverUrl={process.env.NEXT_PUBLIC_LIVEKIT_URL} style={{height:'calc(100vh - 52px)'}}>
         <VideoConference />
         <RoomAudioRenderer />
       </LiveKitRoom>
