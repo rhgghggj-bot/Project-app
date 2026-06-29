@@ -64,7 +64,7 @@ export default function Groupes() {
       )}
 
       <div className="px-5 py-4">
-        <p className="text-xs text-gray-400 uppercase tracking-wider font-medium mb-3">Tous les groupes</p>
+        <p className="text-xs text-gray-400 uppercase tracking-wider font-medium mb-3">Mes groupes</p>
 
         {groupes.length === 0 && (
           <div className="text-center py-12 text-gray-400">
@@ -74,7 +74,7 @@ export default function Groupes() {
           </div>
         )}
 
-        {groupes.map((groupe: any) => {
+        {groupes.filter((groupe: any) => mesGroupes.includes(groupe.id) || groupe.created_by === user?.id).map((groupe: any) => {
           const estMembre = mesGroupes.includes(groupe.id)
           return (
             <div key={groupe.id} className="bg-white border border-blue-100 rounded-2xl p-4 mb-3">
