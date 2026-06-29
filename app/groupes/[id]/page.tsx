@@ -16,6 +16,7 @@ export default function GroupePage() {
   const [lienInvitation, setLienInvitation] = useState("")
   const [copie, setCopie] = useState(false)
   const messagesEndRef = useRef<any>(null)
+  const channelRef = useRef<any>(null)
 
   useEffect(() => {
     async function charger() {
@@ -35,6 +36,23 @@ export default function GroupePage() {
       setProjets(p || [])
     }
     charger()
+
+    // Realtime messages
+    channelRef.current = supabase
+      .channel('messages-' + id)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'messages_groupe',
+        filter: 'groupe_id=eq.' + id
+      }, (payload) => {
+        setMessages(prev => [...prev, payload.new])
+      })
+      .subscribe()
+
+    return () => {
+      if (channelRef.current) supabase.removeChannel(channelRef.current)
+    }
   }, [id])
 
   useEffect(() => {
