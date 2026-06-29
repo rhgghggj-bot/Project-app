@@ -374,92 +374,82 @@ export default function Finances() {
       {onglet === "epargne" && (
         <div style={{padding:'16px 18px'}}>
           <div style={{background:'linear-gradient(135deg,#1a3a6e,#2B7FFF)',borderRadius:'18px',padding:'16px',marginBottom:'14px'}}>
-            <div style={{fontSize:'13px',color:'rgba(255,255,255,0.7)',marginBottom:'4px'}}>💎 Plan d'épargne</div>
-            <div style={{fontSize:'12px',color:'rgba(255,255,255,0.5)'}}>Définis ton objectif et on calcule tout</div>
+            <div style={{fontSize:'15px',fontWeight:'500',color:'#fff',marginBottom:'4px'}}>💎 Plan d'épargne</div>
+            <div style={{fontSize:'12px',color:'rgba(255,255,255,0.6)'}}>Entre ton objectif et vois combien épargner par mois</div>
           </div>
 
-          <div style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'16px',padding:'14px',marginBottom:'12px'}}>
-            <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',marginBottom:'12px'}}>Mon objectif</div>
+          <div style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'16px',padding:'14px',marginBottom:'14px'}}>
+            <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',marginBottom:'10px'}}>Mon objectif</div>
             <input value={objectif} onChange={e => setObjectif(e.target.value)} placeholder="Ex: Voyage au Japon, Voiture..."
               style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'8px 12px',fontSize:'13px',color:'#1a1a2e',background:'#F8FBFF',marginBottom:'8px'}}/>
-            <div style={{display:'flex',gap:'8px',marginBottom:'8px'}}>
-              <div style={{flex:1}}>
-                <div style={{fontSize:'11px',color:'#aaa',marginBottom:'4px'}}>Montant cible (CHF)</div>
-                <input value={montantEpargne} onChange={e => setMontantEpargne(e.target.value)} placeholder="Ex: 5000" type="number"
-                  style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'8px 12px',fontSize:'13px',color:'#1a1a2e',background:'#F8FBFF'}}/>
-              </div>
-              <div style={{flex:1}}>
-                <div style={{fontSize:'11px',color:'#aaa',marginBottom:'4px'}}>En combien de mois</div>
-                <input value={duree} onChange={e => setDuree(e.target.value)} placeholder="Ex: 12" type="number"
-                  style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'8px 12px',fontSize:'13px',color:'#1a1a2e',background:'#F8FBFF'}}/>
-              </div>
-            </div>
-
-            {montantEpargne && duree && (() => {
-              const cible = parseFloat(montantEpargne)
-              const mois = parseInt(duree)
-              const parMois = cible / mois
-              const resteApresCharges = revenus.filter(r=>r.recurrent).reduce((s,r)=>s+parseFloat(r.montant),0) - depenses.filter(d=>d.recurrent).reduce((s,d)=>s+parseFloat(d.montant),0)
-              const faisable = parMois <= resteApresCharges
-              const pct = resteApresCharges > 0 ? Math.min((parMois / resteApresCharges) * 100, 100) : 0
-
-              return (
-                <div style={{background: faisable ? '#F0FFF8' : '#FFF5F5',borderRadius:'12px',padding:'12px',border:`0.5px solid ${faisable ? '#A7F3D0' : '#FECDD3'}`}}>
-                  <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',marginBottom:'8px'}}>
-                    {faisable ? '✅ Objectif atteignable' : '⚠️ Objectif ambitieux'}
-                  </div>
-                  <div style={{display:'flex',justifyContent:'space-between',marginBottom:'6px'}}>
-                    <span style={{fontSize:'12px',color:'#666'}}>A epargner par mois</span>
-                    <span style={{fontSize:'14px',fontWeight:'500',color: faisable ? '#10B981' : '#F43F5E'}}>{parMois.toFixed(0)} CHF</span>
-                  </div>
-                  <div style={{display:'flex',justifyContent:'space-between',marginBottom:'6px'}}>
-                    <span style={{fontSize:'12px',color:'#666'}}>Reste disponible</span>
-                    <span style={{fontSize:'12px',color:'#2B7FFF'}}>{resteApresCharges.toFixed(0)} CHF</span>
-                  </div>
-                  <div style={{height:'8px',background:'#E8F1FF',borderRadius:'99px',overflow:'hidden',marginBottom:'10px'}}>
-                    <div style={{height:'100%',width:`${pct}%`,background: faisable ? '#10B981' : '#F43F5E',borderRadius:'99px'}}></div>
-                  </div>
-                  <div style={{fontSize:'11px',color:'#aaa'}}>Représente {pct.toFixed(0)}% de ton reste disponible</div>
-                </div>
-              )
-            })()}
-
-            {montantEpargne && duree && (() => {
-              const cible = parseFloat(montantEpargne)
-              const mois = parseInt(duree)
-              const parMois = cible / mois
-              const projections = Array.from({length: mois}, (_, i) => ({
-                mois: i + 1,
-                cumul: parMois * (i + 1)
-              }))
-              const max = cible
-              return (
-                <div style={{marginTop:'14px'}}>
-                  <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',marginBottom:'10px'}}>📈 Projection mois par mois</div>
-                  <div style={{display:'flex',alignItems:'flex-end',gap:'3px',height:'100px',marginBottom:'8px'}}>
-                    {projections.map((p, i) => (
-                      <div key={i} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:'2px'}}>
-                        <div style={{width:'100%',height:Math.max((p.cumul/max)*90, 4) + 'px',borderRadius:'3px 3px 0 0',background: p.cumul >= cible ? '#10B981' : '#2B7FFF',opacity: 0.7 + (i/mois)*0.3}}></div>
-                      </div>
-                    ))}
-                  </div>
-                  <div style={{display:'flex',justifyContent:'space-between'}}>
-                    <span style={{fontSize:'10px',color:'#aaa'}}>Mois 1</span>
-                    <span style={{fontSize:'10px',color:'#10B981',fontWeight:'500'}}>🎯 {cible.toFixed(0)} CHF</span>
-                    <span style={{fontSize:'10px',color:'#aaa'}}>Mois {mois}</span>
-                  </div>
-                </div>
-              )
-            })()}
+            <div style={{fontSize:'11px',color:'#aaa',marginBottom:'4px'}}>Montant cible (CHF)</div>
+            <input value={montantEpargne} onChange={e => setMontantEpargne(e.target.value)} placeholder="Ex: 5000" type="number"
+              style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'8px 12px',fontSize:'13px',color:'#1a1a2e',background:'#F8FBFF'}}/>
           </div>
+
+          {montantEpargne && parseFloat(montantEpargne) > 0 && (() => {
+            const cible = parseFloat(montantEpargne)
+            const scenarios = [
+              { mois: 6, label: '6 mois', couleur: '#F43F5E' },
+              { mois: 12, label: '1 an', couleur: '#D4A843' },
+              { mois: 24, label: '2 ans', couleur: '#2B7FFF' },
+              { mois: 36, label: '3 ans', couleur: '#10B981' },
+            ]
+            return (
+              <div>
+                <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',marginBottom:'10px'}}>
+                  Pour atteindre {cible.toFixed(0)} CHF :
+                </div>
+
+                {scenarios.map((s, i) => {
+                  const parMois = cible / s.mois
+                  const resteApresCharges = revenus.filter(r=>r.recurrent).reduce((sum,r)=>sum+parseFloat(r.montant),0) - depenses.filter(d=>d.recurrent).reduce((sum,d)=>sum+parseFloat(d.montant),0)
+                  const faisable = parMois <= resteApresCharges
+                  return (
+                    <div key={i} style={{background:'#fff',border:`1px solid ${s.couleur}33`,borderRadius:'14px',padding:'14px',marginBottom:'10px'}}>
+                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'10px'}}>
+                        <span style={{fontSize:'14px',fontWeight:'500',color:s.couleur}}>{s.label}</span>
+                        <span style={{fontSize:'11px',background: faisable ? '#E1F5EE' : '#FFE4E6',color: faisable ? '#10B981' : '#F43F5E',padding:'3px 8px',borderRadius:'99px'}}>
+                          {faisable ? '✅ Faisable' : '⚠️ Difficile'}
+                        </span>
+                      </div>
+                      <div style={{fontSize:'22px',fontWeight:'500',color:s.couleur,marginBottom:'4px'}}>
+                        {parMois.toFixed(0)} CHF / mois
+                      </div>
+                      <div style={{fontSize:'12px',color:'#aaa',marginBottom:'10px'}}>
+                        soit {(parMois * 7 / 30).toFixed(0)} CHF / semaine · {(parMois / 30).toFixed(0)} CHF / jour
+                      </div>
+
+                      <div style={{display:'flex',alignItems:'flex-end',gap:'2px',height:'60px',marginBottom:'6px'}}>
+                        {Array.from({length: Math.min(s.mois, 12)}, (_, j) => {
+                          const cumul = parMois * (j + 1)
+                          const pct = Math.min((cumul / cible) * 100, 100)
+                          const estDernier = j === Math.min(s.mois, 12) - 1
+                          return (
+                            <div key={j} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center'}}>
+                              <div style={{width:'100%',height: Math.max(pct * 0.55, 3) + 'px',borderRadius:'2px 2px 0 0',background: estDernier ? s.couleur : s.couleur + '66'}}></div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                      <div style={{display:'flex',justifyContent:'space-between'}}>
+                        <span style={{fontSize:'10px',color:'#aaa'}}>0 CHF</span>
+                        <span style={{fontSize:'10px',color:s.couleur,fontWeight:'500'}}>{cible.toFixed(0)} CHF</span>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )
+          })()}
 
           <div style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'16px',padding:'14px',marginBottom:'12px'}}>
             <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',marginBottom:'12px'}}>💡 Conseils placement</div>
             {[
-              {titre:'Livret A', desc:'Sécurisé, disponible, 3% par an. Idéal pour epargne de precaution (3-6 mois de charges).', couleur:'#10B981'},
-              {titre:'PEA (Plan Epargne Actions)', desc:'Avantage fiscal apres 5 ans. Investis en actions europeennes. Plafond 150 000 EUR.', couleur:'#2B7FFF'},
-              {titre:'Assurance-vie', desc:'Fiscalite avantageuse apres 8 ans. Flexible, diversifie. Ideal pour long terme.', couleur:'#8B5CF6'},
-              {titre:'ETF / Index funds', desc:'Diversification maximale, frais minimes. S&P500 ou MSCI World pour commencer.', couleur:'#D4A843'},
+              {titre:'Livret A', desc:'Sécurisé, disponible, 3% par an. Idéal pour épargne de précaution.', couleur:'#10B981'},
+              {titre:'PEA', desc:'Avantage fiscal après 5 ans. Actions européennes. Plafond 150 000 EUR.', couleur:'#2B7FFF'},
+              {titre:'Assurance-vie', desc:'Fiscalité avantageuse après 8 ans. Idéal pour long terme.', couleur:'#8B5CF6'},
+              {titre:'ETF / Index funds', desc:'Diversification maximale, frais minimes. S&P500 ou MSCI World.', couleur:'#D4A843'},
             ].map((c, i) => (
               <div key={i} style={{display:'flex',gap:'12px',marginBottom:'10px',paddingBottom:'10px',borderBottom: i < 3 ? '0.5px solid #E8F1FF' : 'none'}}>
                 <div style={{width:'8px',borderRadius:'99px',background:c.couleur,flexShrink:0}}></div>
@@ -469,13 +459,6 @@ export default function Finances() {
                 </div>
               </div>
             ))}
-          </div>
-
-          <div style={{background:'#FDF8EC',border:'0.5px solid #F0D88A',borderRadius:'16px',padding:'14px',marginBottom:'12px'}}>
-            <div style={{fontSize:'13px',fontWeight:'500',color:'#D4A843',marginBottom:'8px'}}>⚠️ Note importante</div>
-            <div style={{fontSize:'12px',color:'#666',lineHeight:'1.6'}}>
-              Ces informations sont a titre educatif uniquement. Consulte un conseiller financier agree avant tout investissement. Les performances passees ne garantissent pas les resultats futurs.
-            </div>
           </div>
         </div>
       )}
