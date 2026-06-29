@@ -24,6 +24,7 @@ export default function Profile() {
       if (user) {
         const { data: p } = await supabase.from("profiles").select("*").eq("id", user.id).single()
         setProfil(p)
+        if (p?.avatar_url) setProfil(p)
         setNom(p?.nom || "")
         setBio(p?.bio || "")
         setVille(p?.ville || "")
@@ -50,6 +51,8 @@ export default function Profile() {
     setUploading(true)
     const ext = file.name.split('.').pop()
     const path = user.id + '/avatar.' + ext
+    // supprimer ancien avatar
+    await supabase.storage.from('Avatar').remove([user.id + '/avatar.jpg', user.id + '/avatar.png', user.id + '/avatar.jpeg', user.id + '/avatar.heic'])
     const { error } = await supabase.storage.from('Avatar').upload(path, file, { upsert: true })
     if (!error) {
       const { data } = supabase.storage.from('Avatar').getPublicUrl(path)
