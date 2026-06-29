@@ -141,7 +141,7 @@ export default function GroupePage() {
         </div>
       )}
 
-      <div className="flex border-b border-blue-50">
+      <div className="flex border-b border-blue-50" style={{overflowX:"auto",whiteSpace:"nowrap"}}>
         <button onClick={() => setOnglet("discussion")}
           className={`flex-1 py-3 text-sm font-medium ${onglet === "discussion" ? "text-blue-500 border-b-2 border-blue-500" : "text-gray-400"}`}>
           💬 Discussion
