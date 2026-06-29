@@ -23,6 +23,9 @@ export default function AppelGroupe() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/connexion'); return }
       setUser(user)
+      
+      // Attendre que la session soit bien etablie
+      await new Promise(resolve => setTimeout(resolve, 500))
 
       const { data: g } = await supabase.from('groupes').select('*').eq('id', params.id).single()
       setGroupe(g)
