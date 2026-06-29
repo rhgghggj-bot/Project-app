@@ -57,7 +57,7 @@ export default function Profile() {
         <a href="/" className="absolute top-3 left-4 text-white text-sm opacity-80">← Accueil</a>
       </div>
 
-      <div style={{padding:'0 18px'}}>
+      <div style={{padding:"0 18px 100px 18px"}}>
         <div style={{display:'flex',alignItems:'flex-end',justifyContent:'space-between',marginTop:'-32px',marginBottom:'12px'}}>
           <div style={{width:'64px',height:'64px',borderRadius:'50%',background:couleurProfil,border:'4px solid #fff',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:'22px',fontWeight:'500'}}>
             {initiale}
