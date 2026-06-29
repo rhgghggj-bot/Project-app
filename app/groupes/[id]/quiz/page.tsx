@@ -40,17 +40,12 @@ export default function QuizPage() {
     if (!genSujet) return
     setGenerating(true)
     try {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
+      const res = await fetch('/api/quiz-ia', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-6',
-          max_tokens: 1000,
-          messages: [{ role: 'user', content: 'Genere 5 questions de quiz sur: ' + genSujet + '. Reponds UNIQUEMENT en JSON sans markdown: {"titre":"...","questions":[{"question":"...","options":["A","B","C","D"],"reponse":0}]}' }]
-        })
+        body: JSON.stringify({ sujet: genSujet })
       })
-      const data = await res.json()
-      const parsed = JSON.parse(data.content[0].text)
+      const parsed = await res.json()
       setTitre(parsed.titre)
       setQuestions(parsed.questions)
     } catch(e) { console.error(e) }
