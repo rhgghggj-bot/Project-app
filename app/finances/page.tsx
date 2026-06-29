@@ -75,7 +75,6 @@ export default function Finances() {
   const solde = moisActuelData.revenus - moisActuelData.depenses
   const maxVal = Math.max(...donneesGraphique.map(d => Math.max(d.depenses, d.revenus)), 1)
   const pctDepenses = moisActuelData.revenus > 0 ? Math.min((moisActuelData.depenses / moisActuelData.revenus) * 100, 100) : 0
-
   const statutSolde = solde > 0 ? "benefice" : solde < 0 ? "deficit" : "equilibre"
   const couleurSolde = statutSolde === "benefice" ? "#10B981" : statutSolde === "deficit" ? "#F43F5E" : "#D4A843"
   const iconeSolde = statutSolde === "benefice" ? "✅" : statutSolde === "deficit" ? "🔴" : "⚠️"
@@ -87,19 +86,40 @@ export default function Finances() {
   const depensesMoisAff = moisSelectionne ? filtrerMois(depenses, moisSelectionne.mois, moisSelectionne.annee) : filtrerMois(depenses, moisActuel, anneeActuelle)
   const revenusMoisAff = moisSelectionne ? filtrerMois(revenus, moisSelectionne.mois, moisSelectionne.annee) : filtrerMois(revenus, moisActuel, anneeActuelle)
   const totalDep = depensesMoisAff.reduce((s, d) => s + parseFloat(d.montant), 0)
-  const totalRev = revenusMoisAff.reduce((s, r) => s + parseFloat(r.montant), 0)
 
   const depensesParCat = CAT_DEPENSES.map(cat => ({
     cat, total: filtrerMois(depenses, moisSelectionne?.mois ?? moisActuel, moisSelectionne?.annee ?? anneeActuelle)
       .filter(d => d.categorie === cat).reduce((s, d) => s + parseFloat(d.montant), 0)
   })).filter(c => c.total > 0).sort((a, b) => b.total - a.total)
 
+  const ItemDepense = ({ d, type }: { d: any, type: "depense"|"revenu" }) => (
+    <div style={{background: type === "revenu" ? '#F0FFF8' : '#fff', border:`0.5px solid ${type === "revenu" ? '#A7F3D0' : '#E8F1FF'}`,borderRadius:'14px',padding:'12px 14px',marginBottom:'8px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+      <div style={{display:'flex',alignItems:'center',gap:'10px',flex:1}}>
+        <div style={{width:'36px',height:'36px',background: type === "revenu" ? '#E1F5EE' : '#EEF5FF',borderRadius:'10px',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'16px'}}>
+          {d.categorie?.split(' ')[0] || (type === "revenu" ? '💰' : '📦')}
+        </div>
+        <div style={{flex:1}}>
+          <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e'}}>{d.titre}</div>
+          <div style={{fontSize:'11px',color:'#aaa'}}>{new Date(d.date).toLocaleDateString('fr-FR')} {d.recurrent ? '· 🔄' : ''}</div>
+        </div>
+      </div>
+      <div style={{display:'flex',alignItems:'center',gap:'6px'}}>
+        <div style={{fontSize:'14px',fontWeight:'500',color: type === "revenu" ? '#10B981' : '#F43F5E'}}>
+          {type === "revenu" ? '+' : '-'}{parseFloat(d.montant).toFixed(0)} CHF
+        </div>
+        <a href={`/modifier-depense/${d.id}?type=${type}`}>
+          <button style={{background:'#F0F8FF',border:'none',borderRadius:'8px',width:'28px',height:'28px',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',fontSize:'12px'}}>✏️</button>
+        </a>
+        <button onClick={() => supprimer(d.id, type)} style={{background:'none',border:'none',color:'#ddd',cursor:'pointer',fontSize:'16px'}}>×</button>
+      </div>
+    </div>
+  )
+
   return (
     <main className="min-h-screen bg-white">
       <div style={{background:'linear-gradient(160deg,#0A1628,#1a3a6e)',padding:'20px 18px 28px'}}>
         <a href="/" style={{fontSize:'12px',color:'rgba(255,255,255,0.5)',display:'block',marginBottom:'8px'}}>← Accueil</a>
         <div style={{fontSize:'12px',color:'rgba(255,255,255,0.5)',marginBottom:'8px'}}>Bilan du mois</div>
-
         <div style={{background:'rgba(255,255,255,0.08)',borderRadius:'16px',padding:'16px',marginBottom:'12px',border:`1px solid ${couleurSolde}44`}}>
           <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'8px'}}>
             <span style={{fontSize:'20px'}}>{iconeSolde}</span>
@@ -109,7 +129,7 @@ export default function Finances() {
             {solde >= 0 ? '+' : ''}{solde.toFixed(0)} CHF
           </div>
           <div style={{height:'8px',background:'rgba(255,255,255,0.1)',borderRadius:'99px',overflow:'hidden',marginBottom:'6px'}}>
-            <div style={{height:'100%',width:`${pctDepenses}%`,background: pctDepenses > 90 ? '#F43F5E' : pctDepenses > 70 ? '#D4A843' : '#10B981',borderRadius:'99px',transition:'width 0.5s'}}></div>
+            <div style={{height:'100%',width:`${pctDepenses}%`,background: pctDepenses > 90 ? '#F43F5E' : pctDepenses > 70 ? '#D4A843' : '#10B981',borderRadius:'99px'}}></div>
           </div>
           <div style={{display:'flex',justifyContent:'space-between'}}>
             <span style={{fontSize:'12px',color:'rgba(255,255,255,0.6)'}}>Dépenses : {pctDepenses.toFixed(0)}% des revenus</span>
@@ -118,7 +138,6 @@ export default function Finances() {
             </span>
           </div>
         </div>
-
         <div style={{display:'flex',gap:'8px'}}>
           <div style={{flex:1,background:'rgba(16,185,129,0.15)',borderRadius:'12px',padding:'10px 12px',border:'0.5px solid rgba(16,185,129,0.3)'}}>
             <div style={{fontSize:'11px',color:'rgba(255,255,255,0.5)',marginBottom:'3px'}}>📈 Revenus</div>
@@ -148,7 +167,7 @@ export default function Finances() {
             <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'8px'}}>
               <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e'}}>6 derniers mois</div>
               <div style={{display:'flex',gap:'10px'}}>
-                <span style={{fontSize:'11px',color:'#2B7FFF'}}>■ Dépenses</span>
+                <span style={{fontSize:'11px',color:'#F43F5E'}}>■ Dépenses</span>
                 <span style={{fontSize:'11px',color:'#4ade80'}}>■ Revenus</span>
               </div>
             </div>
@@ -234,7 +253,7 @@ export default function Finances() {
           {showForm && (
             <div style={{background: typeForm === "depense" ? '#FFF5F5' : '#F0FFF8',borderRadius:'16px',padding:'14px',marginBottom:'12px',border:`0.5px solid ${typeForm === "depense" ? '#FECDD3' : '#A7F3D0'}`}}>
               <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',marginBottom:'10px'}}>{typeForm === "depense" ? '➖ Nouvelle dépense' : '➕ Nouveau revenu'}</div>
-              <input value={titre} onChange={e => setTitre(e.target.value)} placeholder={typeForm === "depense" ? "Ex: Loyer, Migros..." : "Ex: Salaire, Freelance..."}
+              <input value={titre} onChange={e => setTitre(e.target.value)} placeholder={typeForm === "depense" ? "Ex: Loyer..." : "Ex: Salaire..."}
                 style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'8px 12px',fontSize:'13px',color:'#1a1a2e',background:'#fff',marginBottom:'8px'}}/>
               <div style={{display:'flex',gap:'8px',marginBottom:'8px'}}>
                 <input value={montant} onChange={e => setMontant(e.target.value)} placeholder="Montant CHF" type="number"
@@ -262,37 +281,8 @@ export default function Finances() {
             {moisSelectionne ? `${moisSelectionne.label} ${moisSelectionne.annee}` : 'Ce mois'}
           </div>
 
-          {revenusMoisAff.map((r: any) => (
-            <div key={r.id} style={{background:'#F0FFF8',border:'0.5px solid #A7F3D0',borderRadius:'14px',padding:'12px 14px',marginBottom:'8px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-              <div style={{display:'flex',alignItems:'center',gap:'10px'}}>
-                <div style={{width:'36px',height:'36px',background:'#E1F5EE',borderRadius:'10px',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'16px'}}>{r.categorie?.split(' ')[0] || '💰'}</div>
-                <div>
-                  <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e'}}>{r.titre}</div>
-                  <div style={{fontSize:'11px',color:'#aaa'}}>{new Date(r.date).toLocaleDateString('fr-FR')} {r.recurrent ? '· 🔄' : ''}</div>
-                </div>
-              </div>
-              <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
-                <div style={{fontSize:'14px',fontWeight:'500',color:'#10B981'}}>+{parseFloat(r.montant).toFixed(0)} CHF</div>
-                <button onClick={() => supprimer(r.id, "revenu")} style={{background:'none',border:'none',color:'#ddd',cursor:'pointer',fontSize:'16px'}}>×</button>
-              </div>
-            </div>
-          ))}
-
-          {depensesMoisAff.map((d: any) => (
-            <div key={d.id} style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'14px',padding:'12px 14px',marginBottom:'8px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-              <div style={{display:'flex',alignItems:'center',gap:'10px'}}>
-                <div style={{width:'36px',height:'36px',background:'#EEF5FF',borderRadius:'10px',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'16px'}}>{d.categorie?.split(' ')[0] || '📦'}</div>
-                <div>
-                  <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e'}}>{d.titre}</div>
-                  <div style={{fontSize:'11px',color:'#aaa'}}>{new Date(d.date).toLocaleDateString('fr-FR')} {d.recurrent ? '· 🔄' : ''}</div>
-                </div>
-              </div>
-              <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
-                <div style={{fontSize:'14px',fontWeight:'500',color:'#F43F5E'}}>-{parseFloat(d.montant).toFixed(0)} CHF</div>
-                <button onClick={() => supprimer(d.id, "depense")} style={{background:'none',border:'none',color:'#ddd',cursor:'pointer',fontSize:'16px'}}>×</button>
-              </div>
-            </div>
-          ))}
+          {revenusMoisAff.map((r: any) => <ItemDepense key={r.id} d={r} type="revenu" />)}
+          {depensesMoisAff.map((d: any) => <ItemDepense key={d.id} d={d} type="depense" />)}
 
           {depensesMoisAff.length === 0 && revenusMoisAff.length === 0 && (
             <div style={{textAlign:'center',padding:'32px 0',color:'#aaa'}}>
@@ -341,22 +331,7 @@ export default function Finances() {
               <div style={{fontSize:'13px'}}>Aucun revenu enregistré</div>
             </div>
           )}
-          {revenus.map((r: any) => (
-            <div key={r.id} style={{background:'#F0FFF8',border:'0.5px solid #A7F3D0',borderRadius:'14px',padding:'12px 14px',marginBottom:'8px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-              <div style={{display:'flex',alignItems:'center',gap:'10px'}}>
-                <div style={{width:'36px',height:'36px',background:'#E1F5EE',borderRadius:'10px',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'16px'}}>{r.categorie?.split(' ')[0] || '💰'}</div>
-                <div>
-                  <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e'}}>{r.titre}</div>
-                  <div style={{fontSize:'11px',color:'#aaa'}}>{new Date(r.date).toLocaleDateString('fr-FR',{day:'numeric',month:'long'})} {r.recurrent ? '· 🔄' : ''}</div>
-                  {r.categorie && <div style={{fontSize:'11px',color:'#10B981'}}>{r.categorie}</div>}
-                </div>
-              </div>
-              <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
-                <div style={{fontSize:'14px',fontWeight:'500',color:'#10B981'}}>+{parseFloat(r.montant).toFixed(0)} CHF</div>
-                <button onClick={() => supprimer(r.id, "revenu")} style={{background:'none',border:'none',color:'#ddd',cursor:'pointer',fontSize:'16px'}}>×</button>
-              </div>
-            </div>
-          ))}
+          {revenus.map((r: any) => <ItemDepense key={r.id} d={r} type="revenu" />)}
         </div>
       )}
 
@@ -369,24 +344,8 @@ export default function Finances() {
               <div style={{fontSize:'13px'}}>Coche "Récurrent" en ajoutant une dépense</div>
             </div>
           )}
-          {revenus.filter(r => r.recurrent).map((r: any) => (
-            <div key={r.id} style={{background:'#F0FFF8',border:'0.5px solid #A7F3D0',borderRadius:'14px',padding:'12px 14px',marginBottom:'8px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-              <div style={{display:'flex',alignItems:'center',gap:'10px'}}>
-                <div style={{width:'36px',height:'36px',background:'#E1F5EE',borderRadius:'10px',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'16px'}}>{r.categorie?.split(' ')[0] || '💰'}</div>
-                <div><div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e'}}>{r.titre}</div><div style={{fontSize:'11px',color:'#10B981'}}>{r.categorie}</div></div>
-              </div>
-              <div style={{fontSize:'14px',fontWeight:'500',color:'#10B981'}}>+{parseFloat(r.montant).toFixed(0)} CHF/mois</div>
-            </div>
-          ))}
-          {depenses.filter(d => d.recurrent).map((d: any) => (
-            <div key={d.id} style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'14px',padding:'12px 14px',marginBottom:'8px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-              <div style={{display:'flex',alignItems:'center',gap:'10px'}}>
-                <div style={{width:'36px',height:'36px',background:'#EEF5FF',borderRadius:'10px',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'16px'}}>{d.categorie?.split(' ')[0] || '🔄'}</div>
-                <div><div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e'}}>{d.titre}</div><div style={{fontSize:'11px',color:'#aaa'}}>{d.categorie}</div></div>
-              </div>
-              <div style={{fontSize:'14px',fontWeight:'500',color:'#F43F5E'}}>-{parseFloat(d.montant).toFixed(0)} CHF/mois</div>
-            </div>
-          ))}
+          {revenus.filter(r => r.recurrent).map((r: any) => <ItemDepense key={r.id} d={r} type="revenu" />)}
+          {depenses.filter(d => d.recurrent).map((d: any) => <ItemDepense key={d.id} d={d} type="depense" />)}
           {(depenses.filter(d => d.recurrent).length > 0 || revenus.filter(r => r.recurrent).length > 0) && (
             <div style={{background:'#EEF5FF',borderRadius:'14px',padding:'14px',marginTop:'8px'}}>
               <div style={{display:'flex',justifyContent:'space-between',marginBottom:'6px'}}>
