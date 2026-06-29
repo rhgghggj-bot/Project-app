@@ -52,7 +52,7 @@ export default function Profile() {
   const couleurProfil = couleur || "#2B7FFF"
 
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-white" style={{overflowY:"auto",WebkitOverflowScrolling:"touch"}}>
       <div className="h-24 relative" style={{background:`linear-gradient(135deg,${couleurProfil},#87CEEB)`}}>
         <a href="/" className="absolute top-3 left-4 text-white text-sm opacity-80">← Accueil</a>
       </div>
