@@ -23,30 +23,25 @@ export default function Groupes() {
   async function creerGroupe() {
     if (!user) { window.location.href = "/connexion"; return }
     if (!nom) { setMessage("Donne un nom au groupe !"); return }
-    const { error } = await supabase.from("groupes").insert({
-      nom,
-      description,
-      created_by: user.id
-    })
+    const { data, error } = await supabase.from("groupes").insert({
+      nom, description, created_by: user.id
+    }).select().single()
     if (error) {
       setMessage("Erreur : " + error.message)
     } else {
+      await supabase.from("membres_groupe").insert({ groupe_id: data.id, user_id: user.id })
       setMessage("Groupe créé !")
       setNom("")
       setDescription("")
       setShowForm(false)
-      const { data } = await supabase.from("groupes").select("*").order("created_at", { ascending: false })
-      setGroupes(data || [])
+      window.location.href = `/groupes/${data.id}`
     }
   }
 
   async function rejoindre(groupe_id: string) {
     if (!user) { window.location.href = "/connexion"; return }
-    const { error } = await supabase.from("membres_groupe").insert({
-      groupe_id,
-      user_id: user.id
-    })
-    if (!error) setMessage("Tu as rejoint le groupe !")
+    await supabase.from("membres_groupe").insert({ groupe_id, user_id: user.id })
+    window.location.href = `/groupes/${groupe_id}`
   }
 
   return (
@@ -60,20 +55,10 @@ export default function Groupes() {
       {showForm && (
         <div className="mx-5 mt-4 bg-blue-50 rounded-2xl p-4 border border-blue-100">
           <p className="text-sm font-medium text-gray-900 mb-3">Nouveau groupe</p>
-          <input
-            type="text"
-            placeholder="Nom du groupe"
-            value={nom}
-            onChange={e => setNom(e.target.value)}
-            className="w-full border border-blue-100 rounded-xl px-4 py-2 text-sm text-gray-900 bg-white mb-2 focus:outline-none focus:border-blue-400"
-          />
-          <textarea
-            placeholder="Description du groupe..."
-            value={description}
-            onChange={e => setDescription(e.target.value)}
-            rows={3}
-            className="w-full border border-blue-100 rounded-xl px-4 py-2 text-sm text-gray-900 bg-white mb-3 focus:outline-none focus:border-blue-400 resize-none"
-          />
+          <input type="text" placeholder="Nom du groupe" value={nom} onChange={e => setNom(e.target.value)}
+            className="w-full border border-blue-100 rounded-xl px-4 py-2 text-sm text-gray-900 bg-white mb-2 focus:outline-none focus:border-blue-400"/>
+          <textarea placeholder="Description du groupe..." value={description} onChange={e => setDescription(e.target.value)} rows={3}
+            className="w-full border border-blue-100 rounded-xl px-4 py-2 text-sm text-gray-900 bg-white mb-3 focus:outline-none focus:border-blue-400 resize-none"/>
           <button onClick={creerGroupe} className="w-full bg-blue-500 text-white text-sm font-medium py-2 rounded-xl">Créer le groupe</button>
           {message && <p className="text-sm text-center mt-2 text-green-500">{message}</p>}
         </div>
@@ -92,20 +77,18 @@ export default function Groupes() {
 
         {groupes.map((groupe: any) => (
           <div key={groupe.id} className="bg-white border border-blue-100 rounded-2xl p-4 mb-3">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center text-white font-medium">
+            <div className="flex items-center justify-between">
+              <a href={`/groupes/${groupe.id}`} className="flex items-center gap-3 flex-1">
+                <div className="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center text-white font-medium text-lg">
                   {groupe.nom?.[0]?.toUpperCase()}
                 </div>
                 <div>
                   <p className="font-medium text-gray-900">{groupe.nom}</p>
                   <p className="text-xs text-gray-400">{groupe.description}</p>
                 </div>
-              </div>
-              <button
-                onClick={() => rejoindre(groupe.id)}
-                className="text-xs bg-yellow-400 text-white px-3 py-2 rounded-full font-medium"
-              >
+              </a>
+              <button onClick={() => rejoindre(groupe.id)}
+                className="text-xs bg-yellow-400 text-white px-3 py-2 rounded-full font-medium ml-3">
                 Rejoindre
               </button>
             </div>
