@@ -50,9 +50,9 @@ export default function Profile() {
     setUploading(true)
     const ext = file.name.split('.').pop()
     const path = user.id + '/avatar.' + ext
-    const { error } = await supabase.storage.from('avatars').upload(path, file, { upsert: true })
+    const { error } = await supabase.storage.from('Avatar').upload(path, file, { upsert: true })
     if (!error) {
-      const { data } = supabase.storage.from('avatars').getPublicUrl(path)
+      const { data } = supabase.storage.from('Avatar').getPublicUrl(path)
       await supabase.from('profiles').update({ avatar_url: data.publicUrl }).eq('id', user.id)
       setProfil({ ...profil, avatar_url: data.publicUrl })
       setMessage('Photo mise a jour')
