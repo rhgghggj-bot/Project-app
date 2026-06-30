@@ -12,38 +12,62 @@ import {
 } from '@livekit/components-react'
 import { Track } from 'livekit-client'
 
+function getLayout(n: number) {
+  if (n <= 1) return { cols: 1, rows: 1 }
+  if (n === 2) return { cols: 1, rows: 2 }
+  if (n <= 4) return { cols: 2, rows: 2 }
+  if (n <= 6) return { cols: 2, rows: 3 }
+  return { cols: 3, rows: Math.ceil(n / 3) }
+}
+
 function VideoGrid() {
   const participants = useParticipants()
   const tracks = useTracks([Track.Source.Camera])
+  const n = participants.length
+  const { cols, rows } = getLayout(n)
 
   return (
-    <div style={{flex:1,display:'grid',gridTemplateColumns: participants.length > 1 ? '1fr 1fr' : '1fr',gap:'3px',padding:'3px',background:'rgba(255,255,255,0.1)',minHeight:0}}>
-      {participants.map((participant, i) => {
+    <div style={{
+      flex:1,
+      display:'grid',
+      gridTemplateColumns: `repeat(${cols}, 1fr)`,
+      gridTemplateRows: `repeat(${rows}, 1fr)`,
+      gap:'8px',
+      padding:'8px',
+      minHeight:0,
+      transition:'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
+    }}>
+      {participants.map((participant) => {
         const track = tracks.find(t => t.participant.identity === participant.identity)
-        const isBig = i === 0
+        const isTalking = participant.isSpeaking
         return (
           <div key={participant.identity}
             style={{
-              gridColumn: isBig && participants.length > 1 ? '1/3' : 'auto',
-              height: participants.length === 1 ? '100%' : isBig ? '220px' : '140px',
-              background:'rgba(255,255,255,0.15)',
-              borderRadius:'10px',
-              border:'1px solid rgba(255,255,255,0.25)',
+              background:'rgba(255,255,255,0.08)',
+              backdropFilter:'blur(20px)',
+              WebkitBackdropFilter:'blur(20px)',
+              borderRadius:'24px',
+              border: isTalking ? '2px solid rgba(212,168,67,0.8)' : '1px solid rgba(255,255,255,0.18)',
               display:'flex',
               alignItems:'center',
               justifyContent:'center',
               position:'relative',
-              overflow:'hidden'
+              overflow:'hidden',
+              minWidth:0,
+              minHeight:0,
+              transition:'border 0.3s ease, transform 0.3s ease',
+              transform: isTalking ? 'scale(1.01)' : 'scale(1)',
+              boxShadow: isTalking ? '0 0 24px rgba(212,168,67,0.35)' : '0 4px 20px rgba(0,0,0,0.15)'
             }}>
             {track && participant.isCameraEnabled ? (
-              <VideoTrack trackRef={track} style={{width:'100%',height:'100%',objectFit:'cover',transform: track.participant.isLocal ? 'scaleX(-1)' : 'none'}}/>
+              <VideoTrack trackRef={track} style={{width:'100%',height:'100%',objectFit:'cover',transform: track.participant.isLocal ? 'scaleX(-1)' : 'none',transition:'opacity 0.3s ease'}}/>
             ) : (
-              <div style={{width: isBig ? '75px' : '52px',height: isBig ? '75px' : '52px',borderRadius:'50%',background:'linear-gradient(135deg,#fff,#D4A843)',border:'3px solid rgba(255,255,255,0.6)',display:'flex',alignItems:'center',justifyContent:'center',color:'#1a3a6e',fontSize: isBig ? '28px' : '20px',fontWeight:'500'}}>
+              <div style={{width:'25%',aspectRatio:'1',minWidth:'48px',maxWidth:'90px',borderRadius:'50%',background:'linear-gradient(135deg,#fff,#D4A843)',border:'3px solid rgba(255,255,255,0.6)',display:'flex',alignItems:'center',justifyContent:'center',color:'#1a3a6e',fontSize:'clamp(16px,4vw,28px)',fontWeight:'500'}}>
                 {(participant.identity || "?")[0].toUpperCase()}
               </div>
             )}
-            <div style={{position:'absolute',bottom:'8px',left:'8px',background:'rgba(255,255,255,0.25)',border:'0.5px solid rgba(255,255,255,0.4)',color:'#fff',fontSize:'10px',padding:'2px 8px',borderRadius:'99px',display:'flex',alignItems:'center',gap:'4px'}}>
-              <div style={{width:'5px',height:'5px',borderRadius:'50%',background: participant.isMicrophoneEnabled ? '#D4A843' : '#F43F5E'}}></div>
+            <div style={{position:'absolute',bottom:'10px',left:'10px',background:'rgba(0,0,0,0.35)',backdropFilter:'blur(10px)',WebkitBackdropFilter:'blur(10px)',border:'0.5px solid rgba(255,255,255,0.2)',color:'#fff',fontSize:'11px',padding:'4px 10px',borderRadius:'99px',display:'flex',alignItems:'center',gap:'5px'}}>
+              <div style={{width:'6px',height:'6px',borderRadius:'50%',background: participant.isMicrophoneEnabled ? '#4ade80' : '#F43F5E',transition:'background 0.2s'}}></div>
               {participant.identity || "Participant"} {!participant.isCameraEnabled ? '· cam off' : ''}
             </div>
           </div>
