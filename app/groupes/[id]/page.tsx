@@ -153,10 +153,18 @@ export default function GroupePage() {
                     <span style={{fontSize:'14px',color:'#1a1a2e',fontWeight:'500'}}>Lancer un appel</span>
                   </div>
                 </a>
-                <div onClick={() => { setOnglet('jeux'); setMenuOuvert(false) }} style={{display:'flex',alignItems:'center',gap:'12px',padding:'14px 16px',borderBottom:'0.5px solid #F0F4FA',cursor:'pointer'}}>
-                  <span style={{fontSize:'18px'}}>🎮</span>
-                  <span style={{fontSize:'14px',color:'#1a1a2e',fontWeight:'500'}}>Jouer</span>
-                </div>
+                <a href={'/groupes/' + id + '/puissance4'} style={{textDecoration:'none'}}>
+                  <div style={{display:'flex',alignItems:'center',gap:'12px',padding:'14px 16px',borderBottom:'0.5px solid #F0F4FA'}}>
+                    <span style={{fontSize:'18px'}}>🔴</span>
+                    <span style={{fontSize:'14px',color:'#1a1a2e',fontWeight:'500'}}>Puissance 4</span>
+                  </div>
+                </a>
+                <a href={'/groupes/' + id + '/quiz'} style={{textDecoration:'none'}}>
+                  <div style={{display:'flex',alignItems:'center',gap:'12px',padding:'14px 16px',borderBottom:'0.5px solid #F0F4FA'}}>
+                    <span style={{fontSize:'18px'}}>🗺️</span>
+                    <span style={{fontSize:'14px',color:'#1a1a2e',fontWeight:'500'}}>Quiz</span>
+                  </div>
+                </a>
                 <div onClick={genererInvitation} style={{display:'flex',alignItems:'center',gap:'12px',padding:'14px 16px',cursor:'pointer'}}>
                   <span style={{fontSize:'18px'}}>✉️</span>
                   <span style={{fontSize:'14px',color:'#1a1a2e',fontWeight:'500'}}>Inviter quelqu'un</span>
@@ -187,10 +195,6 @@ export default function GroupePage() {
         <button onClick={() => setOnglet("projets")}
           className={`flex-1 py-3 text-sm font-medium ${onglet === "projets" ? "text-blue-500 border-b-2 border-blue-500" : "text-gray-400"}`}>
           📌 Projets ({projets.length})
-        </button>
-        <button onClick={() => setOnglet("jeux")}
-          className={`flex-1 py-3 text-sm font-medium ${onglet === "jeux" ? "text-blue-500 border-b-2 border-blue-500" : "text-gray-400"}`}>
-          🎮 Jeux
         </button>
         <button onClick={() => setOnglet("membres")}
           className={`flex-1 py-3 text-sm font-medium ${onglet === "membres" ? "text-blue-500 border-b-2 border-blue-500" : "text-gray-400"}`}>
@@ -287,31 +291,6 @@ export default function GroupePage() {
               </div>
             </a>
           ))}
-        </div>
-      )}
-
-      {onglet === "jeux" && (
-        <div style={{padding:'16px 18px'}}>
-          <a href={'/groupes/' + id + '/puissance4'} style={{textDecoration:'none'}}>
-            <div style={{background:'linear-gradient(135deg,#1a1a2e,#16213e)',borderRadius:'20px',padding:'20px',marginBottom:'12px',border:'1px solid rgba(43,127,255,0.3)',display:'flex',alignItems:'center',gap:'16px'}}>
-              <div style={{width:'56px',height:'56px',borderRadius:'16px',background:'rgba(43,127,255,0.3)',border:'1px solid rgba(43,127,255,0.5)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'28px'}}>🔴</div>
-              <div>
-                <div style={{color:'#fff',fontWeight:'500',fontSize:'16px',marginBottom:'4px'}}>Puissance 4</div>
-                <div style={{color:'rgba(255,255,255,0.5)',fontSize:'12px'}}>Joue contre un membre en temps réel</div>
-              </div>
-              <span style={{marginLeft:'auto',color:'rgba(255,255,255,0.4)',fontSize:'20px'}}>›</span>
-            </div>
-          </a>
-          <a href={'/groupes/' + id + '/quiz'} style={{textDecoration:'none'}}>
-            <div style={{background:'linear-gradient(135deg,#46178f,#7c3aed)',borderRadius:'20px',padding:'20px',marginBottom:'12px',border:'1px solid rgba(168,85,247,0.4)',display:'flex',alignItems:'center',gap:'16px'}}>
-              <div style={{width:'56px',height:'56px',borderRadius:'16px',background:'rgba(168,85,247,0.3)',border:'1px solid rgba(168,85,247,0.5)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'28px'}}>🗺️</div>
-              <div>
-                <div style={{color:'#fff',fontWeight:'500',fontSize:'16px',marginBottom:'4px'}}>Quiz</div>
-                <div style={{color:'rgba(255,255,255,0.5)',fontSize:'12px'}}>Crée et joue des quiz avec le groupe</div>
-              </div>
-              <span style={{marginLeft:'auto',color:'rgba(255,255,255,0.4)',fontSize:'20px'}}>›</span>
-            </div>
-          </a>
         </div>
       )}
 
