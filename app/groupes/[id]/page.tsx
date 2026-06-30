@@ -83,8 +83,12 @@ export default function GroupePage() {
 
   async function envoyer() {
     if (!contenu || !user) return
-    await supabase.from("messages_groupe").insert({ groupe_id: id, user_id: user.id, contenu })
+    const texteEnvoye = contenu
     setContenu("")
+    const { data, error } = await supabase.from("messages_groupe").insert({ groupe_id: id, user_id: user.id, contenu: texteEnvoye }).select().single()
+    if (!error && data) {
+      setMessages(prev => prev.some(m => m.id === data.id) ? prev : [...prev, data])
+    }
   }
 
   async function supprimerMessage(messageId: string) {
