@@ -68,7 +68,7 @@ export default function Groupes() {
 
         {groupes.length === 0 && (
           <div className="text-center py-12 text-gray-400">
-            <p className="text-4xl mb-3">👥</p>
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="1.5" style={{marginBottom:"12px"}}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
             <p className="text-sm mb-2">Aucun groupe pour l'instant</p>
             <button onClick={() => setShowForm(true)} className="text-blue-500 text-sm font-medium">Créer le premier groupe →</button>
           </div>
@@ -92,7 +92,7 @@ export default function Groupes() {
                 ) : (
                   <div className="flex items-center gap-3 flex-1">
                     <div className="w-10 h-10 rounded-xl bg-gray-200 flex items-center justify-center text-gray-400 font-medium text-lg">
-                      🔒
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                     </div>
                     <div>
                       <p className="font-medium text-gray-900">{groupe.nom}</p>
@@ -102,7 +102,7 @@ export default function Groupes() {
                 )}
                 {estMembre && (
                   <span className="text-xs bg-blue-50 text-blue-500 px-3 py-1 rounded-full font-medium ml-3">
-                    Membre ✓
+                    <span style={{display:"flex",alignItems:"center",gap:"4px"}}>Membre <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg></span>
                   </span>
                 )}
               </div>
