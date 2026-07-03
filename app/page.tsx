@@ -79,7 +79,7 @@ export default function Home() {
       )}
 
       {user && (
-        <div style={{margin:'-16px 14px 0',borderRadius:'18px',padding:'14px',position:'relative',zIndex:2,background:'rgba(10,30,70,0.6)',backdropFilter:'blur(20px)',border:'1px solid rgba(255,255,255,0.2)',marginBottom:'4px'}}>
+        <div style={{margin:'-16px 14px 0',borderRadius:'18px',padding:'14px',position:'relative',zIndex:2,background:'rgba(15,45,92,0.7)',backdropFilter:'blur(20px)',border:'1px solid rgba(255,255,255,0.2)',marginBottom:'4px'}}>
           <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'12px'}}>
             <span style={{fontSize:'13px',fontWeight:'500',color:'#fff'}}>Cette semaine</span>
             <a href="/semaine" style={{fontSize:'12px',color:'#a8d8f0',fontWeight:'500',textDecoration:'none'}}>Voir tout →</a>
@@ -118,17 +118,17 @@ export default function Home() {
       )}
 
       {user && (
-        <div style={{padding:'0 14px 16px'}}>
+        <div style={{padding:'0 14px 16px',background:'transparent'}}>
           <div style={{display:'flex',gap:'8px',marginBottom:'8px'}}>
             <a href="/finances" style={{flex:1,textDecoration:'none'}}>
-              <div style={{background:'rgba(10,30,70,0.5)',borderRadius:'14px',padding:'12px',border:'1px solid rgba(255,255,255,0.2)'}}>
+              <div style={{background:'rgba(255,255,255,0.18)',borderRadius:'14px',padding:'12px',border:'1px solid rgba(255,255,255,0.35)'}}>
                 <div style={{fontSize:'11px',color:'#a8d8f0',fontWeight:'500',marginBottom:'4px'}}>Finances</div>
                 <div style={{fontSize:'18px',fontWeight:'500',color: solde >= 0 ? '#86efac' : '#fca5a5'}}>{solde >= 0 ? '+' : ''}{solde.toFixed(0)} CHF</div>
                 <div style={{fontSize:'11px',color:'rgba(255,255,255,0.65)',marginTop:'2px'}}>Solde ce mois</div>
               </div>
             </a>
             <a href="/semaine" style={{flex:1,textDecoration:'none'}}>
-              <div style={{background:'rgba(10,30,70,0.5)',borderRadius:'14px',padding:'12px',border:'1px solid rgba(255,255,255,0.2)'}}>
+              <div style={{background:'rgba(255,255,255,0.18)',borderRadius:'14px',padding:'12px',border:'1px solid rgba(255,255,255,0.35)'}}>
                 <div style={{fontSize:'11px',color:'#fcd34d',fontWeight:'500',marginBottom:'4px'}}>Prochain</div>
                 <div style={{fontSize:'13px',fontWeight:'500',color:'#fff'}}>{prochainEvt?.titre || 'Aucun'}</div>
                 <div style={{fontSize:'11px',color:'rgba(255,255,255,0.65)',marginTop:'2px'}}>{prochainEvt ? new Date(prochainEvt.date).toLocaleDateString('fr-FR',{day:'numeric',month:'short'}) : 'Ajoute un événement'}</div>
@@ -136,8 +136,8 @@ export default function Home() {
             </a>
           </div>
           <a href="/scanner" style={{textDecoration:'none',display:'block',marginBottom:'8px'}}>
-            <div style={{background:'rgba(10,30,70,0.5)',borderRadius:'14px',padding:'12px',display:'flex',alignItems:'center',gap:'12px',border:'1px solid rgba(255,255,255,0.2)'}}>
-              <div style={{width:'40px',height:'40px',borderRadius:'12px',background:'rgba(255,255,255,0.1)',border:'1px solid rgba(255,255,255,0.2)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+            <div style={{background:'rgba(255,255,255,0.18)',borderRadius:'14px',padding:'12px',display:'flex',alignItems:'center',gap:'12px',border:'1px solid rgba(255,255,255,0.35)'}}>
+              <div style={{width:'40px',height:'40px',borderRadius:'12px',background:'rgba(255,255,255,0.15)',border:'1px solid rgba(255,255,255,0.3)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8"><polyline points="4 7 4 4 7 4"/><polyline points="17 4 20 4 20 7"/><polyline points="20 17 20 20 17 20"/><polyline points="7 20 4 20 4 17"/><line x1="4" y1="12" x2="20" y2="12"/></svg>
               </div>
               <div>
