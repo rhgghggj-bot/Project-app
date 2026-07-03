@@ -54,7 +54,7 @@ export default function Semaine() {
     if (!titre || !selectedDay) return
     const { error } = await supabase.from("evenements_calendrier").insert({
       user_id: user.id, titre, heure, couleur,
-      date: selectedDay.toISOString().split("T")[0]
+      date: `${selectedDay.getFullYear()}-${String(selectedDay.getMonth()+1).padStart(2,'0')}-${String(selectedDay.getDate()).padStart(2,'0')}`
     })
     if (!error) {
       setTitre(""); setHeure(""); setCouleur("#2B7FFF"); setShowForm(false)

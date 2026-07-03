@@ -79,28 +79,37 @@ export default function Home() {
       )}
 
       {user && (
-        <div style={{margin:'-16px 14px 0',borderRadius:'18px',padding:'14px',position:'relative',zIndex:2,background:'rgba(255,255,255,0.9)',backdropFilter:'blur(20px)',border:'0.5px solid rgba(255,255,255,0.9)',boxShadow:'0 4px 24px rgba(43,127,255,0.1)',marginBottom:'4px'}}>
+        <div style={{margin:'-16px 14px 0',borderRadius:'18px',padding:'14px',position:'relative',zIndex:2,background:'rgba(255,255,255,0.18)',backdropFilter:'blur(20px)',border:'1px solid rgba(255,255,255,0.35)',marginBottom:'4px'}}>
           <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'12px'}}>
-            <span style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e'}}>Cette semaine</span>
-            <a href="/semaine" style={{fontSize:'12px',color:'#2B7FFF',fontWeight:'500',textDecoration:'none'}}>Voir tout →</a>
+            <span style={{fontSize:'13px',fontWeight:'500',color:'#fff'}}>Cette semaine</span>
+            <a href="/semaine" style={{fontSize:'12px',color:'#a8d8f0',fontWeight:'500',textDecoration:'none'}}>Voir tout →</a>
           </div>
           <div style={{display:'flex',gap:'4px'}}>
             {jours.map((jour, i) => {
               const isToday = jour.toDateString() === today.toDateString()
               const evts = evtDuJour(jour)
+              const hasEvts = evts.length > 0
               return (
                 <a key={i} href="/semaine" style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:'3px',textDecoration:'none'}}>
-                  <div style={{fontSize:'10px',color:'#aaa',fontWeight:'500'}}>{JOURS[i]}</div>
-                  <div style={{width:'28px',height:'28px',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'13px',fontWeight:'500',
-                    background: isToday ? '#2B7FFF' : 'transparent',
-                    color: isToday ? '#fff' : '#1a1a2e'}}>
-                    {jour.getDate()}
+                  <div style={{fontSize:'10px',color:'rgba(255,255,255,0.65)',fontWeight:'500'}}>{JOURS[i]}</div>
+                  <div style={{width:'100%',minHeight: hasEvts ? '42px' : '32px',borderRadius:'8px',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:'3px',
+                    background: isToday ? '#fff' : hasEvts ? 'rgba(255,255,255,0.15)' : 'transparent',
+                    border: hasEvts && !isToday ? '1px solid rgba(255,255,255,0.35)' : 'none',
+                    padding: hasEvts ? '3px 0' : '0'}}>
+                    <span style={{fontSize:'12px',fontWeight:'600',color: isToday ? '#1e56a0' : 'rgba(255,255,255,0.85)'}}>
+                      {jour.getDate()}
+                    </span>
+                    {hasEvts && (
+                      <div style={{display:'flex',gap:'2px',alignItems:'center'}}>
+                        {evts.slice(0,3).map((e:any,j:number) => (
+                          <div key={j} style={{width:'5px',height:'5px',borderRadius:'50%',background:e.couleur,opacity:0.9}}></div>
+                        ))}
+                        {evts.length > 3 && (
+                          <div style={{background:'rgba(255,255,255,0.3)',borderRadius:'3px',padding:'0 3px',fontSize:'7px',color:'#fff',fontWeight:'600'}}>+{evts.length-3}</div>
+                        )}
+                      </div>
+                    )}
                   </div>
-                  {evts.slice(0,1).map((e,j) => (
-                    <div key={j} style={{width:'100%',borderRadius:'4px',padding:'2px 3px',fontSize:'8px',fontWeight:'500',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',background:`${e.couleur}22`,color:e.couleur}}>
-                      {e.titre}
-                    </div>
-                  ))}
                 </a>
               )
             })}
@@ -112,28 +121,30 @@ export default function Home() {
         <div style={{padding:'12px 14px 0'}}>
           <div style={{display:'flex',gap:'8px',marginBottom:'8px'}}>
             <a href="/finances" style={{flex:1,textDecoration:'none'}}>
-              <div style={{background:'linear-gradient(135deg,#EEF5FF,#DCE9FF)',borderRadius:'14px',padding:'12px',border:'0.5px solid #DCE9FF'}}>
-                <div style={{fontSize:'11px',color:'#2B7FFF',fontWeight:'500',marginBottom:'4px'}}>Finances</div>
-                <div style={{fontSize:'18px',fontWeight:'500',color: solde >= 0 ? '#10B981' : '#F43F5E'}}>{solde >= 0 ? '+' : ''}{solde.toFixed(0)} CHF</div>
-                <div style={{fontSize:'11px',color:'#aaa',marginTop:'2px'}}>Solde ce mois</div>
+              <div style={{background:'rgba(255,255,255,0.18)',backdropFilter:'blur(20px)',borderRadius:'14px',padding:'12px',border:'1px solid rgba(255,255,255,0.35)'}}>
+                <div style={{fontSize:'11px',color:'#a8d8f0',fontWeight:'500',marginBottom:'4px'}}>Finances</div>
+                <div style={{fontSize:'18px',fontWeight:'500',color: solde >= 0 ? '#86efac' : '#fca5a5'}}>{solde >= 0 ? '+' : ''}{solde.toFixed(0)} CHF</div>
+                <div style={{fontSize:'11px',color:'rgba(255,255,255,0.65)',marginTop:'2px'}}>Solde ce mois</div>
               </div>
             </a>
             <a href="/semaine" style={{flex:1,textDecoration:'none'}}>
-              <div style={{background:'linear-gradient(135deg,#FDF8EC,#F0D88A33)',borderRadius:'14px',padding:'12px',border:'0.5px solid #F0D88A'}}>
-                <div style={{fontSize:'11px',color:'#D4A843',fontWeight:'500',marginBottom:'4px'}}>Prochain événement</div>
-                <div style={{fontSize:'14px',fontWeight:'500',color:'#1a1a2e'}}>{prochainEvt?.titre || 'Aucun'}</div>
-                <div style={{fontSize:'11px',color:'#aaa',marginTop:'2px'}}>{prochainEvt ? new Date(prochainEvt.date).toLocaleDateString('fr-FR',{day:'numeric',month:'short'}) : 'Ajoute un événement'}</div>
+              <div style={{background:'rgba(255,255,255,0.18)',backdropFilter:'blur(20px)',borderRadius:'14px',padding:'12px',border:'1px solid rgba(255,255,255,0.35)'}}>
+                <div style={{fontSize:'11px',color:'#fcd34d',fontWeight:'500',marginBottom:'4px'}}>Prochain</div>
+                <div style={{fontSize:'13px',fontWeight:'500',color:'#fff'}}>{prochainEvt?.titre || 'Aucun'}</div>
+                <div style={{fontSize:'11px',color:'rgba(255,255,255,0.65)',marginTop:'2px'}}>{prochainEvt ? new Date(prochainEvt.date).toLocaleDateString('fr-FR',{day:'numeric',month:'short'}) : 'Ajoute un événement'}</div>
               </div>
             </a>
           </div>
           <a href="/scanner" style={{textDecoration:'none',display:'block',marginBottom:'8px'}}>
-            <div style={{background:'linear-gradient(135deg,#1a1a2e,#2B7FFF)',borderRadius:'14px',padding:'12px',display:'flex',alignItems:'center',gap:'12px'}}>
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="1.5"><polyline points="4 7 4 4 7 4"/><polyline points="17 4 20 4 20 7"/><polyline points="20 17 20 20 17 20"/><polyline points="7 20 4 20 4 17"/><line x1="4" y1="12" x2="20" y2="12"/></svg>
+            <div style={{background:'rgba(255,255,255,0.18)',backdropFilter:'blur(20px)',borderRadius:'14px',padding:'12px',display:'flex',alignItems:'center',gap:'12px',border:'1px solid rgba(255,255,255,0.35)'}}>
+              <div style={{width:'40px',height:'40px',borderRadius:'12px',background:'rgba(255,255,255,0.2)',border:'1px solid rgba(255,255,255,0.35)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8"><polyline points="4 7 4 4 7 4"/><polyline points="17 4 20 4 20 7"/><polyline points="20 17 20 20 17 20"/><polyline points="7 20 4 20 4 17"/><line x1="4" y1="12" x2="20" y2="12"/></svg>
+              </div>
               <div>
                 <div style={{fontSize:'13px',fontWeight:'500',color:'#fff'}}>Scanner un document</div>
-                <div style={{fontSize:'11px',color:'rgba(255,255,255,0.6)',marginTop:'2px'}}>Facture, relevé, contrat, assurance...</div>
+                <div style={{fontSize:'11px',color:'rgba(255,255,255,0.7)',marginTop:'2px'}}>Facture, relevé, contrat...</div>
               </div>
-              <div style={{marginLeft:'auto',fontSize:'16px',color:'rgba(255,255,255,0.5)'}}>›</div>
+              <div style={{marginLeft:'auto',color:'rgba(255,255,255,0.7)',fontSize:'18px'}}>›</div>
             </div>
           </a>
         </div>
