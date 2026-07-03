@@ -90,7 +90,7 @@ export default function GroupePage() {
       setMessages(prev => prev.some(m => m.id === data.id) ? prev : [...prev, data])
       // Notifier les autres membres
       const autresMembers = membres.filter((m: any) => m.user_id !== user.id)
-      const nomExp = profils[user.id]?.nom || user.email?.split('@')[0] || 'Quelqu'un'
+      const nomExp = profils[user.id]?.nom || user.email?.split('@')[0] || 'Quelquun'
       for (const membre of autresMembers) {
         await supabase.from("notifications").insert({
           user_id: membre.user_id,
