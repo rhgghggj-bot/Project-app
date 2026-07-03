@@ -139,35 +139,47 @@ export default function GroupePage() {
           <p className="text-xs text-gray-400">{membres.length} membres</p>
         </div>
         <div style={{position:'relative'}}>
-          <button onClick={() => setMenuOuvert(!menuOuvert)}
-            style={{width:'36px',height:'36px',borderRadius:'50%',background:'#F8FBFF',border:'1px solid #E8F1FF',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',fontSize:'18px',color:'#2B7FFF'}}>
-            ⋯
-          </button>
+          <div style={{display:'flex',gap:'10px',alignItems:'center'}}>
+            <a href={'/groupes/' + id + '/appel'}>
+              <button style={{width:'42px',height:'42px',borderRadius:'50%',background:'#E8F5E9',border:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.58 3.47 2 2 0 0 1 3.54 1h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 8.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+              </button>
+            </a>
+            <button onClick={() => setMenuOuvert(!menuOuvert)}
+              style={{height:'42px',padding:'0 14px',borderRadius:'12px',background:'#EEF5FF',border:'1.5px solid #2B7FFF',cursor:'pointer',display:'flex',alignItems:'center',gap:'6px'}}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2B7FFF" strokeWidth="2.5"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+              <span style={{fontSize:'13px',fontWeight:'500',color:'#2B7FFF'}}>Menu</span>
+            </button>
+          </div>
           {menuOuvert && (
             <>
               <div onClick={() => setMenuOuvert(false)} style={{position:'fixed',inset:0,zIndex:10}}></div>
               <div style={{position:'absolute',top:'44px',right:0,background:'#fff',borderRadius:'16px',boxShadow:'0 8px 30px rgba(0,0,0,0.12)',border:'0.5px solid #E8F1FF',overflow:'hidden',zIndex:20,minWidth:'200px'}}>
-                <a href={'/groupes/' + id + '/appel'} style={{textDecoration:'none'}}>
-                  <div style={{display:'flex',alignItems:'center',gap:'12px',padding:'14px 16px',borderBottom:'0.5px solid #F0F4FA'}}>
-                    <span style={{fontSize:'18px'}}>📞</span>
-                    <span style={{fontSize:'14px',color:'#1a1a2e',fontWeight:'500'}}>Lancer un appel</span>
-                  </div>
-                </a>
+
                 <a href={'/groupes/' + id + '/puissance4'} style={{textDecoration:'none'}}>
-                  <div style={{display:'flex',alignItems:'center',gap:'12px',padding:'14px 16px',borderBottom:'0.5px solid #F0F4FA'}}>
-                    <span style={{fontSize:'18px'}}>🔴</span>
-                    <span style={{fontSize:'14px',color:'#1a1a2e',fontWeight:'500'}}>Puissance 4</span>
+                  <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 16px',borderBottom:'0.5px solid #F0F4FA'}}>
+                    <div style={{display:'flex',alignItems:'center',gap:'12px'}}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2B7FFF" strokeWidth="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                      <span style={{fontSize:'14px',color:'#1a1a2e'}}>Puissance 4</span>
+                    </div>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
                   </div>
                 </a>
                 <a href={'/groupes/' + id + '/quiz'} style={{textDecoration:'none'}}>
-                  <div style={{display:'flex',alignItems:'center',gap:'12px',padding:'14px 16px',borderBottom:'0.5px solid #F0F4FA'}}>
-                    <span style={{fontSize:'18px'}}>🗺️</span>
-                    <span style={{fontSize:'14px',color:'#1a1a2e',fontWeight:'500'}}>Quiz</span>
+                  <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 16px',borderBottom:'0.5px solid #F0F4FA'}}>
+                    <div style={{display:'flex',alignItems:'center',gap:'12px'}}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                      <span style={{fontSize:'14px',color:'#1a1a2e'}}>Quiz</span>
+                    </div>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
                   </div>
                 </a>
-                <div onClick={genererInvitation} style={{display:'flex',alignItems:'center',gap:'12px',padding:'14px 16px',cursor:'pointer'}}>
-                  <span style={{fontSize:'18px'}}>✉️</span>
-                  <span style={{fontSize:'14px',color:'#1a1a2e',fontWeight:'500'}}>Inviter quelqu'un</span>
+                <div onClick={genererInvitation} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 16px',cursor:'pointer'}}>
+                  <div style={{display:'flex',alignItems:'center',gap:'12px'}}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+                    <span style={{fontSize:'14px',color:'#1a1a2e'}}>Inviter un membre</span>
+                  </div>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
                 </div>
               </div>
             </>
