@@ -161,6 +161,19 @@ export default function AppelGroupe() {
         user_id: user.id,
         contenu: username + ' a lancé un appel — Rejoins la discussion pour participer'
       })
+      // Notifier les membres
+      const { data: mbs } = await supabase.from('membres_groupe').select('user_id').eq('groupe_id', params.id)
+      if (mbs) {
+        for (const mb of mbs.filter((m: any) => m.user_id !== user.id)) {
+          await supabase.from('notifications').insert({
+            user_id: mb.user_id,
+            type: 'appel',
+            titre: g?.nom || 'Groupe',
+            contenu: username + ' a lancé un appel',
+            lien: '/groupes/' + params.id + '/appel'
+          })
+        }
+      }
       const res = await fetch('/api/livekit?room=groupe-' + params.id + '&username=' + username)
       const data = await res.json()
       setToken(data.token)

@@ -88,6 +88,18 @@ export default function GroupePage() {
     const { data, error } = await supabase.from("messages_groupe").insert({ groupe_id: id, user_id: user.id, contenu: texteEnvoye }).select().single()
     if (!error && data) {
       setMessages(prev => prev.some(m => m.id === data.id) ? prev : [...prev, data])
+      // Notifier les autres membres
+      const autresMembers = membres.filter((m: any) => m.user_id !== user.id)
+      const nomExp = profils[user.id]?.nom || user.email?.split('@')[0] || 'Quelqu'un'
+      for (const membre of autresMembers) {
+        await supabase.from("notifications").insert({
+          user_id: membre.user_id,
+          type: 'message',
+          titre: groupe?.nom || 'Groupe',
+          contenu: nomExp + ' : ' + texteEnvoye.substring(0, 60),
+          lien: '/groupes/' + id
+        })
+      }
     }
   }
 
