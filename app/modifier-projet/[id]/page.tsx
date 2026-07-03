@@ -59,7 +59,7 @@ export default function ModifierProjet() {
         <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-900">{prive ? "🔒 Publication privée" : "🌍 Publication publique"}</p>
+              <p className="text-sm font-medium text-gray-900">{prive ? "Publication privée" : "Publication publique"}</p>
               <p className="text-xs text-gray-400 mt-1">{prive ? "Visible uniquement par toi" : "Visible par tout le monde"}</p>
             </div>
             <button onClick={() => setPrive(!prive)}
