@@ -52,7 +52,24 @@ export default function Home() {
   const totalRev = revenus.filter(r => { const dt = new Date(r.date); return dt.getMonth() === moisActuel && dt.getFullYear() === anneeActuelle }).reduce((s,r) => s + parseFloat(r.montant), 0)
   const solde = totalRev - totalDep
   const todayStr = today.toISOString().split('T')[0]
-  const prochainEvt = evenements.filter(e => e.date >= todayStr).sort((a,b) => a.date.localeCompare(b.date))[0]
+  const nowMin = today.getHours() * 60 + today.getMinutes()
+  const prochainEvt = evenements
+    .filter(e => {
+      if (e.date > todayStr) return true
+      if (e.date === todayStr) {
+        if (!e.heure) return true
+        const [h, m] = e.heure.split(':').map(Number)
+        return h * 60 + m >= nowMin
+      }
+      return false
+    })
+    .sort((a, b) => {
+      if (a.date !== b.date) return a.date.localeCompare(b.date)
+      if (!a.heure && !b.heure) return 0
+      if (!a.heure) return -1
+      if (!b.heure) return 1
+      return a.heure.localeCompare(b.heure)
+    })[0]
 
   return (
     <main className="min-h-screen bg-white">
