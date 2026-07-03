@@ -68,7 +68,7 @@ export default function Home() {
         </div>
       ) : (
         <div style={{padding:'28px 18px',background:'linear-gradient(135deg,#EEF5FF,#FDF8EC)',borderBottom:'0.5px solid #E8F1FF'}}>
-          <div style={{display:'inline-flex',alignItems:'center',gap:'6px',background:'#FDF8EC',color:'#D4A843',fontSize:'11px',fontWeight:'500',padding:'4px 10px',borderRadius:'99px',border:'1px solid #F0D88A',marginBottom:'12px'}}>✦ Réseau de projets</div>
+          <div style={{display:'inline-flex',alignItems:'center',gap:'6px',background:'#FDF8EC',color:'#D4A843',fontSize:'11px',fontWeight:'500',padding:'4px 10px',borderRadius:'99px',border:'1px solid #F0D88A',marginBottom:'12px'}}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg> Réseau de projets</div>
           <h1 style={{fontSize:'22px',fontWeight:'500',color:'#1a1a2e',lineHeight:'1.3',marginBottom:'6px'}}>Lancez vos projets,<br/><span style={{color:'#2B7FFF'}}>trouvez votre soutien</span></h1>
           <p style={{fontSize:'13px',color:'#aaa',marginBottom:'16px',lineHeight:'1.6'}}>Partagez votre projet avec votre groupe et recevez conseils et dons directement.</p>
           <div style={{display:'flex',gap:'8px'}}>
@@ -144,7 +144,7 @@ export default function Home() {
 
         {projets.length === 0 && (
           <div style={{textAlign:'center',padding:'40px 0',color:'#aaa'}}>
-            <div style={{fontSize:'40px',marginBottom:'12px'}}>🚀</div>
+            <svg width='40' height='40' viewBox='0 0 24 24' fill='none' stroke='#aaa' strokeWidth='1.5' style={{marginBottom:'12px'}}><path d='M22 2L11 13'/><path d='M22 2L15 22 11 13 2 9l20-7z'/></svg>
             <div style={{fontSize:'16px',fontWeight:'500',color:'#666',marginBottom:'8px'}}>Soyez les premiers !</div>
             <div style={{fontSize:'13px',marginBottom:'16px'}}>Aucun projet pour l'instant. Lance le tien !</div>
             <a href="/nouveau-projet">
@@ -156,7 +156,7 @@ export default function Home() {
         {projets.map((projet: any) => (
           <a key={projet.id} href={`/projet/${projet.id}`} style={{textDecoration:'none'}}>
             <div style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'16px',overflow:'hidden',marginBottom:'12px',cursor:'pointer'}}>
-              <div style={{height:'90px',background:'linear-gradient(135deg,#EEF5FF,#DCE9FF)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'36px'}}>📌</div>
+              <div style={{height:'90px',background:'linear-gradient(135deg,#EEF5FF,#DCE9FF)',display:'flex',alignItems:'center',justifyContent:'center',}}><svg width='36' height='36' viewBox='0 0 24 24' fill='none' stroke='rgba(43,127,255,0.5)' strokeWidth='1.5'><path d='M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z'/><circle cx='12' cy='10' r='3'/></svg></div>
               <div style={{padding:'12px 14px'}}>
                 <div style={{display:'flex',alignItems:'center',gap:'6px',marginBottom:'6px'}}>
                   <div style={{width:'20px',height:'20px',borderRadius:'50%',background:'#2B7FFF',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:'10px',fontWeight:'500'}}>
@@ -175,10 +175,10 @@ export default function Home() {
                 </div>
                 <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',paddingTop:'8px',borderTop:'0.5px solid #E8F1FF'}}>
                   <div style={{display:'flex',gap:'10px'}}>
-                    <span style={{fontSize:'12px',color:'#aaa'}}>❤️ 0</span>
-                    <span style={{fontSize:'12px',color:'#aaa'}}>💬 0</span>
+                    <span style={{fontSize:'12px',color:'#aaa',display:'flex',alignItems:'center',gap:'3px'}}><svg width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2'><path d='M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z'/></svg> 0</span>
+                    <span style={{fontSize:'12px',color:'#aaa',display:'flex',alignItems:'center',gap:'3px'}}><svg width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2'><path d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'/></svg> 0</span>
                   </div>
-                  <button style={{background:'#D4A843',color:'#fff',fontSize:'11px',fontWeight:'500',padding:'5px 12px',borderRadius:'99px',border:'none',cursor:'pointer'}}>✦ Soutenir</button>
+                  <button style={{background:'#D4A843',color:'#fff',fontSize:'11px',fontWeight:'500',padding:'5px 12px',borderRadius:'99px',border:'none',cursor:'pointer'}}><span style={{display:"flex",alignItems:"center",gap:"4px"}}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>Soutenir</span></button>
                 </div>
               </div>
             </div>
