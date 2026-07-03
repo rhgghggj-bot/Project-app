@@ -81,6 +81,7 @@ export default function Navigation() {
           </a>
           {user ? (
             <NotificationBell />
+          ) : null}
           <a href="/profile" style={{fontSize:'13px',fontWeight:'500',background:'#2B7FFF',color:'#fff',padding:'6px 14px',borderRadius:'99px',textDecoration:'none'}}>Mon profil</a>
           ) : (
             <a href="/connexion" style={{fontSize:'13px',fontWeight:'500',background:'#2B7FFF',color:'#fff',padding:'6px 14px',borderRadius:'99px',textDecoration:'none'}}>Connexion</a>
