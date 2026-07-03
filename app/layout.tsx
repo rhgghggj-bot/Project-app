@@ -41,7 +41,7 @@ export default function RootLayout({
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <Navigation />
-        <div style={{paddingBottom:"90px"}}>{children}</div>
+        <div style={{paddingBottom:"90px",paddingTop:"calc(44px + env(safe-area-inset-top))"}} className="md:pt-0">{children}</div>
       </body>
     </html>
   );

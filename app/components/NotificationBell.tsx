@@ -71,7 +71,7 @@ export default function NotificationBell() {
     <div style={{position:'relative'}}>
       <button onClick={() => setOuvert(!ouvert)}
         style={{width:'38px',height:'38px',borderRadius:'50%',background: nonLues > 0 ? '#EEF5FF' : '#F8FBFF',border:'1px solid #E8F1FF',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',position:'relative'}}>
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2B7FFF" strokeWidth="2">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2B7FFF" strokeWidth="1.8">
           <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
           <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
         </svg>
@@ -97,7 +97,7 @@ export default function NotificationBell() {
             <div style={{maxHeight:'360px',overflowY:'auto'}}>
               {notifs.length === 0 ? (
                 <div style={{padding:'32px 16px',textAlign:'center',color:'#aaa',fontSize:'13px'}}>
-                  Aucune notification
+                  Aucune notification pour l'instant
                 </div>
               ) : notifs.map((n: any) => (
                 <div key={n.id} onClick={() => marquerLu(n.id, n.lien)}
