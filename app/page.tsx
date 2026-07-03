@@ -79,7 +79,7 @@ export default function Home() {
       )}
 
       {user && (
-        <div style={{margin:'-16px 14px 0',borderRadius:'18px',padding:'14px',position:'relative',zIndex:2,background:'rgba(255,255,255,0.18)',backdropFilter:'blur(20px)',border:'1px solid rgba(255,255,255,0.35)',marginBottom:'4px'}}>
+        <div style={{margin:'-16px 14px 0',borderRadius:'18px',padding:'14px',position:'relative',zIndex:2,background:'rgba(10,30,70,0.6)',backdropFilter:'blur(20px)',border:'1px solid rgba(255,255,255,0.2)',marginBottom:'4px'}}>
           <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'12px'}}>
             <span style={{fontSize:'13px',fontWeight:'500',color:'#fff'}}>Cette semaine</span>
             <a href="/semaine" style={{fontSize:'12px',color:'#a8d8f0',fontWeight:'500',textDecoration:'none'}}>Voir tout →</a>
