@@ -51,7 +51,8 @@ export default function Home() {
   const totalDep = depenses.filter(d => { const dt = new Date(d.date); return dt.getMonth() === moisActuel && dt.getFullYear() === anneeActuelle }).reduce((s,d) => s + parseFloat(d.montant), 0)
   const totalRev = revenus.filter(r => { const dt = new Date(r.date); return dt.getMonth() === moisActuel && dt.getFullYear() === anneeActuelle }).reduce((s,r) => s + parseFloat(r.montant), 0)
   const solde = totalRev - totalDep
-  const prochainEvt = evenements.filter(e => new Date(e.date) >= today).sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0]
+  const todayStr = today.toISOString().split('T')[0]
+  const prochainEvt = evenements.filter(e => e.date >= todayStr).sort((a,b) => a.date.localeCompare(b.date))[0]
 
   return (
     <main className="min-h-screen bg-white">
