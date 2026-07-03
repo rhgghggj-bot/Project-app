@@ -3,149 +3,140 @@ import { useEffect, useRef } from "react"
 import gsap from "gsap"
 
 export default function SplashScreen({ onDone }: { onDone: () => void }) {
-  const containerRef = useRef<HTMLDivElement>(null)
   const logoRef = useRef<HTMLDivElement>(null)
   const lettersRef = useRef<(HTMLSpanElement | null)[]>([])
   const bookRef = useRef<HTMLDivElement>(null)
   const pageLeftRef = useRef<HTMLDivElement>(null)
   const pageRightRef = useRef<HTMLDivElement>(null)
   const flashRef = useRef<HTMLDivElement>(null)
+  const shadowRef = useRef<HTMLDivElement>(null)
+  const wrapRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const tl = gsap.timeline({ onComplete: onDone })
     const logo = logoRef.current
     const letters = lettersRef.current
+    const shadow = shadowRef.current
     const book = bookRef.current
     const pageL = pageLeftRef.current
     const pageR = pageRightRef.current
     const flash = flashRef.current
 
-    // 1. Lettres apparaissent une par une en gris
-    tl.set(letters, { opacity: 0, y: 10, color: 'rgba(255,255,255,0.2)' })
-    tl.set(logo, { y: -300, opacity: 0, scaleY: 1 })
-    tl.set(book, { opacity: 0 })
-    tl.set(flash, { opacity: 0 })
+    gsap.set(logo, { y: -400, opacity: 0, scale: 1, x: 0 })
+    gsap.set(shadow, { scaleX: 0, opacity: 0 })
+    gsap.set(letters, { opacity: 0, y: 15 })
+    gsap.set(book, { opacity: 0, scale: 1 })
+    gsap.set(flash, { opacity: 0 })
 
+    // 1. Lettres apparaissent
     letters.forEach((l, i) => {
-      tl.to(l, { opacity: 1, y: 0, duration: 0.15, ease: 'power2.out' }, i * 0.1)
+      tl.to(l, { opacity: 0.3, y: 0, duration: 0.2, ease: 'back.out(2)' }, 0.1 + i * 0.08)
     })
 
-    // 2. Logo tombe comme une étoile
-    tl.to(logo, { y: 0, opacity: 1, duration: 0.4, ease: 'power2.in' }, 1.0)
-    tl.to(logo, { scaleY: 0.6, duration: 0.08, ease: 'power2.in' }, 1.35)
-    tl.to(logo, { scaleY: 1.2, y: -20, duration: 0.12, ease: 'power2.out' }, 1.43)
-    tl.to(logo, { scaleY: 0.9, y: 5, duration: 0.08 }, 1.55)
-    tl.to(logo, { scaleY: 1, y: 0, duration: 0.08 }, 1.63)
+    // 2. Logo tombe avec boing
+    tl.to(logo, { y: 0, opacity: 1, duration: 0.8, ease: 'elastic.out(1.2, 0.4)' }, 1.0)
+    tl.to(shadow, { scaleX: 1, opacity: 0.4, duration: 0.8, ease: 'elastic.out(1.2, 0.4)' }, 1.0)
 
-    // 3. Logo rebondit sur chaque lettre une par une
-    const positions = [-126, -90, -54, -18, 18, 54, 90]
+    // 3. Rebond sur chaque lettre
+    const xPositions = [-114, -78, -42, -6, 30, 66, 102]
     letters.forEach((l, i) => {
-      const pos = positions[i]
-      tl.to(logo, { x: pos, duration: 0.18, ease: 'power1.inOut' })
-      tl.to(logo, { scaleY: 0.65, y: 8, duration: 0.08, ease: 'power2.in' })
-      tl.to(logo, { scaleY: 1.15, y: -18, duration: 0.1, ease: 'power2.out' })
-      tl.to(logo, { scaleY: 1, y: 0, duration: 0.08 })
-      tl.to(l, { color: i % 2 === 0 ? '#ffffff' : '#D4A843', scale: 1.1, duration: 0.1 }, '<-0.1')
-      tl.to(l, { scale: 1, duration: 0.1 })
+      tl.to(logo, { x: xPositions[i], duration: 0.22, ease: 'power2.inOut' })
+      tl.to(shadow, { x: xPositions[i], duration: 0.22, ease: 'power2.inOut' }, '<')
+      tl.to(logo, { y: -55, scaleX: 0.88, scaleY: 1.18, duration: 0.15, ease: 'power2.out' })
+      tl.to(logo, { y: 0, scaleX: 1.12, scaleY: 0.78, duration: 0.1, ease: 'power2.in' })
+      tl.to(logo, { y: -25, scaleX: 0.94, scaleY: 1.08, duration: 0.1, ease: 'power2.out' })
+      tl.to(logo, { y: 0, scaleX: 1, scaleY: 1, duration: 0.12, ease: 'elastic.out(2, 0.4)' })
+      tl.to(shadow, { scaleX: 0.6, opacity: 0.2, duration: 0.1 }, '<-0.22')
+      tl.to(shadow, { scaleX: 1, opacity: 0.4, duration: 0.12 })
+      tl.to(l, { opacity: 1, color: i % 2 === 0 ? '#ffffff' : '#D4A843', scaleY: 0.85, y: 5, duration: 0.08 }, '<-0.22')
+      tl.to(l, { scaleY: 1, y: 0, duration: 0.15, ease: 'elastic.out(2, 0.3)' })
     })
 
-    // 4. Logo revient au centre et grossit (zoom vers toi)
-    tl.to(logo, { x: 0, y: 0, duration: 0.4, ease: 'power2.inOut' })
-    tl.to(logo, { scale: 3, duration: 0.6, ease: 'power3.inOut' })
+    // 4. Logo vient SE PLACER DEVANT les lettres à plat (reste à sa taille normale)
+    tl.to(logo, { x: 0, y: 0, duration: 0.5, ease: 'power3.inOut' })
+    tl.to(shadow, { opacity: 0, duration: 0.3 }, '<')
+    // Z-index boost pour passer devant les lettres
+    tl.set(logo, { zIndex: 20 })
 
-    // 5. Livre s'ouvre - pages qui défilent
-    tl.set(book, { opacity: 1, scale: 3 })
-    tl.set(logo, { opacity: 0 })
+    // Petite pause pour voir le logo devant
+    tl.to(logo, { scale: 1, duration: 0.3 })
 
-    // Pages qui défilent rapidement
-    for (let i = 0; i < 5; i++) {
-      tl.to(pageL, { rotationY: -100, duration: 0.08, ease: 'power1.in', transformOrigin: 'right center', transformPerspective: 600 })
-      tl.to(pageR, { rotationY: 100, duration: 0.08, ease: 'power1.in', transformOrigin: 'left center', transformPerspective: 600 }, '<')
-      tl.to([pageL, pageR], { rotationY: 0, duration: 0.06 })
-    }
+    // 5. ZOOM - on tombe dans le logo (comme si on rentrait dedans)
+    tl.to(logo, {
+      scale: 30,
+      opacity: 0,
+      duration: 0.8,
+      ease: 'power4.in'
+    })
 
-    // 6. Zoom dans le livre
-    tl.to(book, { scale: 15, opacity: 0, duration: 0.4, ease: 'power3.in' })
-
-    // 7. Flash blanc
-    tl.to(flash, { opacity: 1, duration: 0.2 })
-    tl.to(flash, { opacity: 1, duration: 0.3 })
+    // 6. Flash blanc
+    tl.to(flash, { opacity: 1, duration: 0.2 }, '-=0.2')
+    tl.to(flash, { opacity: 1, duration: 0.4 })
 
     return () => { tl.kill() }
   }, [onDone])
 
   return (
-    <div ref={containerRef} style={{
+    <div style={{
       position:'fixed',inset:0,zIndex:9999,
       background:'linear-gradient(135deg,#0A1628,#1a3a6e,#2B7FFF)',
       display:'flex',alignItems:'center',justifyContent:'center',
-      fontFamily:'system-ui'
+      fontFamily:'system-ui',overflow:'hidden'
     }}>
-      <div style={{position:'relative',display:'flex',flexDirection:'column',alignItems:'center',gap:'16px'}}>
-        {/* Lettres PROJECT */}
-        <div style={{display:'flex',gap:'2px',position:'relative'}}>
+      <div ref={wrapRef} style={{position:'relative',display:'flex',flexDirection:'column',alignItems:'center'}}>
+
+        <div style={{display:'flex',gap:'4px',position:'relative',zIndex:1}}>
           {'Project'.split('').map((letter, i) => (
-            <span
-              key={i}
-              ref={el => { lettersRef.current[i] = el }}
-              style={{
-                fontSize:'38px',
-                fontWeight:'700',
-                display:'inline-block',
-                color:'rgba(255,255,255,0.2)'
-              }}
-            >
+            <span key={i} ref={el => { lettersRef.current[i] = el }}
+              style={{fontSize:'40px',fontWeight:'700',display:'inline-block',color:'rgba(255,255,255,0.2)',lineHeight:1}}>
               {letter}
             </span>
           ))}
         </div>
 
-        {/* Logo carré */}
+        <div ref={shadowRef} style={{
+          width:'50px',height:'8px',borderRadius:'50%',
+          background:'rgba(0,0,0,0.35)',filter:'blur(5px)',
+          marginTop:'4px',transformOrigin:'center'
+        }}/>
+
         <div ref={logoRef} style={{
-          position:'absolute',
-          top:'-80px',
-          left:'50%',
+          position:'absolute',top:'-20px',left:'50%',
           transform:'translateX(-50%)',
-          width:'56px',height:'56px',
-          borderRadius:'16px',
-          background:'linear-gradient(135deg,rgba(255,255,255,0.2),rgba(212,168,67,0.25))',
-          border:'1.5px solid rgba(255,255,255,0.4)',
+          width:'58px',height:'58px',borderRadius:'16px',
+          background:'linear-gradient(135deg,rgba(255,255,255,0.18),rgba(212,168,67,0.2))',
+          border:'1.5px solid rgba(255,255,255,0.45)',
+          backdropFilter:'blur(10px)',
           display:'flex',alignItems:'center',justifyContent:'center',
-          zIndex:10
+          zIndex:10,
+          boxShadow:'0 8px 32px rgba(0,0,0,0.3)'
         }}>
           <span style={{fontSize:'18px',fontWeight:'700',color:'#fff',letterSpacing:'-1px'}}>
             Pro<span style={{color:'#D4A843'}}>j</span>
           </span>
         </div>
 
-        {/* Livre */}
         <div ref={bookRef} style={{
-          position:'absolute',
-          width:'56px',height:'56px',
-          display:'flex',
-          zIndex:11
+          position:'absolute',top:'-20px',left:'50%',
+          transform:'translateX(-50%)',
+          width:'58px',height:'58px',display:'flex',zIndex:11
         }}>
           <div ref={pageLeftRef} style={{
-            width:'28px',height:'56px',
-            background:'linear-gradient(135deg,#fff,#dce8ff)',
-            borderRadius:'4px 0 0 4px',
-            transformOrigin:'right center'
+            width:'29px',height:'58px',
+            background:'linear-gradient(135deg,#f0f4ff,#fff)',
+            borderRadius:'4px 0 0 4px',transformOrigin:'right center'
           }}/>
           <div ref={pageRightRef} style={{
-            width:'28px',height:'56px',
-            background:'linear-gradient(135deg,#dce8ff,#fff)',
-            borderRadius:'0 4px 4px 0',
-            transformOrigin:'left center'
+            width:'29px',height:'58px',
+            background:'linear-gradient(135deg,#fff,#f0f4ff)',
+            borderRadius:'0 4px 4px 0',transformOrigin:'left center'
           }}/>
         </div>
       </div>
 
-      {/* Flash blanc */}
       <div ref={flashRef} style={{
-        position:'absolute',inset:0,
-        background:'#fff',
-        pointerEvents:'none',
-        zIndex:20
+        position:'absolute',inset:0,background:'#fff',
+        pointerEvents:'none',zIndex:20
       }}/>
     </div>
   )
