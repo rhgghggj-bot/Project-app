@@ -60,7 +60,7 @@ export default function NouveauProjet() {
         <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
           <div className="flex items-center justify-between mb-2">
             <div>
-              <p className="text-sm font-medium text-gray-900">{prive ? "🔒 Publication privée" : "🌍 Publication publique"}</p>
+              <p className="text-sm font-medium text-gray-900">{prive ? "Publication privée" : "Publication publique"}</p>
               <p className="text-xs text-gray-400 mt-1">{prive ? "Visible uniquement par toi" : "Visible par tout le monde"}</p>
             </div>
             <button onClick={() => setPrive(!prive)}
@@ -150,7 +150,7 @@ export default function NouveauProjet() {
 
         <button onClick={publier} className="w-full text-white font-medium py-3 rounded-xl text-sm"
           style={{background: prive ? '#1a1a2e' : '#2B7FFF'}}>
-          {prive ? "🔒 Publier en privé" : "🌍 Publier en public"} ✦
+          {prive ? "Publier en privé" : "Publier en public"}
         </button>
 
         {message && <p className="text-sm text-center text-green-500 font-medium">{message}</p>}

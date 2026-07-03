@@ -61,7 +61,7 @@ export default function Home() {
           <div style={{fontSize:'12px',color:'rgba(255,255,255,0.5)',marginBottom:'4px'}}>{today.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</div>
           <div style={{fontSize:'22px',fontWeight:'500',color:'#fff',marginBottom:'6px'}}>Bonjour 👋</div>
           <div style={{display:'flex',gap:'12px'}}>
-            <div style={{fontSize:'13px',color:'rgba(255,255,255,0.7)'}}>📈 <span style={{color:'#4ade80',fontWeight:'500'}}>{totalRev.toFixed(0)} CHF</span></div>
+            <div style={{fontSize:'13px',color:'rgba(255,255,255,0.7)'}}><span style={{color:'#4ade80',fontWeight:'500'}}>{totalRev.toFixed(0)} CHF</span></div>
             <div style={{fontSize:'13px',color:'rgba(255,255,255,0.7)'}}>📉 <span style={{color:'#F43F5E',fontWeight:'500'}}>{totalDep.toFixed(0)} CHF</span></div>
             <div style={{fontSize:'13px',color:'rgba(255,255,255,0.7)'}}>Solde : <span style={{color: solde >= 0 ? '#4ade80' : '#F43F5E',fontWeight:'500'}}>{solde >= 0 ? '+' : ''}{solde.toFixed(0)} CHF</span></div>
           </div>
@@ -128,7 +128,7 @@ export default function Home() {
           </div>
           <a href="/scanner" style={{textDecoration:'none',display:'block',marginBottom:'8px'}}>
             <div style={{background:'linear-gradient(135deg,#1a1a2e,#2B7FFF)',borderRadius:'14px',padding:'12px',display:'flex',alignItems:'center',gap:'12px'}}>
-              <div style={{fontSize:'28px'}}>📄</div>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="1.5"><polyline points="4 7 4 4 7 4"/><polyline points="17 4 20 4 20 7"/><polyline points="20 17 20 20 17 20"/><polyline points="7 20 4 20 4 17"/><line x1="4" y1="12" x2="20" y2="12"/></svg>
               <div>
                 <div style={{fontSize:'13px',fontWeight:'500',color:'#fff'}}>Scanner un document</div>
                 <div style={{fontSize:'11px',color:'rgba(255,255,255,0.6)',marginTop:'2px'}}>Facture, relevé, contrat, assurance...</div>

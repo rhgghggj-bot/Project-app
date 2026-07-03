@@ -118,7 +118,7 @@ export default function Scanner() {
             </div>
             <div style={{background:'#EEF5FF',borderRadius:'14px',padding:'14px',border:'0.5px solid #DCE9FF'}}>
               <div style={{fontSize:'12px',fontWeight:'500',color:'#2B7FFF',marginBottom:'8px'}}>Ce que le scanner détecte :</div>
-              {["🧾 Factures — montant total, date","🏦 Relevés — transactions et solde","🛡️ Assurances — primes et dates","📋 Contrats — informations clés"].map((t,i) => (
+              {["Factures — montant total, date","Relevés — transactions et solde","Assurances — primes et dates","Contrats — informations clés"].map((t,i) => (
                 <div key={i} style={{fontSize:'13px',color:'#666',marginBottom:'4px'}}>{t}</div>
               ))}
               <div style={{fontSize:'11px',color:'#aaa',marginTop:'8px'}}>💡 Pour de meilleurs résultats, prends une photo nette avec bonne lumière</div>
@@ -157,7 +157,7 @@ export default function Scanner() {
                   <span style={{fontSize:'18px',fontWeight:'500',color:'#F43F5E'}}>{analyse.montant} CHF</span>
                 </div>
               )}
-              {analyse.date && <div style={{fontSize:'12px',color:'#aaa'}}>📅 {analyse.date}</div>}
+              {analyse.date && <div style={{fontSize:'12px',color:'#aaa'}}>{analyse.date}</div>}
             </div>
 
             {analyse.infos_cles?.length > 0 && (
@@ -198,7 +198,7 @@ export default function Scanner() {
               </button>
               <a href="/finances" style={{flex:1,textDecoration:'none'}}>
                 <button style={{width:'100%',background:'#2B7FFF',color:'#fff',fontSize:'13px',fontWeight:'500',padding:'12px',borderRadius:'12px',border:'none',cursor:'pointer'}}>
-                  💸 Voir les finances
+                  Voir les finances
                 </button>
               </a>
             </div>

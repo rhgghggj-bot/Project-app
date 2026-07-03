@@ -84,7 +84,7 @@ export default function Groupe() {
             <div className="flex gap-4 pt-3 border-t border-gray-100">
               <button className="text-sm text-gray-400">28 likes</button>
               <button className="text-sm text-gray-400">9 comm.</button>
-              <button className="text-sm text-gray-400">↗️ Partager</button>
+              <button className="text-sm text-gray-400">Partager</button>
             </div>
           </div>
         </div>
