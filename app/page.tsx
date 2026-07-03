@@ -59,10 +59,10 @@ export default function Home() {
         <div style={{background:'linear-gradient(160deg,#0A1628 0%,#1a3a6e 50%,#2B7FFF 100%)',padding:'20px 18px 32px',position:'relative',overflow:'hidden'}}>
           <div style={{position:'absolute',top:'-40px',right:'-40px',width:'180px',height:'180px',borderRadius:'50%',background:'rgba(43,127,255,0.15)'}}></div>
           <div style={{fontSize:'12px',color:'rgba(255,255,255,0.5)',marginBottom:'4px'}}>{today.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</div>
-          <div style={{fontSize:'22px',fontWeight:'500',color:'#fff',marginBottom:'6px'}}>Bonjour 👋</div>
+          <div style={{fontSize:'22px',fontWeight:'500',color:'#fff',marginBottom:'6px'}}>Bonjour</div>
           <div style={{display:'flex',gap:'12px'}}>
             <div style={{fontSize:'13px',color:'rgba(255,255,255,0.7)'}}><span style={{color:'#4ade80',fontWeight:'500'}}>{totalRev.toFixed(0)} CHF</span></div>
-            <div style={{fontSize:'13px',color:'rgba(255,255,255,0.7)'}}>📉 <span style={{color:'#F43F5E',fontWeight:'500'}}>{totalDep.toFixed(0)} CHF</span></div>
+            <div style={{fontSize:'13px',color:'rgba(255,255,255,0.7)'}}><span style={{color:'#F43F5E',fontWeight:'500'}}>{totalDep.toFixed(0)} CHF</span></div>
             <div style={{fontSize:'13px',color:'rgba(255,255,255,0.7)'}}>Solde : <span style={{color: solde >= 0 ? '#4ade80' : '#F43F5E',fontWeight:'500'}}>{solde >= 0 ? '+' : ''}{solde.toFixed(0)} CHF</span></div>
           </div>
         </div>
