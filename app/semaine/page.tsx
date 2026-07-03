@@ -12,6 +12,7 @@ export default function Semaine() {
   const [selectedDay, setSelectedDay] = useState<any>(null)
   const [titre, setTitre] = useState("")
   const [heure, setHeure] = useState("")
+  const [duree, setDuree] = useState(30)
   const [couleur, setCouleur] = useState("#2B7FFF")
   const [semaineOffset, setSemaineOffset] = useState(0)
 
@@ -53,11 +54,11 @@ export default function Semaine() {
   async function ajouterEvt() {
     if (!titre || !selectedDay) return
     const { error } = await supabase.from("evenements_calendrier").insert({
-      user_id: user.id, titre, heure, couleur,
+      user_id: user.id, titre, heure, couleur, duree,
       date: `${selectedDay.getFullYear()}-${String(selectedDay.getMonth()+1).padStart(2,'0')}-${String(selectedDay.getDate()).padStart(2,'0')}`
     })
     if (!error) {
-      setTitre(""); setHeure(""); setCouleur("#2B7FFF"); setShowForm(false)
+      setTitre(""); setHeure(""); setCouleur("#2B7FFF"); setDuree(30); setShowForm(false)
       const { data } = await supabase.from("evenements_calendrier").select("*").eq("user_id", user.id).order("date", { ascending: true })
       setEvenements(data || [])
     }
@@ -106,7 +107,7 @@ export default function Semaine() {
                 </div>
                 {evts.slice(0,2).map((e,j) => (
                   <div key={j} style={{width:'100%',borderRadius:'4px',padding:'2px 3px',fontSize:'8px',fontWeight:'500',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',background:`${e.couleur}22`,color:e.couleur}}>
-                    {e.heure && `${e.heure} `}{e.titre}
+                    {e.heure && `${e.heure} `}{e.titre}{e.duree ? ` (${e.duree >= 60 ? Math.floor(e.duree/60)+'h'+(e.duree%60 ? (e.duree%60)+'min' : '') : e.duree+'min'})` : ''}
                   </div>
                 ))}
                 {evts.length > 2 && <div style={{fontSize:'8px',color:'#aaa'}}>+{evts.length-2}</div>}
@@ -125,6 +126,20 @@ export default function Semaine() {
             style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'8px 12px',fontSize:'13px',color:'#1a1a2e',background:'#fff',marginBottom:'8px'}}/>
           <input value={heure} onChange={e => setHeure(e.target.value)} placeholder="Heure (ex: 14:30)" type="time"
             style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'8px 12px',fontSize:'13px',color:'#1a1a2e',background:'#fff',marginBottom:'8px'}}/>
+          <div style={{display:'flex',alignItems:'center',gap:'8px',marginTop:'8px'}}>
+            <label style={{fontSize:'12px',color:'#666',whiteSpace:'nowrap'}}>Durée :</label>
+            <select value={duree} onChange={e => setDuree(Number(e.target.value))}
+              style={{flex:1,border:'1px solid #E8F1FF',borderRadius:'10px',padding:'8px 12px',fontSize:'13px',color:'#1a1a2e',background:'#F8FBFF'}}>
+              <option value={15}>15 min</option>
+              <option value={30}>30 min</option>
+              <option value={45}>45 min</option>
+              <option value={60}>1h</option>
+              <option value={90}>1h30</option>
+              <option value={120}>2h</option>
+              <option value={180}>3h</option>
+              <option value={240}>4h</option>
+            </select>
+          </div>
           <div style={{display:'flex',gap:'6px',marginBottom:'10px'}}>
             {COULEURS_EVT.map(c => (
               <div key={c} onClick={() => setCouleur(c)} style={{width:'28px',height:'28px',borderRadius:'50%',background:c,cursor:'pointer',border: couleur === c ? '3px solid #1a1a2e' : '3px solid transparent'}}/>
@@ -153,7 +168,7 @@ export default function Semaine() {
                 <div key={e.id} style={{background:'#fff',border:`0.5px solid ${e.couleur}44`,borderLeft:`3px solid ${e.couleur}`,borderRadius:'10px',padding:'10px 12px',marginBottom:'6px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
                   <div>
                     <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e'}}>{e.titre}</div>
-                    {e.heure && <div style={{fontSize:'11px',color:'#aaa',marginTop:'2px'}}>⏰ {e.heure}</div>}
+                    {e.heure && <div style={{fontSize:'11px',color:'#aaa',marginTop:'2px'}}>{e.heure}{e.duree ? ` · ${e.duree >= 60 ? Math.floor(e.duree/60)+'h'+(e.duree%60 ? (e.duree%60)+'min' : '') : e.duree+'min'}` : ''}</div>}
                   </div>
                   <button onClick={() => supprimerEvt(e.id)} style={{background:'none',border:'none',color:'#ddd',cursor:'pointer',fontSize:'18px'}}>×</button>
                 </div>
