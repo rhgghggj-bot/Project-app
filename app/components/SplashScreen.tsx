@@ -42,9 +42,9 @@ export default function SplashScreen({ onDone }: { onDone: () => void }) {
     letters.forEach((l, i) => {
       tl.to(logo, { x: xPositions[i], duration: 0.22, ease: 'power2.inOut' })
       tl.to(shadow, { x: xPositions[i], duration: 0.22, ease: 'power2.inOut' }, '<')
-      tl.to(logo, { y: -55, scaleX: 0.88, scaleY: 1.18, duration: 0.15, ease: 'power2.out' })
+      tl.to(logo, { y: -35, scaleX: 0.88, scaleY: 1.18, duration: 0.15, ease: 'power2.out' })
       tl.to(logo, { y: 0, scaleX: 1.12, scaleY: 0.78, duration: 0.1, ease: 'power2.in' })
-      tl.to(logo, { y: -25, scaleX: 0.94, scaleY: 1.08, duration: 0.1, ease: 'power2.out' })
+      tl.to(logo, { y: -15, scaleX: 0.94, scaleY: 1.08, duration: 0.1, ease: 'power2.out' })
       tl.to(logo, { y: 0, scaleX: 1, scaleY: 1, duration: 0.12, ease: 'elastic.out(2, 0.4)' })
       tl.to(shadow, { scaleX: 0.6, opacity: 0.2, duration: 0.1 }, '<-0.22')
       tl.to(shadow, { scaleX: 1, opacity: 0.4, duration: 0.12 })
@@ -103,7 +103,7 @@ export default function SplashScreen({ onDone }: { onDone: () => void }) {
         <div ref={logoRef} style={{
           position:'absolute',top:'-20px',left:'50%',
           transform:'translateX(-50%)',
-          width:'58px',height:'58px',borderRadius:'16px',
+          width:'42px',height:'42px',borderRadius:'12px',
           background:'linear-gradient(135deg,rgba(255,255,255,0.18),rgba(212,168,67,0.2))',
           border:'1.5px solid rgba(255,255,255,0.45)',
           backdropFilter:'blur(10px)',
@@ -111,7 +111,7 @@ export default function SplashScreen({ onDone }: { onDone: () => void }) {
           zIndex:10,
           boxShadow:'0 8px 32px rgba(0,0,0,0.3)'
         }}>
-          <span style={{fontSize:'18px',fontWeight:'700',color:'#fff',letterSpacing:'-1px'}}>
+          <span style={{fontSize:'13px',fontWeight:'700',color:'#fff',letterSpacing:'-1px'}}>
             Pro<span style={{color:'#D4A843'}}>j</span>
           </span>
         </div>
@@ -119,15 +119,15 @@ export default function SplashScreen({ onDone }: { onDone: () => void }) {
         <div ref={bookRef} style={{
           position:'absolute',top:'-20px',left:'50%',
           transform:'translateX(-50%)',
-          width:'58px',height:'58px',display:'flex',zIndex:11
+          width:'42px',height:'42px',display:'flex',zIndex:11
         }}>
           <div ref={pageLeftRef} style={{
-            width:'29px',height:'58px',
+            width:'21px',height:'42px',
             background:'linear-gradient(135deg,#f0f4ff,#fff)',
             borderRadius:'4px 0 0 4px',transformOrigin:'right center'
           }}/>
           <div ref={pageRightRef} style={{
-            width:'29px',height:'58px',
+            width:'21px',height:'42px',
             background:'linear-gradient(135deg,#fff,#f0f4ff)',
             borderRadius:'0 4px 4px 0',transformOrigin:'left center'
           }}/>
