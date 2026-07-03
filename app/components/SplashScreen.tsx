@@ -1,75 +1,152 @@
 "use client"
-import { useEffect, useState } from "react"
+import { useEffect, useRef } from "react"
+import gsap from "gsap"
 
 export default function SplashScreen({ onDone }: { onDone: () => void }) {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const logoRef = useRef<HTMLDivElement>(null)
+  const lettersRef = useRef<(HTMLSpanElement | null)[]>([])
+  const bookRef = useRef<HTMLDivElement>(null)
+  const pageLeftRef = useRef<HTMLDivElement>(null)
+  const pageRightRef = useRef<HTMLDivElement>(null)
+  const flashRef = useRef<HTMLDivElement>(null)
+
   useEffect(() => {
-    const timer = setTimeout(onDone, 2800)
-    return () => clearTimeout(timer)
+    const tl = gsap.timeline({ onComplete: onDone })
+    const logo = logoRef.current
+    const letters = lettersRef.current
+    const book = bookRef.current
+    const pageL = pageLeftRef.current
+    const pageR = pageRightRef.current
+    const flash = flashRef.current
+
+    // 1. Lettres apparaissent une par une en gris
+    tl.set(letters, { opacity: 0, y: 10, color: 'rgba(255,255,255,0.2)' })
+    tl.set(logo, { y: -300, opacity: 0, scaleY: 1 })
+    tl.set(book, { opacity: 0 })
+    tl.set(flash, { opacity: 0 })
+
+    letters.forEach((l, i) => {
+      tl.to(l, { opacity: 1, y: 0, duration: 0.15, ease: 'power2.out' }, i * 0.1)
+    })
+
+    // 2. Logo tombe comme une étoile
+    tl.to(logo, { y: 0, opacity: 1, duration: 0.4, ease: 'power2.in' }, 1.0)
+    tl.to(logo, { scaleY: 0.6, duration: 0.08, ease: 'power2.in' }, 1.35)
+    tl.to(logo, { scaleY: 1.2, y: -20, duration: 0.12, ease: 'power2.out' }, 1.43)
+    tl.to(logo, { scaleY: 0.9, y: 5, duration: 0.08 }, 1.55)
+    tl.to(logo, { scaleY: 1, y: 0, duration: 0.08 }, 1.63)
+
+    // 3. Logo rebondit sur chaque lettre une par une
+    const positions = [-126, -90, -54, -18, 18, 54, 90]
+    letters.forEach((l, i) => {
+      const pos = positions[i]
+      tl.to(logo, { x: pos, duration: 0.18, ease: 'power1.inOut' })
+      tl.to(logo, { scaleY: 0.65, y: 8, duration: 0.08, ease: 'power2.in' })
+      tl.to(logo, { scaleY: 1.15, y: -18, duration: 0.1, ease: 'power2.out' })
+      tl.to(logo, { scaleY: 1, y: 0, duration: 0.08 })
+      tl.to(l, { color: i % 2 === 0 ? '#ffffff' : '#D4A843', scale: 1.1, duration: 0.1 }, '<-0.1')
+      tl.to(l, { scale: 1, duration: 0.1 })
+    })
+
+    // 4. Logo revient au centre et grossit (zoom vers toi)
+    tl.to(logo, { x: 0, y: 0, duration: 0.4, ease: 'power2.inOut' })
+    tl.to(logo, { scale: 3, duration: 0.6, ease: 'power3.inOut' })
+
+    // 5. Livre s'ouvre - pages qui défilent
+    tl.set(book, { opacity: 1, scale: 3 })
+    tl.set(logo, { opacity: 0 })
+
+    // Pages qui défilent rapidement
+    for (let i = 0; i < 5; i++) {
+      tl.to(pageL, { rotationY: -100, duration: 0.08, ease: 'power1.in', transformOrigin: 'right center', transformPerspective: 600 })
+      tl.to(pageR, { rotationY: 100, duration: 0.08, ease: 'power1.in', transformOrigin: 'left center', transformPerspective: 600 }, '<')
+      tl.to([pageL, pageR], { rotationY: 0, duration: 0.06 })
+    }
+
+    // 6. Zoom dans le livre
+    tl.to(book, { scale: 15, opacity: 0, duration: 0.4, ease: 'power3.in' })
+
+    // 7. Flash blanc
+    tl.to(flash, { opacity: 1, duration: 0.2 })
+    tl.to(flash, { opacity: 1, duration: 0.3 })
+
+    return () => { tl.kill() }
   }, [onDone])
 
   return (
-    <div style={{
+    <div ref={containerRef} style={{
       position:'fixed',inset:0,zIndex:9999,
       background:'linear-gradient(135deg,#0A1628,#1a3a6e,#2B7FFF)',
-      display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',
+      display:'flex',alignItems:'center',justifyContent:'center',
       fontFamily:'system-ui'
     }}>
-      <style>{`
-        @keyframes pixar {
-          0%   { transform: scale(0.1) translateY(80px); opacity:0; }
-          20%  { transform: scale(1.3) translateY(-20px); opacity:1; }
-          35%  { transform: scale(0.9) translateY(0px); }
-          50%  { transform: scale(1.15) translateY(-10px); }
-          65%  { transform: scale(0.95) translateY(0px); }
-          80%  { transform: scale(1.05) translateY(-4px); }
-          100% { transform: scale(1) translateY(0px); }
-        }
-        @keyframes shadow-anim {
-          0%   { transform: scaleX(0.1); opacity:0; }
-          20%  { transform: scaleX(1.4); opacity:0.4; }
-          35%  { transform: scaleX(0.8); opacity:0.6; }
-          50%  { transform: scaleX(1.2); opacity:0.4; }
-          65%  { transform: scaleX(0.9); opacity:0.5; }
-          80%  { transform: scaleX(1.05); opacity:0.45; }
-          100% { transform: scaleX(1); opacity:0.5; }
-        }
-        @keyframes fadein {
-          0%,60% { opacity:0; transform:translateY(10px); }
-          100% { opacity:1; transform:translateY(0); }
-        }
-        @keyframes dots {
-          0%,80%,100% { opacity:0.3; }
-          40% { opacity:1; }
-        }
-        .splash-logo { animation: pixar 1.4s cubic-bezier(0.36,0.07,0.19,0.97) 0.3s both; }
-        .splash-shadow { animation: shadow-anim 1.4s cubic-bezier(0.36,0.07,0.19,0.97) 0.3s both; }
-        .splash-text { animation: fadein 0.6s ease 1.8s both; }
-        .splash-d1 { animation: dots 1.2s 2.2s infinite; }
-        .splash-d2 { animation: dots 1.2s 2.4s infinite; }
-        .splash-d3 { animation: dots 1.2s 2.6s infinite; }
-      `}</style>
-
-      <div style={{position:'absolute',top:'-60px',right:'-60px',width:'250px',height:'250px',borderRadius:'50%',background:'rgba(43,127,255,0.15)'}}></div>
-      <div style={{position:'absolute',bottom:'-40px',left:'-40px',width:'180px',height:'180px',borderRadius:'50%',background:'rgba(135,206,235,0.1)'}}></div>
-
-      <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:'8px',zIndex:1}}>
-        <div className="splash-logo" style={{width:'90px',height:'90px',borderRadius:'24px',background:'rgba(255,255,255,0.12)',border:'1.5px solid rgba(255,255,255,0.25)',display:'flex',alignItems:'center',justifyContent:'center'}}>
-          <span style={{fontSize:'32px',fontWeight:'500',color:'#fff',letterSpacing:'-1px'}}>Pro<span style={{color:'#D4A843'}}>j</span></span>
+      <div style={{position:'relative',display:'flex',flexDirection:'column',alignItems:'center',gap:'16px'}}>
+        {/* Lettres PROJECT */}
+        <div style={{display:'flex',gap:'2px',position:'relative'}}>
+          {'Project'.split('').map((letter, i) => (
+            <span
+              key={i}
+              ref={el => { lettersRef.current[i] = el }}
+              style={{
+                fontSize:'38px',
+                fontWeight:'700',
+                display:'inline-block',
+                color:'rgba(255,255,255,0.2)'
+              }}
+            >
+              {letter}
+            </span>
+          ))}
         </div>
 
-        <div className="splash-shadow" style={{width:'70px',height:'8px',borderRadius:'50%',background:'rgba(0,0,0,0.3)',marginTop:'4px',filter:'blur(4px)'}}></div>
-
-        <div className="splash-text" style={{textAlign:'center',marginTop:'12px'}}>
-          <div style={{fontSize:'28px',fontWeight:'500',color:'#fff',letterSpacing:'-0.5px'}}>Pro<span style={{color:'#D4A843'}}>ject</span></div>
-          <div style={{fontSize:'13px',color:'rgba(255,255,255,0.5)',marginTop:'4px'}}>Ton hub de vie</div>
+        {/* Logo carré */}
+        <div ref={logoRef} style={{
+          position:'absolute',
+          top:'-80px',
+          left:'50%',
+          transform:'translateX(-50%)',
+          width:'56px',height:'56px',
+          borderRadius:'16px',
+          background:'linear-gradient(135deg,rgba(255,255,255,0.2),rgba(212,168,67,0.25))',
+          border:'1.5px solid rgba(255,255,255,0.4)',
+          display:'flex',alignItems:'center',justifyContent:'center',
+          zIndex:10
+        }}>
+          <span style={{fontSize:'18px',fontWeight:'700',color:'#fff',letterSpacing:'-1px'}}>
+            Pro<span style={{color:'#D4A843'}}>j</span>
+          </span>
         </div>
 
-        <div style={{marginTop:'28px',display:'flex',gap:'6px'}}>
-          <div className="splash-d1" style={{width:'6px',height:'6px',borderRadius:'50%',background:'#fff'}}></div>
-          <div className="splash-d2" style={{width:'6px',height:'6px',borderRadius:'50%',background:'#fff'}}></div>
-          <div className="splash-d3" style={{width:'6px',height:'6px',borderRadius:'50%',background:'#fff'}}></div>
+        {/* Livre */}
+        <div ref={bookRef} style={{
+          position:'absolute',
+          width:'56px',height:'56px',
+          display:'flex',
+          zIndex:11
+        }}>
+          <div ref={pageLeftRef} style={{
+            width:'28px',height:'56px',
+            background:'linear-gradient(135deg,#fff,#dce8ff)',
+            borderRadius:'4px 0 0 4px',
+            transformOrigin:'right center'
+          }}/>
+          <div ref={pageRightRef} style={{
+            width:'28px',height:'56px',
+            background:'linear-gradient(135deg,#dce8ff,#fff)',
+            borderRadius:'0 4px 4px 0',
+            transformOrigin:'left center'
+          }}/>
         </div>
       </div>
+
+      {/* Flash blanc */}
+      <div ref={flashRef} style={{
+        position:'absolute',inset:0,
+        background:'#fff',
+        pointerEvents:'none',
+        zIndex:20
+      }}/>
     </div>
   )
 }
