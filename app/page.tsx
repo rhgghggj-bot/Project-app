@@ -55,11 +55,13 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-white">
-      <div style={{background:'linear-gradient(160deg,#0A1628 0%,#1a3a6e 50%,#2B7FFF 100%)',padding:'20px 18px 0',position:'relative',overflow:'hidden'}}>
+
+      {/* Zone bleue - header */}
+      <div style={{background:'linear-gradient(160deg,#0A1628,#1a3a6e,#2B7FFF)',padding:'20px 18px 20px',position:'relative',overflow:'hidden'}}>
         <div style={{position:'absolute',top:'-40px',right:'-40px',width:'200px',height:'200px',borderRadius:'50%',background:'rgba(43,127,255,0.15)'}}></div>
 
         {!user && (
-          <div style={{paddingBottom:'32px'}}>
+          <div>
             <div style={{display:'inline-flex',alignItems:'center',gap:'6px',background:'#FDF8EC',color:'#D4A843',fontSize:'11px',fontWeight:'500',padding:'4px 10px',borderRadius:'99px',border:'1px solid #F0D88A',marginBottom:'12px'}}>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
               Réseau de projets
@@ -74,94 +76,97 @@ export default function Home() {
         )}
 
         {user && (
-          <div style={{paddingBottom:'16px'}}>
+          <div>
             <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'4px'}}>
-              <div style={{fontSize:'13px',color:'rgba(255,255,255,0.5)'}}>
+              <div style={{fontSize:'12px',color:'rgba(255,255,255,0.5)'}}>
                 {today.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}
               </div>
-              <div style={{background:'rgba(255,255,255,0.12)',borderRadius:'50%',padding:'2px'}}>
-                <NotificationBell />
-              </div>
+              <NotificationBell />
             </div>
-            <div style={{fontSize:'22px',fontWeight:'500',color:'#fff',marginBottom:'16px'}}>Bonjour</div>
-
-            <div style={{display:'flex',gap:'12px',marginBottom:'16px'}}>
+            <div style={{fontSize:'22px',fontWeight:'500',color:'#fff',marginBottom:'12px'}}>Bonjour</div>
+            <div style={{display:'flex',gap:'12px'}}>
               <div style={{fontSize:'13px',color:'#86efac',fontWeight:'500'}}><span style={{color:'rgba(255,255,255,0.5)'}}>Rev. </span>{totalRev.toFixed(0)} CHF</div>
               <div style={{fontSize:'13px',color:'#fca5a5',fontWeight:'500'}}><span style={{color:'rgba(255,255,255,0.5)'}}>Dép. </span>{totalDep.toFixed(0)} CHF</div>
-              <div style={{fontSize:'13px',color: solde >= 0 ? '#86efac' : '#fca5a5',fontWeight:'500'}}>Solde : <span style={{color: solde >= 0 ? '#86efac' : '#fca5a5'}}>{solde >= 0 ? '+' : ''}{solde.toFixed(0)} CHF</span></div>
+              <div style={{fontSize:'13px',color: solde >= 0 ? '#86efac' : '#fca5a5',fontWeight:'500'}}>Solde : {solde >= 0 ? '+' : ''}{solde.toFixed(0)} CHF</div>
             </div>
-
-            <div style={{borderRadius:'18px',padding:'14px',background:'rgba(15,45,92,0.7)',backdropFilter:'blur(20px)',border:'1px solid rgba(255,255,255,0.2)',marginBottom:'8px'}}>
-              <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'12px'}}>
-                <span style={{fontSize:'13px',fontWeight:'500',color:'#fff'}}>Cette semaine</span>
-                <a href="/semaine" style={{fontSize:'12px',color:'#a8d8f0',fontWeight:'500',textDecoration:'none'}}>Voir tout →</a>
-              </div>
-              <div style={{display:'flex',gap:'4px'}}>
-                {jours.map((jour, i) => {
-                  const isToday = jour.toDateString() === today.toDateString()
-                  const evts = evtDuJour(jour)
-                  const hasEvts = evts.length > 0
-                  return (
-                    <a key={i} href="/semaine" style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:'3px',textDecoration:'none'}}>
-                      <div style={{fontSize:'10px',color:'rgba(255,255,255,0.65)',fontWeight:'500'}}>{JOURS[i]}</div>
-                      <div style={{width:'100%',minHeight: hasEvts ? '42px' : '32px',borderRadius:'8px',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:'3px',
-                        background: isToday ? '#fff' : hasEvts ? 'rgba(255,255,255,0.15)' : 'transparent',
-                        border: hasEvts && !isToday ? '1px solid rgba(255,255,255,0.35)' : 'none',
-                        padding: hasEvts ? '3px 0' : '0'}}>
-                        <span style={{fontSize:'12px',fontWeight:'600',color: isToday ? '#1e56a0' : 'rgba(255,255,255,0.85)'}}>
-                          {jour.getDate()}
-                        </span>
-                        {hasEvts && (
-                          <div style={{display:'flex',gap:'2px',alignItems:'center'}}>
-                            {evts.slice(0,3).map((e:any,j:number) => (
-                              <div key={j} style={{width:'5px',height:'5px',borderRadius:'50%',background:e.couleur,opacity:0.9}}></div>
-                            ))}
-                            {evts.length > 3 && (
-                              <div style={{background:'rgba(255,255,255,0.3)',borderRadius:'3px',padding:'0 3px',fontSize:'7px',color:'#fff',fontWeight:'600'}}>+{evts.length-3}</div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </a>
-                  )
-                })}
-              </div>
-            </div>
-
-            <div style={{display:'flex',gap:'8px',marginBottom:'8px'}}>
-              <a href="/finances" style={{flex:1,textDecoration:'none'}}>
-                <div style={{background:'rgba(15,45,92,0.7)',backdropFilter:'blur(20px)',borderRadius:'14px',padding:'12px',border:'1px solid rgba(255,255,255,0.2)'}}>
-                  <div style={{fontSize:'11px',color:'#a8d8f0',fontWeight:'500',marginBottom:'4px'}}>Finances</div>
-                  <div style={{fontSize:'18px',fontWeight:'500',color: solde >= 0 ? '#86efac' : '#fca5a5'}}>{solde >= 0 ? '+' : ''}{solde.toFixed(0)} CHF</div>
-                  <div style={{fontSize:'11px',color:'rgba(255,255,255,0.65)',marginTop:'2px'}}>Solde ce mois</div>
-                </div>
-              </a>
-              <a href="/semaine" style={{flex:1,textDecoration:'none'}}>
-                <div style={{background:'rgba(15,45,92,0.7)',backdropFilter:'blur(20px)',borderRadius:'14px',padding:'12px',border:'1px solid rgba(255,255,255,0.2)'}}>
-                  <div style={{fontSize:'11px',color:'#fcd34d',fontWeight:'500',marginBottom:'4px'}}>Prochain</div>
-                  <div style={{fontSize:'13px',fontWeight:'500',color:'#fff'}}>{prochainEvt?.titre || 'Aucun'}</div>
-                  <div style={{fontSize:'11px',color:'rgba(255,255,255,0.65)',marginTop:'2px'}}>{prochainEvt ? new Date(prochainEvt.date).toLocaleDateString('fr-FR',{day:'numeric',month:'short'}) : 'Ajoute un événement'}</div>
-                </div>
-              </a>
-            </div>
-
-            <a href="/scanner" style={{textDecoration:'none',display:'block',marginBottom:'0px'}}>
-              <div style={{background:'rgba(15,45,92,0.7)',backdropFilter:'blur(20px)',borderRadius:'14px',padding:'12px',display:'flex',alignItems:'center',gap:'12px',border:'1px solid rgba(255,255,255,0.2)'}}>
-                <div style={{width:'40px',height:'40px',borderRadius:'12px',background:'rgba(255,255,255,0.15)',border:'1px solid rgba(255,255,255,0.25)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8"><polyline points="4 7 4 4 7 4"/><polyline points="17 4 20 4 20 7"/><polyline points="20 17 20 20 17 20"/><polyline points="7 20 4 20 4 17"/><line x1="4" y1="12" x2="20" y2="12"/></svg>
-                </div>
-                <div>
-                  <div style={{fontSize:'13px',fontWeight:'500',color:'#fff'}}>Scanner un document</div>
-                  <div style={{fontSize:'11px',color:'rgba(255,255,255,0.7)',marginTop:'2px'}}>Facture, relevé, contrat...</div>
-                </div>
-                <div style={{marginLeft:'auto',color:'rgba(255,255,255,0.7)',fontSize:'18px'}}>›</div>
-              </div>
-            </a>
           </div>
         )}
       </div>
 
-      <div style={{padding:'12px 14px'}}>
+      {/* Zone gris clair - calendrier + cartes */}
+      {user && (
+        <div style={{background:'#f0f4ff',padding:'14px'}}>
+          <div style={{borderRadius:'16px',padding:'14px',background:'rgba(15,45,92,0.85)',border:'1px solid rgba(255,255,255,0.15)',marginBottom:'10px'}}>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'12px'}}>
+              <span style={{fontSize:'13px',fontWeight:'500',color:'#fff'}}>Cette semaine</span>
+              <a href="/semaine" style={{fontSize:'12px',color:'#a8d8f0',fontWeight:'500',textDecoration:'none'}}>Voir tout →</a>
+            </div>
+            <div style={{display:'flex',gap:'4px'}}>
+              {jours.map((jour, i) => {
+                const isToday = jour.toDateString() === today.toDateString()
+                const evts = evtDuJour(jour)
+                const hasEvts = evts.length > 0
+                return (
+                  <a key={i} href="/semaine" style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:'3px',textDecoration:'none'}}>
+                    <div style={{fontSize:'10px',color:'rgba(255,255,255,0.5)',fontWeight:'500'}}>{JOURS[i]}</div>
+                    <div style={{width:'100%',minHeight: hasEvts ? '42px' : '28px',borderRadius:'6px',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:'3px',
+                      background: isToday ? '#fff' : hasEvts ? 'rgba(255,255,255,0.12)' : 'transparent',
+                      border: hasEvts && !isToday ? '1px solid rgba(255,255,255,0.2)' : 'none',
+                      padding: hasEvts ? '3px 0' : '0'}}>
+                      <span style={{fontSize:'12px',fontWeight:'600',color: isToday ? '#1e56a0' : 'rgba(255,255,255,0.85)'}}>
+                        {jour.getDate()}
+                      </span>
+                      {hasEvts && (
+                        <div style={{display:'flex',gap:'2px',alignItems:'center'}}>
+                          {evts.slice(0,3).map((e:any,j:number) => (
+                            <div key={j} style={{width:'4px',height:'4px',borderRadius:'50%',background:e.couleur}}></div>
+                          ))}
+                          {evts.length > 3 && (
+                            <div style={{background:'rgba(255,255,255,0.3)',borderRadius:'3px',padding:'0 3px',fontSize:'7px',color:'#fff',fontWeight:'600'}}>+{evts.length-3}</div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </a>
+                )
+              })}
+            </div>
+          </div>
+
+          <div style={{display:'flex',gap:'8px',marginBottom:'8px'}}>
+            <a href="/finances" style={{flex:1,textDecoration:'none'}}>
+              <div style={{background:'rgba(15,45,92,0.85)',borderRadius:'14px',padding:'12px',border:'1px solid rgba(255,255,255,0.15)'}}>
+                <div style={{fontSize:'11px',color:'#a8d8f0',fontWeight:'500',marginBottom:'4px'}}>Finances</div>
+                <div style={{fontSize:'18px',fontWeight:'500',color: solde >= 0 ? '#86efac' : '#fca5a5'}}>{solde >= 0 ? '+' : ''}{solde.toFixed(0)} CHF</div>
+                <div style={{fontSize:'11px',color:'rgba(255,255,255,0.5)',marginTop:'2px'}}>Solde ce mois</div>
+              </div>
+            </a>
+            <a href="/semaine" style={{flex:1,textDecoration:'none'}}>
+              <div style={{background:'rgba(15,45,92,0.85)',borderRadius:'14px',padding:'12px',border:'1px solid rgba(255,255,255,0.15)'}}>
+                <div style={{fontSize:'11px',color:'#fcd34d',fontWeight:'500',marginBottom:'4px'}}>Prochain</div>
+                <div style={{fontSize:'13px',fontWeight:'500',color:'#fff'}}>{prochainEvt?.titre || 'Aucun'}</div>
+                <div style={{fontSize:'11px',color:'rgba(255,255,255,0.5)',marginTop:'2px'}}>{prochainEvt ? new Date(prochainEvt.date).toLocaleDateString('fr-FR',{day:'numeric',month:'short'}) : 'Ajoute un événement'}</div>
+              </div>
+            </a>
+          </div>
+
+          <a href="/scanner" style={{textDecoration:'none',display:'block'}}>
+            <div style={{background:'rgba(15,45,92,0.85)',borderRadius:'14px',padding:'12px',display:'flex',alignItems:'center',gap:'12px',border:'1px solid rgba(255,255,255,0.15)'}}>
+              <div style={{width:'38px',height:'38px',borderRadius:'10px',background:'rgba(255,255,255,0.1)',border:'1px solid rgba(255,255,255,0.2)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8"><polyline points="4 7 4 4 7 4"/><polyline points="17 4 20 4 20 7"/><polyline points="20 17 20 20 17 20"/><polyline points="7 20 4 20 4 17"/><line x1="4" y1="12" x2="20" y2="12"/></svg>
+              </div>
+              <div>
+                <div style={{fontSize:'13px',fontWeight:'500',color:'#fff'}}>Scanner un document</div>
+                <div style={{fontSize:'11px',color:'rgba(255,255,255,0.6)',marginTop:'2px'}}>Facture, relevé, contrat...</div>
+              </div>
+              <div style={{marginLeft:'auto',color:'rgba(255,255,255,0.5)',fontSize:'18px'}}>›</div>
+            </div>
+          </a>
+        </div>
+      )}
+
+      {/* Zone blanche - projets */}
+      <div style={{padding:'12px 14px',background:'#fff'}}>
         <p className="text-xs text-gray-400 uppercase tracking-wider font-medium mb-3">Projets publics</p>
 
         {projets.length === 0 && (
