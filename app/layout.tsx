@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Navigation from "./components/Navigation"
 import PushNotifSetup from "./components/PushNotifSetup";
+import SplashWrapper from "./components/SplashWrapper";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -41,9 +42,11 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icon-192.png" />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <Navigation />
-        <PushNotifSetup />
-        <div style={{paddingBottom:"90px",paddingTop:"calc(44px + env(safe-area-inset-top))"}} className="md:pt-0">{children}</div>
+        <SplashWrapper>
+          <Navigation />
+          <PushNotifSetup />
+          <div style={{paddingBottom:"90px",paddingTop:"calc(44px + env(safe-area-inset-top))"}} className="md:pt-0">{children}</div>
+        </SplashWrapper>
       </body>
     </html>
   );
