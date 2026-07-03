@@ -1,6 +1,7 @@
 "use client"
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
+import NotificationBell from "./components/NotificationBell"
 
 const JOURS = ["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"]
 
@@ -74,7 +75,14 @@ export default function Home() {
 
         {user && (
           <div style={{paddingBottom:'16px'}}>
-            <div style={{fontSize:'13px',color:'rgba(255,255,255,0.5)',marginBottom:'4px'}}>{today.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</div>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'4px'}}>
+              <div style={{fontSize:'13px',color:'rgba(255,255,255,0.5)'}}>
+                {today.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}
+              </div>
+              <div style={{background:'rgba(255,255,255,0.12)',borderRadius:'50%',padding:'2px'}}>
+                <NotificationBell />
+              </div>
+            </div>
             <div style={{fontSize:'22px',fontWeight:'500',color:'#fff',marginBottom:'16px'}}>Bonjour</div>
 
             <div style={{display:'flex',gap:'12px',marginBottom:'16px'}}>
