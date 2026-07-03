@@ -179,8 +179,8 @@ export default function Finances() {
               {donneesGraphique.map((d, i) => {
                 const estActuel = d.mois === moisActuel
                 const estSel = moisSelectionne?.mois === d.mois
-                const hDep = d.depenses > 0 ? Math.max((d.depenses/maxVal)*100, 8) : 3
-                const hRev = d.revenus > 0 ? Math.max((d.revenus/maxVal)*100, 8) : 3
+                const hDep = d.depenses > 0 ? Math.max(Math.min((d.depenses/maxVal)*90, 90), 8) : 3
+                const hRev = d.revenus > 0 ? Math.max(Math.min((d.revenus/maxVal)*90, 90), 8) : 3
                 const soldeMois = d.revenus - d.depenses
                 return (
                   <div key={i} onClick={() => setMoisSelectionne(estSel ? null : d)} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:'3px',cursor:'pointer'}}>
