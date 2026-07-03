@@ -159,7 +159,7 @@ export default function AppelGroupe() {
       await supabase.from('messages_groupe').insert({
         groupe_id: String(params.id),
         user_id: user.id,
-        contenu: '📞 ' + username + ' a lance un appel — Clique sur 📞 pour rejoindre'
+        contenu: username + ' a lancé un appel — Rejoins la discussion pour participer'
       })
       const res = await fetch('/api/livekit?room=groupe-' + params.id + '&username=' + username)
       const data = await res.json()
@@ -178,7 +178,7 @@ export default function AppelGroupe() {
   return (
     <main style={{height:'100vh',background:'linear-gradient(135deg,#1a3a6e,#2B7FFF,#87CEEB)',display:'flex',flexDirection:'column'}}>
       <div style={{padding:'14px 16px',background:'rgba(255,255,255,0.15)',borderBottom:'0.5px solid rgba(255,255,255,0.3)',display:'flex',alignItems:'center',gap:'10px',flexShrink:0}}>
-        <span style={{color:'#fff',fontWeight:'500',fontSize:'15px'}}>📞 {groupe?.nom}</span>
+        <span style={{color:'#fff',fontWeight:'500',fontSize:'15px'}}>{groupe?.nom}</span>
       </div>
       <LiveKitRoom video={true} audio={true} token={token} serverUrl={process.env.NEXT_PUBLIC_LIVEKIT_URL} style={{flex:1,display:'flex',flexDirection:'column'}}>
         <VideoGrid />

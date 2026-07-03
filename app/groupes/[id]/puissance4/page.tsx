@@ -114,7 +114,7 @@ export default function Puissance4() {
     <main style={{minHeight:'100vh',background:'linear-gradient(135deg,#1a1a2e,#16213e)',padding:'20px 18px'}}>
       <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'20px'}}>
         <button onClick={() => router.back()} style={{color:'rgba(255,255,255,0.6)',background:'none',border:'none',fontSize:'20px',cursor:'pointer'}}>←</button>
-        <span style={{color:'#fff',fontWeight:'500',fontSize:'15px'}}>🔴 Puissance 4</span>
+        <span style={{color:'#fff',fontWeight:'500',fontSize:'15px'}}>Puissance 4</span>
         <div style={{width:'32px'}}></div>
       </div>
 
@@ -143,19 +143,19 @@ export default function Puissance4() {
         <div>
           <div style={{display:'flex',justifyContent:'center',gap:'12px',marginBottom:'16px'}}>
             <div style={{background: partie.joueur1_id === user?.id ? 'rgba(255,68,68,0.2)' : 'rgba(255,255,255,0.08)',border:`1px solid ${partie.joueur1_id === user?.id ? 'rgba(255,68,68,0.5)' : 'rgba(255,255,255,0.15)'}`,borderRadius:'12px',padding:'10px 16px',textAlign:'center'}}>
-              <div style={{fontSize:'20px',marginBottom:'4px'}}>🔴</div>
+              <div style={{width:'20px',height:'20px',borderRadius:'50%',background:'#FF4444',marginBottom:'4px'}}></div>
               <div style={{color:'#fff',fontSize:'12px',fontWeight:'500'}}>{nomJoueur(partie.joueur1_id)}</div>
             </div>
             <div style={{color:'rgba(255,255,255,0.4)',fontSize:'20px',display:'flex',alignItems:'center'}}>VS</div>
             <div style={{background: partie.joueur2_id === user?.id ? 'rgba(255,215,0,0.2)' : 'rgba(255,255,255,0.08)',border:`1px solid ${partie.joueur2_id === user?.id ? 'rgba(255,215,0,0.5)' : 'rgba(255,255,255,0.15)'}`,borderRadius:'12px',padding:'10px 16px',textAlign:'center'}}>
-              <div style={{fontSize:'20px',marginBottom:'4px'}}>🟡</div>
+              <div style={{width:'20px',height:'20px',borderRadius:'50%',background:'#FFD700',marginBottom:'4px'}}></div>
               <div style={{color:'#fff',fontSize:'12px',fontWeight:'500'}}>{nomJoueur(partie.joueur2_id)}</div>
             </div>
           </div>
 
           {gagnantId ? (
             <div style={{background:'rgba(212,168,67,0.2)',border:'1px solid rgba(212,168,67,0.5)',borderRadius:'14px',padding:'14px',textAlign:'center',marginBottom:'16px'}}>
-              <div style={{fontSize:'32px',marginBottom:'8px'}}>{gagnantId === user?.id ? '🏆' : '😔'}</div>
+              <div style={{fontSize:'32px',marginBottom:'8px'}}>{gagnantId === user?.id ? '★' : '—'}</div>
               <div style={{color:'#D4A843',fontWeight:'500',fontSize:'15px'}}>{gagnantId === user?.id ? 'Tu as gagné !' : nomJoueur(gagnantId) + ' a gagné !'}</div>
               <button onClick={() => setPartie(null)} style={{background:'#2B7FFF',color:'#fff',border:'none',borderRadius:'10px',padding:'8px 20px',fontSize:'13px',cursor:'pointer',marginTop:'12px',fontWeight:'500'}}>
                 Nouvelle partie

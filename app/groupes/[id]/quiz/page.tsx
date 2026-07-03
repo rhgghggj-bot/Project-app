@@ -100,13 +100,13 @@ export default function QuizPage() {
     const pct = Math.round((score! / total) * 100)
     return (
       <main style={{...s.main,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center'}}>
-        <div style={{fontSize:'64px',marginBottom:'16px'}}>{pct>=80?'🏆':pct>=60?'🎉':pct>=40?'👍':'💪'}</div>
+        <div style={{fontSize:'48px',fontWeight:'500',color:'#fff',marginBottom:'16px'}}>{pct>=80?'Excellent':pct>=60?'Bien':pct>=40?'Pas mal':'Continue'}</div>
         <div style={{color:'#fff',fontSize:'28px',fontWeight:'500',marginBottom:'4px'}}>{score}/{total}</div>
         <div style={{color:'#a855f7',fontSize:'15px',marginBottom:'32px'}}>{pct}% de bonnes reponses</div>
         <div style={{width:'100%',background:'rgba(255,255,255,0.1)',border,borderRadius:'20px',padding:'20px',marginBottom:'24px'}}>
           {quizActif.questions.map((q: any, i: number) => (
             <div key={i} style={{display:'flex',gap:'10px',marginBottom:'12px',alignItems:'flex-start'}}>
-              <span style={{fontSize:'18px',flexShrink:0}}>{reponses[i]===q.reponse?'✅':'❌'}</span>
+              <span style={{flexShrink:0,color:reponses[i]===q.reponse?'#4ade80':'#F43F5E',fontWeight:'500'}}>{reponses[i]===q.reponse?'✓':'✗'}</span>
               <div>
                 <div style={{color:'rgba(255,255,255,0.8)',fontSize:'13px',marginBottom:'3px'}}>{q.question}</div>
                 {reponses[i]!==q.reponse&&<div style={{color:'#4ade80',fontSize:'12px'}}>Bonne reponse: {q.options[q.reponse]}</div>}
@@ -166,7 +166,7 @@ export default function QuizPage() {
       <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'20px'}}>
         <div style={{display:'flex',alignItems:'center',gap:'12px'}}>
           <button onClick={()=>router.back()} style={{color:'rgba(255,255,255,0.6)',background:'none',border:'none',fontSize:'20px',cursor:'pointer'}}>←</button>
-          <span style={{color:'#fff',fontWeight:'500',fontSize:'16px'}}>🗺️ Quiz</span>
+          <span style={{color:'#fff',fontWeight:'500',fontSize:'16px'}}>Quiz</span>
         </div>
         <button onClick={()=>setMode('creer')} style={{background:'rgba(255,255,255,0.15)',border:'1px solid rgba(255,255,255,0.3)',color:'#fff',borderRadius:'99px',padding:'8px 16px',fontSize:'13px',cursor:'pointer',fontWeight:'500'}}>
           + Créer
@@ -174,7 +174,7 @@ export default function QuizPage() {
       </div>
       {quizList.length===0 && (
         <div style={{textAlign:'center',padding:'48px 0',color:'rgba(255,255,255,0.5)'}}>
-          <div style={{fontSize:'48px',marginBottom:'12px'}}>🗺️</div>
+          <svg width='48' height='48' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.4)' strokeWidth='1.5' style={{marginBottom:'12px'}}><circle cx='12' cy='12' r='10'/><path d='M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3'/><line x1='12' y1='17' x2='12.01' y2='17'/></svg>
           <div style={{fontSize:'14px',marginBottom:'8px'}}>Aucun quiz pour l'instant</div>
           <button onClick={()=>setMode('creer')} style={{color:'#a855f7',fontSize:'13px',fontWeight:'500',background:'none',border:'none',cursor:'pointer'}}>
             Crée le premier quiz →
@@ -186,8 +186,7 @@ export default function QuizPage() {
           <div style={{padding:'18px'}}>
             <div style={{display:'flex',alignItems:'center',gap:'12px',marginBottom:'14px'}}>
               <div style={{width:'44px',height:'44px',borderRadius:'12px',background:COULEURS[idx%4],display:'flex',alignItems:'center',justifyContent:'center',fontSize:'22px'}}>
-                🗺️
-              </div>
+                              </div>
               <div>
                 <div style={{color:'#fff',fontWeight:'500',fontSize:'14px'}}>{quiz.titre}</div>
                 <div style={{color:'rgba(255,255,255,0.5)',fontSize:'11px',marginTop:'2px'}}>{quiz.questions.length} questions · {new Date(quiz.created_at).toLocaleDateString('fr-FR')}</div>
