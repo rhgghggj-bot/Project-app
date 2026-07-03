@@ -121,7 +121,7 @@ export default function GroupePage() {
     return (
       <main className="min-h-screen bg-white flex flex-col items-center justify-center px-5">
         <div className="text-center">
-          <p className="text-5xl mb-4">🔒</p>
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="1.5" style={{marginBottom:"16px"}}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
           <h1 className="text-lg font-medium text-gray-900 mb-2">{groupe.nom}</h1>
           <p className="text-sm text-gray-400 mb-6">Ce groupe est privé. Tu as besoin d'une invitation pour y accéder.</p>
           <a href="/groupes" className="text-blue-500 text-sm font-medium">← Retour aux groupes</a>
@@ -257,11 +257,11 @@ export default function GroupePage() {
                       <div style={{display:'flex',gap:'8px',marginTop:'6px',justifyContent: estMoi ? 'flex-end' : 'flex-start'}}>
                         <button onClick={() => { setEditionId(m.id); setEditionTexte(m.contenu); setMessageActif(null) }}
                           style={{fontSize:'11px',background:'#F8FBFF',color:'#2B7FFF',border:'1px solid #E8F1FF',borderRadius:'99px',padding:'4px 10px',cursor:'pointer'}}>
-                          ✏️ Modifier
+                          <span style={{display:"flex",alignItems:"center",gap:"4px"}}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Modifier</span>
                         </button>
                         <button onClick={() => supprimerMessage(m.id)}
                           style={{fontSize:'11px',background:'#FFF5F5',color:'#F43F5E',border:'1px solid #FECDD3',borderRadius:'99px',padding:'4px 10px',cursor:'pointer'}}>
-                          🗑️ Supprimer
+                          <span style={{display:"flex",alignItems:"center",gap:"4px"}}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>Supprimer</span>
                         </button>
                       </div>
                     )}

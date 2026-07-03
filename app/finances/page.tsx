@@ -144,7 +144,7 @@ export default function Finances() {
         </div>
         <div style={{display:'flex',gap:'8px'}}>
           <div style={{flex:1,background:'rgba(16,185,129,0.15)',borderRadius:'12px',padding:'10px 12px',border:'0.5px solid rgba(16,185,129,0.3)'}}>
-            <div style={{fontSize:'11px',color:'rgba(255,255,255,0.5)',marginBottom:'3px'}}>📈 Revenus</div>
+            <div style={{fontSize:'11px',color:'rgba(255,255,255,0.5)',marginBottom:'3px'}}>Revenus</div>
             <div style={{fontSize:'18px',fontWeight:'500',color:'#4ade80'}}>{moisActuelData.revenus.toFixed(0)} CHF</div>
           </div>
           <div style={{flex:1,background:'rgba(244,63,94,0.15)',borderRadius:'12px',padding:'10px 12px',border:'0.5px solid rgba(244,63,94,0.3)'}}>
@@ -220,7 +220,7 @@ export default function Finances() {
               <div style={{fontSize:'12px',color:'#10B981'}}>{moisMinDep?.depenses.toFixed(0) || 0} CHF</div>
             </div>
             <div style={{flex:1,background:'#FFE4E6',borderRadius:'14px',padding:'12px',border:'0.5px solid #FECDD3'}}>
-              <div style={{fontSize:'10px',color:'#F43F5E',fontWeight:'500',marginBottom:'4px'}}>📈 Mois le plus cher</div>
+              <div style={{fontSize:'10px',color:'#F43F5E',fontWeight:'500',marginBottom:'4px'}}>Mois le plus cher</div>
               <div style={{fontSize:'15px',fontWeight:'500',color:'#1a1a2e'}}>{moisMaxDep.label}</div>
               <div style={{fontSize:'12px',color:'#F43F5E'}}>{moisMaxDep.depenses.toFixed(0)} CHF</div>
             </div>
@@ -374,7 +374,7 @@ export default function Finances() {
       {onglet === "epargne" && (
         <div style={{padding:'16px 18px'}}>
           <div style={{background:'linear-gradient(135deg,#1a3a6e,#2B7FFF)',borderRadius:'18px',padding:'16px',marginBottom:'14px'}}>
-            <div style={{fontSize:'15px',fontWeight:'500',color:'#fff',marginBottom:'4px'}}>💎 Plan d'épargne</div>
+            <div style={{fontSize:'15px',fontWeight:'500',color:'#fff',marginBottom:'4px'}}>Plan d'épargne</div>
             <div style={{fontSize:'12px',color:'rgba(255,255,255,0.6)'}}>Entre ton objectif et vois combien épargner par mois</div>
           </div>
 

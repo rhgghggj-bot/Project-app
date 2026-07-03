@@ -113,14 +113,14 @@ export default function Home() {
           <div style={{display:'flex',gap:'8px',marginBottom:'8px'}}>
             <a href="/finances" style={{flex:1,textDecoration:'none'}}>
               <div style={{background:'linear-gradient(135deg,#EEF5FF,#DCE9FF)',borderRadius:'14px',padding:'12px',border:'0.5px solid #DCE9FF'}}>
-                <div style={{fontSize:'11px',color:'#2B7FFF',fontWeight:'500',marginBottom:'4px'}}>💸 Finances</div>
+                <div style={{fontSize:'11px',color:'#2B7FFF',fontWeight:'500',marginBottom:'4px'}}>Finances</div>
                 <div style={{fontSize:'18px',fontWeight:'500',color: solde >= 0 ? '#10B981' : '#F43F5E'}}>{solde >= 0 ? '+' : ''}{solde.toFixed(0)} CHF</div>
                 <div style={{fontSize:'11px',color:'#aaa',marginTop:'2px'}}>Solde ce mois</div>
               </div>
             </a>
             <a href="/semaine" style={{flex:1,textDecoration:'none'}}>
               <div style={{background:'linear-gradient(135deg,#FDF8EC,#F0D88A33)',borderRadius:'14px',padding:'12px',border:'0.5px solid #F0D88A'}}>
-                <div style={{fontSize:'11px',color:'#D4A843',fontWeight:'500',marginBottom:'4px'}}>📅 Prochain événement</div>
+                <div style={{fontSize:'11px',color:'#D4A843',fontWeight:'500',marginBottom:'4px'}}>Prochain événement</div>
                 <div style={{fontSize:'14px',fontWeight:'500',color:'#1a1a2e'}}>{prochainEvt?.titre || 'Aucun'}</div>
                 <div style={{fontSize:'11px',color:'#aaa',marginTop:'2px'}}>{prochainEvt ? new Date(prochainEvt.date).toLocaleDateString('fr-FR',{day:'numeric',month:'short'}) : 'Ajoute un événement'}</div>
               </div>
