@@ -59,7 +59,9 @@ export default function Home() {
       if (e.date === todayStr) {
         if (!e.heure) return true
         const [h, m] = e.heure.split(':').map(Number)
-        return h * 60 + m >= nowMin
+        const debut = h * 60 + m
+        const fin = debut + (e.duree || 0)
+        return fin > nowMin
       }
       return false
     })
