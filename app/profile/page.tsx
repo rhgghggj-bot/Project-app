@@ -145,7 +145,7 @@ export default function Profile() {
                 <div style={{height:'100px',background:`linear-gradient(135deg,${couleurProfil}22,${couleurProfil}44)`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:'36px',position:'relative'}}>
                   <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="1.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
                   {projet.prive && (
-                    <span style={{position:'absolute',top:'8px',right:'8px',background:'#1a1a2e',color:'#fff',fontSize:'10px',padding:'2px 8px',borderRadius:'99px'}} style={{display:"flex",alignItems:"center",gap:"4px"}}><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Privé</span>
+                    <span style={{position:'absolute',top:'8px',right:'8px',background:'#1a1a2e',color:'#fff',fontSize:'10px',padding:'2px 8px',borderRadius:'99px',display:'flex',alignItems:'center',gap:'4px'}}><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Privé</span>
                   )}
                 </div>
                 <div style={{padding:'12px 14px'}}>
