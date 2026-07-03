@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Navigation from "./components/Navigation";
+import Navigation from "./components/Navigation"
+import PushNotifSetup from "./components/PushNotifSetup";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -41,6 +42,7 @@ export default function RootLayout({
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <Navigation />
+        <PushNotifSetup />
         <div style={{paddingBottom:"90px",paddingTop:"calc(44px + env(safe-area-inset-top))"}} className="md:pt-0">{children}</div>
       </body>
     </html>
