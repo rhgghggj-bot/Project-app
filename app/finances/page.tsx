@@ -3,7 +3,7 @@ import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 
 const CAT_DEPENSES = ["🏠 Logement","🛡️ Assurance maladie","🚗 Assurance voiture","🏡 Assurance maison","⛽ Transport","🍽️ Alimentation","💊 Santé","📱 Téléphone","💡 Énergie","🎮 Loisirs","📦 Autres"]
-const CAT_REVENUS = ["💼 Salaire","🏢 Freelance","📈 Investissement","🎁 Don / Cadeau","🏦 Allocation","💰 Autre revenu"]
+const CAT_REVENUS = ["Salaire","Freelance","Investissement","Don / Cadeau","Allocation","Autre revenu"]
 const MOIS_NOMS = ["Jan","Fév","Mar","Avr","Mai","Jun","Jul","Aoû","Sep","Oct","Nov","Déc"]
 
 export default function Finances() {
@@ -81,7 +81,7 @@ export default function Finances() {
   const pctDepenses = moisActuelData.revenus > 0 ? Math.min((moisActuelData.depenses / moisActuelData.revenus) * 100, 100) : 0
   const statutSolde = solde > 0 ? "benefice" : solde < 0 ? "deficit" : "equilibre"
   const couleurSolde = statutSolde === "benefice" ? "#10B981" : statutSolde === "deficit" ? "#F43F5E" : "#D4A843"
-  const iconeSolde = statutSolde === "benefice" ? "✅" : statutSolde === "deficit" ? "🔴" : "⚠️"
+  const iconeSolde = ""
   const texteSolde = statutSolde === "benefice" ? "Bénéfice" : statutSolde === "deficit" ? "Déficit" : "Équilibre"
 
   const moisMaxDep = donneesGraphique.reduce((a, b) => a.depenses > b.depenses ? a : b)
@@ -100,11 +100,11 @@ export default function Finances() {
     <div style={{background: type === "revenu" ? '#F0FFF8' : '#fff', border:`0.5px solid ${type === "revenu" ? '#A7F3D0' : '#E8F1FF'}`,borderRadius:'14px',padding:'12px 14px',marginBottom:'8px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
       <div style={{display:'flex',alignItems:'center',gap:'10px',flex:1}}>
         <div style={{width:'36px',height:'36px',background: type === "revenu" ? '#E1F5EE' : '#EEF5FF',borderRadius:'10px',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'16px'}}>
-          {d.categorie?.split(' ')[0] || (type === "revenu" ? '💰' : '📦')}
+          {type === "revenu" ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>}
         </div>
         <div style={{flex:1}}>
           <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e'}}>{d.titre}</div>
-          <div style={{fontSize:'11px',color:'#aaa'}}>{new Date(d.date).toLocaleDateString('fr-FR')} {d.recurrent ? '· 🔄' : ''}</div>
+          <div style={{fontSize:'11px',color:'#aaa'}}>{new Date(d.date).toLocaleDateString('fr-FR')} {d.recurrent ? '· récurrent' : ''}</div>
         </div>
       </div>
       <div style={{display:'flex',alignItems:'center',gap:'6px'}}>
@@ -138,7 +138,7 @@ export default function Finances() {
           <div style={{display:'flex',justifyContent:'space-between'}}>
             <span style={{fontSize:'12px',color:'rgba(255,255,255,0.6)'}}>Dépenses : {pctDepenses.toFixed(0)}% des revenus</span>
             <span style={{fontSize:'12px',color: pctDepenses > 90 ? '#F43F5E' : pctDepenses > 70 ? '#D4A843' : '#10B981',fontWeight:'500'}}>
-              {pctDepenses > 90 ? '⚠️ Attention' : pctDepenses > 70 ? '👀 Surveille' : '👍 Bon rythme'}
+              {pctDepenses > 90 ? 'Attention' : pctDepenses > 70 ? 'Surveille' : 'Bon rythme'}
             </span>
           </div>
         </div>
@@ -160,7 +160,7 @@ export default function Finances() {
             style={{flex:1,padding:'12px 0',fontSize:'12px',fontWeight:'500',border:'none',background:'none',cursor:'pointer',
               color: onglet === o ? '#2B7FFF' : '#aaa',
               borderBottom: onglet === o ? '2px solid #2B7FFF' : '2px solid transparent'}}>
-            {o === "vue" ? "📊 Vue" : o === "revenus" ? "💰 Revenus" : o === "charges" ? "🔄 Charges" : "💎 Épargne"}
+            {o === "vue" ? "Vue" : o === "revenus" ? "Revenus" : o === "charges" ? "Charges" : "Épargne"}
           </button>
         ))}
       </div>
@@ -205,8 +205,8 @@ export default function Finances() {
                   </span>
                 </div>
                 <div style={{display:'flex',gap:'12px'}}>
-                  <span style={{fontSize:'12px',color:'#F43F5E'}}>📉 {moisSelectionne.depenses.toFixed(0)} CHF</span>
-                  <span style={{fontSize:'12px',color:'#4ade80'}}>📈 {moisSelectionne.revenus.toFixed(0)} CHF</span>
+                  <span style={{fontSize:'12px',color:'#F43F5E'}}>Dép. {moisSelectionne.depenses.toFixed(0)} CHF</span>
+                  <span style={{fontSize:'12px',color:'#4ade80'}}>Rev. {moisSelectionne.revenus.toFixed(0)} CHF</span>
                 </div>
                 <button onClick={() => setMoisSelectionne(null)} style={{fontSize:'11px',color:'#aaa',background:'none',border:'none',cursor:'pointer',marginTop:'4px'}}>× Fermer</button>
               </div>
@@ -256,7 +256,7 @@ export default function Finances() {
 
           {showForm && (
             <div style={{background: typeForm === "depense" ? '#FFF5F5' : '#F0FFF8',borderRadius:'16px',padding:'14px',marginBottom:'12px',border:`0.5px solid ${typeForm === "depense" ? '#FECDD3' : '#A7F3D0'}`}}>
-              <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',marginBottom:'10px'}}>{typeForm === "depense" ? '➖ Nouvelle dépense' : '➕ Nouveau revenu'}</div>
+              <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',marginBottom:'10px'}}>{typeForm === "depense" ? 'Nouvelle dépense' : 'Nouveau revenu'}</div>
               <input value={titre} onChange={e => setTitre(e.target.value)} placeholder={typeForm === "depense" ? "Ex: Loyer..." : "Ex: Salaire..."}
                 style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'8px 12px',fontSize:'13px',color:'#1a1a2e',background:'#fff',marginBottom:'8px'}}/>
               <div style={{display:'flex',gap:'8px',marginBottom:'8px'}}>
@@ -290,7 +290,7 @@ export default function Finances() {
 
           {depensesMoisAff.length === 0 && revenusMoisAff.length === 0 && (
             <div style={{textAlign:'center',padding:'32px 0',color:'#aaa'}}>
-              <div style={{fontSize:'32px',marginBottom:'8px'}}>💸</div>
+              <svg width='32' height='32' viewBox='0 0 24 24' fill='none' stroke='#aaa' strokeWidth='1.5' style={{marginBottom:'8px'}}><line x1='12' y1='1' x2='12' y2='23'/><path d='M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6'/></svg>
               <div style={{fontSize:'13px'}}>Rien ce mois — ajoute une dépense ou un revenu !</div>
             </div>
           )}
@@ -331,7 +331,7 @@ export default function Finances() {
           )}
           {revenus.length === 0 && (
             <div style={{textAlign:'center',padding:'32px 0',color:'#aaa'}}>
-              <div style={{fontSize:'32px',marginBottom:'8px'}}>💰</div>
+              <svg width='32' height='32' viewBox='0 0 24 24' fill='none' stroke='#aaa' strokeWidth='1.5' style={{marginBottom:'8px'}}><line x1='12' y1='1' x2='12' y2='23'/><path d='M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6'/></svg>
               <div style={{fontSize:'13px'}}>Aucun revenu enregistré</div>
             </div>
           )}
@@ -344,7 +344,7 @@ export default function Finances() {
           <div style={{fontSize:'11px',color:'#aaa',textTransform:'uppercase',letterSpacing:'0.07em',fontWeight:'500',marginBottom:'10px'}}>Charges fixes mensuelles</div>
           {depenses.filter(d => d.recurrent).length === 0 && revenus.filter(r => r.recurrent).length === 0 && (
             <div style={{textAlign:'center',padding:'32px 0',color:'#aaa'}}>
-              <div style={{fontSize:'32px',marginBottom:'8px'}}>🔄</div>
+              <svg width='32' height='32' viewBox='0 0 24 24' fill='none' stroke='#aaa' strokeWidth='1.5' style={{marginBottom:'8px'}}><polyline points='23 4 23 10 17 10'/><polyline points='1 20 1 14 7 14'/><path d='M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15'/></svg>
               <div style={{fontSize:'13px'}}>Coche "Récurrent" en ajoutant une dépense</div>
             </div>
           )}
@@ -410,7 +410,7 @@ export default function Finances() {
                       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'10px'}}>
                         <span style={{fontSize:'14px',fontWeight:'500',color:s.couleur}}>{s.label}</span>
                         <span style={{fontSize:'11px',background: faisable ? '#E1F5EE' : '#FFE4E6',color: faisable ? '#10B981' : '#F43F5E',padding:'3px 8px',borderRadius:'99px'}}>
-                          {faisable ? '✅ Faisable' : '⚠️ Difficile'}
+                          {faisable ? 'Faisable' : 'Difficile'}
                         </span>
                       </div>
                       <div style={{fontSize:'22px',fontWeight:'500',color:s.couleur,marginBottom:'4px'}}>
