@@ -91,14 +91,14 @@ export default function Scanner() {
     setImage(null); setTexte(""); setAnalyse(null); setEtape("upload")
   }
 
-  const typeIcon: any = { facture:"🧾", releve_bancaire:"🏦", contrat:"📋", assurance:"🛡️", autre:"📄" }
+  const typeIcon: any = {}
   const typeLabel: any = { facture:"Facture / Reçu", releve_bancaire:"Relevé bancaire", contrat:"Contrat", assurance:"Assurance", autre:"Document" }
 
   return (
     <main className="min-h-screen bg-white">
       <div style={{background:'linear-gradient(160deg,#0A1628,#1a3a6e)',padding:'20px 18px 28px'}}>
         <a href="/" style={{fontSize:'12px',color:'rgba(255,255,255,0.5)',display:'block',marginBottom:'8px'}}>← Accueil</a>
-        <div style={{fontSize:'22px',fontWeight:'500',color:'#fff',marginBottom:'2px'}}>📄 Scanner</div>
+        <div style={{fontSize:'22px',fontWeight:'500',color:'#fff',marginBottom:'2px',display:'flex',alignItems:'center',gap:'8px'}}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="4 7 4 4 7 4"/><polyline points="17 4 20 4 20 7"/><polyline points="20 17 20 20 17 20"/><polyline points="7 20 4 20 4 17"/><line x1="4" y1="12" x2="20" y2="12"/></svg>Scanner</div>
         <div style={{fontSize:'13px',color:'rgba(255,255,255,0.6)'}}>Reconnaissance de texte — 100% gratuit</div>
       </div>
 
@@ -128,7 +128,7 @@ export default function Scanner() {
 
         {etape === "analyse" && (
           <div style={{textAlign:'center',padding:'48px 0'}}>
-            <div style={{fontSize:'48px',marginBottom:'16px'}}>🔍</div>
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="1.5" style={{marginBottom:"16px"}}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             <div style={{fontSize:'16px',fontWeight:'500',color:'#1a1a2e',marginBottom:'8px'}}>Lecture du document...</div>
             <div style={{fontSize:'13px',color:'#aaa',marginBottom:'8px'}}>Extraction du texte en cours</div>
             <div style={{fontSize:'12px',color:'#2B7FFF'}}>Cela peut prendre 10-30 secondes</div>
@@ -145,7 +145,7 @@ export default function Scanner() {
 
             <div style={{background:'linear-gradient(135deg,#EEF5FF,#DCE9FF)',borderRadius:'16px',padding:'16px',marginBottom:'14px'}}>
               <div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'10px'}}>
-                <span style={{fontSize:'32px'}}>{typeIcon[analyse.type] || '📄'}</span>
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                 <div>
                   <div style={{fontSize:'15px',fontWeight:'500',color:'#1a1a2e'}}>{analyse.titre}</div>
                   <div style={{fontSize:'12px',color:'#2B7FFF'}}>{typeLabel[analyse.type] || 'Document'}</div>
