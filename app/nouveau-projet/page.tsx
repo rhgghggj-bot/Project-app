@@ -43,7 +43,7 @@ export default function NouveauProjet() {
     if (error) {
       setMessage("Erreur : " + error.message)
     } else {
-      setMessage("Projet publié ! 🎉")
+      setMessage("Projet publié !")
       setTimeout(() => window.location.href = "/profile", 1500)
     }
   }

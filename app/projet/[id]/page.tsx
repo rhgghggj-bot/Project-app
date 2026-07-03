@@ -47,7 +47,7 @@ export default function Projet() {
       </div>
       <div className="px-5 py-4">
         <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden mb-4">
-          <div className="bg-purple-100 h-32 flex items-center justify-center text-5xl">📌</div>
+          <div className="bg-purple-100 h-32 flex items-center justify-center"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" strokeWidth="1.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
           <div className="p-4">
             <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full">{projet.categorie}</span>
             <h2 className="font-medium text-gray-900 mt-2 mb-2">{projet.titre}</h2>

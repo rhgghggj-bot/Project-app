@@ -202,15 +202,15 @@ export default function GroupePage() {
       <div className="flex border-b border-blue-50" style={{overflowX:"auto",whiteSpace:"nowrap"}}>
         <button onClick={() => setOnglet("discussion")}
           className={`flex-1 py-3 text-sm font-medium ${onglet === "discussion" ? "text-blue-500 border-b-2 border-blue-500" : "text-gray-400"}`}>
-          💬 Discussion
+          Discussion
         </button>
         <button onClick={() => setOnglet("projets")}
           className={`flex-1 py-3 text-sm font-medium ${onglet === "projets" ? "text-blue-500 border-b-2 border-blue-500" : "text-gray-400"}`}>
-          📌 Projets ({projets.length})
+          Projets ({projets.length})
         </button>
         <button onClick={() => setOnglet("membres")}
           className={`flex-1 py-3 text-sm font-medium ${onglet === "membres" ? "text-blue-500 border-b-2 border-blue-500" : "text-gray-400"}`}>
-          👥 Membres ({membres.length})
+          Membres ({membres.length})
         </button>
       </div>
 
@@ -219,7 +219,7 @@ export default function GroupePage() {
           <div className="flex-1 px-5 py-4 overflow-y-auto" style={{maxHeight:'60vh'}}>
             {messagesAffiches.length === 0 && (
               <div className="text-center py-12 text-gray-400">
-                <p className="text-3xl mb-2">💬</p>
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="1.5" style={{marginBottom:"8px"}}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                 <p className="text-sm">Sois le premier à écrire dans ce groupe !</p>
               </div>
             )}

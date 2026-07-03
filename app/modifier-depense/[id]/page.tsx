@@ -3,8 +3,8 @@ import { useEffect, useState } from "react"
 import { useParams, useSearchParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 
-const CAT_DEPENSES = ["🏠 Logement","🛡️ Assurance maladie","🚗 Assurance voiture","🏡 Assurance maison","⛽ Transport","🍽️ Alimentation","💊 Santé","📱 Téléphone","💡 Énergie","🎮 Loisirs","📦 Autres"]
-const CAT_REVENUS = ["💼 Salaire","🏢 Freelance","📈 Investissement","🎁 Don / Cadeau","🏦 Allocation","💰 Autre revenu"]
+const CAT_DEPENSES = ["Logement","Assurance maladie","Assurance voiture","Assurance maison","Transport","Alimentation","Santé","Téléphone","Énergie","Loisirs","Autres"]
+const CAT_REVENUS = ["Salaire","Freelance","Investissement","Don / Cadeau","Allocation","Autre revenu"]
 
 export default function ModifierDepense() {
   const { id } = useParams()
@@ -65,7 +65,7 @@ export default function ModifierDepense() {
           </button>
         </div>
         <div style={{fontSize:'22px',fontWeight:'500',color:'#fff',marginTop:'8px'}}>
-          {isRevenu ? '💰 Modifier le revenu' : '💸 Modifier la dépense'}
+          {isRevenu ? 'Modifier le revenu' : 'Modifier la dépense'}
         </div>
       </div>
 

@@ -47,7 +47,7 @@ export default function Groupe() {
             </div>
             <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full">restauration</span>
           </div>
-          <div className="bg-yellow-100 h-28 flex items-center justify-center text-4xl">🍽️</div>
+          <div className="bg-yellow-100 h-28 flex items-center justify-center"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="1.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
           <div className="p-4">
             <h2 className="font-medium text-gray-900 mb-1">Restaurant le Coin</h2>
             <p className="text-sm text-gray-500 mb-3">Je lance un restaurant de cuisine fusion dans le 10e. Je cherche des soutiens !</p>
@@ -59,9 +59,9 @@ export default function Groupe() {
               </div>
             </div>
             <div className="flex gap-4 pt-3 border-t border-gray-100">
-              <button className="text-sm text-gray-400">❤️ 14</button>
-              <button className="text-sm text-gray-400">💬 5</button>
-              <button className="text-sm text-gray-400">↗️ Partager</button>
+              <button className="text-sm text-gray-400">14 likes</button>
+              <button className="text-sm text-gray-400">5 comm.</button>
+              <button className="text-sm text-gray-400">Partager</button>
             </div>
           </div>
         </div>
@@ -82,8 +82,8 @@ export default function Groupe() {
             <h2 className="font-medium text-gray-900 mb-1">Épicerie bio locale</h2>
             <p className="text-sm text-gray-500 mb-3">Circuit court, zéro plastique. On cherche un local d'environ 80m². Des contacts ?</p>
             <div className="flex gap-4 pt-3 border-t border-gray-100">
-              <button className="text-sm text-gray-400">❤️ 28</button>
-              <button className="text-sm text-gray-400">💬 9</button>
+              <button className="text-sm text-gray-400">28 likes</button>
+              <button className="text-sm text-gray-400">9 comm.</button>
               <button className="text-sm text-gray-400">↗️ Partager</button>
             </div>
           </div>
