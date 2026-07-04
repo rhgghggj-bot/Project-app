@@ -105,12 +105,14 @@ export default function Semaine() {
                   color: isToday ? '#fff' : '#1a1a2e'}}>
                   {jour.getDate()}
                 </div>
-                {evts.slice(0,2).map((e,j) => (
-                  <div key={j} style={{width:'100%',borderRadius:'4px',padding:'2px 3px',fontSize:'8px',fontWeight:'500',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',background:`${e.couleur}22`,color:e.couleur}}>
-                    {e.heure && `${e.heure} `}{e.titre}{e.duree ? ` (${e.duree >= 60 ? Math.floor(e.duree/60)+'h'+(e.duree%60 ? (e.duree%60)+'min' : '') : e.duree+'min'})` : ''}
+                {evts.length > 0 && (
+                  <div style={{display:'flex',gap:'2px',flexWrap:'wrap',justifyContent:'center',maxWidth:'100%'}}>
+                    {evts.slice(0,3).map((e,j) => (
+                      <div key={j} style={{width:'6px',height:'6px',borderRadius:'50%',background:e.couleur,flexShrink:0}}></div>
+                    ))}
+                    {evts.length > 3 && <div style={{fontSize:'7px',color:'#aaa'}}>+{evts.length-3}</div>}
                   </div>
-                ))}
-                {evts.length > 2 && <div style={{fontSize:'8px',color:'#aaa'}}>+{evts.length-2}</div>}
+                )}
               </div>
             )
           })}
