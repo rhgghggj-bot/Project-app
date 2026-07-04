@@ -34,44 +34,44 @@ export default function SplashScreen({ onDone }: { onDone: () => void }) {
     })
 
     // 2. Logo tombe avec boing
-    tl.to(logo, { y: 0, opacity: 1, duration: 0.8, ease: 'elastic.out(1.2, 0.4)' }, 1.0)
-    tl.to(shadow, { scaleX: 1, opacity: 0.4, duration: 0.8, ease: 'elastic.out(1.2, 0.4)' }, 1.0)
+    tl.to(logo, { y: 0, opacity: 1, duration: 0.075, ease: 'elastic.out(1.2, 0.4)' }, 0.5)
+    tl.to(shadow, { scaleX: 1, opacity: 0.4, duration: 0.075, ease: 'elastic.out(1.2, 0.4)' }, 1.0)
 
     // 3. Rebond sur chaque lettre
     const xPositions = [-114, -78, -42, -6, 30, 66, 102]
     letters.forEach((l, i) => {
-      tl.to(logo, { x: xPositions[i], duration: 0.22, ease: 'power2.inOut' })
-      tl.to(shadow, { x: xPositions[i], duration: 0.22, ease: 'power2.inOut' }, '<')
-      tl.to(logo, { y: -35, scaleX: 0.88, scaleY: 1.18, duration: 0.15, ease: 'power2.out' })
-      tl.to(logo, { y: 0, scaleX: 1.12, scaleY: 0.78, duration: 0.1, ease: 'power2.in' })
-      tl.to(logo, { y: -15, scaleX: 0.94, scaleY: 1.08, duration: 0.1, ease: 'power2.out' })
-      tl.to(logo, { y: 0, scaleX: 1, scaleY: 1, duration: 0.12, ease: 'elastic.out(2, 0.4)' })
-      tl.to(shadow, { scaleX: 0.6, opacity: 0.2, duration: 0.1 }, '<-0.22')
-      tl.to(shadow, { scaleX: 1, opacity: 0.4, duration: 0.12 })
-      tl.to(l, { opacity: 1, color: i % 2 === 0 ? '#ffffff' : '#D4A843', scaleY: 0.85, y: 5, duration: 0.08 }, '<-0.22')
-      tl.to(l, { scaleY: 1, y: 0, duration: 0.15, ease: 'elastic.out(2, 0.3)' })
+      tl.to(logo, { x: xPositions[i], duration: 0.07, ease: 'power2.inOut' })
+      tl.to(shadow, { x: xPositions[i], duration: 0.07, ease: 'power2.inOut' }, '<')
+      tl.to(logo, { y: -35, scaleX: 0.88, scaleY: 1.18, duration: 0.05, ease: 'power2.out' })
+      tl.to(logo, { y: 0, scaleX: 1.12, scaleY: 0.78, duration: 0.04, ease: 'power2.in' })
+      tl.to(logo, { y: -15, scaleX: 0.94, scaleY: 1.08, duration: 0.04, ease: 'power2.out' })
+      tl.to(logo, { y: 0, scaleX: 1, scaleY: 1, duration: 0.07, ease: 'elastic.out(2, 0.4)' })
+      tl.to(shadow, { scaleX: 0.6, opacity: 0.2, duration: 0.04 }, '<-0.22')
+      tl.to(shadow, { scaleX: 1, opacity: 0.4, duration: 0.07 })
+      tl.to(l, { opacity: 1, color: i % 2 === 0 ? '#ffffff' : '#D4A843', scaleY: 0.85, y: 5, duration: 0.05 }, '<-0.22')
+      tl.to(l, { scaleY: 1, y: 0, duration: 0.05, ease: 'elastic.out(2, 0.3)' })
     })
 
     // 4. Logo vient SE PLACER DEVANT les lettres à plat (reste à sa taille normale)
-    tl.to(logo, { x: 0, y: 0, duration: 0.5, ease: 'power3.inOut' })
-    tl.to(shadow, { opacity: 0, duration: 0.3 }, '<')
+    tl.to(logo, { x: 0, y: 0, duration: 0.28, ease: 'power3.inOut' })
+    tl.to(shadow, { opacity: 0, duration: 0.047 }, '<')
     // Z-index boost pour passer devant les lettres
     tl.set(logo, { zIndex: 20 })
 
     // Petite pause pour voir le logo devant
-    tl.to(logo, { scale: 1, duration: 0.3 })
+    tl.to(logo, { scale: 1, duration: 0.047 })
 
     // 5. ZOOM - on tombe dans le logo (comme si on rentrait dedans)
     tl.to(logo, {
       scale: 30,
       opacity: 0,
-      duration: 0.8,
+      duration: 0.075,
       ease: 'power4.in'
     })
 
     // 6. Flash blanc
     tl.to(flash, { opacity: 1, duration: 0.2 }, '-=0.2')
-    tl.to(flash, { opacity: 1, duration: 0.4 })
+    tl.to(flash, { opacity: 1, duration: 0.07 })
 
     return () => { tl.kill() }
   }, [onDone])
