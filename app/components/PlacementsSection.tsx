@@ -3,46 +3,113 @@ import { useState } from "react"
 
 const PLACEMENTS = [
   {
-    id: 'livretA', nom: 'Livret A', pays: 'FR', rendement: 3,
-    plafond: '22 950 EUR', fiscalite: 'Exonere', risque: 'Aucun', horizon: '0 a 5 ans', couleur: '#10B981',
-    description: "Le livret A est le placement securise par excellence. Garanti par l'Etat francais, ideal pour l'epargne de precaution.",
-    avantages: ["Interets exoneres d'impot et de prelevements sociaux","Capital garanti par l'Etat","Disponible a tout moment sans penalite"],
-    inconvenients: ["Rendement limite face a l'inflation","Plafond de 22 950 EUR","Un seul livret A par personne"]
+    id: 'livretA', nom: 'Livret A', pays: 'FR', rendement: 2.4,
+    plafond: '22 950 EUR', fiscalite: 'Totalement exonere', risque: 'Aucun', horizon: '0 a 5 ans', couleur: '#10B981',
+    description: "Le livret A est le placement garanti par l'Etat francais. Taux abaisse a 2.4% depuis fevrier 2025 (contre 3% en 2024). Ideal pour l'epargne de precaution : gardez 3 a 6 mois de charges fixes dessus avant d'investir ailleurs.",
+    avantages: [
+      "Interets 100% exoneres d'impot sur le revenu et de prelevements sociaux",
+      "Capital garanti par l'Etat francais sans limite",
+      "Retrait possible a tout moment, sans frais ni penalite",
+      "Ouverture gratuite dans toute banque ou La Poste",
+      "Accessible a tous, meme aux mineurs"
+    ],
+    inconvenients: [
+      "Taux de 2.4% en 2025 — inferieur a l'inflation certaines annees",
+      "Plafond strict de 22 950 EUR (hors interets capitalises)",
+      "Un seul livret A par personne en France",
+      "Ne convient pas pour faire fructifier un capital important"
+    ]
   },
   {
     id: 'pea', nom: 'PEA', pays: 'FR', rendement: 7,
     plafond: '150 000 EUR', fiscalite: '17.2% apres 5 ans', risque: 'Moyen-eleve', horizon: '5 ans minimum', couleur: '#2B7FFF',
-    description: "Le Plan d'Epargne en Actions permet d'investir en actions europeennes avec une fiscalite avantageuse apres 5 ans.",
-    avantages: ["Exoneration d'impot sur les plus-values apres 5 ans","Plafond eleve de 150 000 EUR","Large choix d'ETF eligibles"],
-    inconvenients: ["Tout retrait avant 5 ans cloture le PEA","Limite aux actions europeennes","Capital non garanti"]
+    description: "Le Plan d'Epargne en Actions est l'enveloppe fiscale la plus avantageuse pour investir en bourse en France. Apres 5 ans, seuls les 17.2% de prelevements sociaux s'appliquent sur les plus-values — pas d'impot sur le revenu. Parfait pour investir dans des ETF europeens ou mondiaux sur le long terme.",
+    avantages: [
+      "Exoneration d'impot sur le revenu apres 5 ans (seuls 17.2% de PS restent)",
+      "Plafond de 150 000 EUR — largement suffisant pour la plupart",
+      "Accessible aux ETF MSCI World, S&P 500 eligibles PEA",
+      "Cloture possible apres 5 ans sans perdre les avantages fiscaux",
+      "Transmissible au conjoint en cas de deces"
+    ],
+    inconvenients: [
+      "Tout retrait avant 5 ans entraine la cloture du PEA",
+      "Limite aux actions et fonds bases dans l'Union Europeenne",
+      "Capital non garanti — risque de perte en capital",
+      "Un seul PEA par contribuable"
+    ]
   },
   {
     id: 'av', nom: 'Assurance-vie', pays: 'FR', rendement: 4.5,
-    plafond: 'Illimite', fiscalite: '7.5% apres 8 ans', risque: 'Faible a eleve', horizon: '8 ans minimum', couleur: '#8B5CF6',
-    description: "L'assurance-vie combine securite (fonds euros) et performance (unites de compte). Avantageuse apres 8 ans et pour la succession.",
-    avantages: ["Fiscalite avantageuse apres 8 ans (abattement 4 600 EUR/an)","Transmission hors succession jusqu'a 152 500 EUR par beneficiaire","Pas de plafond de versement"],
-    inconvenients: ["Frais parfois eleves","Fonds euros en baisse","Optimale seulement apres 8 ans"]
+    plafond: 'Illimite', fiscalite: '7.5% + 17.2% apres 8 ans', risque: 'Faible a eleve', horizon: '8 ans minimum', couleur: '#8B5CF6',
+    description: "L'assurance-vie est le placement prefere des Francais (1 900 milliards EUR). Elle combine un fonds euros securise (rendement ~2.5% en 2025) et des unites de compte dynamiques. Son avantage successoral est unique : 152 500 EUR transmis hors succession par beneficiaire.",
+    avantages: [
+      "Abattement fiscal de 4 600 EUR/an sur les gains apres 8 ans (9 200 EUR pour un couple)",
+      "Transmission hors succession jusqu'a 152 500 EUR par beneficiaire designe",
+      "Pas de plafond de versement — ideal pour les grandes fortunes",
+      "Mixte securise (fonds euros) + dynamique (UC actions, immobilier)",
+      "Fonds euros garanti par l'assureur"
+    ],
+    inconvenients: [
+      "Frais de gestion annuels : 0.5% a 1.5% selon les contrats",
+      "Fonds euros en baisse structurelle (2.5% en 2025 vs 5% en 2000)",
+      "Avantages fiscaux maximaux seulement apres 8 ans",
+      "Moins liquide qu'un livret en cas de retrait urgent"
+    ]
   },
   {
-    id: 'etf', nom: 'ETF / Index', pays: 'FR/CH', rendement: 8,
-    plafond: 'Illimite', fiscalite: '30% (PFU) ou PEA', risque: 'Moyen-eleve', horizon: '10 ans+', couleur: '#D4A843',
-    description: "Les ETF repliquent un indice boursier (S&P 500, MSCI World). Frais tres bas, diversification maximale.",
-    avantages: ["Frais de gestion tres faibles (0.05% a 0.5%/an)","Diversification immediate","Performance historique S&P 500 : +10%/an sur 30 ans"],
-    inconvenients: ["Capital non garanti","Fiscalite de 30% hors PEA","Necessite une discipline de long terme"]
+    id: 'etf', nom: 'ETF / Index', pays: 'FR/CH', rendement: 9,
+    plafond: 'Illimite', fiscalite: '30% PFU (ou PEA)', risque: 'Moyen-eleve', horizon: '10 ans+', couleur: '#D4A843',
+    description: "Les ETF (Exchange Traded Funds) sont des fonds indiciels qui repliquent passivement un indice boursier. Le MSCI World couvre 1 500 entreprises dans 23 pays. Historiquement, le S&P 500 a rapporte +10.5%/an sur 50 ans. C'est la strategie de Warren Buffett pour le grand public.",
+    avantages: [
+      "Frais de gestion ultra-faibles : 0.07% a 0.5%/an (vs 1.5%+ pour les fonds actifs)",
+      "Diversification immediate sur des centaines ou milliers d'entreprises",
+      "Performance historique superieure a 80% des fonds geres activement",
+      "Accessible des 1 EUR via certains courtiers (Trade Republic, Degiro)",
+      "Combine parfaitement avec le PEA pour optimiser la fiscalite"
+    ],
+    inconvenients: [
+      "Capital non garanti — peut perdre 30 a 50% en periode de crise",
+      "Fiscalite de 30% hors PEA sur les plus-values",
+      "Necessite une vision long terme et de ne pas paniquer en cas de baisse",
+      "Aucun rendement garanti — performance basee sur les marches"
+    ]
   },
   {
     id: 'pilier2', nom: '2e pilier', pays: 'CH', rendement: 1.25,
-    plafond: 'Selon salaire', fiscalite: 'Deductible AVS', risque: 'Tres faible', horizon: 'Retraite', couleur: '#F43F5E',
-    description: "La prevoyance professionnelle obligatoire en Suisse (LPP). Votre employeur et vous cotisez ensemble pour la retraite.",
-    avantages: ["Cotisations deductibles du revenu imposable","Employeur verse autant que vous","Capital garanti par la LPP"],
-    inconvenients: ["Capital bloque jusqu'a la retraite","Taux minimum legal faible (1.25%)","Depend de la sante de votre caisse"]
+    plafond: 'Selon salaire LPP', fiscalite: 'Cotisations deductibles', risque: 'Tres faible', horizon: 'Retraite (65 ans)', couleur: '#F43F5E',
+    description: "Le 2e pilier (LPP - Loi sur la Prevoyance Professionnelle) est obligatoire pour tous les salaries en Suisse gagnant plus de 22 680 CHF/an. Taux minimum legal 2025 : 1.25%. Vous pouvez verser des rachats volontaires entierement deductibles de votre revenu imposable.",
+    avantages: [
+      "Cotisations et rachats entierement deductibles du revenu imposable",
+      "Votre employeur verse au minimum le meme montant que vous",
+      "Capital garanti par la LPP et le fonds de garantie",
+      "Rachats volontaires : forte reduction d'impots immediate",
+      "Possible de retirer pour achat immobilier ou depart a l'etranger"
+    ],
+    inconvenients: [
+      "Capital bloque jusqu'a 65 ans (homme) / 64 ans (femme) sauf cas specifiques",
+      "Taux minimum legal faible : 1.25% en 2025",
+      "Imposition a la sortie (taux reduit mais non nul)",
+      "Performance dependante de la sante financiere de votre caisse de pension",
+      "Rente viagere : si vous mourez tot, le capital ne revient pas a vos heritiers"
+    ]
   },
   {
     id: 'pilier3', nom: '3e pilier', pays: 'CH', rendement: 3,
-    plafond: '7 056 CHF/an', fiscalite: 'Deductible impots', risque: 'Faible a moyen', horizon: '5 a 30 ans', couleur: '#EC4899',
-    description: "La prevoyance individuelle liee (pilier 3a) permet d'epargner pour la retraite avec deduction fiscale immediate.",
-    avantages: ["Deduction fiscale immediate (500 a 2 000 CHF/an selon canton)","Plafond 2024 : 7 056 CHF pour les salaries","Possible en actions via pilier 3a titres"],
-    inconvenients: ["Capital bloque jusqu'a 5 ans avant la retraite","Imposition a la sortie","Plafond annuel limite"]
+    plafond: '7 258 CHF/an (2025)', fiscalite: 'Deductible impots', risque: 'Faible a eleve', horizon: '5 a 40 ans', couleur: '#EC4899',
+    description: "Le pilier 3a est la prevoyance individuelle liee en Suisse. Plafond 2025 : 7 258 CHF pour les salaries, 36 288 CHF pour les independants. Chaque franc verse reduit votre revenu imposable — l'economie fiscale varie de 500 a 3 000 CHF/an selon votre canton et tranche d'imposition.",
+    avantages: [
+      "Deduction fiscale immediate : economie de 500 a 3 000 CHF/an selon canton et revenu",
+      "Plafond 2025 : 7 258 CHF (salaries) ou 36 288 CHF (independants)",
+      "Pilier 3a en titres : investissement en actions/ETF avec avantage fiscal",
+      "Possible d'ouvrir plusieurs comptes 3a (strategie de fractionnement a la retraite)",
+      "Retraite anticipee possible 5 ans avant l'age ordinaire"
+    ],
+    inconvenients: [
+      "Capital totalement bloque jusqu'a 5 ans avant la retraite",
+      "Imposition a la sortie (taux separe reduit, mais impot quand meme)",
+      "Plafond annuel limite a 7 258 CHF pour les salaries",
+      "Pas de flexibilite : impossible de retirer pour une urgence ordinaire"
+    ]
   }
 ]
 
