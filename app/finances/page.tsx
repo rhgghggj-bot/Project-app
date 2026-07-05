@@ -38,10 +38,13 @@ export default function Finances() {
         for (const dep of depRec) {
           const { data: existe } = await supabase.from('depenses').select('id').eq('user_id', user.id).eq('source_id', dep.id).gte('date', debutMois).lte('date', finMois)
           if (!existe || existe.length === 0) {
-            await supabase.from('depenses').insert({
-              user_id: user.id, titre: dep.titre, montant: dep.montant,
-              categorie: dep.categorie, date: debutMois, recurrent: false, source_id: dep.id
-            })
+            const dateExistante = dep.date?.substring(0,7) === moisStr
+            if (!dateExistante) {
+              await supabase.from('depenses').insert({
+                user_id: user.id, titre: dep.titre, montant: dep.montant,
+                categorie: dep.categorie, date: debutMois, recurrent: false, source_id: dep.id
+              })
+            }
           }
         }
       }
@@ -52,10 +55,13 @@ export default function Finances() {
         for (const rev of revRec) {
           const { data: existe } = await supabase.from('revenus').select('id').eq('user_id', user.id).eq('source_id', rev.id).gte('date', debutMois).lte('date', finMois)
           if (!existe || existe.length === 0) {
-            await supabase.from('revenus').insert({
-              user_id: user.id, titre: rev.titre, montant: rev.montant,
-              categorie: rev.categorie, date: debutMois, recurrent: false, source_id: rev.id
-            })
+            const dateExistante = rev.date?.substring(0,7) === moisStr
+            if (!dateExistante) {
+              await supabase.from('revenus').insert({
+                user_id: user.id, titre: rev.titre, montant: rev.montant,
+                categorie: rev.categorie, date: debutMois, recurrent: false, source_id: rev.id
+              })
+            }
           }
         }
       }
