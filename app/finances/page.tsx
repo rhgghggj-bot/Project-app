@@ -26,10 +26,46 @@ export default function Finances() {
   const [showEpargne, setShowEpargne] = useState(false)
 
   useEffect(() => {
+    async function creerRecurrencesMois(user: any) {
+      const maintenant = new Date()
+      const moisStr = maintenant.getFullYear() + '-' + String(maintenant.getMonth()+1).padStart(2,'0')
+      const debutMois = moisStr + '-01'
+      const finMois = moisStr + '-31'
+
+      // Depenses recurrentes
+      const { data: depRec } = await supabase.from('depenses').select('*').eq('user_id', user.id).eq('recurrent', true).is('source_id', null)
+      if (depRec) {
+        for (const dep of depRec) {
+          const { data: existe } = await supabase.from('depenses').select('id').eq('user_id', user.id).eq('source_id', dep.id).gte('date', debutMois).lte('date', finMois)
+          if (!existe || existe.length === 0) {
+            await supabase.from('depenses').insert({
+              user_id: user.id, titre: dep.titre, montant: dep.montant,
+              categorie: dep.categorie, date: debutMois, recurrent: false, source_id: dep.id
+            })
+          }
+        }
+      }
+
+      // Revenus recurrents
+      const { data: revRec } = await supabase.from('revenus').select('*').eq('user_id', user.id).eq('recurrent', true).is('source_id', null)
+      if (revRec) {
+        for (const rev of revRec) {
+          const { data: existe } = await supabase.from('revenus').select('id').eq('user_id', user.id).eq('source_id', rev.id).gte('date', debutMois).lte('date', finMois)
+          if (!existe || existe.length === 0) {
+            await supabase.from('revenus').insert({
+              user_id: user.id, titre: rev.titre, montant: rev.montant,
+              categorie: rev.categorie, date: debutMois, recurrent: false, source_id: rev.id
+            })
+          }
+        }
+      }
+    }
+
     async function charger() {
       const { data: { user } } = await supabase.auth.getUser()
       setUser(user)
       if (user) {
+        await creerRecurrencesMois(user)
         const { data: d } = await supabase.from("depenses").select("*").eq("user_id", user.id).order("date", { ascending: false })
         setDepenses(d || [])
         const { data: r } = await supabase.from("revenus").select("*").eq("user_id", user.id).order("date", { ascending: false })
