@@ -49,16 +49,23 @@ const PLACEMENTS = [
 export default function PlacementsSection() {
   const [actif, setActif] = useState('livretA')
   const [capital, setCapital] = useState(5000)
+  const [versementMois, setVersementMois] = useState(200)
+  const [rendementCustom, setRendementCustom] = useState(7)
   const [duree, setDuree] = useState(10)
 
   const p = PLACEMENTS.find(pl => pl.id === actif)!
-  const rate = p.rendement / 100
-  const max = Math.round(capital * Math.pow(1 + rate, duree))
-  const gain = max - capital
-  const projections = Array.from({length: duree + 1}, (_, i) => Math.round(capital * Math.pow(1 + rate, i)))
-  const step = Math.max(1, Math.floor(duree / 10))
-  const displayed = projections.filter((_, i) => i % step === 0 || i === duree)
-  const maxVal = displayed[displayed.length - 1]
+  const rm = rendementCustom / 100 / 12
+  const simulData = Array.from({length: duree + 1}, (_, y) => {
+    const n = y * 12
+    const total = rm > 0
+      ? Math.round(capital * Math.pow(1 + rm, n) + versementMois * (Math.pow(1 + rm, n) - 1) / rm)
+      : capital + versementMois * n
+    const verse = capital + versementMois * n
+    return { total, verse, interets: Math.max(0, total - verse) }
+  })
+  const capitalFinal = simulData[duree].total
+  const totalVerse = simulData[duree].verse
+  const gainSimul = capitalFinal - totalVerse
 
   return (
     <div>
@@ -117,34 +124,65 @@ export default function PlacementsSection() {
 
         <div style={{padding:'14px',borderTop:'0.5px solid #E8F1FF',background:'#F8FBFF'}}>
           <div style={{fontSize:'12px',fontWeight:'500',color:'#1a1a2e',marginBottom:'12px'}}>Simulateur de capital</div>
-          <div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'8px'}}>
-            <label style={{fontSize:'11px',color:'#666',minWidth:'72px'}}>Capital</label>
-            <input type="range" min="1000" max="100000" step="1000" value={capital} onChange={e => setCapital(Number(e.target.value))} style={{flex:1}}/>
-            <span style={{fontSize:'12px',fontWeight:'500',minWidth:'75px',textAlign:'right',color:p.couleur}}>{capital.toLocaleString('fr-FR')} CHF</span>
+
+          <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'8px'}}>
+            <label style={{fontSize:'11px',color:'#666',minWidth:'110px'}}>Capital initial</label>
+            <input type="range" min="0" max="100000" step="500" value={capital} onChange={e => setCapital(Number(e.target.value))} style={{flex:1}}/>
+            <span style={{fontSize:'11px',fontWeight:'500',minWidth:'70px',textAlign:'right',color:p.couleur}}>{capital.toLocaleString('fr-FR')} CHF</span>
           </div>
-          <div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'14px'}}>
-            <label style={{fontSize:'11px',color:'#666',minWidth:'72px'}}>Duree</label>
+          <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'8px'}}>
+            <label style={{fontSize:'11px',color:'#666',minWidth:'110px'}}>Versement/mois</label>
+            <input type="range" min="0" max="5000" step="50" value={versementMois} onChange={e => setVersementMois(Number(e.target.value))} style={{flex:1}}/>
+            <span style={{fontSize:'11px',fontWeight:'500',minWidth:'70px',textAlign:'right',color:p.couleur}}>{versementMois.toLocaleString('fr-FR')} CHF</span>
+          </div>
+          <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'8px'}}>
+            <label style={{fontSize:'11px',color:'#666',minWidth:'110px'}}>Rendement/an</label>
+            <input type="range" min="0.5" max="15" step="0.5" value={rendementCustom} onChange={e => setRendementCustom(Number(e.target.value))} style={{flex:1}}/>
+            <span style={{fontSize:'11px',fontWeight:'500',minWidth:'70px',textAlign:'right',color:p.couleur}}>{rendementCustom}%</span>
+          </div>
+          <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'14px'}}>
+            <label style={{fontSize:'11px',color:'#666',minWidth:'110px'}}>Duree</label>
             <input type="range" min="1" max="30" step="1" value={duree} onChange={e => setDuree(Number(e.target.value))} style={{flex:1}}/>
-            <span style={{fontSize:'12px',fontWeight:'500',minWidth:'75px',textAlign:'right',color:p.couleur}}>{duree} an{duree > 1 ? 's' : ''}</span>
+            <span style={{fontSize:'11px',fontWeight:'500',minWidth:'70px',textAlign:'right',color:p.couleur}}>{duree} an{duree>1?'s':''}</span>
           </div>
-          <div style={{display:'flex',alignItems:'flex-end',gap:'2px',height:'80px',marginBottom:'8px'}}>
-            {displayed.map((val, i) => (
-              <div key={i} style={{flex:1,height: Math.max((val / maxVal) * 76, 4) + 'px',borderRadius:'3px 3px 0 0',
-                background: i === displayed.length - 1 ? p.couleur : p.couleur + '55',transition:'height 0.3s'}}></div>
+
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'6px',marginBottom:'12px'}}>
+            <div style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'10px',padding:'10px 12px'}}>
+              <div style={{fontSize:'10px',color:'#aaa',marginBottom:'2px'}}>Capital final</div>
+              <div style={{fontSize:'14px',fontWeight:'500',color:p.couleur}}>{capitalFinal.toLocaleString('fr-FR')} CHF</div>
+            </div>
+            <div style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'10px',padding:'10px 12px'}}>
+              <div style={{fontSize:'10px',color:'#aaa',marginBottom:'2px'}}>Total verse</div>
+              <div style={{fontSize:'14px',fontWeight:'500',color:'#1a1a2e'}}>{totalVerse.toLocaleString('fr-FR')} CHF</div>
+            </div>
+            <div style={{background:'#E1F5EE',border:'0.5px solid #A7F3D0',borderRadius:'10px',padding:'10px 12px'}}>
+              <div style={{fontSize:'10px',color:'#10B981',marginBottom:'2px'}}>Gain (interets)</div>
+              <div style={{fontSize:'14px',fontWeight:'500',color:'#10B981'}}>+{gainSimul.toLocaleString('fr-FR')} CHF</div>
+            </div>
+            <div style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'10px',padding:'10px 12px'}}>
+              <div style={{fontSize:'10px',color:'#aaa',marginBottom:'2px'}}>Rendement reel</div>
+              <div style={{fontSize:'14px',fontWeight:'500',color:'#2B7FFF'}}>+{totalVerse > 0 ? Math.round((gainSimul/totalVerse)*100) : 0}%</div>
+            </div>
+          </div>
+
+          <div style={{display:'flex',alignItems:'flex-end',gap:'2px',height:'80px',marginBottom:'4px'}}>
+            {simulData.map((pt, i) => (
+              <div key={i} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'stretch',justifyContent:'flex-end',height:'100%'}}>
+                <div style={{width:'100%',height: Math.max((pt.interets / Math.max(...simulData.map(d=>d.total))) * 76, 0) + 'px',background:p.couleur,borderRadius:'2px 2px 0 0'}}></div>
+                <div style={{width:'100%',height: Math.max((pt.verse / Math.max(...simulData.map(d=>d.total))) * 76, 2) + 'px',background:p.couleur + '44'}}></div>
+              </div>
             ))}
           </div>
-          <div style={{display:'flex',justifyContent:'space-between',marginBottom:'12px'}}>
+          <div style={{display:'flex',justifyContent:'space-between',marginBottom:'6px'}}>
             <span style={{fontSize:'10px',color:'#aaa'}}>Maintenant</span>
             <span style={{fontSize:'10px',color:'#aaa'}}>Dans {duree} an{duree>1?'s':''}</span>
           </div>
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'8px'}}>
-            <div style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'10px',padding:'10px 12px'}}>
-              <div style={{fontSize:'10px',color:'#aaa',marginBottom:'2px'}}>Capital final</div>
-              <div style={{fontSize:'15px',fontWeight:'500',color:p.couleur}}>{max.toLocaleString('fr-FR')} CHF</div>
+          <div style={{display:'flex',gap:'12px',justifyContent:'center'}}>
+            <div style={{display:'flex',alignItems:'center',gap:'4px',fontSize:'10px',color:'#aaa'}}>
+              <div style={{width:'10px',height:'10px',borderRadius:'2px',background:p.couleur}}></div>Interets
             </div>
-            <div style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'10px',padding:'10px 12px'}}>
-              <div style={{fontSize:'10px',color:'#aaa',marginBottom:'2px'}}>Gain estime</div>
-              <div style={{fontSize:'15px',fontWeight:'500',color:'#10B981'}}>+{gain.toLocaleString('fr-FR')} CHF</div>
+            <div style={{display:'flex',alignItems:'center',gap:'4px',fontSize:'10px',color:'#aaa'}}>
+              <div style={{width:'10px',height:'10px',borderRadius:'2px',background:p.couleur+'44'}}></div>Verse
             </div>
           </div>
         </div>
