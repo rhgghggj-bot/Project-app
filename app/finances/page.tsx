@@ -1,4 +1,5 @@
 "use client"
+import PlacementsSection from "../components/PlacementsSection"
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 
@@ -373,6 +374,8 @@ export default function Finances() {
       )}
       {onglet === "epargne" && (
         <div style={{padding:'16px 18px'}}>
+
+          {/* Plan épargne */}
           <div style={{background:'linear-gradient(135deg,#1a3a6e,#2B7FFF)',borderRadius:'18px',padding:'16px',marginBottom:'14px'}}>
             <div style={{fontSize:'15px',fontWeight:'500',color:'#fff',marginBottom:'4px'}}>Plan d'épargne</div>
             <div style={{fontSize:'12px',color:'rgba(255,255,255,0.6)'}}>Entre ton objectif et vois combien épargner par mois</div>
@@ -381,10 +384,10 @@ export default function Finances() {
           <div style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'16px',padding:'14px',marginBottom:'14px'}}>
             <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',marginBottom:'10px'}}>Mon objectif</div>
             <input value={objectif} onChange={e => setObjectif(e.target.value)} placeholder="Ex: Voyage au Japon, Voiture..."
-              style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'8px 12px',fontSize:'13px',color:'#1a1a2e',background:'#F8FBFF',marginBottom:'8px'}}/>
+              style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'8px 12px',fontSize:'16px',color:'#1a1a2e',background:'#F8FBFF',marginBottom:'8px'}}/>
             <div style={{fontSize:'11px',color:'#aaa',marginBottom:'4px'}}>Montant cible (CHF)</div>
             <input value={montantEpargne} onChange={e => setMontantEpargne(e.target.value)} placeholder="Ex: 5000" type="number"
-              style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'8px 12px',fontSize:'13px',color:'#1a1a2e',background:'#F8FBFF'}}/>
+              style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'8px 12px',fontSize:'16px',color:'#1a1a2e',background:'#F8FBFF'}}/>
           </div>
 
           {montantEpargne && parseFloat(montantEpargne) > 0 && (() => {
@@ -396,11 +399,10 @@ export default function Finances() {
               { mois: 36, label: '3 ans', couleur: '#10B981' },
             ]
             return (
-              <div>
+              <div style={{marginBottom:'14px'}}>
                 <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',marginBottom:'10px'}}>
                   Pour atteindre {cible.toFixed(0)} CHF :
                 </div>
-
                 {scenarios.map((s, i) => {
                   const parMois = cible / s.mois
                   const resteApresCharges = revenus.filter(r=>r.recurrent).reduce((sum,r)=>sum+parseFloat(r.montant),0) - depenses.filter(d=>d.recurrent).reduce((sum,d)=>sum+parseFloat(d.montant),0)
@@ -417,9 +419,8 @@ export default function Finances() {
                         {parMois.toFixed(0)} CHF / mois
                       </div>
                       <div style={{fontSize:'12px',color:'#aaa',marginBottom:'10px'}}>
-                        soit {(parMois * 7 / 30).toFixed(0)} CHF / semaine · {(parMois / 30).toFixed(0)} CHF / jour
+                        soit {(parMois * 7 / 30).toFixed(0)} CHF / semaine
                       </div>
-
                       <div style={{display:'flex',alignItems:'flex-end',gap:'2px',height:'60px',marginBottom:'6px'}}>
                         {Array.from({length: Math.min(s.mois, 12)}, (_, j) => {
                           const cumul = parMois * (j + 1)
@@ -443,25 +444,11 @@ export default function Finances() {
             )
           })()}
 
-          <div style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'16px',padding:'14px',marginBottom:'12px'}}>
-            <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',marginBottom:'12px'}}>💡 Conseils placement</div>
-            {[
-              {titre:'Livret A', desc:'Sécurisé, disponible, 3% par an. Idéal pour épargne de précaution.', couleur:'#10B981'},
-              {titre:'PEA', desc:'Avantage fiscal après 5 ans. Actions européennes. Plafond 150 000 EUR.', couleur:'#2B7FFF'},
-              {titre:'Assurance-vie', desc:'Fiscalité avantageuse après 8 ans. Idéal pour long terme.', couleur:'#8B5CF6'},
-              {titre:'ETF / Index funds', desc:'Diversification maximale, frais minimes. S&P500 ou MSCI World.', couleur:'#D4A843'},
-            ].map((c, i) => (
-              <div key={i} style={{display:'flex',gap:'12px',marginBottom:'10px',paddingBottom:'10px',borderBottom: i < 3 ? '0.5px solid #E8F1FF' : 'none'}}>
-                <div style={{width:'8px',borderRadius:'99px',background:c.couleur,flexShrink:0}}></div>
-                <div>
-                  <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',marginBottom:'2px'}}>{c.titre}</div>
-                  <div style={{fontSize:'12px',color:'#aaa',lineHeight:'1.5'}}>{c.desc}</div>
-                </div>
-              </div>
-            ))}
-          </div>
+          {/* Onglet placements */}
+          <PlacementsSection />
         </div>
       )}
-    </main>
+
+</main>
   )
 }
