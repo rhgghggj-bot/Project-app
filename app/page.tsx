@@ -194,16 +194,16 @@ export default function Home() {
       )}
 
       {/* Zone decouvrir */}
-      <div style={{background:'#fff'}}>
-        <div style={{background:'linear-gradient(160deg,#0A1628,#1a3a6e,#2B7FFF)',padding:'16px 14px 20px'}}>
-          <div style={{fontSize:'11px',color:'rgba(255,255,255,0.5)',marginBottom:'4px'}}>Réseau Project</div>
-          <div style={{fontSize:'20px',fontWeight:'500',color:'#fff',marginBottom:'12px'}}>Découvrir</div>
+      <div style={{background:'#f8faff'}}>
+        <div style={{padding:'16px 14px 8px'}}>
+          <div style={{fontSize:'11px',color:'#aaa',marginBottom:'4px'}}>Réseau Project</div>
+          <div style={{fontSize:'20px',fontWeight:'500',color:'#1a1a2e',marginBottom:'12px'}}>Découvrir</div>
           <div style={{display:'flex',gap:'8px',overflowX:'auto',paddingBottom:'4px'}}>
             {['Tous','Tech','Business','Art','Sport','Education','Sante','Autre'].map(cat => (
               <button key={cat} onClick={() => setCategorie(cat)}
                 style={{whiteSpace:'nowrap',padding:'6px 14px',borderRadius:'99px',border:'none',cursor:'pointer',fontSize:'12px',fontWeight:'500',
-                  background: categorie === cat ? '#fff' : 'rgba(255,255,255,0.15)',
-                  color: categorie === cat ? '#1a3a6e' : '#fff'}}>
+                  background: categorie === cat ? '#2B7FFF' : '#EEF5FF',
+                  color: categorie === cat ? '#fff' : '#2B7FFF'}}>
                 {cat}
               </button>
             ))}
