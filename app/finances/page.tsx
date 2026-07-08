@@ -162,7 +162,7 @@ export default function Finances() {
             style={{flex:1,padding:'12px 0',fontSize:'12px',fontWeight:'500',border:'none',background:'none',cursor:'pointer',
               color: onglet === o ? '#2B7FFF' : '#aaa',
               borderBottom: onglet === o ? '2px solid #2B7FFF' : '2px solid transparent'}}>
-            {o === "vue" ? "Vue" : o === "revenus" ? "Revenus" : o === "charges" ? "Charges" : "Épargne"}
+            {o === "vue" ? "Vue" : o === "revenus" ? "Revenus" : o === "charges" ? "Charges" : o === "epargne" ? "Épargne" : "Fiscalité"}
           </button>
         ))}
       </div>
