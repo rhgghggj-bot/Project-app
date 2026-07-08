@@ -16,6 +16,10 @@ export default function Home() {
     async function charger() {
       const { data: { user } } = await supabase.auth.getUser()
       setUser(user)
+      if (!user) {
+        const vu = sessionStorage.getItem('onboardingVu')
+        if (!vu) { sessionStorage.setItem('onboardingVu','1'); window.location.href='/onboarding'; return }
+      }
       const { data: p } = await supabase.from("projets").select("*").is("groupe_id", null).eq("prive", false).order("created_at", { ascending: false })
       setProjets(p || [])
       if (user) {
