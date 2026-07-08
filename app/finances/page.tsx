@@ -1,17 +1,19 @@
 "use client"
 import PlacementsSection from "../components/PlacementsSection"
 import FiscaliteSection from "../components/FiscaliteSection"
-import { useEffect, useState } from "react"
+import { useEffect, useState, Suspense } from "react"
+import { useSearchParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 
 const CAT_DEPENSES = ["Logement","Assurance maladie","Assurance voiture","Assurance maison","Transport","Alimentation","Santé","Téléphone","Énergie","Loisirs","Autres"]
 const CAT_REVENUS = ["Salaire","Freelance","Investissement","Don / Cadeau","Allocation","Autre revenu"]
 const MOIS_NOMS = ["Jan","Fév","Mar","Avr","Mai","Jun","Jul","Aoû","Sep","Oct","Nov","Déc"]
 
-export default function Finances() {
+function FinancesContent() {
   const [depenses, setDepenses] = useState<any[]>([])
   const [revenus, setRevenus] = useState<any[]>([])
   const [user, setUser] = useState<any>(null)
+  const searchParams = useSearchParams()
   const [onglet, setOnglet] = useState("vue")
   const [showForm, setShowForm] = useState(false)
   const [typeForm, setTypeForm] = useState<"depense"|"revenu">("depense")
@@ -457,5 +459,14 @@ export default function Finances() {
       )}
 
 </main>
+  )
+}
+
+
+export default function Finances() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-gray-400">Chargement...</div>}>
+      <FinancesContent />
+    </Suspense>
   )
 }
