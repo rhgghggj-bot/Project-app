@@ -29,6 +29,27 @@ function FinancesContent() {
   const [showEpargne, setShowEpargne] = useState(false)
 
   useEffect(() => {
+    const action = searchParams.get('action')
+    const montant_url = searchParams.get('montant')
+    const titre_url = searchParams.get('titre')
+    if (action === 'depense' && montant_url) {
+      setTypeForm('depense')
+      setMontant(montant_url)
+      if (titre_url) setTitre(titre_url)
+      setOnglet('charges')
+      setShowForm(true)
+    } else if (action === 'revenu' && montant_url) {
+      setTypeForm('revenu')
+      setMontant(montant_url)
+      if (titre_url) setTitre(titre_url)
+      setOnglet('revenus')
+      setShowForm(true)
+    } else if (action === 'fiscalite') {
+      setOnglet('fiscalite')
+    }
+  }, [searchParams])
+
+  useEffect(() => {
     async function charger() {
       const { data: { user } } = await supabase.auth.getUser()
       setUser(user)
