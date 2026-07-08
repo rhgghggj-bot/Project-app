@@ -40,6 +40,15 @@ export default function Scanner() {
     else if (isFacture) type = "facture"
     else if (isContrat) type = "contrat"
 
+    // Trouver le vrai nom - ligne en majuscules ou premiere ligne significative
+    const nomEntreprise = lignes.find(l => {
+      const clean = l.replace(/[^a-zA-ZÀ-ÿs]/g, '').trim()
+      return clean.length > 3 && clean.length < 50 && (
+        clean === clean.toUpperCase() ||
+        /^[A-Z][a-z]/.test(clean)
+      )
+    }) || mots[0] || 'Document scanne'
+
     const maxMontant = montants.length > 0 ? Math.max(...montants) : null
     const transactions = montants.slice(0, 5).map((m, i) => ({
       nom: mots[i] || `Transaction ${i+1}`,
@@ -49,7 +58,7 @@ export default function Scanner() {
 
     setAnalyse({
       type,
-      titre: mots[0] || "Document scanné",
+      titre: nomEntreprise,
       montant: maxMontant,
       date: dates[0] || null,
       infos_cles: mots.slice(0, 5),
