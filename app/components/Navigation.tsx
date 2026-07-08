@@ -21,10 +21,10 @@ export default function Navigation() {
 
   const items = [
     { href: "/", Icon: IconHome, label: "Accueil" },
-    { href: user ? "/groupes" : "/connexion", Icon: IconGroupe, label: "Groupes" },
-    { href: user ? "/semaine" : "/connexion", Icon: IconCalendrier, label: "Calendrier" },
-    { href: user ? "/finances" : "/connexion", Icon: IconFinances, label: "Finances" },
-    { href: user ? "/profile" : "/connexion", Icon: IconProfil, label: user ? "Profil" : "Connexion" },
+    { href: "/groupes", Icon: IconGroupe, label: "Groupes" },
+    { href: "/semaine", Icon: IconCalendrier, label: "Calendrier" },
+    { href: "/finances", Icon: IconFinances, label: "Finances" },
+    { href: "/profile", Icon: IconProfil, label: user ? "Profil" : "Connexion" },
   ]
 
   return (
@@ -40,7 +40,16 @@ export default function Navigation() {
       }}>
         {items.map((item) => {
           const isActive = pathname === item.href
-          return (
+          const locked = !user && item.href !== '/'
+          return locked ? (
+            <div key={item.href} style={{
+              flex:1,display:'flex',flexDirection:'column',alignItems:'center',
+              gap:'3px',cursor:'not-allowed',opacity:0.3
+            }}>
+              <item.Icon />
+              <span style={{fontSize:'10px',fontWeight:'500'}}>{item.label}</span>
+            </div>
+          ) : (
             <a key={item.href} href={item.href} style={{
               flex:1,display:'flex',flexDirection:'column',alignItems:'center',
               gap:'3px',textDecoration:'none',cursor:'pointer',
