@@ -1,7 +1,6 @@
 "use client"
 import PlacementsSection from "../components/PlacementsSection"
 import FiscaliteSection from "../components/FiscaliteSection"
-import FiscaliteSection from "../components/FiscaliteSection"
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 
