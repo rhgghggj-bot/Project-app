@@ -1,4 +1,5 @@
 "use client"
+import Tutorial from "../components/Tutorial"
 import PlacementsSection from "../components/PlacementsSection"
 import FiscaliteSection from "../components/FiscaliteSection"
 import { useEffect, useState, Suspense } from "react"
@@ -145,7 +146,7 @@ function FinancesContent() {
   )
 
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-white"><Tutorial page="finances" />
       <div style={{background:'linear-gradient(160deg,#0A1628,#1a3a6e)',padding:'20px 18px 28px'}}>
         <a href="/" style={{fontSize:'12px',color:'rgba(255,255,255,0.5)',display:'block',marginBottom:'8px'}}>← Accueil</a>
         <div style={{fontSize:'12px',color:'rgba(255,255,255,0.5)',marginBottom:'8px'}}>Bilan du mois</div>

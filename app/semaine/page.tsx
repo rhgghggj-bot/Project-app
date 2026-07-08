@@ -1,4 +1,5 @@
 "use client"
+import Tutorial from "../components/Tutorial"
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 
@@ -73,7 +74,7 @@ export default function Semaine() {
   const finSemaine = jours[6].toLocaleDateString('fr-FR', {day:'numeric', month:'long', year:'numeric'})
 
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-white"><Tutorial page="calendrier" />
       <div style={{background:'linear-gradient(160deg,#0A1628,#1a3a6e)',padding:'20px 18px 32px',position:'relative',overflow:'hidden'}}>
         <div style={{position:'absolute',top:'-40px',right:'-40px',width:'180px',height:'180px',borderRadius:'50%',background:'rgba(43,127,255,0.15)'}}></div>
         <a href="/" style={{fontSize:'12px',color:'rgba(255,255,255,0.5)',display:'block',marginBottom:'8px'}}>← Accueil</a>
