@@ -379,12 +379,6 @@ export default function Finances() {
         </div>
       )}
 
-      {onglet === "fiscalite" && (
-        <div style={{padding:'16px 18px'}}>
-          <FiscaliteSection />
-        </div>
-      )}
-
       {onglet === "epargne" && (
         <div style={{padding:'16px 18px'}}>
 
