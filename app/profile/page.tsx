@@ -226,6 +226,12 @@ export default function Profile() {
               </a>
             </div>
 
+            <a href="/qrcode" style={{textDecoration:'none',display:'block',marginBottom:'10px'}}>
+              <div style={{background:'#EEF5FF',border:'0.5px solid #DCE9FF',borderRadius:'14px',padding:'14px',display:'flex',alignItems:'center',justifyContent:'center',gap:'8px',cursor:'pointer'}}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2B7FFF" strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3M17 14h3M14 17v3"/></svg>
+                <span style={{fontSize:'14px',fontWeight:'500',color:'#2B7FFF'}}>Partager l application</span>
+              </div>
+            </a>
             <button onClick={deconnecter}
               style={{width:'100%',background:'#FFE4E6',color:'#F43F5E',fontSize:'14px',fontWeight:'500',padding:'12px',borderRadius:'14px',border:'none',cursor:'pointer',marginBottom:'24px'}}>
               <span style={{display:"flex",alignItems:"center",gap:"8px",justifyContent:"center"}}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F43F5E" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Se déconnecter</span>
