@@ -1,5 +1,7 @@
 "use client"
 import PlacementsSection from "../components/PlacementsSection"
+import FiscaliteSection from "../components/FiscaliteSection"
+import FiscaliteSection from "../components/FiscaliteSection"
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 
@@ -156,7 +158,7 @@ export default function Finances() {
       </div>
 
       <div style={{display:'flex',borderBottom:'0.5px solid #E8F1FF',background:'#fff',position:'sticky',top:0,zIndex:10}}>
-        {["vue","revenus","charges","epargne"].map(o => (
+        {["vue","revenus","charges","epargne","fiscalite"].map(o => (
           <button key={o} onClick={() => setOnglet(o)}
             style={{flex:1,padding:'12px 0',fontSize:'12px',fontWeight:'500',border:'none',background:'none',cursor:'pointer',
               color: onglet === o ? '#2B7FFF' : '#aaa',
@@ -372,6 +374,18 @@ export default function Finances() {
           )}
         </div>
       )}
+      {onglet === "fiscalite" && (
+        <div style={{padding:'16px 18px'}}>
+          <FiscaliteSection />
+        </div>
+      )}
+
+      {onglet === "fiscalite" && (
+        <div style={{padding:'16px 18px'}}>
+          <FiscaliteSection />
+        </div>
+      )}
+
       {onglet === "epargne" && (
         <div style={{padding:'16px 18px'}}>
 
