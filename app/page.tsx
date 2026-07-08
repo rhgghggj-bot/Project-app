@@ -85,16 +85,19 @@ export default function Home() {
         <div style={{position:'absolute',top:'-40px',right:'-40px',width:'200px',height:'200px',borderRadius:'50%',background:'rgba(43,127,255,0.15)'}}></div>
 
         {!user && (
-          <div>
-            <div style={{display:'inline-flex',alignItems:'center',gap:'6px',background:'#FDF8EC',color:'#D4A843',fontSize:'11px',fontWeight:'500',padding:'4px 10px',borderRadius:'99px',border:'1px solid #F0D88A',marginBottom:'12px'}}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
-              Réseau de projets
-            </div>
-            <h1 style={{fontSize:'26px',fontWeight:'500',color:'#fff',marginBottom:'8px',lineHeight:'1.3'}}>Lance tes projets,<br/>trouve ton soutien</h1>
-            <p style={{fontSize:'14px',color:'rgba(255,255,255,0.6)',marginBottom:'20px'}}>Partage tes ambitions et rejoins une communauté qui t'aide à avancer.</p>
-            <div style={{display:'flex',gap:'10px',flexWrap:'wrap'}}>
-              <a href="/nouveau-projet"><button style={{background:'#2B7FFF',color:'#fff',fontWeight:'500',fontSize:'13px',padding:'9px 18px',borderRadius:'99px',border:'none',cursor:'pointer'}}>Publier un projet</button></a>
-              <a href="/groupes"><button style={{background:'#FDF8EC',color:'#D4A843',fontWeight:'500',fontSize:'13px',padding:'9px 18px',borderRadius:'99px',border:'1.5px solid #F0D88A',cursor:'pointer'}}>Rejoindre un groupe</button></a>
+          <div style={{textAlign:'center',paddingBottom:'20px'}}>
+            <div style={{fontSize:'22px',fontWeight:'500',color:'#fff',marginBottom:'8px'}}>Bienvenue sur Project</div>
+            <p style={{fontSize:'14px',color:'rgba(255,255,255,0.6)',marginBottom:'24px'}}>Connecte-toi pour accéder à toutes les fonctionnalités</p>
+            <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
+              <a href="/inscription" style={{textDecoration:'none'}}>
+                <button style={{width:'100%',background:'#fff',color:'#1a3a6e',fontWeight:'500',fontSize:'15px',padding:'14px',borderRadius:'14px',border:'none',cursor:'pointer'}}>Créer mon compte</button>
+              </a>
+              <a href="/connexion" style={{textDecoration:'none'}}>
+                <button style={{width:'100%',background:'transparent',color:'rgba(255,255,255,0.7)',fontWeight:'500',fontSize:'14px',padding:'13px',borderRadius:'14px',border:'0.5px solid rgba(255,255,255,0.3)',cursor:'pointer'}}>J'ai déjà un compte</button>
+              </a>
+              <a href="/onboarding" style={{textDecoration:'none'}}>
+                <button style={{width:'100%',background:'transparent',color:'rgba(255,255,255,0.5)',fontSize:'13px',padding:'10px',borderRadius:'14px',border:'none',cursor:'pointer'}}>Voir les fonctionnalités →</button>
+              </a>
             </div>
           </div>
         )}

@@ -21,9 +21,9 @@ export default function Navigation() {
 
   const items = [
     { href: "/", Icon: IconHome, label: "Accueil" },
-    { href: "/groupes", Icon: IconGroupe, label: "Groupes" },
-    { href: "/semaine", Icon: IconCalendrier, label: "Calendrier" },
-    { href: "/finances", Icon: IconFinances, label: "Finances" },
+    { href: user ? "/groupes" : "/connexion", Icon: IconGroupe, label: "Groupes" },
+    { href: user ? "/semaine" : "/connexion", Icon: IconCalendrier, label: "Calendrier" },
+    { href: user ? "/finances" : "/connexion", Icon: IconFinances, label: "Finances" },
     { href: user ? "/profile" : "/connexion", Icon: IconProfil, label: user ? "Profil" : "Connexion" },
   ]
 
