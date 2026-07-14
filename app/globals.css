@@ -18,3 +18,55 @@ body {
 input, textarea, select {
   font-size: 16px !important;
 }
+
+/* Mode sombre automatique */
+@media (prefers-color-scheme: dark) {
+  body { background: #121212 !important; color: #e0e0e0 !important; }
+
+  /* Fonds */
+  .bg-white, [style*="background:'#fff'"], [style*='background:"#fff"'] { background: #1e1e2e !important; }
+  [style*="background:'#F8FBFF'"], [style*="background:'#f8faff'"], [style*="background:'#EEF5FF'"] { background: #1a1a2e !important; }
+  [style*="background:'#F8FBFF'"] { background: #1e1e2e !important; }
+
+  /* Textes */
+  [style*="color:'#1a1a2e'"], [style*="color:'#1a2e'"] { color: #e0e0e0 !important; }
+  [style*="color:'#666'"] { color: #999 !important; }
+  [style*="color:'#aaa'"] { color: #555 !important; }
+
+  /* Bordures */
+  [style*="border:'0.5px solid #E8F1FF'"], [style*="border:0.5px solid #E8F1FF"] { border-color: #2a2a3a !important; }
+  [style*="border:'1px solid #E8F1FF'"] { border-color: #2a2a3a !important; }
+
+  /* Cards */
+  .bg-white { background: #1e1e2e !important; }
+  .border-blue-50 { border-color: #2a2a3a !important; }
+  .text-gray-900 { color: #e0e0e0 !important; }
+  .text-gray-400 { color: #555 !important; }
+  .text-gray-600 { color: #888 !important; }
+  .bg-blue-50 { background: #1a1a2e !important; }
+  .bg-gray-50 { background: #1a1a2e !important; }
+
+  /* Navigation */
+  nav, [class*="Navigation"] { background: #121212 !important; border-color: #2a2a3a !important; }
+
+  /* Inputs */
+  input, select, textarea {
+    background: #1e1e2e !important;
+    color: #e0e0e0 !important;
+    border-color: #2a2a3a !important;
+  }
+
+  /* Glass effect adapte mode sombre */
+  [style*="backdrop-filter"] {
+    background: rgba(15, 15, 30, 0.85) !important;
+    border-color: rgba(255,255,255,0.1) !important;
+  }
+
+  /* Zones grises */
+  [style*="background:'#f8faff'"] { background: #0f0f1a !important; }
+  [style*="background:'#F0F8FF'"] { background: #1a1a2e !important; }
+
+  /* Scrollbars */
+  ::-webkit-scrollbar { background: #1e1e2e; }
+  ::-webkit-scrollbar-thumb { background: #2a2a3a; border-radius: 4px; }
+}
