@@ -46,7 +46,8 @@ export default function Groupes() {
   }
 
   return (
-    <main className="min-h-screen bg-white">
+ 
+    <main className="min-h-screen bg-white"><Tutorial page="groupes" />
       <div className="bg-white border-b border-blue-50 px-5 py-3 flex items-center justify-between">
         <a href="/" className="text-gray-400 text-sm">← Retour</a>
         <h1 className="text-base font-medium text-gray-900">Groupes</h1>
