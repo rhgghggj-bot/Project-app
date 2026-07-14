@@ -1,4 +1,5 @@
 "use client"
+import Tutorial from "../components/Tutorial"
 
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"

@@ -226,6 +226,24 @@ export default function Profile() {
               </a>
             </div>
 
+            <div style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'14px',padding:'14px',marginBottom:'10px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+              <div>
+                <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e'}}>Tutoriels</div>
+                <div style={{fontSize:'11px',color:'#aaa',marginTop:'2px'}}>Guides interactifs a chaque ouverture</div>
+              </div>
+              <button onClick={() => {
+                const desactive = localStorage.getItem('tuto_desactive')
+                if (desactive) { localStorage.removeItem('tuto_desactive') } 
+                else { localStorage.setItem('tuto_desactive','1') }
+                window.location.reload()
+              }} style={{
+                background: typeof window !== 'undefined' && localStorage.getItem('tuto_desactive') ? '#EEF5FF' : '#2B7FFF',
+                color: typeof window !== 'undefined' && localStorage.getItem('tuto_desactive') ? '#2B7FFF' : '#fff',
+                border:'none',borderRadius:'99px',padding:'6px 14px',fontSize:'12px',fontWeight:'500',cursor:'pointer'
+              }}>
+                {typeof window !== 'undefined' && localStorage.getItem('tuto_desactive') ? 'Activer' : 'Desactiver'}
+              </button>
+            </div>
             <a href="/qrcode" style={{textDecoration:'none',display:'block',marginBottom:'10px'}}>
               <div style={{background:'#EEF5FF',border:'0.5px solid #DCE9FF',borderRadius:'14px',padding:'14px',display:'flex',alignItems:'center',justifyContent:'center',gap:'8px',cursor:'pointer'}}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2B7FFF" strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3M17 14h3M14 17v3"/></svg>

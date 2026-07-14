@@ -1,5 +1,6 @@
 "use client"
 import { useState } from "react"
+import Tutorial from "./Tutorial"
 
 const CANTONS: any = {
   GE:{nom:'Geneve',t:[{m:20000,r:.053},{m:40000,r:.072},{m:60000,r:.091},{m:80000,r:.107},{m:100000,r:.114},{m:150000,r:.120},{m:1e9,r:.130}],ef:13000,em:8000},
@@ -59,7 +60,7 @@ export default function FiscaliteSection() {
   const taux = brut > 0 ? ((total/brut)*100).toFixed(1) : '0.0'
 
   return (
-    <div>
+    <div><Tutorial page="fiscalite" />
       <div style={{fontSize:'14px',fontWeight:'500',color:'#1a1a2e',marginBottom:'12px'}}>Calculateur fiscal 2025</div>
       <div style={{display:'flex',gap:'6px',overflowX:'auto',paddingBottom:'8px',marginBottom:'14px'}}>
         {['revenus','deductions','situation','resultat'].map(o => (
