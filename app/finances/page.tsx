@@ -64,13 +64,15 @@ function FinancesContent() {
     charger()
   }, [])
 
+  function haptic(t='light') { if(typeof navigator !== 'undefined' && navigator.vibrate) { if(t==='light') navigator.vibrate(10); else if(t==='success') navigator.vibrate([10,30,10]); else if(t==='error') navigator.vibrate([50,30,50]); } }
+
   async function ajouter() {
-    if (!titre || !montant) return
+    if (!titre || !montant) { haptic("error"); return }
     const table = typeForm === "depense" ? "depenses" : "revenus"
     const { error } = await supabase.from(table).insert({
       user_id: user.id, titre, montant: parseFloat(montant), categorie, date, recurrent
     })
-    if (!error) {
+    if (!error) { haptic("success");
       setTitre(""); setMontant(""); setCategorie(""); setRecurrent(false); setShowForm(false)
       const { data: d } = await supabase.from("depenses").select("*").eq("user_id", user.id).order("date", { ascending: false })
       setDepenses(d || [])
