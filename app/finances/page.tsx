@@ -27,6 +27,8 @@ function FinancesContent() {
   const [objectif, setObjectif] = useState("")
   const [montantEpargne, setMontantEpargne] = useState("")
   const [dureeObjectif, setDureeObjectif] = useState(12)
+  const [annees, setAnnees] = useState(1)
+  const [moisExtra, setMoisExtra] = useState(0)
   const [duree, setDuree] = useState("12")
   const [showEpargne, setShowEpargne] = useState(false)
 
@@ -439,60 +441,45 @@ function FinancesContent() {
 
                 <div style={{background:'linear-gradient(135deg,#1a3a6e,#2B7FFF)',borderRadius:'16px',padding:'16px',marginBottom:'12px'}}>
                   <div style={{fontSize:'11px',color:'rgba(255,255,255,0.6)',marginBottom:'4px'}}>En combien de temps ?</div>
-                  <div style={{fontSize:'22px',fontWeight:'500',color:'#fff',marginBottom:'14px'}}>
-                    {dureeObjectif < 12 ? dureeObjectif+' mois' : dureeObjectif === 12 ? '1 an' : dureeObjectif < 24 ? '1 an '+(dureeObjectif-12)+' mois' : Math.floor(dureeObjectif/12)+' ans'+(dureeObjectif%12?' '+(dureeObjectif%12)+' mois':'')}
+                  <div style={{fontSize:'22px',fontWeight:'500',color:'#fff',marginBottom:'16px'}}>
+                    {annees > 0 && moisExtra > 0 ? annees+' an'+(annees>1?'s':'')+' '+moisExtra+' mois' : annees > 0 ? annees+' an'+(annees>1?'s':'') : moisExtra+' mois'}
                   </div>
 
-                  <div style={{display:'flex',gap:'12px',alignItems:'center',marginBottom:'14px'}}>
-                    <div style={{flex:1,textAlign:'center'}}>
-                      <div style={{fontSize:'10px',color:'rgba(255,255,255,0.5)',marginBottom:'6px',textTransform:'uppercase',letterSpacing:'.05em'}}>Années</div>
-                      <div style={{height:'140px',overflow:'hidden',position:'relative'}}>
-                        <div style={{position:'absolute',top:0,left:0,right:0,height:'45px',background:'linear-gradient(to bottom,rgba(26,58,110,0.95),transparent)',zIndex:2,pointerEvents:'none'}}></div>
-                        <div style={{position:'absolute',bottom:0,left:0,right:0,height:'45px',background:'linear-gradient(to top,rgba(26,58,110,0.95),transparent)',zIndex:2,pointerEvents:'none'}}></div>
-                        <div style={{position:'absolute',top:'45px',left:'4px',right:'4px',height:'46px',borderTop:'1px solid rgba(255,255,255,0.4)',borderBottom:'1px solid rgba(255,255,255,0.4)',background:'rgba(255,255,255,0.1)',borderRadius:'8px',zIndex:1,pointerEvents:'none'}}></div>
-                        <div style={{display:'flex',flexDirection:'column',alignItems:'center'}}>
-                          {Array.from({length:11},(_,i)=>(
-                            <div key={i} onClick={() => setDureeObjectif(i*12 + dureeObjectif%12)}
-                              style={{height:'46px',display:'flex',alignItems:'center',justifyContent:'center',width:'100%',cursor:'pointer',
-                                fontSize: Math.floor(dureeObjectif/12)===i ? '22px' : Math.abs(Math.floor(dureeObjectif/12)-i)===1 ? '16px' : '13px',
-                                fontWeight: Math.floor(dureeObjectif/12)===i ? '600' : '400',
-                                color: Math.floor(dureeObjectif/12)===i ? '#fff' : Math.abs(Math.floor(dureeObjectif/12)-i)===1 ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.25)'}}>
-                              {i}
-                            </div>
-                          ))}
+                  <div style={{display:'flex',gap:'10px',marginBottom:'16px'}}>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:'11px',color:'rgba(255,255,255,0.6)',marginBottom:'6px',textTransform:'uppercase',letterSpacing:'.05em'}}>Années</div>
+                      <div style={{background:'#fff',borderRadius:'12px',padding:'10px 14px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+                        <button onClick={() => { const na = Math.max(0, annees-1); setAnnees(na); setDureeObjectif(na*12+moisExtra) }}
+                          style={{width:'32px',height:'32px',borderRadius:'50%',background:'#EEF5FF',border:'none',fontSize:'20px',color:'#2B7FFF',cursor:'pointer',lineHeight:'1'}}>−</button>
+                        <div style={{textAlign:'center'}}>
+                          <div style={{fontSize:'28px',fontWeight:'600',color:'#1a1a2e'}}>{annees}</div>
+                          <div style={{fontSize:'10px',color:'#aaa'}}>0 → 10 ans</div>
                         </div>
+                        <button onClick={() => { const na = Math.min(10, annees+1); setAnnees(na); setDureeObjectif(na*12+moisExtra) }}
+                          style={{width:'32px',height:'32px',borderRadius:'50%',background:'#2B7FFF',border:'none',fontSize:'20px',color:'#fff',cursor:'pointer',lineHeight:'1'}}>+</button>
                       </div>
                     </div>
-
-                    <div style={{width:'1px',height:'80px',background:'rgba(255,255,255,0.2)'}}></div>
-
-                    <div style={{flex:1,textAlign:'center'}}>
-                      <div style={{fontSize:'10px',color:'rgba(255,255,255,0.5)',marginBottom:'6px',textTransform:'uppercase',letterSpacing:'.05em'}}>Mois</div>
-                      <div style={{height:'140px',overflow:'hidden',position:'relative'}}>
-                        <div style={{position:'absolute',top:0,left:0,right:0,height:'45px',background:'linear-gradient(to bottom,rgba(26,58,110,0.95),transparent)',zIndex:2,pointerEvents:'none'}}></div>
-                        <div style={{position:'absolute',bottom:0,left:0,right:0,height:'45px',background:'linear-gradient(to top,rgba(26,58,110,0.95),transparent)',zIndex:2,pointerEvents:'none'}}></div>
-                        <div style={{position:'absolute',top:'45px',left:'4px',right:'4px',height:'46px',borderTop:'1px solid rgba(255,255,255,0.4)',borderBottom:'1px solid rgba(255,255,255,0.4)',background:'rgba(255,255,255,0.1)',borderRadius:'8px',zIndex:1,pointerEvents:'none'}}></div>
-                        <div style={{display:'flex',flexDirection:'column',alignItems:'center'}}>
-                          {Array.from({length:12},(_,i)=>(
-                            <div key={i} onClick={() => setDureeObjectif(Math.floor(dureeObjectif/12)*12 + i)}
-                              style={{height:'46px',display:'flex',alignItems:'center',justifyContent:'center',width:'100%',cursor:'pointer',
-                                fontSize: dureeObjectif%12===i ? '22px' : Math.abs(dureeObjectif%12-i)===1 ? '16px' : '13px',
-                                fontWeight: dureeObjectif%12===i ? '600' : '400',
-                                color: dureeObjectif%12===i ? '#fff' : Math.abs(dureeObjectif%12-i)===1 ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.25)'}}>
-                              {i}
-                            </div>
-                          ))}
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:'11px',color:'rgba(255,255,255,0.6)',marginBottom:'6px',textTransform:'uppercase',letterSpacing:'.05em'}}>Mois</div>
+                      <div style={{background:'#fff',borderRadius:'12px',padding:'10px 14px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+                        <button onClick={() => { const nm = Math.max(0, moisExtra-1); setMoisExtra(nm); setDureeObjectif(annees*12+nm) }}
+                          style={{width:'32px',height:'32px',borderRadius:'50%',background:'#EEF5FF',border:'none',fontSize:'20px',color:'#2B7FFF',cursor:'pointer',lineHeight:'1'}}>−</button>
+                        <div style={{textAlign:'center'}}>
+                          <div style={{fontSize:'28px',fontWeight:'600',color:'#1a1a2e'}}>{moisExtra}</div>
+                          <div style={{fontSize:'10px',color:'#aaa'}}>1 → 12 mois</div>
                         </div>
+                        <button onClick={() => { let nm = moisExtra+1; let na = annees; if(nm>12){nm=0;na=Math.min(10,na+1);setAnnees(na);} setMoisExtra(nm); setDureeObjectif(na*12+nm) }}
+                          style={{width:'32px',height:'32px',borderRadius:'50%',background:'#2B7FFF',border:'none',fontSize:'20px',color:'#fff',cursor:'pointer',lineHeight:'1'}}>+</button>
                       </div>
                     </div>
                   </div>
 
                   <div style={{display:'flex',gap:'6px',flexWrap:'wrap'}}>
-                    {[{m:6,l:'6 mois'},{m:12,l:'1 an'},{m:18,l:'18 mois'},{m:24,l:'2 ans'},{m:36,l:'3 ans'}].map(r=>(
-                      <button key={r.m} onClick={() => setDureeObjectif(r.m)}
+                    {[{a:0,m:6,l:'6 mois'},{a:1,m:0,l:'1 an'},{a:1,m:6,l:'18 mois'},{a:2,m:0,l:'2 ans'},{a:3,m:0,l:'3 ans'}].map(r=>(
+                      <button key={r.l} onClick={() => { setAnnees(r.a); setMoisExtra(r.m); setDureeObjectif(r.a*12+r.m) }}
                         style={{padding:'6px 12px',borderRadius:'99px',border:'none',cursor:'pointer',fontSize:'12px',fontWeight:'500',
-                          background: dureeObjectif===r.m ? '#fff' : 'rgba(255,255,255,0.15)',
-                          color: dureeObjectif===r.m ? '#1a3a6e' : 'rgba(255,255,255,0.8)'}}>
+                          background: dureeObjectif===r.a*12+r.m ? '#fff' : 'rgba(255,255,255,0.15)',
+                          color: dureeObjectif===r.a*12+r.m ? '#1a3a6e' : 'rgba(255,255,255,0.9)'}}>
                         {r.l}
                       </button>
                     ))}
