@@ -20,6 +20,8 @@ export default function GroupePage() {
   const [messageActif, setMessageActif] = useState<any>(null)
   const [editionId, setEditionId] = useState<string|null>(null)
   const [editionTexte, setEditionTexte] = useState("")
+  const [reactions, setReactions] = useState<Record<string,Record<string,number>>>({})
+  const [pickerMsg, setPickerMsg] = useState<string|null>(null)
   const messagesEndRef = useRef<any>(null)
   const channelRef = useRef<any>(null)
 
@@ -140,6 +142,15 @@ export default function GroupePage() {
         </div>
       </main>
     )
+  }
+
+  function toggleReaction(msgId: string, emoji: string) {
+    setReactions(prev => {
+      const msgR = prev[msgId] || {}
+      const count = msgR[emoji] || 0
+      return { ...prev, [msgId]: { ...msgR, [emoji]: count + 1 } }
+    })
+    setPickerMsg(null)
   }
 
   return (
