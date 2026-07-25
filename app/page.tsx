@@ -121,6 +121,26 @@ export default function Home() {
         )}
       </div>
 
+      {user && evenements.filter(e => {
+        const now = new Date()
+        const todayStr = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0')
+        if (e.date !== todayStr || !e.heure) return false
+        const [h,m] = e.heure.split(':').map(Number)
+        const diffMin = (h*60+m) - (now.getHours()*60+now.getMinutes())
+        return diffMin > 0 && diffMin <= 60
+      }).map(e => {
+        const now = new Date()
+        const [h,m] = e.heure.split(':').map(Number)
+        const diffMin = (h*60+m) - (now.getHours()*60+now.getMinutes())
+        return (
+          <div key={e.id} style={{margin:'0 14px 8px',background:'#FFE4E6',border:'0.5px solid #FECDD3',borderRadius:'10px',padding:'10px 14px',display:'flex',alignItems:'center',gap:'10px'}}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F43F5E" strokeWidth="2" style={{flexShrink:0}}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <span style={{fontSize:'12px',color:'#1a1a2e',flex:1}}><b style={{color:'#F43F5E'}}>{e.titre}</b> dans <b style={{color:'#F43F5E'}}>{diffMin} min</b></span>
+            <a href="/semaine" style={{fontSize:'11px',color:'#F43F5E',fontWeight:'500',textDecoration:'none'}}>Voir →</a>
+          </div>
+        )
+      })}
+
       {/* Zone gris clair - calendrier + cartes */}
       {user && (
         <div style={{background:'#f0f4ff',padding:'14px'}}>
