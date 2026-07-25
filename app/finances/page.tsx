@@ -437,12 +437,21 @@ function FinancesContent() {
                 </div>
 
                 <div style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'14px',padding:'14px',marginBottom:'12px'}}>
-                  <div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'8px'}}>
-                    <label style={{fontSize:'12px',color:'#666',minWidth:'50px'}}>Durée</label>
-                    <input type="range" min="1" max="120" step="1" value={dureeObjectif}
-                      onChange={e => setDureeObjectif(Number(e.target.value))}
-                      style={{flex:1,accentColor:'#2B7FFF'}}/>
-                    <span style={{fontSize:'13px',fontWeight:'500',color:'#2B7FFF',minWidth:'60px',textAlign:'right'}}>{label}</span>
+                  <div style={{fontSize:'12px',color:'#666',marginBottom:'8px'}}>En combien de temps ?</div>
+                  <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'6px'}}>
+                    {[
+                      {mois:3,label:'3 mois'},{mois:6,label:'6 mois'},{mois:9,label:'9 mois'},
+                      {mois:12,label:'1 an'},{mois:18,label:'1 an 6'},{mois:24,label:'2 ans'},
+                      {mois:36,label:'3 ans'},{mois:48,label:'4 ans'},{mois:60,label:'5 ans'},
+                      {mois:72,label:'6 ans'},{mois:84,label:'7 ans'},{mois:120,label:'10 ans'},
+                    ].map(opt => (
+                      <button key={opt.mois} onClick={() => setDureeObjectif(opt.mois)}
+                        style={{padding:'8px 4px',borderRadius:'10px',border:'none',cursor:'pointer',fontSize:'12px',fontWeight:'500',
+                          background: dureeObjectif === opt.mois ? '#2B7FFF' : '#F8FBFF',
+                          color: dureeObjectif === opt.mois ? '#fff' : '#666'}}>
+                        {opt.label}
+                      </button>
+                    ))}
                   </div>
                 </div>
 
