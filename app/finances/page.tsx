@@ -84,6 +84,64 @@ function FinancesContent() {
     }
   }
 
+  function exporterPDF() {
+    const moisNom = ['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre'][moisActuel]
+    const totalRev = moisActuelData.revenus.toFixed(0)
+    const totalDep = moisActuelData.depenses.toFixed(0)
+    const solde = (moisActuelData.revenus - moisActuelData.depenses).toFixed(0)
+    const revList = revenusMoisAff.map(r => `<tr><td style="padding:8px;border-bottom:1px solid #E8F1FF">${r.titre}</td><td style="padding:8px;border-bottom:1px solid #E8F1FF;color:#10B981;text-align:right">+${parseFloat(r.montant).toFixed(0)} CHF</td></tr>`).join('')
+    const depList = depensesMoisAff.map(d => `<tr><td style="padding:8px;border-bottom:1px solid #E8F1FF">${d.titre}</td><td style="padding:8px;border-bottom:1px solid #E8F1FF;color:#F43F5E;text-align:right">-${parseFloat(d.montant).toFixed(0)} CHF</td></tr>`).join('')
+
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Bilan ${moisNom} ${anneeActuelle}</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; padding: 24px; color: #1a1a2e; }
+    .header { background: linear-gradient(135deg, #0A1628, #1a3a6e); color: white; padding: 24px; border-radius: 12px; text-align: center; margin-bottom: 20px; }
+    .header h1 { margin: 0 0 4px; font-size: 22px; }
+    .header p { margin: 0; opacity: 0.6; font-size: 13px; }
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+    .stat { background: #F8FBFF; border: 1px solid #E8F1FF; border-radius: 10px; padding: 14px; text-align: center; }
+    .stat label { font-size: 11px; color: #aaa; display: block; margin-bottom: 4px; }
+    .stat value { font-size: 20px; font-weight: 600; display: block; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+    th { text-align: left; padding: 8px; background: #F8FBFF; font-size: 11px; color: #aaa; text-transform: uppercase; letter-spacing: .05em; }
+    .footer { text-align: center; font-size: 11px; color: #aaa; margin-top: 20px; padding-top: 12px; border-top: 1px solid #E8F1FF; }
+    @media print { body { padding: 0; } }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Project</h1>
+    <p>Bilan financier — ${moisNom} ${anneeActuelle}</p>
+  </div>
+  <div class="stats">
+    <div class="stat"><label>Revenus</label><value style="color:#10B981">+${totalRev} CHF</value></div>
+    <div class="stat"><label>Depenses</label><value style="color:#F43F5E">-${totalDep} CHF</value></div>
+    <div class="stat"><label>Solde</label><value style="color:#2B7FFF">${parseFloat(solde) >= 0 ? '+' : ''}${solde} CHF</value></div>
+  </div>
+  <table>
+    <tr><th colspan="2">Revenus</th></tr>
+    ${revList || '<tr><td colspan="2" style="padding:8px;color:#aaa">Aucun revenu ce mois</td></tr>'}
+  </table>
+  <table>
+    <tr><th colspan="2">Depenses</th></tr>
+    ${depList || '<tr><td colspan="2" style="padding:8px;color:#aaa">Aucune depense ce mois</td></tr>'}
+  </table>
+  <div class="footer">Genere par Project App — project-app-rust-delta.vercel.app</div>
+</body>
+</html>`
+
+    const w = window.open('', '_blank')
+    if (w) {
+      w.document.write(html)
+      w.document.close()
+      setTimeout(() => w.print(), 500)
+    }
+  }
+
   async function supprimer(id: string, type: "depense"|"revenu") {
     await supabase.from(type === "depense" ? "depenses" : "revenus").delete().eq("id", id)
     if (type === "depense") setDepenses(depenses.filter(d => d.id !== id))
