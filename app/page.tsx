@@ -105,6 +105,16 @@ export default function Home() {
 
         {user && (
           <div>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'12px'}}>
+              <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
+                <svg width='22' height='22' viewBox='0 0 60 60' style={{flexShrink:0}}>
+                  <path d='M30 5 L35 25 L55 30 L35 35 L30 55 L25 35 L5 30 L25 25 Z' fill='url(#navGrad)'/>
+                  <defs><linearGradient id='navGrad' x1='0%' y1='0%' x2='100%' y2='100%'><stop offset='0%' stopColor='#2B7FFF'/><stop offset='100%' stopColor='#D4A843'/></linearGradient></defs>
+                </svg>
+                <span style={{fontSize:'16px',fontWeight:'700',color:'#fff',letterSpacing:'2px'}}>NEXIA</span>
+              </div>
+              <NotificationBell />
+            </div>
             <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'4px'}}>
               <div style={{fontSize:'12px',color:'rgba(255,255,255,0.5)'}}>
                 {today.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}
