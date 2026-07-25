@@ -267,6 +267,13 @@ function FinancesContent() {
                   <div style={{height:'6px',background:'#F0F8FF',borderRadius:'99px',overflow:'hidden'}}>
                     <div style={{height:'100%',width:`${totalDep > 0 ? (c.total/totalDep)*100 : 0}%`,background:'linear-gradient(90deg,#F43F5E,#F59E0B)',borderRadius:'99px'}}></div>
                   </div>
+                  <div style={{display:'flex',alignItems:'center',gap:'8px',marginTop:'8px',paddingTop:'8px',borderTop:'0.5px solid #E8F1FF'}}>
+                    <span style={{fontSize:'12px',color:'#aaa'}}>Autre :</span>
+                    <input type="number" min="1" max="360" placeholder="ex: 15"
+                      onChange={e => { if(e.target.value) setDureeObjectif(Number(e.target.value)) }}
+                      style={{width:'70px',border:'1px solid #E8F1FF',borderRadius:'8px',padding:'5px 8px',fontSize:'14px',color:'#1a1a2e',background:'#F8FBFF'}}/>
+                    <span style={{fontSize:'12px',color:'#aaa'}}>mois</span>
+                  </div>
                 </div>
               ))}
             </div>
