@@ -255,6 +255,54 @@ function FinancesContent() {
       </div>
 
       {onglet === "vue" && (
+        <>
+        {/* Alerte budget */}
+        {moisActuelData.revenus > 0 && (() => {
+          const pct = (moisActuelData.depenses / moisActuelData.revenus) * 100
+          const reste = moisActuelData.revenus - moisActuelData.depenses
+          if (pct > 100) return (
+            <div style={{margin:'8px 14px 0',background:'#FFE4E6',border:'0.5px solid #FECDD3',borderRadius:'10px',padding:'10px 14px',display:'flex',alignItems:'center',gap:'10px'}}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F43F5E" strokeWidth="2" style={{flexShrink:0}}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              <span style={{fontSize:'12px',color:'#1a1a2e',flex:1}}>Budget depasse de <b style={{color:'#F43F5E'}}>{Math.abs(reste).toFixed(0)} CHF</b> ce mois</span>
+            </div>
+          )
+          if (pct >= 80) return (
+            <div style={{margin:'8px 14px 0',background:'#FDF8EC',border:'0.5px solid #F0D88A',borderRadius:'10px',padding:'10px 14px',display:'flex',alignItems:'center',gap:'10px'}}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="2" style={{flexShrink:0}}><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              <span style={{fontSize:'12px',color:'#1a1a2e',flex:1}}>80% du budget atteint — il te reste <b style={{color:'#D4A843'}}>{reste.toFixed(0)} CHF</b></span>
+            </div>
+          )
+          return (
+            <div style={{margin:'8px 14px 0',background:'#E1F5EE',border:'0.5px solid #A7F3D0',borderRadius:'10px',padding:'10px 14px',display:'flex',alignItems:'center',gap:'10px'}}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2" style={{flexShrink:0}}><polyline points="20 6 9 17 4 12"/></svg>
+              <span style={{fontSize:'12px',color:'#1a1a2e',flex:1}}>Bon rythme — tu peux epargner <b style={{color:'#10B981'}}>{reste.toFixed(0)} CHF</b> ce mois</span>
+            </div>
+          )
+        })()}
+        <>
+        {/* Alerte budget */}
+        {moisActuelData.revenus > 0 && (() => {
+          const pct = (moisActuelData.depenses / moisActuelData.revenus) * 100
+          const reste = moisActuelData.revenus - moisActuelData.depenses
+          if (pct > 100) return (
+            <div style={{margin:'8px 14px 0',background:'#FFE4E6',border:'0.5px solid #FECDD3',borderRadius:'10px',padding:'10px 14px',display:'flex',alignItems:'center',gap:'10px'}}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F43F5E" strokeWidth="2" style={{flexShrink:0}}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              <span style={{fontSize:'12px',color:'#1a1a2e',flex:1}}>Budget depasse de <b style={{color:'#F43F5E'}}>{Math.abs(reste).toFixed(0)} CHF</b> ce mois</span>
+            </div>
+          )
+          if (pct >= 80) return (
+            <div style={{margin:'8px 14px 0',background:'#FDF8EC',border:'0.5px solid #F0D88A',borderRadius:'10px',padding:'10px 14px',display:'flex',alignItems:'center',gap:'10px'}}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="2" style={{flexShrink:0}}><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              <span style={{fontSize:'12px',color:'#1a1a2e',flex:1}}>80% du budget atteint — il te reste <b style={{color:'#D4A843'}}>{reste.toFixed(0)} CHF</b></span>
+            </div>
+          )
+          return (
+            <div style={{margin:'8px 14px 0',background:'#E1F5EE',border:'0.5px solid #A7F3D0',borderRadius:'10px',padding:'10px 14px',display:'flex',alignItems:'center',gap:'10px'}}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2" style={{flexShrink:0}}><polyline points="20 6 9 17 4 12"/></svg>
+              <span style={{fontSize:'12px',color:'#1a1a2e',flex:1}}>Bon rythme — tu peux epargner <b style={{color:'#10B981'}}>{reste.toFixed(0)} CHF</b> ce mois</span>
+            </div>
+          )
+        })()}
         <div style={{padding:'16px 18px'}}>
           <div style={{background:'rgba(255,255,255,0.9)',border:'0.5px solid #E8F1FF',borderRadius:'18px',padding:'16px',marginBottom:'14px',boxShadow:'0 4px 24px rgba(43,127,255,0.08)'}}>
             <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'8px'}}>
@@ -385,6 +433,8 @@ function FinancesContent() {
             </div>
           )}
         </div>
+      </>
+      </>
       )}
 
       {onglet === "revenus" && (
