@@ -212,7 +212,7 @@ function FinancesContent() {
     <main className="min-h-screen bg-white"><Tutorial page="finances" />
       <div style={{background:'linear-gradient(160deg,#0A1628,#1a3a6e)',padding:'20px 18px 28px'}}>
         <a href="/" style={{fontSize:'12px',color:'rgba(255,255,255,0.5)',display:'block',marginBottom:'8px'}}>← Accueil</a>
-        <div style={{fontSize:'12px',color:'rgba(255,255,255,0.5)',marginBottom:'8px'}}>Bilan du mois</div>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'8px'}}><div style={{fontSize:'12px',color:'rgba(255,255,255,0.5)'}}>Bilan du mois</div><button onClick={exporterPDF} style={{background:'rgba(255,255,255,0.15)',color:'#fff',border:'0.5px solid rgba(255,255,255,0.3)',borderRadius:'10px',padding:'6px 12px',fontSize:'12px',fontWeight:'500',cursor:'pointer',display:'flex',alignItems:'center',gap:'5px'}}><svg width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='#fff' strokeWidth='2'><path d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4'/><polyline points='7 10 12 15 17 10'/><line x1='12' y1='15' x2='12' y2='3'/></svg>PDF</button></div>
         <div style={{background:'rgba(255,255,255,0.08)',borderRadius:'16px',padding:'16px',marginBottom:'12px',border:`1px solid ${couleurSolde}44`}}>
           <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'8px'}}>
             <span style={{fontSize:'20px'}}>{iconeSolde}</span>
