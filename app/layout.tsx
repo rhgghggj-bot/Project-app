@@ -16,13 +16,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Project - Hub de vie",
-  description: "Réseau social, finances et calendrier personnel",
+  title: "Nexia - Ton hub de vie",
+  description: "Nexia — Ton hub de vie. Finances, calendrier, groupes et fiscalité suisse.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Project",
+    title: "Nexia",
   },
 };
 

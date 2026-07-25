@@ -1,7 +1,7 @@
 {
-  "name": "Project - Hub de vie",
-  "short_name": "Project",
-  "description": "Réseau social, finances et calendrier personnel",
+  "name": "Nexia",
+  "short_name": "Nexia",
+  "description": "Ton hub de vie — Finances, calendrier, groupes",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
