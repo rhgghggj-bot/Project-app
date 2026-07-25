@@ -26,6 +26,7 @@ function FinancesContent() {
   const [moisSelectionne, setMoisSelectionne] = useState<any>(null)
   const [objectif, setObjectif] = useState("")
   const [montantEpargne, setMontantEpargne] = useState("")
+  const [dureeObjectif, setDureeObjectif] = useState(12)
   const [duree, setDuree] = useState("12")
   const [showEpargne, setShowEpargne] = useState(false)
 
@@ -425,21 +426,27 @@ function FinancesContent() {
 
           {montantEpargne && parseFloat(montantEpargne) > 0 && (() => {
             const cible = parseFloat(montantEpargne)
-            const scenarios = [
-              { mois: 6, label: '6 mois', couleur: '#F43F5E' },
-              { mois: 12, label: '1 an', couleur: '#D4A843' },
-              { mois: 24, label: '2 ans', couleur: '#2B7FFF' },
-              { mois: 36, label: '3 ans', couleur: '#10B981' },
-            ]
+            const parMois = cible / dureeObjectif
+            const resteApresCharges = revenus.filter(r=>r.recurrent).reduce((sum,r)=>sum+parseFloat(r.montant),0) - depenses.filter(d=>d.recurrent).reduce((sum,d)=>sum+parseFloat(d.montant),0)
+            const faisable = parMois <= resteApresCharges
+            const label = dureeObjectif < 12 ? dureeObjectif+' mois' : dureeObjectif === 12 ? '1 an' : Math.floor(dureeObjectif/12)+'ans '+(dureeObjectif%12 > 0 ? (dureeObjectif%12)+'mois' : '')
             return (
               <div style={{marginBottom:'14px'}}>
-                <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',marginBottom:'10px'}}>
+                <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',marginBottom:'12px'}}>
                   Pour atteindre {cible.toFixed(0)} CHF :
                 </div>
-                {scenarios.map((s, i) => {
-                  const parMois = cible / s.mois
-                  const resteApresCharges = revenus.filter(r=>r.recurrent).reduce((sum,r)=>sum+parseFloat(r.montant),0) - depenses.filter(d=>d.recurrent).reduce((sum,d)=>sum+parseFloat(d.montant),0)
-                  const faisable = parMois <= resteApresCharges
+
+                <div style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'14px',padding:'14px',marginBottom:'12px'}}>
+                  <div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'8px'}}>
+                    <label style={{fontSize:'12px',color:'#666',minWidth:'50px'}}>Durée</label>
+                    <input type="range" min="1" max="120" step="1" value={dureeObjectif}
+                      onChange={e => setDureeObjectif(Number(e.target.value))}
+                      style={{flex:1,accentColor:'#2B7FFF'}}/>
+                    <span style={{fontSize:'13px',fontWeight:'500',color:'#2B7FFF',minWidth:'60px',textAlign:'right'}}>{label}</span>
+                  </div>
+                </div>
+
+                {[{mois: dureeObjectif, label, couleur: faisable ? '#10B981' : '#F43F5E'}].map((s, i) => {
                   return (
                     <div key={i} style={{background:'#fff',border:`1px solid ${s.couleur}33`,borderRadius:'14px',padding:'14px',marginBottom:'10px'}}>
                       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'10px'}}>
