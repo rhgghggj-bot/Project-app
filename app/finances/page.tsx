@@ -114,7 +114,7 @@ function FinancesContent() {
 </head>
 <body>
   <div class="header">
-    <h1>Project</h1>
+    <h1>Nexia</h1>
     <p>Bilan financier — ${moisNom} ${anneeActuelle}</p>
   </div>
   <div class="stats">
@@ -130,7 +130,7 @@ function FinancesContent() {
     <tr><th colspan="2">Depenses</th></tr>
     ${depList || '<tr><td colspan="2" style="padding:8px;color:#aaa">Aucune depense ce mois</td></tr>'}
   </table>
-  <div class="footer">Genere par Project App — project-app-rust-delta.vercel.app</div>
+  <div class="footer">Genere par Nexia — project-app-rust-delta.vercel.app</div>
 </body>
 </html>`
 

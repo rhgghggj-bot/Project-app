@@ -87,7 +87,7 @@ export default function Home() {
 
         {!user && (
           <div style={{textAlign:'center',paddingBottom:'20px'}}>
-            <div style={{fontSize:'22px',fontWeight:'500',color:'#fff',marginBottom:'8px'}}>Bienvenue sur Project</div>
+            <div style={{fontSize:'22px',fontWeight:'500',color:'#fff',marginBottom:'8px'}}>Bienvenue sur Nexia</div>
             <p style={{fontSize:'14px',color:'rgba(255,255,255,0.6)',marginBottom:'24px'}}>Connecte-toi pour accéder à toutes les fonctionnalités</p>
             <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
               <a href="/inscription" style={{textDecoration:'none'}}>
@@ -216,7 +216,7 @@ export default function Home() {
       {/* Zone decouvrir */}
       <div style={{background:'#f8faff'}}>
         <div style={{padding:'16px 14px 8px'}}>
-          <div style={{fontSize:'11px',color:'#aaa',marginBottom:'4px'}}>Réseau Project</div>
+          <div style={{fontSize:'11px',color:'#aaa',marginBottom:'4px'}}>Réseau Nexia</div>
           <div style={{fontSize:'20px',fontWeight:'500',color:'#1a1a2e',marginBottom:'12px'}}>Découvrir</div>
           <div style={{display:'flex',gap:'8px',overflowX:'auto',paddingBottom:'4px'}}>
             {['Tous','Tech','Business','Art','Sport','Education','Sante','Autre'].map(cat => (
