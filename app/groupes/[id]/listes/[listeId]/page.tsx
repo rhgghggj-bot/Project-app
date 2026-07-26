@@ -27,8 +27,9 @@ export default function ListeDetailPage() {
   const [modeShopping, setModeShopping] = useState(false)
 
   useEffect(() => {
+    charger()
     supabase.auth.getUser().then(({ data: { user } }) => {
-      setUser(user); charger()
+      setUser(user)
     })
   }, [])
 
