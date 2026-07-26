@@ -27,6 +27,7 @@ export default function ListeDetailPage() {
   const [categorie, setCategorie] = useState("Alimentation")
   const [filtre, setFiltre] = useState("Tous")
   const [modeShopping, setModeShopping] = useState(false)
+  const [prix, setPrix] = useState(0)
 
   useEffect(() => {
     if (listeId) {
@@ -52,8 +53,8 @@ export default function ListeDetailPage() {
   async function ajouterArticle() {
     if (!nom.trim()) return
     const { data: { user } } = await supabase.auth.getUser()
-    await supabase.from("liste_articles").insert({ liste_id: listeId, nom, quantite, unite, categorie, modifie_par: user?.id })
-    setNom(""); setQuantite(1); setShowForm(false); charger()
+    await supabase.from("liste_articles").insert({ liste_id: listeId, nom, quantite, unite, categorie, prix, modifie_par: user?.id })
+    setNom(""); setQuantite(1); setPrix(0); setShowForm(false); charger()
   }
 
   async function changerQuantite(art: any, delta: number) {
@@ -73,6 +74,9 @@ export default function ListeDetailPage() {
     setArticles(articles.filter(a => a.id !== artId))
   }
 
+  const totalDepense = articles.reduce((sum, a) => sum + (parseFloat(a.prix || 0) * a.quantite), 0)
+  const budgetListe = liste?.budget || 0
+  const restebudget = budgetListe - totalDepense
   const articlesFiltres = articles.filter(a => filtre === 'Tous' || a.categorie === filtre)
   const nonAchetes = articles.filter(a => !a.achete).length
 
@@ -89,7 +93,28 @@ export default function ListeDetailPage() {
             {modeShopping ? 'Mode normal' : 'Mode shopping'}
           </button>
         </div>
-        <div style={{fontSize:'12px',color:'rgba(255,255,255,0.5)'}}>{nonAchetes} article{nonAchetes > 1 ? 's' : ''} restant{nonAchetes > 1 ? 's' : ''}</div>
+        <div style={{fontSize:'12px',color:'rgba(255,255,255,0.5)',marginBottom: budgetListe > 0 ? '12px' : 0}}>{nonAchetes} article{nonAchetes > 1 ? 's' : ''} restant{nonAchetes > 1 ? 's' : ''}</div>
+
+        {budgetListe > 0 && (
+          <div style={{background:'rgba(255,255,255,0.1)',borderRadius:'14px',padding:'14px',border:'0.5px solid rgba(255,255,255,0.15)'}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:'10px'}}>
+              <div>
+                <div style={{fontSize:'10px',color:'rgba(255,255,255,0.4)',marginBottom:'2px'}}>Depense</div>
+                <div style={{fontSize:'20px',fontWeight:'600',color:'#fff'}}>{totalDepense.toFixed(2)} CHF</div>
+              </div>
+              <div style={{textAlign:'right'}}>
+                <div style={{fontSize:'10px',color:'rgba(255,255,255,0.4)',marginBottom:'2px'}}>Budget</div>
+                <div style={{fontSize:'20px',fontWeight:'600',color:'#fff'}}>{budgetListe.toFixed(2)} CHF</div>
+              </div>
+            </div>
+            <div style={{background:'rgba(255,255,255,0.1)',borderRadius:'99px',height:'6px',overflow:'hidden',marginBottom:'6px'}}>
+              <div style={{width: Math.min((totalDepense/budgetListe)*100, 100)+'%',height:'100%',background: restebudget < 0 ? '#F43F5E' : 'linear-gradient(90deg,#10B981,#D4A843)',borderRadius:'99px',transition:'width 0.3s'}}></div>
+            </div>
+            <div style={{fontSize:'11px',color:'rgba(255,255,255,0.5)',textAlign:'right'}}>
+              Il reste <b style={{color: restebudget < 0 ? '#F43F5E' : '#10B981'}}>{restebudget.toFixed(2)} CHF</b>
+            </div>
+          </div>
+        )}
 
         <div style={{display:'flex',gap:'6px',marginTop:'12px',overflowX:'auto',paddingBottom:'4px'}}>
           {['Tous', ...CATEGORIES].map(c => (
@@ -109,22 +134,27 @@ export default function ListeDetailPage() {
             <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',marginBottom:'10px'}}>Nouvel article</div>
             <input value={nom} onChange={e => setNom(e.target.value)} placeholder="Nom de l'article" style={inp}/>
             <div style={{display:'flex',gap:'8px',marginBottom:'8px'}}>
-              <div style={{flex:1}}>
-                <div style={{fontSize:'11px',color:'#666',marginBottom:'4px'}}>Quantite</div>
-                <div style={{display:'flex',alignItems:'center',gap:'8px',background:'#fff',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'6px 10px'}}>
-                  <button onClick={() => setQuantite(Math.max(1,quantite-1))} style={{background:'#EEF5FF',border:'none',borderRadius:'50%',width:'28px',height:'28px',color:'#2B7FFF',cursor:'pointer',fontSize:'16px'}}>−</button>
-                  <span style={{flex:1,textAlign:'center',fontSize:'18px',fontWeight:'600',color:'#1a1a2e'}}>{quantite}</span>
-                  <button onClick={() => setQuantite(quantite+1)} style={{background:'#2B7FFF',border:'none',borderRadius:'50%',width:'28px',height:'28px',color:'#fff',cursor:'pointer',fontSize:'16px'}}>+</button>
-                </div>
-              </div>
-              <div style={{flex:1}}>
-                <div style={{fontSize:'11px',color:'#666',marginBottom:'4px'}}>Unite</div>
-                <select value={unite} onChange={e => setUnite(e.target.value)} style={{...inp,marginBottom:0}}>
-                  {['unite','kg','g','L','cl','paquet','bouteille','boite','sachet'].map(u => <option key={u} value={u}>{u}</option>)}
-                </select>
+            <div style={{flex:1}}>
+              <div style={{fontSize:'11px',color:'#666',marginBottom:'4px'}}>Quantite</div>
+              <div style={{display:'flex',alignItems:'center',gap:'8px',background:'#fff',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'6px 10px'}}>
+                <button onClick={() => setQuantite(Math.max(1,quantite-1))} style={{background:'#EEF5FF',border:'none',borderRadius:'50%',width:'28px',height:'28px',color:'#2B7FFF',cursor:'pointer',fontSize:'16px'}}>−</button>
+                <span style={{flex:1,textAlign:'center',fontSize:'18px',fontWeight:'600',color:'#1a1a2e'}}>{quantite}</span>
+                <button onClick={() => setQuantite(quantite+1)} style={{background:'#2B7FFF',border:'none',borderRadius:'50%',width:'28px',height:'28px',color:'#fff',cursor:'pointer',fontSize:'16px'}}>+</button>
               </div>
             </div>
-            <div style={{fontSize:'11px',color:'#666',marginBottom:'4px'}}>Categorie</div>
+            <div style={{flex:1}}>
+              <div style={{fontSize:'11px',color:'#666',marginBottom:'4px'}}>Unite</div>
+              <select value={unite} onChange={e => setUnite(e.target.value)} style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'8px 10px',fontSize:'16px',color:'#1a1a2e',background:'#fff'}}>
+                {['unite','kg','g','L','cl','paquet','bouteille','boite','sachet'].map(u => <option key={u} value={u}>{u}</option>)}
+              </select>
+            </div>
+          </div>
+          <div style={{marginBottom:'8px'}}>
+            <div style={{fontSize:'11px',color:'#666',marginBottom:'4px'}}>Prix unitaire (CHF)</div>
+            <input type="number" value={prix} onChange={e => setPrix(Number(e.target.value))} placeholder="0.00"
+              style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'8px 10px',fontSize:'16px',color:'#1a1a2e',background:'#fff',boxSizing:'border-box'}}/>
+          </div>
+          <div style={{fontSize:'11px',color:'#666',marginBottom:'4px'}}>Categorie</div>
             <div style={{display:'flex',gap:'6px',flexWrap:'wrap',marginBottom:'10px'}}>
               {CATEGORIES.map(c => (
                 <button key={c} onClick={() => setCategorie(c)}
@@ -165,8 +195,9 @@ export default function ListeDetailPage() {
                   </span>
                   {art.quantite <= 1 && <span style={{fontSize:'10px',padding:'2px 8px',borderRadius:'99px',background:'#FFE4E6',color:'#F43F5E',fontWeight:'500'}}>Stock bas</span>}
                 </div>
-                <div style={{fontSize:'11px',color:'#aaa'}}>
+                <div style={{fontSize:'11px',color:'#aaa',display:'flex',gap:'8px',alignItems:'center'}}>
                   {profils[art.modifie_par] ? `Modifie par ${profils[art.modifie_par]}` : 'Ajoute'} · {art.unite}
+                  {art.prix > 0 && <span style={{color:'#2B7FFF',fontWeight:'500'}}>{parseFloat(art.prix).toFixed(2)} CHF = {(parseFloat(art.prix)*art.quantite).toFixed(2)} CHF</span>}
                 </div>
               </div>
               <div style={{display:'flex',alignItems:'center',gap:'8px'}}>

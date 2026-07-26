@@ -11,6 +11,8 @@ export default function ListesPage() {
   const [user, setUser] = useState<any>(null)
   const [showForm, setShowForm] = useState(false)
   const [titre, setTitre] = useState("")
+  const [categorieBudget, setCategorieBudget] = useState("Alimentation")
+  const [budget, setBudget] = useState(0)
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -27,7 +29,21 @@ export default function ListesPage() {
   async function creerListe() {
     if (!titre.trim()) return
     const { data: { user } } = await supabase.auth.getUser()
-    await supabase.from("listes").insert({ groupe_id: id, titre, created_by: user?.id })
+    
+    // Chercher le budget depuis les depenses recurrentes
+    const { data: deps } = await supabase.from("depenses")
+      .select("montant")
+      .eq("user_id", user?.id)
+      .eq("recurrent", true)
+      .eq("categorie", categorieBudget)
+    
+    const budgetAuto = deps ? deps.reduce((sum, d) => sum + parseFloat(d.montant), 0) : 0
+    
+    await supabase.from("listes").insert({ 
+      groupe_id: id, titre, created_by: user?.id,
+      categorie_budget: categorieBudget,
+      budget: budgetAuto
+    })
     setTitre(""); setShowForm(false); charger()
   }
 
@@ -52,6 +68,13 @@ export default function ListesPage() {
             <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',marginBottom:'10px'}}>Nouvelle liste</div>
             <input value={titre} onChange={e => setTitre(e.target.value)} placeholder="Ex: Courses juillet, Fournitures..."
               style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 12px',fontSize:'16px',color:'#1a1a2e',background:'#fff',marginBottom:'10px',boxSizing:'border-box'}}/>
+            <div style={{fontSize:'12px',color:'#666',marginBottom:'6px'}}>Categorie budget (depuis tes depenses recurrentes)</div>
+            <select value={categorieBudget} onChange={e => setCategorieBudget(e.target.value)}
+              style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 12px',fontSize:'16px',color:'#1a1a2e',background:'#fff',marginBottom:'10px'}}>
+              {["Logement","Assurance maladie","Assurance voiture","Transport","Alimentation","Sante","Telephone","Energie","Loisirs","Autres"].map(c => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
             <div style={{display:'flex',gap:'8px'}}>
               <button onClick={creerListe} style={{flex:1,background:'#2B7FFF',color:'#fff',border:'none',borderRadius:'10px',padding:'10px',fontSize:'13px',fontWeight:'500',cursor:'pointer'}}>Créer</button>
               <button onClick={() => setShowForm(false)} style={{flex:1,background:'#fff',color:'#666',border:'0.5px solid #E8F1FF',borderRadius:'10px',padding:'10px',fontSize:'13px',cursor:'pointer'}}>Annuler</button>
