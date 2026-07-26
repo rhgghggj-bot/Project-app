@@ -115,11 +115,8 @@ export default function Home() {
               </div>
               <NotificationBell />
             </div>
-            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'4px'}}>
-              <div style={{fontSize:'12px',color:'rgba(255,255,255,0.5)'}}>
-                {today.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}
-              </div>
-              <NotificationBell />
+            <div style={{fontSize:'12px',color:'rgba(255,255,255,0.5)',marginBottom:'4px'}}>
+              {today.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}
             </div>
             <div style={{fontSize:'22px',fontWeight:'500',color:'#fff',marginBottom:'12px'}}>Bonjour</div>
             <div style={{display:'flex',gap:'12px'}}>
