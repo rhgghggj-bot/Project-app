@@ -27,7 +27,7 @@ export default function ListeDetailPage() {
   const [categorie, setCategorie] = useState("Alimentation")
   const [filtre, setFiltre] = useState("Tous")
   const [modeShopping, setModeShopping] = useState(false)
-  const [prix, setPrix] = useState(0)
+  const [prix, setPrix] = useState<string>("")
 
   useEffect(() => {
     if (listeId) {
@@ -53,8 +53,8 @@ export default function ListeDetailPage() {
   async function ajouterArticle() {
     if (!nom.trim()) return
     const { data: { user } } = await supabase.auth.getUser()
-    await supabase.from("liste_articles").insert({ liste_id: listeId, nom, quantite, unite, categorie, prix, modifie_par: user?.id })
-    setNom(""); setQuantite(1); setPrix(0); setShowForm(false); charger()
+    await supabase.from("liste_articles").insert({ liste_id: listeId, nom, quantite, unite, categorie, prix: parseFloat(String(prix).replace(",",".")) || 0, modifie_par: user?.id })
+    setNom(""); setQuantite(1); setPrix(""); setShowForm(false); charger()
   }
 
   async function changerQuantite(art: any, delta: number) {
@@ -64,8 +64,25 @@ export default function ListeDetailPage() {
     setArticles(articles.map(a => a.id === art.id ? { ...a, quantite: newQ } : a))
   }
 
+  async function cocherShopping(art: any) {
+    const { data: { user: u } } = await supabase.auth.getUser()
+    if (!art.coche_shopping) {
+      const newQ = art.quantite * 2
+      await supabase.from('liste_articles').update({ 
+        coche_shopping: true, quantite: newQ, modifie_par: u?.id, updated_at: new Date().toISOString()
+      }).eq('id', art.id)
+      setArticles(articles.map(a => a.id === art.id ? { ...a, coche_shopping: true, quantite: newQ } : a))
+    } else {
+      const newQ = Math.max(0, art.quantite / 2)
+      await supabase.from('liste_articles').update({ 
+        coche_shopping: false, quantite: newQ, modifie_par: u?.id, updated_at: new Date().toISOString()
+      }).eq('id', art.id)
+      setArticles(articles.map(a => a.id === art.id ? { ...a, coche_shopping: false, quantite: newQ } : a))
+    }
+  }
+  
   async function toggleAchete(art: any) {
-    await supabase.from("liste_articles").update({ achete: !art.achete }).eq("id", art.id)
+    await supabase.from('liste_articles').update({ achete: !art.achete }).eq('id', art.id)
     setArticles(articles.map(a => a.id === art.id ? { ...a, achete: !a.achete } : a))
   }
 
@@ -95,7 +112,7 @@ export default function ListeDetailPage() {
         </div>
         <div style={{fontSize:'12px',color:'rgba(255,255,255,0.5)',marginBottom: budgetListe > 0 ? '12px' : 0}}>{nonAchetes} article{nonAchetes > 1 ? 's' : ''} restant{nonAchetes > 1 ? 's' : ''}</div>
 
-        {budgetListe > 0 && (
+        {modeShopping && budgetListe > 0 && (
           <div style={{background:'rgba(255,255,255,0.1)',borderRadius:'14px',padding:'14px',border:'0.5px solid rgba(255,255,255,0.15)'}}>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:'10px'}}>
               <div>
@@ -151,7 +168,7 @@ export default function ListeDetailPage() {
           </div>
           <div style={{marginBottom:'8px'}}>
             <div style={{fontSize:'11px',color:'#666',marginBottom:'4px'}}>Prix unitaire (CHF)</div>
-            <input type="number" value={prix} onChange={e => setPrix(Number(e.target.value))} placeholder="0.00"
+            <input type="number" value={prix} onChange={e => setPrix(e.target.value)} placeholder="Ex: 8.50"
               style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'8px 10px',fontSize:'16px',color:'#1a1a2e',background:'#fff',boxSizing:'border-box'}}/>
           </div>
           <div style={{fontSize:'11px',color:'#666',marginBottom:'4px'}}>Categorie</div>
@@ -179,7 +196,7 @@ export default function ListeDetailPage() {
         </button>
 
         {articlesFiltres.filter(a => !a.achete).map(art => (
-          <div key={art.id} style={{background: art.quantite <= 1 ? '#FFF8F8' : '#fff',border:`0.5px solid ${art.quantite <= 1 ? '#FECDD3' : '#E8F1FF'}`,borderRadius:'14px',padding:'14px',marginBottom:'8px'}}>
+          <div key={art.id} style={{background: modeShopping && art.coche_shopping ? '#E1F5EE' : art.quantite <= 1 ? '#FFF8F8' : '#fff', border:`0.5px solid ${modeShopping && art.coche_shopping ? '#A7F3D0' : art.quantite <= 1 ? '#FECDD3' : '#E8F1FF'}`,borderRadius:'14px',padding:'14px',marginBottom:'8px'}}>
             <div style={{display:'flex',alignItems:'center',gap:'12px'}}>
               {modeShopping && (
                 <input type="checkbox" checked={art.achete} onChange={() => toggleAchete(art)}
