@@ -4,7 +4,8 @@ import { useParams, useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 
 export default function ListesPage() {
-  const { id } = useParams()
+  const params = useParams()
+  const id = Array.isArray(params.id) ? params.id[0] : params.id
   const router = useRouter()
   const [listes, setListes] = useState<any[]>([])
   const [user, setUser] = useState<any>(null)

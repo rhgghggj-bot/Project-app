@@ -29,11 +29,13 @@ export default function ListeDetailPage() {
   const [modeShopping, setModeShopping] = useState(false)
 
   useEffect(() => {
-    charger()
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUser(user)
-    })
-  }, [])
+    if (listeId) {
+      charger()
+      supabase.auth.getUser().then(({ data: { user } }) => {
+        setUser(user)
+      })
+    }
+  }, [listeId])
 
   async function charger() {
     const { data: l } = await supabase.from("listes").select("*").eq("id", listeId).single()
