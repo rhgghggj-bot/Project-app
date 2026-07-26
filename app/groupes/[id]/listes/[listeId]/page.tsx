@@ -13,7 +13,9 @@ const CAT_COLORS: any = {
 }
 
 export default function ListeDetailPage() {
-  const { id, listeId } = useParams()
+  const params = useParams()
+  const id = Array.isArray(params.id) ? params.id[0] : params.id
+  const listeId = Array.isArray(params.listeId) ? params.listeId[0] : params.listeId
   const [liste, setListe] = useState<any>(null)
   const [articles, setArticles] = useState<any[]>([])
   const [user, setUser] = useState<any>(null)
