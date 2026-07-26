@@ -40,7 +40,8 @@ export default function ListeDetailPage() {
   async function charger() {
     const { data: l } = await supabase.from("listes").select("*").eq("id", listeId).single()
     setListe(l)
-    const { data: a } = await supabase.from("liste_articles").select("*").eq("liste_id", listeId).order("created_at", { ascending: true })
+    const { data: a, error: errA } = await supabase.from("liste_articles").select("*").eq("liste_id", listeId).order("created_at", { ascending: true })
+    console.log("articles result:", a, "error:", errA)
     setArticles(a || [])
 
     const { data: members } = await supabase.from("membres_groupe").select("user_id, profiles(prenom, nom)").eq("groupe_id", id)
