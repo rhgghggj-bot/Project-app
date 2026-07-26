@@ -26,6 +26,12 @@ export default function ListesPage() {
     setListes(data || [])
   }
 
+  async function supprimerListe(listeId: string) {
+    await supabase.from('liste_articles').delete().eq('liste_id', listeId)
+    await supabase.from('listes').delete().eq('id', listeId)
+    charger()
+  }
+
   async function creerListe() {
     if (!titre.trim()) return
     const { data: { user } } = await supabase.auth.getUser()
@@ -100,7 +106,13 @@ export default function ListesPage() {
               <div style={{fontSize:'14px',fontWeight:'500',color:'#1a1a2e',marginBottom:'3px'}}>{l.titre}</div>
               <div style={{fontSize:'11px',color:'#aaa'}}>{new Date(l.created_at).toLocaleDateString('fr-FR',{day:'numeric',month:'long'})}</div>
             </div>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
+            <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
+              <button onClick={e => { e.stopPropagation(); e.preventDefault(); if(confirm('Supprimer cette liste ?')) supprimerListe(l.id) }}
+                style={{width:'28px',height:'28px',borderRadius:'50%',background:'#FFE4E6',border:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#F43F5E" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
+            </div>
           </div>
         ))}
       </div>
