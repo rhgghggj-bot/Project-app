@@ -64,6 +64,71 @@ export default function ListeDetailPage() {
     setArticles(articles.map(a => a.id === art.id ? { ...a, quantite: newQ } : a))
   }
 
+  function exporterPDF() {
+    const titre = liste?.titre || 'Liste'
+    const date = new Date().toLocaleDateString('fr-FR', {day:'numeric',month:'long',year:'numeric'})
+    const totalDep = articles.reduce((sum, a) => sum + (parseFloat(a.prix || 0) * a.quantite), 0)
+    const budget = liste?.budget || 0
+
+    const lignes = articles.map(a => `
+      <tr style="border-bottom:1px solid #E8F1FF">
+        <td style="padding:10px 12px;font-size:13px;color:#1a1a2e">${a.nom}</td>
+        <td style="padding:10px 12px;font-size:13px;color:#666;text-align:center">${a.categorie}</td>
+        <td style="padding:10px 12px;font-size:13px;color:#1a1a2e;text-align:center">${a.quantite} ${a.unite}</td>
+        <td style="padding:10px 12px;font-size:13px;color:#2B7FFF;text-align:right">${a.prix > 0 ? parseFloat(a.prix).toFixed(2)+' CHF' : '—'}</td>
+        <td style="padding:10px 12px;font-size:13px;font-weight:500;color:#1a1a2e;text-align:right">${a.prix > 0 ? (parseFloat(a.prix)*a.quantite).toFixed(2)+' CHF' : '—'}</td>
+      </tr>
+    `).join('')
+
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>${titre}</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; padding: 24px; color: #1a1a2e; }
+    .header { background: linear-gradient(135deg, #0A1628, #1a3a6e); color: white; padding: 24px; border-radius: 12px; margin-bottom: 20px; }
+    .header h1 { margin: 0 0 4px; font-size: 20px; }
+    .header p { margin: 0; opacity: 0.6; font-size: 13px; }
+    .budget { display: flex; justify-content: space-between; background: #F8FBFF; border: 1px solid #E8F1FF; border-radius: 10px; padding: 14px; margin-bottom: 20px; }
+    .budget div { text-align: center; }
+    .budget label { font-size: 11px; color: #aaa; display: block; margin-bottom: 4px; }
+    .budget value { font-size: 18px; font-weight: 600; display: block; }
+    table { width: 100%; border-collapse: collapse; }
+    th { text-align: left; padding: 10px 12px; background: #F8FBFF; font-size: 11px; color: #aaa; text-transform: uppercase; letter-spacing: .05em; }
+    th:last-child, th:nth-child(4), th:nth-child(3) { text-align: right; }
+    .footer { text-align: center; font-size: 11px; color: #aaa; margin-top: 20px; padding-top: 12px; border-top: 1px solid #E8F1FF; }
+    @media print { body { padding: 0; } }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>${titre}</h1>
+    <p>Genere le ${date} · Nexia App</p>
+  </div>
+  ${budget > 0 ? `<div class="budget">
+    <div><label>Total depense</label><value style="color:#F43F5E">${totalDep.toFixed(2)} CHF</value></div>
+    <div><label>Budget</label><value>${budget.toFixed(2)} CHF</value></div>
+    <div><label>Restant</label><value style="color:#10B981">${(budget-totalDep).toFixed(2)} CHF</value></div>
+  </div>` : ''}
+  <table>
+    <tr>
+      <th>Article</th><th>Categorie</th><th style="text-align:center">Quantite</th><th style="text-align:right">Prix unit.</th><th style="text-align:right">Total</th>
+    </tr>
+    ${lignes}
+    <tr style="background:#F8FBFF;font-weight:600">
+      <td colspan="4" style="padding:10px 12px;font-size:13px">Total</td>
+      <td style="padding:10px 12px;font-size:14px;color:#2B7FFF;text-align:right">${totalDep.toFixed(2)} CHF</td>
+    </tr>
+  </table>
+  <div class="footer">Nexia App · Liste partagee · ${date}</div>
+</body>
+</html>`
+
+    const w = window.open('', '_blank')
+    if (w) { w.document.write(html); w.document.close(); setTimeout(() => w.print(), 500) }
+  }
+
   async function cocherShopping(art: any) {
     const { data: { user: u } } = await supabase.auth.getUser()
     if (!art.coche_shopping) {
@@ -107,7 +172,10 @@ export default function ListeDetailPage() {
           <div style={{fontSize:'18px',fontWeight:'500',color:'#fff'}}>{liste?.titre || 'Liste'}</div>
           <button onClick={() => setModeShopping(!modeShopping)}
             style={{background: modeShopping ? '#D4A843' : 'rgba(255,255,255,0.15)',border:'none',borderRadius:'10px',padding:'7px 12px',color:'#fff',fontSize:'12px',cursor:'pointer',fontWeight:'500'}}>
-            {modeShopping ? 'Mode normal' : 'Mode shopping'}
+            {modeShopping ? 'Mode normal' : 'Mode shopping'}</button>
+        <button onClick={exporterPDF}
+          style={{background:'rgba(255,255,255,0.15)',border:'0.5px solid rgba(255,255,255,0.3)',borderRadius:'10px',padding:'7px 10px',color:'#fff',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           </button>
         </div>
         <div style={{fontSize:'12px',color:'rgba(255,255,255,0.5)',marginBottom: budgetListe > 0 ? '12px' : 0}}>{nonAchetes} article{nonAchetes > 1 ? 's' : ''} restant{nonAchetes > 1 ? 's' : ''}</div>
