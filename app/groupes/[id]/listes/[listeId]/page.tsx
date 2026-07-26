@@ -95,7 +95,7 @@ export default function ListeDetailPage() {
   const budgetListe = liste?.budget || 0
   const restebudget = budgetListe - totalDepense
   const articlesFiltres = articles.filter(a => filtre === 'Tous' || a.categorie === filtre)
-  const nonAchetes = articles.filter(a => !a.achete).length
+  const nonAchetes = modeShopping ? articles.filter(a => !a.coche_shopping).length : articles.filter(a => !a.achete).length
 
   const inp = {width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 12px',fontSize:'16px',color:'#1a1a2e',background:'#fff',marginBottom:'8px',boxSizing:'border-box' as any}
 
@@ -195,11 +195,11 @@ export default function ListeDetailPage() {
           Ajouter un article
         </button>
 
-        {articlesFiltres.filter(a => !a.achete).map(art => (
+        {articlesFiltres.filter(a => modeShopping ? !a.coche_shopping : !a.achete).map(art => (
           <div key={art.id} style={{background: modeShopping && art.coche_shopping ? '#E1F5EE' : art.quantite <= 1 ? '#FFF8F8' : '#fff', border:`0.5px solid ${modeShopping && art.coche_shopping ? '#A7F3D0' : art.quantite <= 1 ? '#FECDD3' : '#E8F1FF'}`,borderRadius:'14px',padding:'14px',marginBottom:'8px'}}>
             <div style={{display:'flex',alignItems:'center',gap:'12px'}}>
               {modeShopping && (
-                <input type="checkbox" checked={art.achete} onChange={() => toggleAchete(art)}
+                <input type="checkbox" checked={art.coche_shopping || false} onChange={() => cocherShopping(art)}
                   style={{width:'20px',height:'20px',flexShrink:0,accentColor:'#10B981',cursor:'pointer'}}/>
               )}
               <div style={{flex:1}}>
@@ -236,7 +236,7 @@ export default function ListeDetailPage() {
           </div>
         ))}
 
-        {articlesFiltres.filter(a => a.achete).length > 0 && (
+        {!modeShopping && articlesFiltres.filter(a => a.achete).length > 0 && (
           <>
             <div style={{fontSize:'11px',color:'#aaa',fontWeight:'500',textTransform:'uppercase',letterSpacing:'.05em',margin:'16px 0 8px'}}>Achetes</div>
             {articlesFiltres.filter(a => a.achete).map(art => (
