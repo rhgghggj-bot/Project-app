@@ -80,6 +80,7 @@ export default function ListeDetailPage() {
 
   return (
     <main className="min-h-screen bg-white">
+      <div style={{background:"red",color:"#fff",padding:"8px",fontSize:"10px"}}>listeId: {listeId} | articles: {articles.length}</div>
       <div style={{background:'linear-gradient(160deg,#0A1628,#1a3a6e)',padding:'20px 18px 24px'}}>
         <a href={`/groupes/${id}/listes`} style={{fontSize:'12px',color:'rgba(255,255,255,0.5)',display:'block',marginBottom:'8px'}}>← Listes</a>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'8px'}}>
