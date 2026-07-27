@@ -17,12 +17,9 @@ export default function SplashWrapper({ children }: { children: React.ReactNode 
     sessionStorage.setItem("splashDone", "1")
   }
 
-  if (!mounted) return <>{children}</>
+  if (!mounted) return null
 
-  return (
-    <>
-      {splash && <SplashScreen onDone={handleDone} />}
-      {children}
-    </>
-  )
+  if (splash) return <SplashScreen onDone={handleDone} />
+
+  return <>{children}</>
 }
