@@ -93,22 +93,20 @@ export default function NouveauProjet() {
           </div>
         </div>
 
-        <div style={{display:'flex',gap:'10px',marginBottom:'12px'}}>
-          <div style={{flex:1,background:'#fff',borderRadius:'16px',padding:'14px',boxShadow:'0 2px 8px rgba(43,127,255,0.06)',border:'0.5px solid #E8F1FF'}}>
-            <div style={{fontSize:'11px',color:'#666',fontWeight:'600',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:'6px'}}>Lien Revolut</div>
-            <div style={{display:'flex',alignItems:'center',gap:'4px'}}>
-              <span style={{fontSize:'12px',color:'#aaa'}}>revolut.me/</span>
-              <input type="text" placeholder="pseudo" value={revolut} onChange={e => setRevolut(e.target.value)}
-                style={{flex:1,border:'none',fontSize:'14px',color:'#1a1a2e',outline:'none',background:'transparent'}}/>
-            </div>
+        <div style={{background:'#fff',borderRadius:'16px',padding:'14px',marginBottom:'8px',boxShadow:'0 2px 8px rgba(43,127,255,0.06)',border:'0.5px solid #E8F1FF'}}>
+          <div style={{fontSize:'11px',color:'#666',fontWeight:'600',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:'6px'}}>Lien Revolut</div>
+          <div style={{display:'flex',alignItems:'center',gap:'4px'}}>
+            <span style={{fontSize:'13px',color:'#aaa'}}>revolut.me/</span>
+            <input type="text" placeholder="tonpseudo" value={revolut} onChange={e => setRevolut(e.target.value)}
+              style={{flex:1,border:'none',fontSize:'16px',color:'#1a1a2e',outline:'none',background:'transparent'}}/>
           </div>
-          <div style={{flex:1,background:'#fff',borderRadius:'16px',padding:'14px',boxShadow:'0 2px 8px rgba(43,127,255,0.06)',border:'0.5px solid #E8F1FF'}}>
-            <div style={{fontSize:'11px',color:'#10B981',fontWeight:'600',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:'6px'}}>Lien Wave</div>
-            <div style={{display:'flex',alignItems:'center',gap:'4px'}}>
-              <span style={{fontSize:'12px',color:'#aaa'}}>wave.com/</span>
-              <input type="text" placeholder="pseudo" value={wave} onChange={e => setWave(e.target.value)}
-                style={{flex:1,border:'none',fontSize:'14px',color:'#1a1a2e',outline:'none',background:'transparent'}}/>
-            </div>
+        </div>
+        <div style={{background:'#fff',borderRadius:'16px',padding:'14px',marginBottom:'12px',boxShadow:'0 2px 8px rgba(43,127,255,0.06)',border:'0.5px solid #E8F1FF'}}>
+          <div style={{fontSize:'11px',color:'#10B981',fontWeight:'600',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:'6px'}}>Lien Wave</div>
+          <div style={{display:'flex',alignItems:'center',gap:'4px'}}>
+            <span style={{fontSize:'13px',color:'#aaa'}}>wave.com/</span>
+            <input type="text" placeholder="tonpseudo" value={wave} onChange={e => setWave(e.target.value)}
+              style={{flex:1,border:'none',fontSize:'16px',color:'#1a1a2e',outline:'none',background:'transparent'}}/>
           </div>
         </div>
 
