@@ -16,6 +16,8 @@ export default function Semaine() {
   const [duree, setDuree] = useState(30)
   const [dureeH, setDureeH] = useState(0)
   const [dureeM, setDureeM] = useState(30)
+  const [multiJours, setMultiJours] = useState(false)
+  const [dateFin, setDateFin] = useState("")
   const [couleur, setCouleur] = useState("#2B7FFF")
   const [semaineOffset, setSemaineOffset] = useState(0)
 
@@ -58,7 +60,8 @@ export default function Semaine() {
     if (!titre || !selectedDay) return
     const { error } = await supabase.from("evenements_calendrier").insert({
       user_id: user.id, titre, heure, couleur, duree,
-      date: `${selectedDay.getFullYear()}-${String(selectedDay.getMonth()+1).padStart(2,'0')}-${String(selectedDay.getDate()).padStart(2,'0')}`
+      date: `${selectedDay.getFullYear()}-${String(selectedDay.getMonth()+1).padStart(2,'0')}-${String(selectedDay.getDate()).padStart(2,'0')}`,
+      date_fin: multiJours && dateFin ? dateFin : null
     })
     if (!error) {
       setTitre(""); setHeure(""); setCouleur("#2B7FFF"); setDuree(30); setShowForm(false)
@@ -127,6 +130,25 @@ export default function Semaine() {
           <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',marginBottom:'10px'}}>
             + Événement le {selectedDay.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})}
           </div>
+          <div style={{background:'#F8FBFF',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 12px',marginBottom:'8px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+            <div>
+              <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e'}}>Événement sur plusieurs jours</div>
+              <div style={{fontSize:'11px',color:'#aaa',marginTop:'2px'}}>Du jour sélectionné jusqu'à une date de fin</div>
+            </div>
+            <button onClick={() => setMultiJours(!multiJours)}
+              style={{width:'40px',height:'22px',borderRadius:'99px',border:'none',cursor:'pointer',position:'relative',background: multiJours ? '#2B7FFF' : '#E2E8F0'}}>
+              <div style={{width:'18px',height:'18px',borderRadius:'50%',background:'#fff',position:'absolute',top:'2px',left: multiJours ? '20px' : '2px',transition:'left 0.2s',boxShadow:'0 1px 3px rgba(0,0,0,0.2)'}}></div>
+            </button>
+          </div>
+
+          {multiJours && (
+            <div style={{background:'#F8FBFF',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 12px',marginBottom:'8px'}}>
+              <div style={{fontSize:'11px',color:'#2B7FFF',fontWeight:'600',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:'6px'}}>Date de fin</div>
+              <input type="date" value={dateFin} onChange={e => setDateFin(e.target.value)}
+                style={{width:'100%',border:'none',fontSize:'16px',color:'#1a1a2e',outline:'none',background:'transparent'}}/>
+            </div>
+          )}
+
           <div style={{background:'#F8FBFF',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 12px',marginBottom:'8px'}}>
             <div style={{fontSize:'11px',color:'#2B7FFF',fontWeight:'600',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:'8px'}}>Heure de debut</div>
             <div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'6px'}}>
