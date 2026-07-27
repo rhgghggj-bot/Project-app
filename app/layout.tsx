@@ -17,6 +17,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Nexia - Ton hub de vie",
+    icons: { icon: "/favicon.svg" },
   description: "Nexia — Ton hub de vie. Finances, calendrier, groupes et fiscalité suisse.",
   manifest: "/manifest.json",
   appleWebApp: {
