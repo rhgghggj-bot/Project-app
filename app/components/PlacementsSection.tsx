@@ -113,8 +113,89 @@ const PLACEMENTS = [
   }
 ]
 
+
+const ETF_INDICES = [
+  {
+    id: 'sp500',
+    nom: 'S&P 500',
+    description: 'Les 500 plus grandes entreprises américaines (Apple, Microsoft, Amazon, Google...)',
+    rendement: 10.5,
+    duree: '50 ans',
+    valeur1000: 142000,
+    volatilite: 'Élevée',
+    horizon: '10 ans+',
+    couleur: '#10B981',
+    courbe: [0,2,4,6,9,13,18,22,28,35,42,50,60,72,88,108,130,142],
+    annees: ['1975','1980','1985','1990','1995','2000','2005','2010','2015','2020','2025'],
+    etfs: [
+      { nom: 'iShares Core S&P 500', ticker: 'CSPX', ter: '0.07%', pays: 'CH', courtiers: ['Swissquote','Interactive Brokers','Neon Invest'] },
+      { nom: 'Amundi S&P 500 UCITS ETF', ticker: 'PE500', ter: '0.15%', pays: 'FR', courtiers: ['Boursorama','Trade Republic','Fortuneo'] },
+    ],
+    risques: ['Volatilité élevée — baisses de 30-50% possibles', 'Risque de change USD/CHF ou USD/EUR'],
+    avantages: ['Frais ultra-faibles 0.07%/an', 'Diversification 500 entreprises', '+10.5%/an sur 50 ans en moyenne']
+  },
+  {
+    id: 'msci',
+    nom: 'MSCI World',
+    description: '1 600 entreprises dans 23 pays développés — la diversification mondiale par excellence',
+    rendement: 9.2,
+    duree: '50 ans',
+    valeur1000: 78000,
+    volatilite: 'Moyenne-élevée',
+    horizon: '10 ans+',
+    couleur: '#2B7FFF',
+    courbe: [0,1.8,3.5,5.5,8,12,17,21,27,33,40,48,57,65,76,78],
+    annees: ['1975','1980','1985','1990','1995','2000','2005','2010','2015','2020','2025'],
+    etfs: [
+      { nom: 'iShares MSCI World', ticker: 'SWRD', ter: '0.20%', pays: 'CH', courtiers: ['Swissquote','Interactive Brokers'] },
+      { nom: 'Amundi MSCI World', ticker: 'CW8', ter: '0.38%', pays: 'FR', courtiers: ['Boursorama','Fortuneo','Trade Republic'] },
+    ],
+    risques: ['Concentré à 65% sur les USA', 'Capital non garanti'],
+    avantages: ['Diversification mondiale maximale', 'Moins volatile que S&P 500 seul', 'Idéal pour un premier ETF']
+  },
+  {
+    id: 'smi',
+    nom: 'SMI Suisse',
+    description: '20 plus grandes entreprises suisses — Nestlé, Novartis, Roche, UBS, Richemont...',
+    rendement: 7.8,
+    duree: '30 ans',
+    valeur1000: 28000,
+    volatilite: 'Moyenne',
+    horizon: '5 ans+',
+    couleur: '#D4A843',
+    courbe: [0,1.5,3,5,8,11,14,17,20,24,28],
+    annees: ['1995','2000','2005','2010','2015','2020','2025'],
+    etfs: [
+      { nom: 'iShares SMI ETF', ticker: 'CSSMI', ter: '0.35%', pays: 'CH', courtiers: ['Swissquote','Postfinance'] },
+    ],
+    risques: ['Concentré sur 20 entreprises uniquement', 'Moins diversifié que MSCI World'],
+    avantages: ['En CHF — pas de risque de change', 'Dividendes élevés des entreprises suisses', 'Accessible depuis la Suisse']
+  },
+  {
+    id: 'nasdaq',
+    nom: 'NASDAQ 100',
+    description: '100 plus grandes entreprises technologiques américaines — Apple, NVIDIA, Meta, Tesla...',
+    rendement: 13.5,
+    duree: '40 ans',
+    valeur1000: 320000,
+    volatilite: 'Très élevée',
+    horizon: '15 ans+',
+    couleur: '#8B5CF6',
+    courbe: [0,1,3,5,9,15,8,12,18,25,35,50,70,100,150,210,280,320],
+    annees: ['1985','1990','1995','2000','2005','2010','2015','2020','2025'],
+    etfs: [
+      { nom: 'iShares NASDAQ 100', ticker: 'CNDX', ter: '0.33%', pays: 'CH', courtiers: ['Swissquote','Interactive Brokers'] },
+      { nom: 'Amundi NASDAQ-100', ticker: 'PANX', ter: '0.22%', pays: 'FR', courtiers: ['Trade Republic','Boursorama'] },
+    ],
+    risques: ['Très volatil — baisse de 80% en 2000-2002', 'Concentré sur la tech américaine'],
+    avantages: ['+13.5%/an sur 40 ans', 'Profite de la révolution IA et tech', 'ETF le plus performant sur 20 ans']
+  }
+]
+
 export default function PlacementsSection() {
   const [actif, setActif] = useState('livretA')
+  const [etfActif, setEtfActif] = useState<any>(null)
+  const [ongletEpargne, setOngletEpargne] = useState('placements')
   const [capital, setCapital] = useState(5000)
   const [versementMois, setVersementMois] = useState(200)
   const [rendementCustom, setRendementCustom] = useState(7)
@@ -136,9 +217,150 @@ export default function PlacementsSection() {
 
   return (
     <div>
-      <div style={{fontSize:'14px',fontWeight:'500',color:'#1a1a2e',marginBottom:'12px',marginTop:'8px'}}>Placements</div>
+      <div style={{display:'flex',gap:'8px',marginBottom:'14px',marginTop:'8px'}}>
+        <button onClick={() => setOngletEpargne('placements')}
+          style={{flex:1,padding:'8px',borderRadius:'10px',border:'none',cursor:'pointer',fontSize:'12px',fontWeight:'500',
+            background: ongletEpargne==='placements' ? '#2B7FFF' : '#EEF5FF',
+            color: ongletEpargne==='placements' ? '#fff' : '#2B7FFF'}}>
+          Placements
+        </button>
+        <button onClick={() => setOngletEpargne('etf')}
+          style={{flex:1,padding:'8px',borderRadius:'10px',border:'none',cursor:'pointer',fontSize:'12px',fontWeight:'500',
+            background: ongletEpargne==='etf' ? '#2B7FFF' : '#EEF5FF',
+            color: ongletEpargne==='etf' ? '#fff' : '#2B7FFF'}}>
+          ETF & Indices
+        </button>
+      </div>
 
-      <div style={{display:'flex',gap:'6px',overflowX:'auto',paddingBottom:'8px',marginBottom:'14px'}}>
+      {ongletEpargne === 'etf' && !etfActif && (
+        <div>
+          {ETF_INDICES.map(etf => {
+            const max = Math.max(...etf.courbe)
+            return (
+              <div key={etf.id} style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'16px',padding:'16px',marginBottom:'12px'}}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:'6px'}}>
+                  <div>
+                    <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'3px'}}>
+                      <span style={{fontSize:'16px',fontWeight:'600',color:'#1a1a2e'}}>{etf.nom}</span>
+                    </div>
+                    <div style={{fontSize:'12px',color:'#aaa',marginBottom:'6px'}}>{etf.description}</div>
+                    <div style={{display:'flex',gap:'6px',flexWrap:'wrap'}}>
+                      {etf.etfs.map((e,i) => (
+                        <span key={i} style={{fontSize:'10px',padding:'2px 8px',borderRadius:'99px',background:e.pays==='CH'?'#EEF5FF':'#FDF8EC',color:e.pays==='CH'?'#2B7FFF':'#D4A843',fontWeight:'500'}}>
+                          {e.pays==='CH'?'🇨🇭':'🇫🇷'} {e.nom}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <div style={{textAlign:'right',flexShrink:0}}>
+                    <div style={{fontSize:'18px',fontWeight:'700',color:etf.couleur}}>+{etf.rendement}%</div>
+                    <div style={{fontSize:'10px',color:'#aaa'}}>moy./an {etf.duree}</div>
+                  </div>
+                </div>
+
+                <div style={{background:'#F8FBFF',borderRadius:'10px',padding:'10px',marginBottom:'10px'}}>
+                  <div style={{fontSize:'10px',color:'#aaa',marginBottom:'6px'}}>1 000 CHF investi → {etf.valeur1000.toLocaleString('fr-FR')} CHF aujourd'hui</div>
+                  <svg width="100%" height="60" viewBox={"0 0 " + (etf.courbe.length * 20) + " 60"} preserveAspectRatio="none">
+                    <polyline
+                      points={etf.courbe.map((v,i) => (i * 20) + "," + (58 - (v/max)*54)).join(' ')}
+                      fill="none" stroke={etf.couleur} strokeWidth="2" strokeLinejoin="round"/>
+                    <polygon
+                      points={etf.courbe.map((v,i) => (i * 20) + "," + (58 - (v/max)*54)).join(' ') + " " + ((etf.courbe.length-1)*20) + ",60 0,60"}
+                      fill={etf.couleur} opacity="0.1"/>
+                  </svg>
+                  <div style={{display:'flex',justifyContent:'space-between',fontSize:'9px',color:'#aaa',marginTop:'4px'}}>
+                    {etf.annees.map((a,i) => <span key={i}>{a}</span>)}
+                  </div>
+                </div>
+
+                <button onClick={() => setEtfActif(etf)}
+                  style={{width:'100%',background:'#EEF5FF',color:'#2B7FFF',border:'none',borderRadius:'10px',padding:'10px',fontSize:'13px',fontWeight:'500',cursor:'pointer'}}>
+                  Voir la fiche complète →
+                </button>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {ongletEpargne === 'etf' && etfActif && (
+        <div>
+          <button onClick={() => setEtfActif(null)} style={{fontSize:'12px',color:'#2B7FFF',background:'none',border:'none',cursor:'pointer',marginBottom:'12px',padding:'0'}}>← Retour aux indices</button>
+          
+          <div style={{background:'linear-gradient(160deg,#0A1628,#1a3a6e,#2B7FFF)',borderRadius:'16px',padding:'16px',marginBottom:'12px'}}>
+            <div style={{fontSize:'18px',fontWeight:'700',color:'#fff',marginBottom:'4px'}}>{etfActif.nom}</div>
+            <div style={{fontSize:'12px',color:'rgba(255,255,255,0.6)',marginBottom:'12px'}}>{etfActif.description}</div>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'8px'}}>
+              <div style={{background:'rgba(255,255,255,0.1)',borderRadius:'10px',padding:'10px',textAlign:'center'}}>
+                <div style={{fontSize:'10px',color:'rgba(255,255,255,0.5)',marginBottom:'2px'}}>Rendement {etfActif.duree}</div>
+                <div style={{fontSize:'16px',fontWeight:'700',color:'#10B981'}}>+{etfActif.rendement}%/an</div>
+              </div>
+              <div style={{background:'rgba(255,255,255,0.1)',borderRadius:'10px',padding:'10px',textAlign:'center'}}>
+                <div style={{fontSize:'10px',color:'rgba(255,255,255,0.5)',marginBottom:'2px'}}>1 000 CHF → </div>
+                <div style={{fontSize:'14px',fontWeight:'700',color:'#fff'}}>{(etfActif.valeur1000/1000).toFixed(0)}k CHF</div>
+              </div>
+              <div style={{background:'rgba(255,255,255,0.1)',borderRadius:'10px',padding:'10px',textAlign:'center'}}>
+                <div style={{fontSize:'10px',color:'rgba(255,255,255,0.5)',marginBottom:'2px'}}>Volatilité</div>
+                <div style={{fontSize:'13px',fontWeight:'700',color:'#D4A843'}}>{etfActif.volatilite}</div>
+              </div>
+            </div>
+          </div>
+
+          <div style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'14px',padding:'14px',marginBottom:'10px'}}>
+            <div style={{fontSize:'11px',color:'#2B7FFF',fontWeight:'600',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:'8px'}}>C'est quoi ?</div>
+            <div style={{fontSize:'13px',color:'#444',lineHeight:'1.7',marginBottom:'10px'}}>
+              Un ETF (fonds indiciel coté) qui réplique passivement l'indice {etfActif.nom}. En achetant 1 part tu investis automatiquement dans toutes les entreprises de l'indice.
+            </div>
+            <div style={{background:'#EEF5FF',borderRadius:'10px',padding:'10px'}}>
+              <div style={{fontSize:'12px',color:'#2B7FFF',fontWeight:'500',marginBottom:'4px'}}>Exemple concret</div>
+              <div style={{fontSize:'12px',color:'#444',lineHeight:'1.6'}}>
+                1 000 CHF investi il y a {etfActif.duree} = <b style={{color:etfActif.couleur}}>{etfActif.valeur1000.toLocaleString('fr-FR')} CHF</b> aujourd'hui.
+                <span style={{color:'#aaa'}}> Cet exemple est indicatif — ton montant sera différent.</span>
+              </div>
+            </div>
+          </div>
+
+          {etfActif.etfs.map((e: any, i: number) => (
+            <div key={i} style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'14px',padding:'14px',marginBottom:'10px'}}>
+              <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'8px'}}>
+                <span style={{fontSize:'18px'}}>{e.pays==='CH'?'🇨🇭':'🇫🇷'}</span>
+                <div>
+                  <div style={{fontSize:'13px',fontWeight:'600',color:'#1a1a2e'}}>{e.nom}</div>
+                  <div style={{fontSize:'11px',color:'#aaa'}}>Ticker: {e.ticker} · Frais: {e.ter}/an</div>
+                </div>
+              </div>
+              <div style={{fontSize:'11px',color:'#666',marginBottom:'6px'}}>Courtiers recommandés :</div>
+              <div style={{display:'flex',gap:'6px',flexWrap:'wrap'}}>
+                {e.courtiers.map((c: string, j: number) => (
+                  <span key={j} style={{fontSize:'11px',padding:'3px 10px',borderRadius:'99px',background:e.pays==='CH'?'#EEF5FF':'#FDF8EC',color:e.pays==='CH'?'#2B7FFF':'#D4A843',fontWeight:'500',border:e.pays==='CH'?'0.5px solid #DCE9FF':'0.5px solid #F0D88A'}}>
+                    {c}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ))}
+
+          <div style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'14px',padding:'14px',marginBottom:'14px'}}>
+            <div style={{fontSize:'11px',color:'#10B981',fontWeight:'600',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:'8px'}}>Points forts</div>
+            {etfActif.avantages.map((a: string,i: number) => (
+              <div key={i} style={{display:'flex',gap:'8px',marginBottom:'6px',alignItems:'flex-start'}}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2.5" style={{flexShrink:0,marginTop:'2px'}}><polyline points="20 6 9 17 4 12"/></svg>
+                <span style={{fontSize:'12px',color:'#444',lineHeight:'1.5'}}>{a}</span>
+              </div>
+            ))}
+            <div style={{fontSize:'11px',color:'#F43F5E',fontWeight:'600',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:'8px',marginTop:'12px'}}>Points de vigilance</div>
+            {etfActif.risques.map((r: string,i: number) => (
+              <div key={i} style={{display:'flex',gap:'8px',marginBottom:'6px',alignItems:'flex-start'}}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F43F5E" strokeWidth="2.5" style={{flexShrink:0,marginTop:'2px'}}><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                <span style={{fontSize:'12px',color:'#444',lineHeight:'1.5'}}>{r}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {ongletEpargne === 'placements' && (
+        <div><div style={{display:'flex',gap:'6px',overflowX:'auto',paddingBottom:'8px',marginBottom:'14px'}}>
         {PLACEMENTS.map(pl => (
           <button key={pl.id} onClick={() => setActif(pl.id)}
             style={{whiteSpace:'nowrap',padding:'6px 14px',borderRadius:'99px',border:'none',cursor:'pointer',fontSize:'12px',fontWeight:'500',
@@ -254,6 +476,8 @@ export default function PlacementsSection() {
           </div>
         </div>
       </div>
+        </div>
+      )}
     </div>
   )
 }
