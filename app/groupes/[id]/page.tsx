@@ -236,10 +236,10 @@ export default function GroupePage() {
         </button>
         <button onClick={() => setOnglet("membres")}
           className={`flex-1 py-3 text-sm font-medium ${onglet === "membres" ? "text-blue-500 border-b-2 border-blue-500" : "text-gray-400"}`}>
-          Membres ({membres.length})</button>
+          Membres</button>
           <button onClick={() => setOnglet('listes')}
           className={`flex-1 py-3 text-sm font-medium ${onglet === 'listes' ? 'text-blue-500 border-b-2 border-blue-500' : 'text-gray-400'}`}>
-          Listes partagées
+          Listes
         </button>
       </div>
 
