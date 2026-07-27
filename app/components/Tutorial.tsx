@@ -36,10 +36,10 @@ export default function Tutorial({ page }: { page: string }) {
   useEffect(() => {
     const desactive = localStorage.getItem('tuto_desactive')
     if (desactive) return
-    const key = 'tuto_' + page
-    const n = parseInt(sessionStorage.getItem(key) || '0')
-    if (n < 3) {
-      sessionStorage.setItem(key, String(n + 1))
+    const key = 'tuto_done_' + page
+    const done = localStorage.getItem(key)
+    if (!done) {
+      localStorage.setItem(key, '1')
       setTimeout(() => setVisible(true), 800)
     }
   }, [page])
