@@ -131,19 +131,13 @@ export default function ListeDetailPage() {
 
   async function cocherShopping(art: any) {
     const { data: { user: u } } = await supabase.auth.getUser()
-    if (!art.coche_shopping) {
-      const newQ = art.quantite * 2
-      await supabase.from('liste_articles').update({ 
-        coche_shopping: true, quantite: newQ, modifie_par: u?.id, updated_at: new Date().toISOString()
-      }).eq('id', art.id)
-      setArticles(articles.map(a => a.id === art.id ? { ...a, coche_shopping: true, quantite: newQ } : a))
-    } else {
-      const newQ = Math.max(0, art.quantite / 2)
-      await supabase.from('liste_articles').update({ 
-        coche_shopping: false, quantite: newQ, modifie_par: u?.id, updated_at: new Date().toISOString()
-      }).eq('id', art.id)
-      setArticles(articles.map(a => a.id === art.id ? { ...a, coche_shopping: false, quantite: newQ } : a))
-    }
+    const newCoche = !art.coche_shopping
+    await supabase.from('liste_articles').update({ 
+      coche_shopping: newCoche,
+      modifie_par: u?.id,
+      updated_at: new Date().toISOString()
+    }).eq('id', art.id)
+    setArticles(articles.map(a => a.id === art.id ? { ...a, coche_shopping: newCoche } : a))
   }
   
   async function toggleAchete(art: any) {
