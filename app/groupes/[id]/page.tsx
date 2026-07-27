@@ -13,6 +13,7 @@ export default function GroupePage() {
   const [user, setUser] = useState<any>(null)
   const [contenu, setContenu] = useState("")
   const [onglet, setOnglet] = useState("discussion")
+  const [listes, setListes] = useState<any[]>([])
   const [estMembre, setEstMembre] = useState(false)
   const [lienInvitation, setLienInvitation] = useState("")
   const [copie, setCopie] = useState(false)
@@ -48,6 +49,8 @@ export default function GroupePage() {
       }
       const { data: p } = await supabase.from("projets").select("*").eq("groupe_id", id).order("created_at", { ascending: false })
       setProjets(p || [])
+      const { data: lst } = await supabase.from('listes').select('*').eq('groupe_id', id).order('created_at', { ascending: false })
+      setListes(lst || [])
     }
     charger()
 
@@ -233,9 +236,44 @@ export default function GroupePage() {
         </button>
         <button onClick={() => setOnglet("membres")}
           className={`flex-1 py-3 text-sm font-medium ${onglet === "membres" ? "text-blue-500 border-b-2 border-blue-500" : "text-gray-400"}`}>
-          Membres ({membres.length})
+          Membres ({membres.length})</button>
+          <button onClick={() => setOnglet('listes')}
+          className={`flex-1 py-3 text-sm font-medium ${onglet === 'listes' ? 'text-blue-500 border-b-2 border-blue-500' : 'text-gray-400'}`}>
+          Listes partagées
         </button>
       </div>
+
+      {onglet === 'listes' && (
+        <div style={{padding:'14px'}}>
+          <a href={'/groupes/'+id+'/listes'} style={{textDecoration:'none',display:'block',marginBottom:'14px'}}>
+            <button style={{width:'100%',background:'#EEF5FF',color:'#2B7FFF',border:'0.5px solid #DCE9FF',borderRadius:'12px',padding:'12px',fontSize:'13px',fontWeight:'500',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:'6px'}}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2B7FFF" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Nouvelle liste
+            </button>
+          </a>
+          {listes.length === 0 && (
+            <div style={{textAlign:'center',padding:'32px 0',color:'#aaa',fontSize:'13px'}}>Aucune liste pour l instant</div>
+          )}
+          {listes.map((l: any, i: number) => {
+            const couleurs = [{bg:'#EEF5FF',stroke:'#2B7FFF'},{bg:'#FDF8EC',stroke:'#D4A843'},{bg:'#E1F5EE',stroke:'#10B981'}]
+            const col = couleurs[i % 3]
+            return (
+              <a key={l.id} href={'/groupes/'+id+'/listes/'+l.id} style={{textDecoration:'none',display:'block',marginBottom:'10px'}}>
+                <div style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'14px',padding:'14px',display:'flex',alignItems:'center',gap:'12px'}}>
+                  <div style={{width:'40px',height:'40px',borderRadius:'12px',background:col.bg,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={col.stroke} strokeWidth="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                  </div>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:'14px',fontWeight:'500',color:'#1a1a2e',marginBottom:'2px'}}>{l.titre}</div>
+                    <div style={{fontSize:'11px',color:'#aaa'}}>{l.budget > 0 ? 'Budget: '+parseFloat(l.budget).toFixed(0)+' CHF' : 'Pas de budget'}</div>
+                  </div>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
+                </div>
+              </a>
+            )
+          })}
+        </div>
+      )}
 
       {onglet === "discussion" && (
         <div className="flex flex-col flex-1">
