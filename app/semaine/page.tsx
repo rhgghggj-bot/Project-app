@@ -14,6 +14,8 @@ export default function Semaine() {
   const [titre, setTitre] = useState("")
   const [heure, setHeure] = useState("")
   const [duree, setDuree] = useState(30)
+  const [dureeH, setDureeH] = useState(0)
+  const [dureeM, setDureeM] = useState(30)
   const [couleur, setCouleur] = useState("#2B7FFF")
   const [semaineOffset, setSemaineOffset] = useState(0)
 
@@ -125,23 +127,58 @@ export default function Semaine() {
           <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',marginBottom:'10px'}}>
             + Événement le {selectedDay.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})}
           </div>
-          <input value={titre} onChange={e => setTitre(e.target.value)} placeholder="Titre de l'événement"
-            style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'8px 12px',fontSize:'13px',color:'#1a1a2e',background:'#fff',marginBottom:'8px'}}/>
-          <input value={heure} onChange={e => setHeure(e.target.value)} placeholder="Heure (ex: 14:30)" type="time"
-            style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'8px 12px',fontSize:'13px',color:'#1a1a2e',background:'#fff',marginBottom:'8px'}}/>
-          <div style={{display:'flex',alignItems:'center',gap:'8px',marginTop:'8px'}}>
-            <label style={{fontSize:'12px',color:'#666',whiteSpace:'nowrap'}}>Durée :</label>
-            <select value={duree} onChange={e => setDuree(Number(e.target.value))}
-              style={{flex:1,border:'1px solid #E8F1FF',borderRadius:'10px',padding:'8px 12px',fontSize:'13px',color:'#1a1a2e',background:'#F8FBFF'}}>
-              <option value={15}>15 min</option>
-              <option value={30}>30 min</option>
-              <option value={45}>45 min</option>
-              <option value={60}>1h</option>
-              <option value={90}>1h30</option>
-              <option value={120}>2h</option>
-              <option value={180}>3h</option>
-              <option value={240}>4h</option>
-            </select>
+          <div style={{background:'#F8FBFF',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 12px',marginBottom:'8px'}}>
+            <div style={{fontSize:'11px',color:'#2B7FFF',fontWeight:'600',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:'8px'}}>Heure de debut</div>
+            <div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'6px'}}>
+              <span style={{fontSize:'24px',fontWeight:'600',color:'#1a1a2e',minWidth:'52px'}}>{heure || '09:00'}</span>
+              <input type="range" min="0" max="47" value={heure ? (parseInt(heure.split(':')[0])*2 + (parseInt(heure.split(':')[1])>=30?1:0)) : 18}
+                onChange={e => {
+                  const v = Number(e.target.value)
+                  const h = Math.floor(v/2).toString().padStart(2,'0')
+                  const m = v%2===0?'00':'30'
+                  setHeure(h+':'+m)
+                }}
+                style={{flex:1,accentColor:'#2B7FFF',cursor:'pointer'}}/>
+            </div>
+            <div style={{display:'flex',justifyContent:'space-between',fontSize:'10px',color:'#aaa'}}>
+              <span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>23:30</span>
+            </div>
+          </div>
+
+          <div style={{background:'#F8FBFF',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 12px',marginBottom:'8px'}}>
+            <div style={{fontSize:'11px',color:'#D4A843',fontWeight:'600',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:'10px'}}>Durée</div>
+            <div style={{display:'flex',gap:'8px',marginBottom:'8px'}}>
+              <div style={{flex:1}}>
+                <div style={{fontSize:'10px',color:'#aaa',marginBottom:'4px',textAlign:'center'}}>Heures</div>
+                <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',background:'#fff',borderRadius:'10px',padding:'6px 10px',border:'0.5px solid #E8F1FF'}}>
+                  <button onClick={() => { const h=Math.max(0,dureeH-1); setDureeH(h); setDuree(h*60+dureeM) }}
+                    style={{width:'22px',height:'22px',borderRadius:'50%',background:'#EEF5FF',border:'none',fontSize:'14px',color:'#2B7FFF',cursor:'pointer',lineHeight:'1',display:'flex',alignItems:'center',justifyContent:'center'}}>−</button>
+                  <span style={{fontSize:'20px',fontWeight:'600',color:'#1a1a2e'}}>{dureeH}</span>
+                  <button onClick={() => { const h=Math.min(12,dureeH+1); setDureeH(h); setDuree(h*60+dureeM) }}
+                    style={{width:'22px',height:'22px',borderRadius:'50%',background:'#2B7FFF',border:'none',fontSize:'14px',color:'#fff',cursor:'pointer',lineHeight:'1',display:'flex',alignItems:'center',justifyContent:'center'}}>+</button>
+                </div>
+              </div>
+              <div style={{flex:1}}>
+                <div style={{fontSize:'10px',color:'#aaa',marginBottom:'4px',textAlign:'center'}}>Minutes</div>
+                <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',background:'#fff',borderRadius:'10px',padding:'6px 10px',border:'0.5px solid #E8F1FF'}}>
+                  <button onClick={() => { const m=(dureeM-15+60)%60; setDureeM(m); setDuree(dureeH*60+m) }}
+                    style={{width:'22px',height:'22px',borderRadius:'50%',background:'#EEF5FF',border:'none',fontSize:'14px',color:'#2B7FFF',cursor:'pointer',lineHeight:'1',display:'flex',alignItems:'center',justifyContent:'center'}}>−</button>
+                  <span style={{fontSize:'20px',fontWeight:'600',color:'#1a1a2e'}}>{dureeM.toString().padStart(2,'0')}</span>
+                  <button onClick={() => { const m=(dureeM+15)%60; setDureeM(m); setDuree(dureeH*60+m) }}
+                    style={{width:'22px',height:'22px',borderRadius:'50%',background:'#2B7FFF',border:'none',fontSize:'14px',color:'#fff',cursor:'pointer',lineHeight:'1',display:'flex',alignItems:'center',justifyContent:'center'}}>+</button>
+                </div>
+              </div>
+            </div>
+            <div style={{display:'flex',gap:'6px',flexWrap:'wrap'}}>
+              {[{h:0,m:30,l:'30min'},{h:1,m:0,l:'1h'},{h:1,m:30,l:'1h30'},{h:2,m:0,l:'2h'},{h:3,m:0,l:'3h'}].map(r=>(
+                <button key={r.l} onClick={() => { setDureeH(r.h); setDureeM(r.m); setDuree(r.h*60+r.m) }}
+                  style={{padding:'5px 10px',borderRadius:'99px',border:'none',cursor:'pointer',fontSize:'11px',fontWeight:'500',
+                    background: duree===r.h*60+r.m ? '#2B7FFF' : '#EEF5FF',
+                    color: duree===r.h*60+r.m ? '#fff' : '#2B7FFF'}}>
+                  {r.l}
+                </button>
+              ))}
+            </div>
           </div>
           <div style={{display:'flex',gap:'6px',marginBottom:'10px'}}>
             {COULEURS_EVT.map(c => (
