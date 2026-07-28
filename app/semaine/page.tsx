@@ -58,8 +58,10 @@ export default function Semaine() {
 
   async function ajouterEvt() {
     if (!titre || !selectedDay) return
+    const { data: { user: u } } = await supabase.auth.getUser()
+    if (!u) return
     const { error } = await supabase.from("evenements_calendrier").insert({
-      user_id: user.id, titre, heure, couleur, duree,
+      user_id: u.id, titre, heure, couleur, duree,
       date: `${selectedDay.getFullYear()}-${String(selectedDay.getMonth()+1).padStart(2,'0')}-${String(selectedDay.getDate()).padStart(2,'0')}`,
       date_fin: multiJours && dateFin ? dateFin : null
     })
