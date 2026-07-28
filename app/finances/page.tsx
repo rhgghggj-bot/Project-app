@@ -92,8 +92,8 @@ function FinancesContent() {
     const totalRev = moisActuelData.revenus.toFixed(0)
     const totalDep = moisActuelData.depenses.toFixed(0)
     const solde = (moisActuelData.revenus - moisActuelData.depenses).toFixed(0)
-    const revList = revenusMoisAff.map(r => `<tr><td style="padding:8px;border-bottom:1px solid #E8F1FF">${r.titre}</td><td style="padding:8px;border-bottom:1px solid #E8F1FF;color:#10B981;text-align:right">+${parseFloat(r.montant).toFixed(0)} CHF</td></tr>`).join('')
-    const depList = depensesMoisAff.map(d => `<tr><td style="padding:8px;border-bottom:1px solid #E8F1FF">${d.titre}</td><td style="padding:8px;border-bottom:1px solid #E8F1FF;color:#F43F5E;text-align:right">-${parseFloat(d.montant).toFixed(0)} CHF</td></tr>`).join('')
+    const revList = revenusMoisAff.map(r => `<tr><td style="padding:8px;border-bottom:1px solid #E8F1FF">${r.titre}</td><td style="padding:8px;border-bottom:1px solid #E8F1FF;color:#10B981;text-align:right">+${parseFloat(r.montant).toFixed(0)} ${devise}</td></tr>`).join('')
+    const depList = depensesMoisAff.map(d => `<tr><td style="padding:8px;border-bottom:1px solid #E8F1FF">${d.titre}</td><td style="padding:8px;border-bottom:1px solid #E8F1FF;color:#F43F5E;text-align:right">-${parseFloat(d.montant).toFixed(0)} ${devise}</td></tr>`).join('')
 
     const html = `<!DOCTYPE html>
 <html>
@@ -121,9 +121,9 @@ function FinancesContent() {
     <p>Bilan financier — ${moisNom} ${anneeActuelle}</p>
   </div>
   <div class="stats">
-    <div class="stat"><label>Revenus</label><value style="color:#10B981">+${totalRev} CHF</value></div>
-    <div class="stat"><label>Depenses</label><value style="color:#F43F5E">-${totalDep} CHF</value></div>
-    <div class="stat"><label>Solde</label><value style="color:#2B7FFF">${parseFloat(solde) >= 0 ? '+' : ''}${solde} CHF</value></div>
+    <div class="stat"><label>Revenus</label><value style="color:#10B981">+${totalRev} ${devise}</value></div>
+    <div class="stat"><label>Depenses</label><value style="color:#F43F5E">-${totalDep} ${devise}</value></div>
+    <div class="stat"><label>Solde</label><value style="color:#2B7FFF">${parseFloat(solde) >= 0 ? '+' : ''}${solde} ${devise}</value></div>
   </div>
   <table>
     <tr><th colspan="2">Revenus</th></tr>
@@ -244,11 +244,11 @@ function FinancesContent() {
         <div style={{display:'flex',gap:'8px'}}>
           <div style={{flex:1,background:'rgba(16,185,129,0.15)',borderRadius:'12px',padding:'10px 12px',border:'0.5px solid rgba(16,185,129,0.3)'}}>
             <div style={{fontSize:'11px',color:'rgba(255,255,255,0.5)',marginBottom:'3px'}}>Revenus</div>
-            <div style={{fontSize:'18px',fontWeight:'500',color:'#4ade80'}}>{moisActuelData.revenus.toFixed(0)} CHF</div>
+            <div style={{fontSize:'18px',fontWeight:'500',color:'#4ade80'}}>{moisActuelData.revenus.toFixed(0)} {devise}</div>
           </div>
           <div style={{flex:1,background:'rgba(244,63,94,0.15)',borderRadius:'12px',padding:'10px 12px',border:'0.5px solid rgba(244,63,94,0.3)'}}>
             <div style={{fontSize:'11px',color:'rgba(255,255,255,0.5)',marginBottom:'3px'}}>Dépenses</div>
-            <div style={{fontSize:'18px',fontWeight:'500',color:'#F43F5E'}}>{moisActuelData.depenses.toFixed(0)} CHF</div>
+            <div style={{fontSize:'18px',fontWeight:'500',color:'#F43F5E'}}>{moisActuelData.depenses.toFixed(0)} {devise}</div>
           </div>
         </div>
       </div>
@@ -279,13 +279,13 @@ function FinancesContent() {
           if (pct >= 80) return (
             <div style={{margin:'8px 14px 0',background:'#FDF8EC',border:'0.5px solid #F0D88A',borderRadius:'10px',padding:'10px 14px',display:'flex',alignItems:'center',gap:'10px'}}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="2" style={{flexShrink:0}}><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-              <span style={{fontSize:'12px',color:'#1a1a2e',flex:1}}>80% du budget atteint — il te reste <b style={{color:'#D4A843'}}>{reste.toFixed(0)} CHF</b></span>
+              <span style={{fontSize:'12px',color:'#1a1a2e',flex:1}}>80% du budget atteint — il te reste <b style={{color:'#D4A843'}}>{reste.toFixed(0)} {devise}</b></span>
             </div>
           )
           return (
             <div style={{margin:'8px 14px 0',background:'#E1F5EE',border:'0.5px solid #A7F3D0',borderRadius:'10px',padding:'10px 14px',display:'flex',alignItems:'center',gap:'10px'}}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2" style={{flexShrink:0}}><polyline points="20 6 9 17 4 12"/></svg>
-              <span style={{fontSize:'12px',color:'#1a1a2e',flex:1}}>Bon rythme — tu peux epargner <b style={{color:'#10B981'}}>{reste.toFixed(0)} CHF</b> ce mois</span>
+              <span style={{fontSize:'12px',color:'#1a1a2e',flex:1}}>Bon rythme — tu peux epargner <b style={{color:'#10B981'}}>{reste.toFixed(0)} {devise}</b> ce mois</span>
             </div>
           )
         })()}
@@ -330,8 +330,8 @@ function FinancesContent() {
                   </span>
                 </div>
                 <div style={{display:'flex',gap:'12px'}}>
-                  <span style={{fontSize:'12px',color:'#F43F5E'}}>Dép. {moisSelectionne.depenses.toFixed(0)} CHF</span>
-                  <span style={{fontSize:'12px',color:'#4ade80'}}>Rev. {moisSelectionne.revenus.toFixed(0)} CHF</span>
+                  <span style={{fontSize:'12px',color:'#F43F5E'}}>Dép. {moisSelectionne.depenses.toFixed(0)} {devise}</span>
+                  <span style={{fontSize:'12px',color:'#4ade80'}}>Rev. {moisSelectionne.revenus.toFixed(0)} {devise}</span>
                 </div>
                 <button onClick={() => setMoisSelectionne(null)} style={{fontSize:'11px',color:'#aaa',background:'none',border:'none',cursor:'pointer',marginTop:'4px'}}>× Fermer</button>
               </div>
@@ -347,7 +347,7 @@ function FinancesContent() {
             <div style={{flex:1,background:'#FFE4E6',borderRadius:'14px',padding:'12px',border:'0.5px solid #FECDD3'}}>
               <div style={{fontSize:'10px',color:'#F43F5E',fontWeight:'500',marginBottom:'4px'}}>Dépenses · mois max</div>
               <div style={{fontSize:'15px',fontWeight:'500',color:'#1a1a2e'}}>{moisMaxDep.label}</div>
-              <div style={{fontSize:'12px',color:'#F43F5E'}}>{moisMaxDep.depenses.toFixed(0)} CHF</div>
+              <div style={{fontSize:'12px',color:'#F43F5E'}}>{moisMaxDep.depenses.toFixed(0)} {devise}</div>
             </div>
           </div>
 
@@ -482,11 +482,11 @@ function FinancesContent() {
             <div style={{background:'#EEF5FF',borderRadius:'14px',padding:'14px',marginTop:'8px'}}>
               <div style={{display:'flex',justifyContent:'space-between',marginBottom:'6px'}}>
                 <span style={{fontSize:'13px',color:'#10B981',fontWeight:'500'}}>Revenus fixes</span>
-                <span style={{fontSize:'14px',fontWeight:'500',color:'#10B981'}}>+{revenus.filter(r=>r.recurrent).reduce((s,r)=>s+parseFloat(r.montant),0).toFixed(0)} CHF</span>
+                <span style={{fontSize:'14px',fontWeight:'500',color:'#10B981'}}>+{revenus.filter(r=>r.recurrent).reduce((s,r)=>s+parseFloat(r.montant),0).toFixed(0)} {devise}</span>
               </div>
               <div style={{display:'flex',justifyContent:'space-between',marginBottom:'6px'}}>
                 <span style={{fontSize:'13px',color:'#F43F5E',fontWeight:'500'}}>Charges fixes</span>
-                <span style={{fontSize:'14px',fontWeight:'500',color:'#F43F5E'}}>-{depenses.filter(d=>d.recurrent).reduce((s,d)=>s+parseFloat(d.montant),0).toFixed(0)} CHF</span>
+                <span style={{fontSize:'14px',fontWeight:'500',color:'#F43F5E'}}>-{depenses.filter(d=>d.recurrent).reduce((s,d)=>s+parseFloat(d.montant),0).toFixed(0)} {devise}</span>
               </div>
               <div style={{height:'0.5px',background:'#DCE9FF',margin:'8px 0'}}></div>
               <div style={{display:'flex',justifyContent:'space-between'}}>
@@ -610,8 +610,8 @@ function FinancesContent() {
                         })}
                       </div>
                       <div style={{display:'flex',justifyContent:'space-between'}}>
-                        <span style={{fontSize:'10px',color:'#aaa'}}>0 CHF</span>
-                        <span style={{fontSize:'10px',color:s.couleur,fontWeight:'500'}}>{cible.toFixed(0)} CHF</span>
+                        <span style={{fontSize:'10px',color:'#aaa'}}>0 {devise}</span>
+                        <span style={{fontSize:'10px',color:s.couleur,fontWeight:'500'}}>{cible.toFixed(0)} {devise}</span>
                       </div>
                     </div>
                   )
