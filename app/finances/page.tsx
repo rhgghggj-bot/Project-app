@@ -1,4 +1,5 @@
 "use client"
+import DeviseSelector from "../components/DeviseSelector"
 import Tutorial from "../components/Tutorial"
 import PlacementsSection from "../components/PlacementsSection"
 import FiscaliteSection from "../components/FiscaliteSection"
@@ -14,6 +15,8 @@ function FinancesContent() {
   const [depenses, setDepenses] = useState<any[]>([])
   const [revenus, setRevenus] = useState<any[]>([])
   const [user, setUser] = useState<any>(null)
+  const [devise, setDevise] = useState("CHF")
+  const [showDevise, setShowDevise] = useState(false)
   const searchParams = useSearchParams()
   const [onglet, setOnglet] = useState("vue")
   const [showForm, setShowForm] = useState(false)
@@ -209,9 +212,16 @@ function FinancesContent() {
   )
 
   return (
-    <main className="min-h-screen bg-white"><Tutorial page="finances" />
+    <main className="min-h-screen bg-white">
+      {showDevise && <DeviseSelector onClose={() => setShowDevise(false)} />}<Tutorial page="finances" />
       <div style={{background:'linear-gradient(160deg,#0A1628,#1a3a6e)',padding:'20px 18px 28px'}}>
-        <a href="/" style={{fontSize:'12px',color:'rgba(255,255,255,0.5)',display:'block',marginBottom:'8px'}}>← Accueil</a>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'8px'}}>
+          <a href="/" style={{fontSize:'12px',color:'rgba(255,255,255,0.5)',textDecoration:'none'}}>← Accueil</a>
+          <button onClick={() => setShowDevise(true)}
+            style={{background:'rgba(255,255,255,0.15)',border:'0.5px solid rgba(255,255,255,0.3)',borderRadius:'99px',padding:'5px 12px',color:'#fff',fontSize:'12px',cursor:'pointer'}}>
+            {devise}
+          </button>
+        </div>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'8px'}}><div style={{fontSize:'12px',color:'rgba(255,255,255,0.5)'}}>Bilan du mois</div><button onClick={exporterPDF} style={{background:'rgba(255,255,255,0.15)',color:'#fff',border:'0.5px solid rgba(255,255,255,0.3)',borderRadius:'10px',padding:'6px 12px',fontSize:'12px',fontWeight:'500',cursor:'pointer',display:'flex',alignItems:'center',gap:'5px'}}><svg width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='#fff' strokeWidth='2'><path d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4'/><polyline points='7 10 12 15 17 10'/><line x1='12' y1='15' x2='12' y2='3'/></svg>PDF</button></div>
         <div style={{background:'rgba(255,255,255,0.08)',borderRadius:'16px',padding:'16px',marginBottom:'12px',border:`1px solid ${couleurSolde}44`}}>
           <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'8px'}}>
