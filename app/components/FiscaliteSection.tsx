@@ -73,6 +73,44 @@ export default function FiscaliteSection() {
           </button>
         ))}
       </div>
+      {pays === 'sn' && (
+        <div>
+          <div style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'14px',padding:'14px',marginBottom:'10px'}}>
+            <div style={{fontSize:'11px',color:'#2B7FFF',fontWeight:'600',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:'8px'}}>Bareme IRPP 2025</div>
+            <div style={{fontSize:'12px',color:'#666',marginBottom:'8px'}}>Abattement 30% sur salaire max 900 000 XOF/an</div>
+            {[
+              ['0 a 630 000 XOF','0%','#10B981'],
+              ['630 001 a 1 500 000 XOF','20%','#2B7FFF'],
+              ['1 500 001 a 4 000 000 XOF','25%','#2B7FFF'],
+              ['4 000 001 a 8 000 000 XOF','30%','#D4A843'],
+              ['8 000 001 a 13 500 000 XOF','35%','#F43F5E'],
+              ['Au-dela 13 500 000 XOF','37-43%','#F43F5E'],
+            ].map(([t,r,col],i) => (
+              <div key={i} style={{display:'flex',justifyContent:'space-between',padding:'7px 10px',background:'#F8FBFF',borderRadius:'8px',marginBottom:'4px'}}>
+                <span style={{fontSize:'12px',color:'#444'}}>{t}</span>
+                <span style={{fontSize:'12px',fontWeight:'600',color:col}}>{r}</span>
+              </div>
+            ))}
+          </div>
+          <div style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'14px',padding:'14px',marginBottom:'10px'}}>
+            <div style={{fontSize:'11px',color:'#D4A843',fontWeight:'600',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:'8px'}}>Placements disponibles</div>
+            {[
+              ['Bons du Tresor 1-10 ans','6.4-6.95%','#10B981'],
+              ['BRVM Actions Sonatel CBAO','8-10%/an','#10B981'],
+              ['Diaspora Bonds UEMOA','6%/an','#D4A843'],
+              ['Fonds OPCVM Jappoo CGF','5-8%/an','#10B981'],
+            ].map(([n,r,col],i) => (
+              <div key={i} style={{display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom:i<3?'0.5px solid #F0F0F0':'none'}}>
+                <span style={{fontSize:'12px',color:'#444'}}>{n}</span>
+                <span style={{fontSize:'12px',fontWeight:'600',color:col}}>{r}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {pays !== 'sn' && (
+      <div>
       <div style={{fontSize:'14px',fontWeight:'500',color:'#1a1a2e',marginBottom:'12px'}}>Calculateur fiscal 2025</div>
       <div style={{display:'flex',gap:'6px',overflowX:'auto',paddingBottom:'8px',marginBottom:'14px'}}>
         {['revenus','deductions','situation','resultat'].map(o => (
@@ -178,6 +216,7 @@ export default function FiscaliteSection() {
             <div style={{fontSize:'12px',fontWeight:'500',color:'#D4A843',marginBottom:'4px'}}>Estimation uniquement</div>
             <div style={{fontSize:'12px',color:'#666',lineHeight:'1.6'}}>Base sur les baremes 2025. Impot communal non inclus. Consultez un fiduciaire pour un calcul exact.</div>
           </div>
+        </div>
         </div>
       )}
     </div>
