@@ -31,6 +31,7 @@ const inp: any = {width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',pa
 const sel: any = {width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'8px 12px',fontSize:'16px',color:'#1a1a2e',background:'#F8FBFF'}
 
 export default function FiscaliteSection() {
+  const [pays, setPays] = useState('ch')
   const [onglet, setOnglet] = useState('revenus')
   const [salaire, setSalaire] = useState(80000)
   const [accessoires, setAccessoires] = useState(0)
@@ -60,7 +61,18 @@ export default function FiscaliteSection() {
   const taux = brut > 0 ? ((total/brut)*100).toFixed(1) : '0.0'
 
   return (
-    <div><Tutorial page="fiscalite" />
+    <div>
+      <Tutorial page="fiscalite" />
+      <div style={{display:'flex',gap:'8px',marginBottom:'16px'}}>
+        {['ch','fr','sn'].map(p => (
+          <button key={p} onClick={() => setPays(p)}
+            style={{flex:1,padding:'8px',borderRadius:'10px',border:'none',cursor:'pointer',fontSize:'11px',fontWeight:'500',
+              background: pays===p ? '#2B7FFF' : '#EEF5FF',
+              color: pays===p ? '#fff' : '#2B7FFF'}}>
+            {p==='ch' ? '🇨🇭 Suisse' : p==='fr' ? '🇫🇷 France' : '🇸🇳 Senegal'}
+          </button>
+        ))}
+      </div>
       <div style={{fontSize:'14px',fontWeight:'500',color:'#1a1a2e',marginBottom:'12px'}}>Calculateur fiscal 2025</div>
       <div style={{display:'flex',gap:'6px',overflowX:'auto',paddingBottom:'8px',marginBottom:'14px'}}>
         {['revenus','deductions','situation','resultat'].map(o => (
