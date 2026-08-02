@@ -26,7 +26,7 @@ export default function Semaine() {
       const { data: { user } } = await supabase.auth.getUser()
       setUser(user)
       if (user) {
-        const { data } = await supabase.from("evenements_calendrier").select("*").eq("user_id", u!.id).order("date", { ascending: true })
+        const { data } = await supabase.from("evenements_calendrier").select("*").eq("user_id", user.id).order("date", { ascending: true })
         setEvenements(data || [])
       }
     }
@@ -58,16 +58,16 @@ export default function Semaine() {
 
   async function ajouterEvt() {
     if (!titre || !selectedDay) return
-    const { data: { user: u } } = await supabase.auth.getUser()
-    if (!u) return
+    const { data: { user: currentUser } } = await supabase.auth.getUser()
+    if (!currentUser) return
     const { error } = await supabase.from("evenements_calendrier").insert({
-      user_id: u.id, titre, heure, couleur, duree,
+      user_id: currentUser.id, titre, heure, couleur, duree,
       date: `${selectedDay.getFullYear()}-${String(selectedDay.getMonth()+1).padStart(2,'0')}-${String(selectedDay.getDate()).padStart(2,'0')}`,
       date_fin: multiJours && dateFin ? dateFin : null
     })
     if (!error) {
       setTitre(""); setHeure(""); setCouleur("#2B7FFF"); setDuree(30); setShowForm(false)
-      const { data } = await supabase.from("evenements_calendrier").select("*").eq("user_id", u.id).order("date", { ascending: true })
+      const { data } = await supabase.from("evenements_calendrier").select("*").eq("user_id", currentUser.id).order("date", { ascending: true })
       setEvenements(data || [])
     }
   }
