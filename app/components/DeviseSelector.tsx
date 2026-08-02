@@ -29,7 +29,7 @@ export default function DeviseSelector({ onClose }: { onClose: () => void }) {
       }
     })
     // Charger les taux de change en temps reel
-    fetch('https://api.frankfurter.app/latest?from=CHF')
+    fetch('https://open.er-api.com/v6/latest/CHF')
       .then(r => r.json())
       .then(data => setTaux(data.rates))
       .catch(() => {})

@@ -75,7 +75,7 @@ function FinancesContent() {
       }
     }
     charger()
-    fetch('https://api.frankfurter.app/latest?from=CHF')
+    fetch('https://open.er-api.com/v6/latest/CHF')
       .then(r => r.json())
       .then(data => setTauxChange(data.rates))
       .catch(() => {})
