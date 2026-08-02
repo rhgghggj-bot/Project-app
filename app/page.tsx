@@ -249,34 +249,46 @@ export default function Home() {
             </div>
           )}
 
-          {projets.length > 0 && (
-            <>
-              {/* Projet en vedette */}
-              <a href={'/projet/'+projets[0].id} style={{textDecoration:'none',display:'block',marginBottom:'14px'}}>
-                <div style={{background:'linear-gradient(135deg,#1a3a6e,#2B7FFF)',borderRadius:'20px',padding:'20px',position:'relative',overflow:'hidden'}}>
-                  <div style={{position:'absolute',top:'-20px',right:'-20px',width:'100px',height:'100px',borderRadius:'50%',background:'rgba(255,255,255,0.08)'}}></div>
-                  <div style={{fontSize:'10px',color:'rgba(255,255,255,0.6)',marginBottom:'6px',textTransform:'uppercase',letterSpacing:'.05em'}}>En vedette</div>
-                  <div style={{fontSize:'17px',fontWeight:'500',color:'#fff',marginBottom:'6px'}}>{projets[0].titre}</div>
-                  <div style={{fontSize:'12px',color:'rgba(255,255,255,0.7)',marginBottom:'14px',lineHeight:'1.5'}}>{projets[0].description}</div>
-                  <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-                    <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
-                      <div style={{width:'28px',height:'28px',borderRadius:'50%',background:'rgba(255,255,255,0.2)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'11px',fontWeight:'500',color:'#fff'}}>
-                        {(projets[0].titre?.[0] || 'P').toUpperCase()}
+          {projets.length > 0 && (() => {
+            const projetsFiltres = projets.filter((p: any) => categorie === 'Tous' || p.categorie === categorie)
+            const vedette = projetsFiltres[0]
+            if (!vedette) return (
+              <div className="text-center py-12">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="1.5" style={{margin:'0 auto 12px'}}><path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/></svg>
+                <p className="text-sm font-medium text-gray-900 mb-1">Aucun projet dans cette catégorie</p>
+                <p className="text-xs text-gray-400 mb-4">Sois le premier à publier dans "{categorie}" !</p>
+                <a href="/nouveau-projet"><button className="bg-blue-500 text-white text-sm font-medium px-6 py-2 rounded-full">Publier mon projet</button></a>
+              </div>
+            )
+            return (
+              <>
+                {/* Projet en vedette */}
+                <a href={'/projet/'+vedette.id} style={{textDecoration:'none',display:'block',marginBottom:'14px'}}>
+                  <div style={{background:'linear-gradient(135deg,#1a3a6e,#2B7FFF)',borderRadius:'20px',padding:'20px',position:'relative',overflow:'hidden'}}>
+                    <div style={{position:'absolute',top:'-20px',right:'-20px',width:'100px',height:'100px',borderRadius:'50%',background:'rgba(255,255,255,0.08)'}}></div>
+                    <div style={{fontSize:'10px',color:'rgba(255,255,255,0.6)',marginBottom:'6px',textTransform:'uppercase',letterSpacing:'.05em'}}>En vedette</div>
+                    <div style={{fontSize:'17px',fontWeight:'500',color:'#fff',marginBottom:'6px'}}>{vedette.titre}</div>
+                    <div style={{fontSize:'12px',color:'rgba(255,255,255,0.7)',marginBottom:'14px',lineHeight:'1.5'}}>{vedette.description}</div>
+                    <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+                      <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
+                        <div style={{width:'28px',height:'28px',borderRadius:'50%',background:'rgba(255,255,255,0.2)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'11px',fontWeight:'500',color:'#fff'}}>
+                          {(vedette.titre?.[0] || 'P').toUpperCase()}
+                        </div>
+                        <span style={{fontSize:'12px',color:'rgba(255,255,255,0.7)'}}>{vedette.categorie}</span>
                       </div>
-                      <span style={{fontSize:'12px',color:'rgba(255,255,255,0.7)'}}>{projets[0].categorie}</span>
+                      <div style={{background:'rgba(255,255,255,0.15)',borderRadius:'99px',padding:'6px 14px',fontSize:'12px',color:'#fff',fontWeight:'500'}}>Voir</div>
                     </div>
-                    <div style={{background:'rgba(255,255,255,0.15)',borderRadius:'99px',padding:'6px 14px',fontSize:'12px',color:'#fff',fontWeight:'500'}}>Voir</div>
                   </div>
-                </div>
-              </a>
+                </a>
 
-              <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',marginBottom:'12px'}}>Récents</div>
-            </>
-          )}
+                <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',marginBottom:'12px'}}>Récents</div>
+              </>
+            )
+          })()}
 
           {projets
-            .filter((_: any, i: number) => i > 0)
             .filter((p: any) => categorie === 'Tous' || p.categorie === categorie)
+            .filter((p: any) => p.id !== (projets.filter((pr: any) => categorie === 'Tous' || pr.categorie === categorie)[0]?.id))
             .map((projet: any) => (
             <a key={projet.id} href={'/projet/'+projet.id} style={{textDecoration:'none',display:'block',marginBottom:'10px'}}>
               <div style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'16px',padding:'14px'}}>
