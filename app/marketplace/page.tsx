@@ -69,6 +69,11 @@ export default function Marketplace() {
     setArticles(articles.filter(a => a.id !== id))
   }
 
+  async function supprimerAnnonce(id: string) {
+    await supabase.from('marketplace_annonces').delete().eq('id', id)
+    setAnnonces(annonces.filter(a => a.id !== id))
+  }
+
   async function ajouterAnnonce() {
     if (!titreAnnonce.trim()) return
     const { data: { user: u } } = await supabase.auth.getUser()
@@ -204,12 +209,15 @@ export default function Marketplace() {
             <div style={{background:'#EEF5FF',borderRadius:'14px',padding:'14px',marginBottom:'14px',border:'0.5px solid #DCE9FF'}}>
               <input value={titreAnnonce} onChange={e => setTitreAnnonce(e.target.value)} placeholder="Titre de l'annonce" style={inp}/>
               <div style={{marginBottom:'8px'}}>
-                <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Photo</label>
-                <input type="file" accept="image/*" onChange={e => {
-                  const f = e.target.files?.[0]
-                  if (f) { setImageAnnonce(f); setImagePreview(URL.createObjectURL(f)) }
-                }} style={{fontSize:'13px',color:'#666'}}/>
-                {imagePreview && <img src={imagePreview} style={{width:'100%',height:'120px',objectFit:'cover',borderRadius:'10px',marginTop:'8px'}}/>}
+                <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'6px'}}>Photo</label>
+                <label style={{display:'block',background:'#EEF5FF',border:'1px dashed #2B7FFF',borderRadius:'10px',padding:'16px',textAlign:'center',cursor:'pointer',color:'#2B7FFF',fontSize:'13px',fontWeight:'500'}}>
+                  📷 Choisir une photo
+                  <input type="file" accept="image/*" onChange={e => {
+                    const f = e.target.files?.[0]
+                    if (f) { setImageAnnonce(f); setImagePreview(URL.createObjectURL(f)) }
+                  }} style={{display:'none'}}/>
+                </label>
+                {imagePreview && <img src={imagePreview} style={{width:'100%',height:'140px',objectFit:'cover',borderRadius:'10px',marginTop:'8px'}}/>}
               </div>
               <select value={etatAnnonce} onChange={e => setEtatAnnonce(e.target.value)}
                 style={{...inp as any, marginBottom:'8px'}}>
