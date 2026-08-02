@@ -51,7 +51,7 @@ export default function DeviseSelector({ onClose }: { onClose: () => void }) {
   const tauxActuel = taux && devise !== 'CHF' ? taux[devise] : 1
 
   return (
-    <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',zIndex:999,display:'flex',alignItems:'flex-end'}}>
+    <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',zIndex:1500,display:'flex',alignItems:'flex-end'}}>
       <div style={{background:'#f8faff',borderRadius:'20px 20px 0 0',width:'100%',maxHeight:'90vh',overflowY:'auto',padding:'20px 14px 40px'}}>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'16px'}}>
           <div style={{fontSize:'18px',fontWeight:'600',color:'#1a1a2e'}}>Ma devise</div>

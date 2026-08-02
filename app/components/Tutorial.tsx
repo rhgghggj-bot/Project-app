@@ -63,7 +63,7 @@ export default function Tutorial({ page }: { page: string }) {
 
   return (
     <>
-      <div onClick={fermer} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.6)',zIndex:998}}/>
+      <div onClick={fermer} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.6)',zIndex:1498}}/>
       <div style={{
         position:'fixed',
         ...positions[step.position],
@@ -71,7 +71,7 @@ export default function Tutorial({ page }: { page: string }) {
         borderRadius:'16px',
         padding:'16px',
         width:'270px',
-        zIndex:999,
+        zIndex:1499,
         boxShadow:'0 8px 30px rgba(0,0,0,0.4)'
       }}>
         <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'8px'}}>
