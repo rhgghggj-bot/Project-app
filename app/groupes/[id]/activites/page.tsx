@@ -19,6 +19,8 @@ export default function ActivitesGroupe() {
   const [lieu, setLieu] = useState("")
   const [date, setDate] = useState("")
   const [heure, setHeure] = useState("")
+  const [dureeH, setDureeH] = useState(1)
+  const [dureeM, setDureeM] = useState(0)
   const [couleur, setCouleur] = useState(COULEURS[0])
   const [message, setMessage] = useState("")
 
@@ -51,7 +53,7 @@ export default function ActivitesGroupe() {
     if (!user) return
 
     const { data: nouvelleActivite, error } = await supabase.from("activites_groupe").insert({
-      groupe_id: id, titre, description, lieu, date, heure, couleur, created_by: user.id
+      groupe_id: id, titre, description, lieu, date, heure, duree: dureeH * 60 + dureeM, couleur, created_by: user.id
     }).select().single()
 
     if (error) { setMessage("Erreur : " + error.message); return }
@@ -73,7 +75,7 @@ export default function ActivitesGroupe() {
       }
     }
 
-    setTitre(""); setDescription(""); setLieu(""); setDate(""); setHeure(""); setCouleur(COULEURS[0])
+    setTitre(""); setDescription(""); setLieu(""); setDate(""); setHeure(""); setDureeH(1); setDureeM(0); setCouleur(COULEURS[0])
     setShowForm(false); setMessage("")
     charger()
   }
@@ -110,9 +112,24 @@ export default function ActivitesGroupe() {
             <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',marginBottom:'10px'}}>Nouvelle activité</div>
             <input value={titre} onChange={e => setTitre(e.target.value)} placeholder="Ex: Raclette chez Sam, Randonnée..." style={inp}/>
             <input value={lieu} onChange={e => setLieu(e.target.value)} placeholder="Lieu (optionnel)" style={inp}/>
-            <div style={{display:'flex',gap:'8px',marginBottom:'8px'}}>
+            <div style={{display:'flex',gap:'8px',marginBottom:'4px'}}>
+              <div style={{flex:1,fontSize:'11px',color:'#666'}}>Date</div>
+              <div style={{flex:1,fontSize:'11px',color:'#666'}}>Heure (optionnel)</div>
+            </div>
+            <div style={{display:'flex',gap:'8px',marginBottom:'12px'}}>
               <input type="date" value={date} onChange={e => setDate(e.target.value)} style={{...inp,marginBottom:0,flex:1}}/>
               <input type="time" value={heure} onChange={e => setHeure(e.target.value)} style={{...inp,marginBottom:0,flex:1}}/>
+            </div>
+            <div style={{fontSize:'11px',color:'#666',marginBottom:'4px'}}>Durée</div>
+            <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'12px'}}>
+              <select value={dureeH} onChange={e => setDureeH(Number(e.target.value))}
+                style={{flex:1,border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 12px',fontSize:'16px',color:'#1a1a2e',background:'#fff'}}>
+                {Array.from({length:13}, (_,i) => i).map(h => <option key={h} value={h}>{h} h</option>)}
+              </select>
+              <select value={dureeM} onChange={e => setDureeM(Number(e.target.value))}
+                style={{flex:1,border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 12px',fontSize:'16px',color:'#1a1a2e',background:'#fff'}}>
+                {[0,15,30,45].map(m => <option key={m} value={m}>{m} min</option>)}
+              </select>
             </div>
             <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Description (optionnel)" rows={2}
               style={{...inp,resize:'none' as const}}/>
@@ -156,6 +173,7 @@ export default function ActivitesGroupe() {
                   <div style={{fontSize:'12px',color:'#666',marginTop:'2px'}}>
                     {new Date(a.date).toLocaleDateString('fr-FR', {weekday:'long', day:'numeric', month:'long'})}
                     {a.heure && ` · ${a.heure}`}
+                    {a.duree ? ` · ${Math.floor(a.duree/60)}h${a.duree%60 ? String(a.duree%60).padStart(2,'0') : ''}` : ''}
                     {a.lieu && ` · ${a.lieu}`}
                   </div>
                   {a.description && <div style={{fontSize:'12px',color:'#aaa',marginTop:'4px'}}>{a.description}</div>}

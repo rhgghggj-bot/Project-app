@@ -25,7 +25,7 @@ export async function syncActivitesGroupeVersCalendrier(userId: string) {
       titre: `👥 ${a.titre}`,
       date: a.date,
       heure: a.heure || null,
-      duree: 60,
+      duree: a.duree || 60,
       couleur: a.couleur || "#8B5CF6",
       activite_groupe_id: a.id,
     }))
