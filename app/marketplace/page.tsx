@@ -19,6 +19,9 @@ export default function Marketplace() {
   const [unite, setUnite] = useState("unite")
   const [categorie, setCategorie] = useState("Autre")
   const [titreAnnonce, setTitreAnnonce] = useState("")
+  const [etatAnnonce, setEtatAnnonce] = useState("Bon état")
+  const [imageAnnonce, setImageAnnonce] = useState<File|null>(null)
+  const [imagePreview, setImagePreview] = useState("")
   const [descAnnonce, setDescAnnonce] = useState("")
   const [prixAnnonce, setPrixAnnonce] = useState("")
   const [catAnnonce, setCatAnnonce] = useState("Autre")
@@ -70,9 +73,19 @@ export default function Marketplace() {
     if (!titreAnnonce.trim()) return
     const { data: { user: u } } = await supabase.auth.getUser()
     if (!u) { alert('Connecte-toi pour publier'); return }
-    const { error } = await supabase.from("marketplace_annonces").insert({ user_id: u.id, titre: titreAnnonce, description: descAnnonce, prix: parseFloat(prixAnnonce.replace(",",".")) || 0, categorie: catAnnonce })
+    let imageUrl = ''
+    if (imageAnnonce) {
+      const ext = imageAnnonce.name.split('.').pop()
+      const path = u.id + '/' + Date.now() + '.' + ext
+      const { error: upErr } = await supabase.storage.from('marketplace').upload(path, imageAnnonce)
+      if (!upErr) {
+        const { data: urlData } = supabase.storage.from('marketplace').getPublicUrl(path)
+        imageUrl = urlData.publicUrl
+      }
+    }
+    const { error } = await supabase.from("marketplace_annonces").insert({ user_id: u.id, titre: titreAnnonce, description: descAnnonce, prix: parseFloat(prixAnnonce.replace(",",".")) || 0, categorie: catAnnonce, image_url: imageUrl, etat: etatAnnonce })
     if (error) { alert('Erreur: ' + error.message); return }
-    setTitreAnnonce(""); setDescAnnonce(""); setPrixAnnonce(""); setShowFormAnnonce(false); chargerAnnonces()
+    setTitreAnnonce(""); setDescAnnonce(""); setPrixAnnonce(""); setImageAnnonce(null); setImagePreview(''); setShowFormAnnonce(false); chargerAnnonces()
   }
 
   const total = articles.reduce((sum, a) => sum + (parseFloat(a.prix || 0) * a.quantite), 0)
@@ -190,6 +203,36 @@ export default function Marketplace() {
           {showFormAnnonce && (
             <div style={{background:'#EEF5FF',borderRadius:'14px',padding:'14px',marginBottom:'14px',border:'0.5px solid #DCE9FF'}}>
               <input value={titreAnnonce} onChange={e => setTitreAnnonce(e.target.value)} placeholder="Titre de l'annonce" style={inp}/>
+              <div style={{marginBottom:'8px'}}>
+                <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Photo</label>
+                <input type="file" accept="image/*" onChange={e => {
+                  const f = e.target.files?.[0]
+                  if (f) { setImageAnnonce(f); setImagePreview(URL.createObjectURL(f)) }
+                }} style={{fontSize:'13px',color:'#666'}}/>
+                {imagePreview && <img src={imagePreview} style={{width:'100%',height:'120px',objectFit:'cover',borderRadius:'10px',marginTop:'8px'}}/>}
+              </div>
+              <select value={etatAnnonce} onChange={e => setEtatAnnonce(e.target.value)}
+                style={{...inp as any, marginBottom:'8px'}}>
+                <option>Neuf</option>
+                <option>Bon état</option>
+                <option>État correct</option>
+                <option>Urgent</option>
+              </select>
+              <div style={{marginBottom:'8px'}}>
+                <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Photo</label>
+                <input type="file" accept="image/*" onChange={e => {
+                  const f = e.target.files?.[0]
+                  if (f) { setImageAnnonce(f); setImagePreview(URL.createObjectURL(f)) }
+                }} style={{fontSize:'13px',color:'#666'}}/>
+                {imagePreview && <img src={imagePreview} style={{width:'100%',height:'120px',objectFit:'cover',borderRadius:'10px',marginTop:'8px'}}/>}
+              </div>
+              <select value={etatAnnonce} onChange={e => setEtatAnnonce(e.target.value)}
+                style={{...inp as any, marginBottom:'8px'}}>
+                <option>Neuf</option>
+                <option>Bon état</option>
+                <option>État correct</option>
+                <option>Urgent</option>
+              </select>
               <textarea value={descAnnonce} onChange={e => setDescAnnonce(e.target.value)} placeholder="Description..."
                 style={{...inp,height:'60px',resize:'none'}}/>
               <div style={{display:'flex',gap:'8px',marginBottom:'8px'}}>
