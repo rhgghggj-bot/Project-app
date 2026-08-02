@@ -17,7 +17,7 @@ export default function Inscription() {
     if (error) {
       setMessage("Erreur : " + error.message)
     } else {
-      setMessage("Compte créé ! Vérifie ton email pour confirmer.")
+      setMessage("Compte créé ! Tu peux maintenant te connecter.")
     }
   }
 
