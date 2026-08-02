@@ -43,7 +43,8 @@ export default function Marketplace() {
   async function ajouterArticle() {
     if (!nom.trim()) return
     const { data: { user: u } } = await supabase.auth.getUser()
-    await supabase.from("portfolio_articles").insert({ user_id: u?.id, nom, prix: parseFloat(prix.replace(",",".")) || 0, quantite, unite, categorie })
+    if (!u) return
+    await supabase.from("portfolio_articles").insert({ user_id: u.id, nom, prix: parseFloat(prix.replace(",",".")) || 0, quantite, unite, categorie })
     setNom(""); setPrix(""); setQuantite(1); setShowForm(false); chargerArticles()
   }
 
@@ -67,7 +68,9 @@ export default function Marketplace() {
   async function ajouterAnnonce() {
     if (!titreAnnonce.trim()) return
     const { data: { user: u } } = await supabase.auth.getUser()
-    await supabase.from("marketplace_annonces").insert({ user_id: u?.id, titre: titreAnnonce, description: descAnnonce, prix: parseFloat(prixAnnonce.replace(",",".")) || 0, categorie: catAnnonce })
+    if (!u) { alert('Connecte-toi pour publier'); return }
+    const { error } = await supabase.from("marketplace_annonces").insert({ user_id: u.id, titre: titreAnnonce, description: descAnnonce, prix: parseFloat(prixAnnonce.replace(",",".")) || 0, categorie: catAnnonce })
+    if (error) { alert('Erreur: ' + error.message); return }
     setTitreAnnonce(""); setDescAnnonce(""); setPrixAnnonce(""); setShowFormAnnonce(false); chargerAnnonces()
   }
 
