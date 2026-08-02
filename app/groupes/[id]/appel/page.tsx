@@ -137,15 +137,8 @@ export default function AppelGroupe() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const navMobile = document.querySelector('nav.md\\:hidden') as HTMLElement
-    const navDesktop = document.querySelector('nav.hidden') as HTMLElement
-    if (navMobile) navMobile.style.display = 'none'
-    if (navDesktop) navDesktop.style.display = 'none'
-    return () => {
-      if (navMobile) navMobile.style.display = ''
-      if (navDesktop) navDesktop.style.display = ''
-    }
-    
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = '' }
   }, [])
 
   useEffect(() => {
@@ -182,13 +175,13 @@ export default function AppelGroupe() {
   }, [])
 
   if (loading) return (
-    <main style={{position:'fixed',inset:0,display:'flex',alignItems:'center',justifyContent:'center',height:'100dvh',background:'linear-gradient(135deg,#1a3a6e,#2B7FFF,#87CEEB)',zIndex:1000}}>
+    <main style={{position:'fixed',inset:0,display:'flex',alignItems:'center',justifyContent:'center',height:'100dvh',background:'linear-gradient(135deg,#1a3a6e,#2B7FFF,#87CEEB)',zIndex:2000}}>
       <div style={{color:'#fff',fontSize:'16px',fontWeight:'500'}}>Connexion en cours...</div>
     </main>
   )
 
   return (
-    <main style={{position:'fixed',inset:0,height:'100dvh',background:'linear-gradient(135deg,#1a3a6e,#2B7FFF,#87CEEB)',display:'flex',flexDirection:'column',zIndex:1000,overflow:'hidden'}}>
+    <main style={{position:'fixed',inset:0,height:'100dvh',background:'linear-gradient(135deg,#1a3a6e,#2B7FFF,#87CEEB)',display:'flex',flexDirection:'column',zIndex:2000,overflow:'hidden'}}>
       <div style={{padding:'14px 16px',background:'rgba(255,255,255,0.15)',borderBottom:'0.5px solid rgba(255,255,255,0.3)',display:'flex',alignItems:'center',gap:'10px',flexShrink:0}}>
         <span style={{color:'#fff',fontWeight:'500',fontSize:'15px'}}>{groupe?.nom}</span>
       </div>
