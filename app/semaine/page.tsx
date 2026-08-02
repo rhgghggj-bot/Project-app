@@ -26,7 +26,7 @@ export default function Semaine() {
       const { data: { user } } = await supabase.auth.getUser()
       setUser(user)
       if (user) {
-        const { data } = await supabase.from("evenements_calendrier").select("*").eq("user_id", u.id).order("date", { ascending: true })
+        const { data } = await supabase.from("evenements_calendrier").select("*").eq("user_id", u!.id).order("date", { ascending: true })
         setEvenements(data || [])
       }
     }
