@@ -198,7 +198,7 @@ export default function AppelGroupe() {
             <VideoGrid />
           </div>
           <RoomAudioRenderer />
-          <Controls onLeave={() => router.back()} />
+          <Controls onLeave={() => router.push('/groupes/' + params.id)} />
         </LiveKitRoom>
       </div>
     </main>
