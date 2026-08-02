@@ -36,7 +36,7 @@ export default function Marketplace() {
   }
 
   async function chargerAnnonces() {
-    const { data } = await supabase.from("marketplace_annonces").select("*, profiles(prenom, nom)").order("created_at", { ascending: false })
+    const { data } = await supabase.from("marketplace_annonces").select("*").order("created_at", { ascending: false })
     setAnnonces(data || [])
   }
 
@@ -226,7 +226,7 @@ export default function Marketplace() {
                 <div style={{padding:'10px'}}>
                   <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',marginBottom:'2px'}}>{a.titre}</div>
                   <div style={{fontSize:'13px',color:'#2B7FFF',fontWeight:'600',marginBottom:'2px'}}>{parseFloat(a.prix).toFixed(0)} CHF</div>
-                  <div style={{fontSize:'11px',color:'#aaa'}}>{a.profiles?.prenom || 'Anonyme'}</div>
+                  <div style={{fontSize:'11px',color:'#aaa'}}>'Anonyme'</div>
                 </div>
               </div>
             ))}
