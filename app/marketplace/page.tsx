@@ -24,6 +24,7 @@ export default function Marketplace() {
   const [descAnnonce, setDescAnnonce] = useState("")
   const [prixAnnonce, setPrixAnnonce] = useState("")
   const [catAnnonce, setCatAnnonce] = useState("Autre")
+  const [annonceOuverte, setAnnonceOuverte] = useState<any>(null)
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -241,7 +242,7 @@ export default function Marketplace() {
 
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"10px"}}>
             {annoncesFiltrees.map(a => (
-              <div key={a.id} style={{background:"#fff",border:"0.5px solid #E8F1FF",borderRadius:"16px",overflow:"hidden",cursor:"pointer"}}>
+              <div key={a.id} onClick={() => setAnnonceOuverte(a)} style={{background:"#fff",border:"0.5px solid #E8F1FF",borderRadius:"16px",overflow:"hidden",cursor:"pointer"}}>
                 <div style={{height:"130px",background:"linear-gradient(135deg,#EEF5FF,#DCE9FF)",position:"relative",overflow:"hidden"}}>
                   {a.image_url ? (
                     <img src={a.image_url} alt={a.titre} style={{width:"100%",height:"100%",objectFit:"cover"}}/>
@@ -251,10 +252,12 @@ export default function Marketplace() {
                     </div>
                   )}
                   {a.etat && <div style={{position:"absolute",top:"8px",left:"8px",background:a.etat==="Neuf"?"#10B981":a.etat==="Urgent"?"#F43F5E":"#D4A843",borderRadius:"99px",padding:"3px 8px",fontSize:"10px",color:"#fff",fontWeight:"500"}}>{a.etat}</div>}
-                  <button onClick={() => supprimerAnnonce(a.id)}
-                    style={{position:"absolute",top:"8px",right:"8px",background:"rgba(255,255,255,0.9)",border:"none",borderRadius:"50%",width:"24px",height:"24px",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#F43F5E" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                  </button>
+                  {user && a.user_id === user.id && (
+                    <button onClick={(e) => { e.stopPropagation(); supprimerAnnonce(a.id) }}
+                      style={{position:"absolute",top:"8px",right:"8px",background:"rgba(255,255,255,0.9)",border:"none",borderRadius:"50%",width:"24px",height:"24px",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#F43F5E" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                  )}
                 </div>
                 <div style={{padding:"10px"}}>
                   <div style={{fontSize:"13px",fontWeight:"500",color:"#1a1a2e",marginBottom:"4px"}}>{a.titre}</div>
@@ -266,6 +269,39 @@ export default function Marketplace() {
 
           {annoncesFiltrees.length === 0 && (
             <div style={{textAlign:"center",padding:"48px 0",color:"#aaa",fontSize:"13px"}}>Aucune annonce pour l instant</div>
+          )}
+
+          {annonceOuverte && (
+            <div onClick={() => setAnnonceOuverte(null)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:1500,display:"flex",alignItems:"flex-end"}}>
+              <div onClick={(e) => e.stopPropagation()} style={{background:"#fff",borderRadius:"20px 20px 0 0",width:"100%",maxHeight:"88vh",overflowY:"auto"}}>
+                <div style={{position:"relative"}}>
+                  {annonceOuverte.image_url ? (
+                    <img src={annonceOuverte.image_url} alt={annonceOuverte.titre} style={{width:"100%",height:"260px",objectFit:"cover"}}/>
+                  ) : (
+                    <div style={{width:"100%",height:"260px",background:"linear-gradient(135deg,#EEF5FF,#DCE9FF)",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#2B7FFF" strokeWidth="1.2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                    </div>
+                  )}
+                  <button onClick={() => setAnnonceOuverte(null)}
+                    style={{position:"absolute",top:"12px",right:"12px",background:"rgba(255,255,255,0.9)",border:"none",borderRadius:"50%",width:"32px",height:"32px",cursor:"pointer",fontSize:"16px",display:"flex",alignItems:"center",justifyContent:"center"}}>×</button>
+                  {annonceOuverte.etat && <div style={{position:"absolute",top:"12px",left:"12px",background:annonceOuverte.etat==="Neuf"?"#10B981":annonceOuverte.etat==="Urgent"?"#F43F5E":"#D4A843",borderRadius:"99px",padding:"4px 12px",fontSize:"11px",color:"#fff",fontWeight:"500"}}>{annonceOuverte.etat}</div>}
+                </div>
+                <div style={{padding:"18px"}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:"6px"}}>
+                    <div style={{fontSize:"18px",fontWeight:"600",color:"#1a1a2e",flex:1}}>{annonceOuverte.titre}</div>
+                    <div style={{fontSize:"20px",fontWeight:"700",color:"#2B7FFF",whiteSpace:"nowrap",marginLeft:"10px"}}>{parseFloat(annonceOuverte.prix).toFixed(0)} CHF</div>
+                  </div>
+                  <div style={{fontSize:"11px",color:"#aaa",marginBottom:"14px"}}>{annonceOuverte.categorie}</div>
+                  <div style={{fontSize:"13px",color:"#666",lineHeight:"1.6",whiteSpace:"pre-wrap"}}>{annonceOuverte.description || "Aucune description."}</div>
+                  {user && annonceOuverte.user_id === user.id && (
+                    <button onClick={() => { supprimerAnnonce(annonceOuverte.id); setAnnonceOuverte(null) }}
+                      style={{width:"100%",marginTop:"18px",background:"#FFE4E6",color:"#F43F5E",border:"none",borderRadius:"12px",padding:"12px",fontSize:"13px",fontWeight:"500",cursor:"pointer"}}>
+                      Supprimer mon annonce
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
           )}
         </div>
       )}
