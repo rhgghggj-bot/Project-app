@@ -132,6 +132,8 @@ export default function Semaine() {
           <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',marginBottom:'10px'}}>
             + Événement le {selectedDay.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})}
           </div>
+          <input value={titre} onChange={e => setTitre(e.target.value)} placeholder="Titre de l'événement"
+            style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 12px',fontSize:'14px',color:'#1a1a2e',background:'#fff',marginBottom:'8px',boxSizing:'border-box'}}/>
           <div style={{background:'#F8FBFF',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 12px',marginBottom:'8px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
             <div>
               <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e'}}>Événement sur plusieurs jours</div>
