@@ -26,7 +26,8 @@ export default function Marketplace() {
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       setUser(user)
-      if (user) { chargerArticles(); chargerAnnonces() }
+      chargerAnnonces()
+      if (user) { chargerArticles() }
     })
   }, [])
 
