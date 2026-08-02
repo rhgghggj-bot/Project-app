@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import NotificationBell from "./components/NotificationBell"
+import { syncActivitesGroupeVersCalendrier } from "@/lib/syncActivites"
 
 const JOURS = ["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"]
 
@@ -24,6 +25,7 @@ export default function Home() {
       const { data: p } = await supabase.from("projets").select("*").is("groupe_id", null).eq("prive", false).order("created_at", { ascending: false })
       setProjets(p || [])
       if (user) {
+        await syncActivitesGroupeVersCalendrier(user.id)
         const { data: e } = await supabase.from("evenements_calendrier").select("*").eq("user_id", user.id)
         setEvenements(e || [])
         const { data: d } = await supabase.from("depenses").select("*").eq("user_id", user.id)

@@ -2,6 +2,7 @@
 import Tutorial from "../components/Tutorial"
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
+import { syncActivitesGroupeVersCalendrier } from "@/lib/syncActivites"
 
 const JOURS = ["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"]
 const COULEURS_EVT = ["#2B7FFF","#10B981","#F43F5E","#D4A843","#8B5CF6","#F59E0B","#EC4899"]
@@ -26,6 +27,7 @@ export default function Semaine() {
       const { data: { user } } = await supabase.auth.getUser()
       setUser(user)
       if (user) {
+        await syncActivitesGroupeVersCalendrier(user.id)
         const { data } = await supabase.from("evenements_calendrier").select("*").eq("user_id", user.id).order("date", { ascending: true })
         setEvenements(data || [])
       }

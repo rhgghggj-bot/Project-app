@@ -183,13 +183,13 @@ export default function AppelGroupe() {
   }, [])
 
   if (loading) return (
-    <main style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:'100vh',background:'linear-gradient(135deg,#1a3a6e,#2B7FFF,#87CEEB)'}}>
+    <main style={{position:'fixed',inset:0,display:'flex',alignItems:'center',justifyContent:'center',height:'100dvh',background:'linear-gradient(135deg,#1a3a6e,#2B7FFF,#87CEEB)',zIndex:1000}}>
       <div style={{color:'#fff',fontSize:'16px',fontWeight:'500'}}>Connexion en cours...</div>
     </main>
   )
 
   return (
-    <main style={{height:'100vh',background:'linear-gradient(135deg,#1a3a6e,#2B7FFF,#87CEEB)',display:'flex',flexDirection:'column'}}>
+    <main style={{position:'fixed',inset:0,height:'100dvh',background:'linear-gradient(135deg,#1a3a6e,#2B7FFF,#87CEEB)',display:'flex',flexDirection:'column',zIndex:1000}}>
       <div style={{padding:'14px 16px',background:'rgba(255,255,255,0.15)',borderBottom:'0.5px solid rgba(255,255,255,0.3)',display:'flex',alignItems:'center',gap:'10px',flexShrink:0}}>
         <span style={{color:'#fff',fontWeight:'500',fontSize:'15px'}}>{groupe?.nom}</span>
       </div>

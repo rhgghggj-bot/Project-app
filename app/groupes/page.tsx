@@ -17,11 +17,19 @@ export default function Groupes() {
     async function charger() {
       const { data: { user } } = await supabase.auth.getUser()
       setUser(user)
-      const { data } = await supabase.from("groupes").select("*").order("created_at", { ascending: false })
-      setGroupes(data || [])
-      if (user) {
-        const { data: membres } = await supabase.from("membres_groupe").select("groupe_id").eq("user_id", user.id)
-        setMesGroupes(membres?.map((m: any) => m.groupe_id) || [])
+      if (!user) {
+        setGroupes([])
+        setMesGroupes([])
+        return
+      }
+      const { data: membres } = await supabase.from("membres_groupe").select("groupe_id").eq("user_id", user.id)
+      const idsGroupes = membres?.map((m: any) => m.groupe_id) || []
+      setMesGroupes(idsGroupes)
+      if (idsGroupes.length > 0) {
+        const { data } = await supabase.from("groupes").select("*").in("id", idsGroupes).order("created_at", { ascending: false })
+        setGroupes(data || [])
+      } else {
+        setGroupes([])
       }
     }
     charger()
