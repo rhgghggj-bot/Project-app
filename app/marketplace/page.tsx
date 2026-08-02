@@ -25,14 +25,66 @@ export default function Marketplace() {
   const [prixAnnonce, setPrixAnnonce] = useState("")
   const [catAnnonce, setCatAnnonce] = useState("Autre")
   const [annonceOuverte, setAnnonceOuverte] = useState<any>(null)
+  const [likes, setLikes] = useState<any[]>([])
+  const [commentaires, setCommentaires] = useState<any[]>([])
+  const [profilsCommentaires, setProfilsCommentaires] = useState<any>({})
+  const [nouveauCommentaire, setNouveauCommentaire] = useState("")
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       setUser(user)
       chargerAnnonces()
+      chargerLikes()
+      chargerCommentaires()
       if (user) chargerArticles()
     })
   }, [])
+
+  async function chargerLikes() {
+    const { data } = await supabase.from("marketplace_likes").select("*")
+    setLikes(data || [])
+  }
+
+  async function chargerCommentaires() {
+    const { data } = await supabase.from("marketplace_commentaires").select("*").order("created_at", { ascending: true })
+    setCommentaires(data || [])
+    if (data && data.length > 0) {
+      const ids = Array.from(new Set(data.map((c: any) => c.user_id)))
+      const { data: profs } = await supabase.from("profiles").select("id,prenom,nom").in("id", ids)
+      const map: any = {}
+      profs?.forEach((p: any) => { map[p.id] = p.prenom || p.nom || "Membre" })
+      setProfilsCommentaires(map)
+    }
+  }
+
+  async function toggleLike(annonceId: string) {
+    if (!user) { alert("Connecte-toi pour aimer une annonce"); return }
+    const dejaLike = likes.find(l => l.annonce_id === annonceId && l.user_id === user.id)
+    if (dejaLike) {
+      await supabase.from("marketplace_likes").delete().eq("id", dejaLike.id)
+      setLikes(prev => prev.filter(l => l.id !== dejaLike.id))
+    } else {
+      const { data } = await supabase.from("marketplace_likes").insert({ annonce_id: annonceId, user_id: user.id }).select().single()
+      if (data) setLikes(prev => [...prev, data])
+    }
+  }
+
+  async function ajouterCommentaire() {
+    if (!nouveauCommentaire.trim() || !annonceOuverte || !user) return
+    const { data, error } = await supabase.from("marketplace_commentaires").insert({
+      annonce_id: annonceOuverte.id, user_id: user.id, contenu: nouveauCommentaire.trim()
+    }).select().single()
+    if (!error && data) {
+      setCommentaires(prev => [...prev, data])
+      setProfilsCommentaires((prev: any) => ({ ...prev, [user.id]: prev[user.id] || "Toi" }))
+      setNouveauCommentaire("")
+    }
+  }
+
+  async function supprimerCommentaire(id: string) {
+    await supabase.from("marketplace_commentaires").delete().eq("id", id)
+    setCommentaires(prev => prev.filter(c => c.id !== id))
+  }
 
   async function chargerArticles() {
     const { data } = await supabase.from("portfolio_articles").select("*").order("created_at", { ascending: true })
@@ -261,7 +313,13 @@ export default function Marketplace() {
                 </div>
                 <div style={{padding:"10px"}}>
                   <div style={{fontSize:"13px",fontWeight:"500",color:"#1a1a2e",marginBottom:"4px"}}>{a.titre}</div>
-                  <div style={{fontSize:"15px",fontWeight:"700",color:"#2B7FFF"}}>{parseFloat(a.prix).toFixed(0)} CHF</div>
+                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                    <div style={{fontSize:"15px",fontWeight:"700",color:"#2B7FFF"}}>{parseFloat(a.prix).toFixed(0)} CHF</div>
+                    <div style={{display:"flex",alignItems:"center",gap:"3px",fontSize:"11px",color:"#aaa"}}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill={likes.some(l=>l.annonce_id===a.id&&l.user_id===user?.id)?"#F43F5E":"none"} stroke={likes.some(l=>l.annonce_id===a.id&&l.user_id===user?.id)?"#F43F5E":"#aaa"} strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                      {likes.filter(l => l.annonce_id === a.id).length}
+                    </div>
+                  </div>
                 </div>
               </div>
             ))}
@@ -292,7 +350,55 @@ export default function Marketplace() {
                     <div style={{fontSize:"20px",fontWeight:"700",color:"#2B7FFF",whiteSpace:"nowrap",marginLeft:"10px"}}>{parseFloat(annonceOuverte.prix).toFixed(0)} CHF</div>
                   </div>
                   <div style={{fontSize:"11px",color:"#aaa",marginBottom:"14px"}}>{annonceOuverte.categorie}</div>
+
+                  <div style={{display:"flex",alignItems:"center",gap:"14px",marginBottom:"14px",paddingBottom:"14px",borderBottom:"0.5px solid #F0F4FA"}}>
+                    <button onClick={() => toggleLike(annonceOuverte.id)}
+                      style={{display:"flex",alignItems:"center",gap:"6px",background: likes.some(l=>l.annonce_id===annonceOuverte.id&&l.user_id===user?.id) ? "#FFE4E6" : "#F8FBFF",border:"0.5px solid #E8F1FF",borderRadius:"99px",padding:"8px 14px",cursor:"pointer"}}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill={likes.some(l=>l.annonce_id===annonceOuverte.id&&l.user_id===user?.id)?"#F43F5E":"none"} stroke={likes.some(l=>l.annonce_id===annonceOuverte.id&&l.user_id===user?.id)?"#F43F5E":"#aaa"} strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                      <span style={{fontSize:"13px",fontWeight:"500",color:"#1a1a2e"}}>{likes.filter(l => l.annonce_id === annonceOuverte.id).length}</span>
+                    </button>
+                    <div style={{display:"flex",alignItems:"center",gap:"6px",color:"#aaa"}}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                      <span style={{fontSize:"13px"}}>{commentaires.filter(c => c.annonce_id === annonceOuverte.id).length}</span>
+                    </div>
+                  </div>
+
                   <div style={{fontSize:"13px",color:"#666",lineHeight:"1.6",whiteSpace:"pre-wrap"}}>{annonceOuverte.description || "Aucune description."}</div>
+
+                  <div style={{marginTop:"18px"}}>
+                    <div style={{fontSize:"13px",fontWeight:"500",color:"#1a1a2e",marginBottom:"10px"}}>Commentaires</div>
+                    {commentaires.filter(c => c.annonce_id === annonceOuverte.id).length === 0 && (
+                      <div style={{fontSize:"12px",color:"#aaa",marginBottom:"10px"}}>Aucun commentaire pour l'instant</div>
+                    )}
+                    {commentaires.filter(c => c.annonce_id === annonceOuverte.id).map(c => (
+                      <div key={c.id} style={{display:"flex",gap:"8px",marginBottom:"10px"}}>
+                        <div style={{width:"28px",height:"28px",borderRadius:"50%",background:"#EEF5FF",color:"#2B7FFF",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"11px",fontWeight:"500",flexShrink:0}}>
+                          {(profilsCommentaires[c.user_id] || "?")[0].toUpperCase()}
+                        </div>
+                        <div style={{flex:1,background:"#F8FBFF",borderRadius:"12px",padding:"8px 12px"}}>
+                          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"2px"}}>
+                            <span style={{fontSize:"12px",fontWeight:"500",color:"#1a1a2e"}}>{profilsCommentaires[c.user_id] || "Membre"}</span>
+                            {user && c.user_id === user.id && (
+                              <button onClick={() => supprimerCommentaire(c.id)} style={{background:"none",border:"none",color:"#ddd",cursor:"pointer",fontSize:"14px"}}>×</button>
+                            )}
+                          </div>
+                          <div style={{fontSize:"13px",color:"#333"}}>{c.contenu}</div>
+                        </div>
+                      </div>
+                    ))}
+                    {user ? (
+                      <div style={{display:"flex",gap:"8px",marginTop:"10px"}}>
+                        <input value={nouveauCommentaire} onChange={e => setNouveauCommentaire(e.target.value)}
+                          onKeyDown={e => e.key === "Enter" && ajouterCommentaire()}
+                          placeholder="Écrire un commentaire..."
+                          style={{flex:1,border:"1px solid #E8F1FF",borderRadius:"99px",padding:"10px 14px",fontSize:"14px",color:"#1a1a2e",background:"#F8FBFF"}}/>
+                        <button onClick={ajouterCommentaire} style={{width:"40px",height:"40px",borderRadius:"50%",background:"#2B7FFF",color:"#fff",border:"none",cursor:"pointer",fontSize:"16px",flexShrink:0}}>↑</button>
+                      </div>
+                    ) : (
+                      <div style={{fontSize:"12px",color:"#aaa",marginTop:"8px"}}>Connecte-toi pour commenter</div>
+                    )}
+                  </div>
+
                   {user && annonceOuverte.user_id === user.id && (
                     <button onClick={() => { supprimerAnnonce(annonceOuverte.id); setAnnonceOuverte(null) }}
                       style={{width:"100%",marginTop:"18px",background:"#FFE4E6",color:"#F43F5E",border:"none",borderRadius:"12px",padding:"12px",fontSize:"13px",fontWeight:"500",cursor:"pointer"}}>
