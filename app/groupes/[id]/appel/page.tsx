@@ -161,7 +161,6 @@ export default function AppelGroupe() {
         user_id: user.id,
         contenu: username + ' a lancé un appel — Rejoins la discussion pour participer'
       })
-      // Notifier les membres
       const { data: mbs } = await supabase.from('membres_groupe').select('user_id').eq('groupe_id', params.id)
       if (mbs) {
         for (const mb of mbs.filter((m: any) => m.user_id !== user.id)) {
@@ -189,15 +188,19 @@ export default function AppelGroupe() {
   )
 
   return (
-    <main style={{position:'fixed',inset:0,height:'100dvh',background:'linear-gradient(135deg,#1a3a6e,#2B7FFF,#87CEEB)',display:'flex',flexDirection:'column',zIndex:1000}}>
+    <main style={{position:'fixed',inset:0,height:'100dvh',background:'linear-gradient(135deg,#1a3a6e,#2B7FFF,#87CEEB)',display:'flex',flexDirection:'column',zIndex:1000,overflow:'hidden'}}>
       <div style={{padding:'14px 16px',background:'rgba(255,255,255,0.15)',borderBottom:'0.5px solid rgba(255,255,255,0.3)',display:'flex',alignItems:'center',gap:'10px',flexShrink:0}}>
         <span style={{color:'#fff',fontWeight:'500',fontSize:'15px'}}>{groupe?.nom}</span>
       </div>
-      <LiveKitRoom video={true} audio={true} token={token} serverUrl={process.env.NEXT_PUBLIC_LIVEKIT_URL} style={{flex:1,display:'flex',flexDirection:'column'}}>
-        <VideoGrid />
-        <RoomAudioRenderer />
-        <Controls onLeave={() => router.back()} />
-      </LiveKitRoom>
+      <div style={{flex:1,minHeight:0,position:'relative',overflow:'hidden'}}>
+        <LiveKitRoom video={true} audio={true} token={token} serverUrl={process.env.NEXT_PUBLIC_LIVEKIT_URL} style={{position:'absolute',inset:0,display:'flex',flexDirection:'column'}}>
+          <div style={{flex:1,minHeight:0,overflowY:'auto',display:'flex'}}>
+            <VideoGrid />
+          </div>
+          <RoomAudioRenderer />
+          <Controls onLeave={() => router.back()} />
+        </LiveKitRoom>
+      </div>
     </main>
   )
 }
