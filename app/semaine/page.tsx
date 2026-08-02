@@ -67,7 +67,7 @@ export default function Semaine() {
     })
     if (!error) {
       setTitre(""); setHeure(""); setCouleur("#2B7FFF"); setDuree(30); setShowForm(false)
-      const { data } = await supabase.from("evenements_calendrier").select("*").eq("user_id", user.id).order("date", { ascending: true })
+      const { data } = await supabase.from("evenements_calendrier").select("*").eq("user_id", u.id).order("date", { ascending: true })
       setEvenements(data || [])
     }
   }
