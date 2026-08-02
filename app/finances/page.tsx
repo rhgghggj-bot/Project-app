@@ -16,6 +16,7 @@ function FinancesContent() {
   const [revenus, setRevenus] = useState<any[]>([])
   const [user, setUser] = useState<any>(null)
   const [devise, setDevise] = useState("CHF")
+  const [tauxChange, setTauxChange] = useState<any>(null)
   const [showDevise, setShowDevise] = useState(false)
   const searchParams = useSearchParams()
   const [onglet, setOnglet] = useState("vue")
@@ -65,10 +66,25 @@ function FinancesContent() {
         setDepenses(d || [])
         const { data: r } = await supabase.from("revenus").select("*").eq("user_id", user.id).order("date", { ascending: false })
         setRevenus(r || [])
+        const { data: profil } = await supabase.from("profiles").select("devise").eq("id", user.id).single()
+        if (profil?.devise) setDevise(profil.devise)
+        else {
+          const saved = typeof window !== 'undefined' ? localStorage.getItem('nexia_devise') : null
+          if (saved) setDevise(saved)
+        }
       }
     }
     charger()
+    fetch('https://api.frankfurter.app/latest?from=CHF')
+      .then(r => r.json())
+      .then(data => setTauxChange(data.rates))
+      .catch(() => {})
   }, [])
+
+  function conv(montantCHF: number) {
+    if (devise === 'CHF' || !tauxChange || !tauxChange[devise]) return montantCHF
+    return montantCHF * tauxChange[devise]
+  }
 
   function haptic(t='light') { if(typeof navigator !== 'undefined' && navigator.vibrate) { if(t==='light') navigator.vibrate(10); else if(t==='success') navigator.vibrate([10,30,10]); else if(t==='error') navigator.vibrate([50,30,50]); } }
 
@@ -89,11 +105,11 @@ function FinancesContent() {
 
   function exporterPDF() {
     const moisNom = ['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre'][moisActuel]
-    const totalRev = moisActuelData.revenus.toFixed(0)
-    const totalDep = moisActuelData.depenses.toFixed(0)
-    const solde = (moisActuelData.revenus - moisActuelData.depenses).toFixed(0)
-    const revList = revenusMoisAff.map(r => `<tr><td style="padding:8px;border-bottom:1px solid #E8F1FF">${r.titre}</td><td style="padding:8px;border-bottom:1px solid #E8F1FF;color:#10B981;text-align:right">+${parseFloat(r.montant).toFixed(0)} ${devise}</td></tr>`).join('')
-    const depList = depensesMoisAff.map(d => `<tr><td style="padding:8px;border-bottom:1px solid #E8F1FF">${d.titre}</td><td style="padding:8px;border-bottom:1px solid #E8F1FF;color:#F43F5E;text-align:right">-${parseFloat(d.montant).toFixed(0)} ${devise}</td></tr>`).join('')
+    const totalRev = conv(moisActuelData.revenus).toFixed(0)
+    const totalDep = conv(moisActuelData.depenses).toFixed(0)
+    const solde = conv(moisActuelData.revenus - moisActuelData.depenses).toFixed(0)
+    const revList = revenusMoisAff.map(r => `<tr><td style="padding:8px;border-bottom:1px solid #E8F1FF">${r.titre}</td><td style="padding:8px;border-bottom:1px solid #E8F1FF;color:#10B981;text-align:right">+${conv(parseFloat(r.montant)).toFixed(0)} ${devise}</td></tr>`).join('')
+    const depList = depensesMoisAff.map(d => `<tr><td style="padding:8px;border-bottom:1px solid #E8F1FF">${d.titre}</td><td style="padding:8px;border-bottom:1px solid #E8F1FF;color:#F43F5E;text-align:right">-${conv(parseFloat(d.montant)).toFixed(0)} ${devise}</td></tr>`).join('')
 
     const html = `<!DOCTYPE html>
 <html>
@@ -201,7 +217,7 @@ function FinancesContent() {
       </div>
       <div style={{display:'flex',alignItems:'center',gap:'6px'}}>
         <div style={{fontSize:'14px',fontWeight:'500',color: type === "revenu" ? '#10B981' : '#F43F5E'}}>
-          {type === "revenu" ? '+' : '-'}{parseFloat(d.montant).toFixed(0)} CHF
+          {type === "revenu" ? '+' : '-'}{conv(parseFloat(d.montant)).toFixed(0)} {devise}
         </div>
         <a href={`/modifier-depense/${d.id}?type=${type}`}>
           <button style={{background:'#F0F8FF',border:'none',borderRadius:'8px',width:'28px',height:'28px',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',fontSize:'12px'}}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
@@ -229,7 +245,7 @@ function FinancesContent() {
             <span style={{fontSize:'14px',fontWeight:'500',color:couleurSolde}}>{texteSolde}</span>
           </div>
           <div style={{fontSize:'32px',fontWeight:'500',color:couleurSolde,marginBottom:'8px'}}>
-            {solde >= 0 ? '+' : ''}{solde.toFixed(0)} CHF
+            {solde >= 0 ? '+' : ''}{conv(solde).toFixed(0)} {devise}
           </div>
           <div style={{height:'8px',background:'rgba(255,255,255,0.1)',borderRadius:'99px',overflow:'hidden',marginBottom:'6px'}}>
             <div style={{height:'100%',width:`${pctDepenses}%`,background: pctDepenses > 90 ? '#F43F5E' : pctDepenses > 70 ? '#D4A843' : '#10B981',borderRadius:'99px'}}></div>
@@ -244,11 +260,11 @@ function FinancesContent() {
         <div style={{display:'flex',gap:'8px'}}>
           <div style={{flex:1,background:'rgba(16,185,129,0.15)',borderRadius:'12px',padding:'10px 12px',border:'0.5px solid rgba(16,185,129,0.3)'}}>
             <div style={{fontSize:'11px',color:'rgba(255,255,255,0.5)',marginBottom:'3px'}}>Revenus</div>
-            <div style={{fontSize:'18px',fontWeight:'500',color:'#4ade80'}}>{moisActuelData.revenus.toFixed(0)} {devise}</div>
+            <div style={{fontSize:'18px',fontWeight:'500',color:'#4ade80'}}>{conv(moisActuelData.revenus).toFixed(0)} {devise}</div>
           </div>
           <div style={{flex:1,background:'rgba(244,63,94,0.15)',borderRadius:'12px',padding:'10px 12px',border:'0.5px solid rgba(244,63,94,0.3)'}}>
             <div style={{fontSize:'11px',color:'rgba(255,255,255,0.5)',marginBottom:'3px'}}>Dépenses</div>
-            <div style={{fontSize:'18px',fontWeight:'500',color:'#F43F5E'}}>{moisActuelData.depenses.toFixed(0)} {devise}</div>
+            <div style={{fontSize:'18px',fontWeight:'500',color:'#F43F5E'}}>{conv(moisActuelData.depenses).toFixed(0)} {devise}</div>
           </div>
         </div>
       </div>
@@ -273,19 +289,19 @@ function FinancesContent() {
           if (pct > 100) return (
             <div style={{margin:'8px 14px 0',background:'#FFE4E6',border:'0.5px solid #FECDD3',borderRadius:'10px',padding:'10px 14px',display:'flex',alignItems:'center',gap:'10px'}}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F43F5E" strokeWidth="2" style={{flexShrink:0}}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-              <span style={{fontSize:'12px',color:'#1a1a2e',flex:1}}>Budget depasse de <b style={{color:'#F43F5E'}}>{Math.abs(reste).toFixed(0)} CHF</b> ce mois</span>
+              <span style={{fontSize:'12px',color:'#1a1a2e',flex:1}}>Budget depasse de <b style={{color:'#F43F5E'}}>{conv(Math.abs(reste)).toFixed(0)} {devise}</b> ce mois</span>
             </div>
           )
           if (pct >= 80) return (
             <div style={{margin:'8px 14px 0',background:'#FDF8EC',border:'0.5px solid #F0D88A',borderRadius:'10px',padding:'10px 14px',display:'flex',alignItems:'center',gap:'10px'}}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="2" style={{flexShrink:0}}><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-              <span style={{fontSize:'12px',color:'#1a1a2e',flex:1}}>80% du budget atteint — il te reste <b style={{color:'#D4A843'}}>{reste.toFixed(0)} {devise}</b></span>
+              <span style={{fontSize:'12px',color:'#1a1a2e',flex:1}}>80% du budget atteint — il te reste <b style={{color:'#D4A843'}}>{conv(reste).toFixed(0)} {devise}</b></span>
             </div>
           )
           return (
             <div style={{margin:'8px 14px 0',background:'#E1F5EE',border:'0.5px solid #A7F3D0',borderRadius:'10px',padding:'10px 14px',display:'flex',alignItems:'center',gap:'10px'}}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2" style={{flexShrink:0}}><polyline points="20 6 9 17 4 12"/></svg>
-              <span style={{fontSize:'12px',color:'#1a1a2e',flex:1}}>Bon rythme — tu peux epargner <b style={{color:'#10B981'}}>{reste.toFixed(0)} {devise}</b> ce mois</span>
+              <span style={{fontSize:'12px',color:'#1a1a2e',flex:1}}>Bon rythme — tu peux epargner <b style={{color:'#10B981'}}>{conv(reste).toFixed(0)} {devise}</b> ce mois</span>
             </div>
           )
         })()}
@@ -326,12 +342,12 @@ function FinancesContent() {
                 <div style={{display:'flex',justifyContent:'space-between',marginBottom:'4px'}}>
                   <span style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e'}}>{moisSelectionne.label} {moisSelectionne.annee}</span>
                   <span style={{fontSize:'13px',fontWeight:'500',color: moisSelectionne.revenus - moisSelectionne.depenses >= 0 ? '#10B981' : '#F43F5E'}}>
-                    {moisSelectionne.revenus - moisSelectionne.depenses >= 0 ? '+' : ''}{(moisSelectionne.revenus - moisSelectionne.depenses).toFixed(0)} CHF
+                    {moisSelectionne.revenus - moisSelectionne.depenses >= 0 ? '+' : ''}{conv(moisSelectionne.revenus - moisSelectionne.depenses).toFixed(0)} {devise}
                   </span>
                 </div>
                 <div style={{display:'flex',gap:'12px'}}>
-                  <span style={{fontSize:'12px',color:'#F43F5E'}}>Dép. {moisSelectionne.depenses.toFixed(0)} {devise}</span>
-                  <span style={{fontSize:'12px',color:'#4ade80'}}>Rev. {moisSelectionne.revenus.toFixed(0)} {devise}</span>
+                  <span style={{fontSize:'12px',color:'#F43F5E'}}>Dép. {conv(moisSelectionne.depenses).toFixed(0)} {devise}</span>
+                  <span style={{fontSize:'12px',color:'#4ade80'}}>Rev. {conv(moisSelectionne.revenus).toFixed(0)} {devise}</span>
                 </div>
                 <button onClick={() => setMoisSelectionne(null)} style={{fontSize:'11px',color:'#aaa',background:'none',border:'none',cursor:'pointer',marginTop:'4px'}}>× Fermer</button>
               </div>
@@ -342,12 +358,12 @@ function FinancesContent() {
             <div style={{flex:1,background:'#E1F5EE',borderRadius:'14px',padding:'12px',border:'0.5px solid #A7F3D0'}}>
               <div style={{fontSize:'10px',color:'#10B981',fontWeight:'500',marginBottom:'4px'}}>Revenus · mois min</div>
               <div style={{fontSize:'15px',fontWeight:'500',color:'#1a1a2e'}}>{moisMinDep?.label || '-'}</div>
-              <div style={{fontSize:'12px',color:'#10B981'}}>{moisMinDep?.depenses.toFixed(0) || 0} CHF</div>
+              <div style={{fontSize:'12px',color:'#10B981'}}>{conv(moisMinDep?.depenses || 0).toFixed(0)} {devise}</div>
             </div>
             <div style={{flex:1,background:'#FFE4E6',borderRadius:'14px',padding:'12px',border:'0.5px solid #FECDD3'}}>
               <div style={{fontSize:'10px',color:'#F43F5E',fontWeight:'500',marginBottom:'4px'}}>Dépenses · mois max</div>
               <div style={{fontSize:'15px',fontWeight:'500',color:'#1a1a2e'}}>{moisMaxDep.label}</div>
-              <div style={{fontSize:'12px',color:'#F43F5E'}}>{moisMaxDep.depenses.toFixed(0)} {devise}</div>
+              <div style={{fontSize:'12px',color:'#F43F5E'}}>{conv(moisMaxDep.depenses).toFixed(0)} {devise}</div>
             </div>
           </div>
 
@@ -358,7 +374,7 @@ function FinancesContent() {
                 <div key={i} style={{marginBottom:'8px'}}>
                   <div style={{display:'flex',justifyContent:'space-between',marginBottom:'3px'}}>
                     <span style={{fontSize:'12px',color:'#666'}}>{c.cat}</span>
-                    <span style={{fontSize:'12px',fontWeight:'500',color:'#1a1a2e'}}>{c.total.toFixed(0)} CHF · {totalDep > 0 ? ((c.total/totalDep)*100).toFixed(0) : 0}%</span>
+                    <span style={{fontSize:'12px',fontWeight:'500',color:'#1a1a2e'}}>{conv(c.total).toFixed(0)} {devise} · {totalDep > 0 ? ((c.total/totalDep)*100).toFixed(0) : 0}%</span>
                   </div>
                   <div style={{height:'6px',background:'#F0F8FF',borderRadius:'99px',overflow:'hidden'}}>
                     <div style={{height:'100%',width:`${totalDep > 0 ? (c.total/totalDep)*100 : 0}%`,background:'linear-gradient(90deg,#F43F5E,#F59E0B)',borderRadius:'99px'}}></div>
@@ -482,17 +498,17 @@ function FinancesContent() {
             <div style={{background:'#EEF5FF',borderRadius:'14px',padding:'14px',marginTop:'8px'}}>
               <div style={{display:'flex',justifyContent:'space-between',marginBottom:'6px'}}>
                 <span style={{fontSize:'13px',color:'#10B981',fontWeight:'500'}}>Revenus fixes</span>
-                <span style={{fontSize:'14px',fontWeight:'500',color:'#10B981'}}>+{revenus.filter(r=>r.recurrent).reduce((s,r)=>s+parseFloat(r.montant),0).toFixed(0)} {devise}</span>
+                <span style={{fontSize:'14px',fontWeight:'500',color:'#10B981'}}>+{conv(revenus.filter(r=>r.recurrent).reduce((s,r)=>s+parseFloat(r.montant),0)).toFixed(0)} {devise}</span>
               </div>
               <div style={{display:'flex',justifyContent:'space-between',marginBottom:'6px'}}>
                 <span style={{fontSize:'13px',color:'#F43F5E',fontWeight:'500'}}>Charges fixes</span>
-                <span style={{fontSize:'14px',fontWeight:'500',color:'#F43F5E'}}>-{depenses.filter(d=>d.recurrent).reduce((s,d)=>s+parseFloat(d.montant),0).toFixed(0)} {devise}</span>
+                <span style={{fontSize:'14px',fontWeight:'500',color:'#F43F5E'}}>-{conv(depenses.filter(d=>d.recurrent).reduce((s,d)=>s+parseFloat(d.montant),0)).toFixed(0)} {devise}</span>
               </div>
               <div style={{height:'0.5px',background:'#DCE9FF',margin:'8px 0'}}></div>
               <div style={{display:'flex',justifyContent:'space-between'}}>
                 <span style={{fontSize:'13px',fontWeight:'500',color:'#2B7FFF'}}>Reste après charges</span>
                 <span style={{fontSize:'15px',fontWeight:'500',color:(revenus.filter(r=>r.recurrent).reduce((s,r)=>s+parseFloat(r.montant),0)-depenses.filter(d=>d.recurrent).reduce((s,d)=>s+parseFloat(d.montant),0))>=0?'#10B981':'#F43F5E'}}>
-                  {(revenus.filter(r=>r.recurrent).reduce((s,r)=>s+parseFloat(r.montant),0)-depenses.filter(d=>d.recurrent).reduce((s,d)=>s+parseFloat(d.montant),0)).toFixed(0)} CHF
+                  {conv(revenus.filter(r=>r.recurrent).reduce((s,r)=>s+parseFloat(r.montant),0)-depenses.filter(d=>d.recurrent).reduce((s,d)=>s+parseFloat(d.montant),0)).toFixed(0)} {devise}
                 </span>
               </div>
             </div>
@@ -532,7 +548,7 @@ function FinancesContent() {
             return (
               <div style={{marginBottom:'14px'}}>
                 <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',marginBottom:'12px'}}>
-                  Pour atteindre {cible.toFixed(0)} CHF :
+                  Pour atteindre {conv(cible).toFixed(0)} {devise} :
                 </div>
 
                 <div style={{background:'linear-gradient(135deg,#1a3a6e,#2B7FFF)',borderRadius:'16px',padding:'16px',marginBottom:'12px'}}>
@@ -592,10 +608,10 @@ function FinancesContent() {
                         </span>
                       </div>
                       <div style={{fontSize:'22px',fontWeight:'500',color:s.couleur,marginBottom:'4px'}}>
-                        {parMois.toFixed(0)} CHF / mois
+                        {conv(parMois).toFixed(0)} {devise} / mois
                       </div>
                       <div style={{fontSize:'12px',color:'#aaa',marginBottom:'10px'}}>
-                        soit {(parMois * 7 / 30).toFixed(0)} CHF / semaine
+                        soit {conv(parMois * 7 / 30).toFixed(0)} {devise} / semaine
                       </div>
                       <div style={{display:'flex',alignItems:'flex-end',gap:'2px',height:'60px',marginBottom:'6px'}}>
                         {Array.from({length: Math.min(s.mois, 12)}, (_, j) => {
@@ -611,7 +627,7 @@ function FinancesContent() {
                       </div>
                       <div style={{display:'flex',justifyContent:'space-between'}}>
                         <span style={{fontSize:'10px',color:'#aaa'}}>0 {devise}</span>
-                        <span style={{fontSize:'10px',color:s.couleur,fontWeight:'500'}}>{cible.toFixed(0)} {devise}</span>
+                        <span style={{fontSize:'10px',color:s.couleur,fontWeight:'500'}}>{conv(cible).toFixed(0)} {devise}</span>
                       </div>
                     </div>
                   )
