@@ -38,7 +38,9 @@ const FORMES: number[][][] = [
 function normaliser(forme: number[][]) {
   const minR = Math.min(...forme.map(c => c[0]))
   const minC = Math.min(...forme.map(c => c[1]))
-  return forme.map(([r,c]) => [r-minR, c-minC])
+  const decalee = forme.map(([r,c]) => [r-minR, c-minC])
+  // Trie pour que le premier element soit le bloc reel le plus haut/gauche (jamais une case vide)
+  return decalee.sort((a,b) => a[0]-b[0] || a[1]-b[1])
 }
 
 function formeAleatoire() {
@@ -87,10 +89,14 @@ export default function BlockBlast() {
     return !restantes.some(p => pieceJouablePartOuQueCeSoit(p.forme, b))
   }
 
-  function placer(r: number, c: number) {
+  function placer(rClic: number, cClic: number) {
     if (selection === null || gameOver) return
     const piece = pieces[selection]
-    if (!piece || !peutPlacer(piece.forme, board, r, c)) {
+    if (!piece) return
+    const [ancreR, ancreC] = piece.forme[0]
+    const r = rClic - ancreR
+    const c = cClic - ancreC
+    if (!peutPlacer(piece.forme, board, r, c)) {
       setSecousse(true)
       setTimeout(() => setSecousse(false), 300)
       return
@@ -174,8 +180,14 @@ export default function BlockBlast() {
         animation: secousse ? 'shake 0.3s' : 'none'
       }}>
         {board.map((row, r) => row.map((cell, c) => {
-          const estSurvole = pieceSelectionnee && survole && peutPlacer(pieceSelectionnee.forme, board, survole.r, survole.c) &&
-            pieceSelectionnee.forme.some(([dr,dc]: number[]) => survole.r+dr===r && survole.c+dc===c)
+          let estSurvole = false
+          if (pieceSelectionnee && survole) {
+            const [ancreR, ancreC] = pieceSelectionnee.forme[0]
+            const baseR = survole.r - ancreR
+            const baseC = survole.c - ancreC
+            estSurvole = peutPlacer(pieceSelectionnee.forme, board, baseR, baseC) &&
+              pieceSelectionnee.forme.some(([dr,dc]: number[]) => baseR+dr===r && baseC+dc===c)
+          }
           return (
             <div key={r+'-'+c}
               onClick={() => selection !== null && placer(r, c)}
