@@ -9,6 +9,9 @@ const JEUX = [
   { id: 'memory', nom: 'Memory', desc: 'Retrouve toutes les paires', couleur: '#8B5CF6', icone: 'cards' },
   { id: 'puissance4', nom: 'Puissance 4', desc: 'Défie un membre d\'un groupe', couleur: '#F43F5E', icone: 'connect4' },
   { id: 'quiz', nom: 'Quiz', desc: 'Crée ou joue un quiz de groupe', couleur: '#D4A843', icone: 'quiz' },
+  { id: 'stacktower', nom: 'Stack Tower', desc: 'Empile les blocs sans déborder', couleur: '#EC4899', icone: 'stack' },
+  { id: 'reflexes', nom: 'Réflexes', desc: 'Teste ton temps de réaction', couleur: '#10B981', icone: 'bolt' },
+  { id: 'cassebriques', nom: 'Casse-briques', desc: 'Détruis toutes les briques', couleur: '#2B7FFF', icone: 'breakout' },
 ]
 
 function Icone({ type, couleur }: { type: string, couleur: string }) {
@@ -18,6 +21,9 @@ function Icone({ type, couleur }: { type: string, couleur: string }) {
   if (type === 'snake') return <svg {...props}><path d="M4 6c0-1.5 1.5-2 3-2s3 .5 3 2-1.5 2-3 2H5c-1.5 0-3 .5-3 2s1.5 2 3 2h9c1.5 0 3 .5 3 2s-1.5 2-3 2h-2"/><circle cx="19" cy="16" r="1"/></svg>
   if (type === 'connect4') return <svg {...props}><rect x="2" y="4" width="20" height="16" rx="2"/><circle cx="7" cy="9" r="1.6" fill={couleur}/><circle cx="12" cy="9" r="1.6" fill={couleur}/><circle cx="17" cy="9" r="1.6" fill={couleur}/><circle cx="7" cy="15" r="1.6" fill={couleur}/><circle cx="12" cy="15" r="1.6" fill={couleur}/></svg>
   if (type === 'quiz') return <svg {...props}><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+  if (type === 'stack') return <svg {...props}><rect x="4" y="4" width="16" height="4" rx="1"/><rect x="7" y="10" width="10" height="4" rx="1"/><rect x="5" y="16" width="14" height="4" rx="1"/></svg>
+  if (type === 'bolt') return <svg {...props}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+  if (type === 'breakout') return <svg {...props}><rect x="3" y="4" width="5" height="3"/><rect x="9" y="4" width="5" height="3"/><rect x="15" y="4" width="5" height="3"/><rect x="6" y="9" width="5" height="3"/><rect x="12" y="9" width="5" height="3"/><circle cx="12" cy="15" r="1.5" fill={couleur}/><rect x="8" y="20" width="8" height="2" rx="1"/></svg>
   return <svg {...props}><rect x="2" y="7" width="8" height="12" rx="1.5"/><rect x="14" y="7" width="8" height="12" rx="1.5"/><path d="M6 7V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2"/></svg>
 }
 
@@ -31,6 +37,10 @@ export default function JeuxHub() {
     m['2048'] = parseInt(localStorage.getItem('jeu2048_meilleur') || '0')
     m.snake = parseInt(localStorage.getItem('snake_meilleur') || '0')
     m.memory = parseInt(localStorage.getItem('memory_meilleur_facile') || '0')
+    m.stacktower = parseInt(localStorage.getItem('stacktower_meilleur') || '0')
+    m.cassebriques = parseInt(localStorage.getItem('cassebriques_meilleur') || '0')
+    const r = localStorage.getItem('reflexes_meilleur')
+    m.reflexes = r ? parseInt(r) : 0
     setMeilleurs(m)
   }, [])
 
