@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 const GAME_W = 300
+const BASE_W = 165
 const BLOC_H = 34
 const HAUTEUR_VISIBLE = 480
 const COULEURS = ['#2B7FFF','#10B981','#D4A843','#F97316','#8B5CF6','#EC4899','#F43F5E','#06B6D4','#A855F7']
@@ -13,8 +14,8 @@ function vibrer(pattern: number | number[]) {
 
 export default function StackTower() {
   const router = useRouter()
-  const [blocs, setBlocs] = useState<{x:number,w:number,couleur:string}[]>([{ x: 0, w: GAME_W, couleur: COULEURS[0] }])
-  const [courant, setCourant] = useState({ x: 0, w: GAME_W })
+  const [blocs, setBlocs] = useState<{x:number,w:number,couleur:string}[]>([{ x: (GAME_W-BASE_W)/2, w: BASE_W, couleur: COULEURS[0] }])
+  const [courant, setCourant] = useState({ x: 0, w: BASE_W })
   const [score, setScore] = useState(0)
   const [meilleur, setMeilleur] = useState(0)
   const [gameOver, setGameOver] = useState(false)
@@ -114,8 +115,8 @@ export default function StackTower() {
   }
 
   function recommencer() {
-    setBlocs([{ x: 0, w: GAME_W, couleur: COULEURS[0] }])
-    setCourant({ x: 0, w: GAME_W })
+    setBlocs([{ x: (GAME_W-BASE_W)/2, w: BASE_W, couleur: COULEURS[0] }])
+    setCourant({ x: 0, w: BASE_W })
     setScore(0)
     setStreak(0)
     setChutes([])
