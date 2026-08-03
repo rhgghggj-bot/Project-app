@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 const GAME_W = 300
 const BLOC_H = 34
 const HAUTEUR_VISIBLE = 480
-const COULEURS = ['#2B7FFF','#10B981','#D4A843','#F97316','#8B5CF6','#EC4899','#F43F5E']
+const COULEURS = ['#2B7FFF','#10B981','#D4A843','#F97316','#8B5CF6','#EC4899','#F43F5E','#06B6D4','#A855F7']
 
 function vibrer(pattern: number | number[]) {
   if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(pattern)
@@ -19,6 +19,9 @@ export default function StackTower() {
   const [meilleur, setMeilleur] = useState(0)
   const [gameOver, setGameOver] = useState(false)
   const [parfait, setParfait] = useState(false)
+  const [streak, setStreak] = useState(0)
+  const [meilleurStreak, setMeilleurStreak] = useState(0)
+  const [chutes, setChutes] = useState<{id:string,x:number,w:number,bottom:number,tombe:boolean}[]>([])
   const directionRef = useRef(1)
   const vitesseRef = useRef(1.6)
   const xRef = useRef(0)
@@ -29,6 +32,8 @@ export default function StackTower() {
   useEffect(() => {
     const m = localStorage.getItem('stacktower_meilleur')
     if (m) setMeilleur(parseInt(m))
+    const ms = localStorage.getItem('stacktower_streak')
+    if (ms) setMeilleurStreak(parseInt(ms))
   }, [])
 
   useEffect(() => { blocsRef.current = blocs }, [blocs])
@@ -49,6 +54,16 @@ export default function StackTower() {
     return () => cancelAnimationFrame(rafRef.current)
   }, [gameOver, blocs.length])
 
+  function ajouterChute(x: number, w: number, bottom: number) {
+    if (w <= 0.5) return
+    const id = Math.random().toString(36).slice(2)
+    setChutes(c => [...c, { id, x, w, bottom, tombe: false }])
+    requestAnimationFrame(() => {
+      setTimeout(() => setChutes(c => c.map(ch => ch.id === id ? { ...ch, tombe: true } : ch)), 20)
+    })
+    setTimeout(() => setChutes(c => c.filter(ch => ch.id !== id)), 650)
+  }
+
   function poser() {
     if (gameOver) { recommencer(); return }
     const dernier = blocsRef.current[blocsRef.current.length - 1]
@@ -56,34 +71,45 @@ export default function StackTower() {
     const gauche = Math.max(c.x, dernier.x)
     const droite = Math.min(c.x + c.w, dernier.x + dernier.w)
     const largeur = droite - gauche
+    const niveauBottom = blocsRef.current.length * BLOC_H
 
     if (largeur <= 4) {
       setGameOver(true)
       vibrer([50,30,50,30,80])
       if (score > meilleur) { setMeilleur(score); localStorage.setItem('stacktower_meilleur', String(score)) }
+      if (streak > meilleurStreak) { setMeilleurStreak(streak); localStorage.setItem('stacktower_streak', String(streak)) }
       return
     }
 
     const diff = Math.abs(c.x - dernier.x)
-    let nouveauBloc
+    let nouveauBloc, gainPoints, nouveauStreak
+
     if (diff < 5) {
       nouveauBloc = { x: dernier.x, w: dernier.w, couleur: COULEURS[blocsRef.current.length % COULEURS.length] }
+      nouveauStreak = streak + 1
+      gainPoints = 2 + nouveauStreak
       setParfait(true)
       setTimeout(() => setParfait(false), 500)
-      vibrer([10,15,10,15,10])
-      setScore(s => s + 2)
+      vibrer(nouveauStreak >= 3 ? [10,15,10,15,10,15,10] : [10,15,10,15,10])
     } else {
       nouveauBloc = { x: gauche, w: largeur, couleur: COULEURS[blocsRef.current.length % COULEURS.length] }
+      nouveauStreak = 0
+      gainPoints = 1
       vibrer(10)
-      setScore(s => s + 1)
+      if (c.x < gauche) ajouterChute(c.x, gauche - c.x, niveauBottom)
+      if (c.x + c.w > droite) ajouterChute(droite, (c.x + c.w) - droite, niveauBottom)
     }
+
+    setStreak(nouveauStreak)
+    if (nouveauStreak > meilleurStreak) { setMeilleurStreak(nouveauStreak); localStorage.setItem('stacktower_streak', String(nouveauStreak)) }
 
     setBlocs(prev => [...prev, nouveauBloc])
     xRef.current = nouveauBloc.x === 0 ? nouveauBloc.w >= GAME_W - nouveauBloc.w ? 0 : GAME_W - nouveauBloc.w : 0
     directionRef.current = Math.random() > 0.5 ? 1 : -1
-    vitesseRef.current = Math.min(vitesseRef.current + 0.08, 5)
+    vitesseRef.current = Math.min(vitesseRef.current + 0.09, 5.5)
 
-    const s = score + (diff < 5 ? 2 : 1)
+    const s = score + gainPoints
+    setScore(s)
     if (s > meilleur) { setMeilleur(s); localStorage.setItem('stacktower_meilleur', String(s)) }
   }
 
@@ -91,6 +117,8 @@ export default function StackTower() {
     setBlocs([{ x: 0, w: GAME_W, couleur: COULEURS[0] }])
     setCourant({ x: 0, w: GAME_W })
     setScore(0)
+    setStreak(0)
+    setChutes([])
     setGameOver(false)
     directionRef.current = 1
     vitesseRef.current = 1.6
@@ -108,21 +136,25 @@ export default function StackTower() {
         <div style={{width:'32px'}}></div>
       </div>
 
-      <div style={{display:'flex',gap:'10px',width:'100%',maxWidth:GAME_W+40,marginBottom:'14px'}}>
+      <div style={{display:'flex',gap:'8px',width:'100%',maxWidth:GAME_W+40,marginBottom:'14px'}}>
         <div style={{flex:1,background:'rgba(255,255,255,0.08)',borderRadius:'14px',padding:'10px',textAlign:'center'}}>
           <div style={{fontSize:'10px',color:'rgba(255,255,255,0.5)',textTransform:'uppercase',letterSpacing:'.05em'}}>Score</div>
-          <div style={{fontSize:'20px',fontWeight:'600',color:'#fff'}}>{score}</div>
+          <div style={{fontSize:'18px',fontWeight:'600',color:'#fff'}}>{score}</div>
+        </div>
+        <div style={{flex:1,background: streak >= 2 ? 'rgba(212,168,67,0.25)' : 'rgba(255,255,255,0.08)',border: streak >= 2 ? '0.5px solid rgba(212,168,67,0.5)' : 'none',borderRadius:'14px',padding:'10px',textAlign:'center'}}>
+          <div style={{fontSize:'10px',color: streak >= 2 ? '#D4A843' : 'rgba(255,255,255,0.5)',textTransform:'uppercase',letterSpacing:'.05em'}}>Combo</div>
+          <div style={{fontSize:'18px',fontWeight:'600',color: streak >= 2 ? '#D4A843' : '#fff'}}>{streak > 0 ? 'x'+streak : '-'}</div>
         </div>
         <div style={{flex:1,background:'rgba(212,168,67,0.15)',border:'0.5px solid rgba(212,168,67,0.3)',borderRadius:'14px',padding:'10px',textAlign:'center'}}>
-          <div style={{fontSize:'10px',color:'#D4A843',textTransform:'uppercase',letterSpacing:'.05em'}}>Meilleur</div>
-          <div style={{fontSize:'20px',fontWeight:'600',color:'#D4A843'}}>{meilleur}</div>
+          <div style={{fontSize:'10px',color:'#D4A843',textTransform:'uppercase',letterSpacing:'.05em'}}>Record</div>
+          <div style={{fontSize:'18px',fontWeight:'600',color:'#D4A843'}}>{meilleur}</div>
         </div>
       </div>
 
       <div onClick={poser} style={{position:'relative',width:GAME_W,height:HAUTEUR_VISIBLE,background:'rgba(255,255,255,0.05)',borderRadius:'16px',overflow:'hidden',cursor:'pointer'}}>
         {parfait && (
           <div style={{position:'absolute',top:'30%',left:'50%',transform:'translate(-50%,-50%)',zIndex:10,background:'linear-gradient(135deg,#D4A843,#F97316)',color:'#fff',padding:'8px 20px',borderRadius:'99px',fontSize:'15px',fontWeight:'700',boxShadow:'0 8px 20px rgba(212,168,67,0.5)'}}>
-            PARFAIT !
+            {streak >= 3 ? 'PARFAIT x'+streak+' !' : 'PARFAIT !'}
           </div>
         )}
         <div style={{position:'absolute',bottom: -decalage,left:0,width:'100%',transition:'bottom 0.25s ease'}}>
@@ -130,6 +162,15 @@ export default function StackTower() {
             <div key={i} style={{
               position:'absolute', bottom: i * BLOC_H, left: b.x, width: b.w, height: BLOC_H - 3,
               background: b.couleur, borderRadius:'4px', boxShadow:'0 2px 4px rgba(0,0,0,0.25)'
+            }}></div>
+          ))}
+          {chutes.map(ch => (
+            <div key={ch.id} style={{
+              position:'absolute', bottom: ch.tombe ? ch.bottom - 120 : ch.bottom, left: ch.x, width: ch.w, height: BLOC_H - 3,
+              background: 'rgba(244,63,94,0.85)', borderRadius:'4px',
+              opacity: ch.tombe ? 0 : 1,
+              transform: ch.tombe ? 'rotate(15deg)' : 'rotate(0deg)',
+              transition: 'bottom 0.6s ease-in, opacity 0.6s ease-in, transform 0.6s ease-in'
             }}></div>
           ))}
           {!gameOver && (
@@ -152,6 +193,7 @@ export default function StackTower() {
             <div style={{fontSize:'40px',marginBottom:'8px'}}>🗼</div>
             <div style={{fontSize:'18px',fontWeight:'600',color:'#1a1a2e',marginBottom:'4px'}}>Tour effondrée !</div>
             <div style={{fontSize:'32px',fontWeight:'700',color:'#2B7FFF',marginBottom:'4px'}}>{score}</div>
+            <div style={{fontSize:'12px',color:'#aaa',marginBottom:'8px'}}>Meilleur combo : x{meilleurStreak}</div>
             {score >= meilleur && score > 0 && <div style={{fontSize:'12px',color:'#D4A843',fontWeight:'500',marginBottom:'16px'}}>🏆 Nouveau record !</div>}
             <button onClick={recommencer} style={{width:'100%',background:'#2B7FFF',color:'#fff',border:'none',borderRadius:'12px',padding:'14px',fontSize:'14px',fontWeight:'500',cursor:'pointer'}}>Rejouer</button>
           </div>

@@ -39,7 +39,7 @@ export default function JeuxHub() {
     m.memory = parseInt(localStorage.getItem('memory_meilleur_facile') || '0')
     m.stacktower = parseInt(localStorage.getItem('stacktower_meilleur') || '0')
     m.cassebriques = parseInt(localStorage.getItem('cassebriques_meilleur') || '0')
-    const r = localStorage.getItem('reflexes_meilleur')
+    const r = localStorage.getItem('reflexes_meilleur_score')
     m.reflexes = r ? parseInt(r) : 0
     setMeilleurs(m)
   }, [])
