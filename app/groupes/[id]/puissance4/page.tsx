@@ -63,7 +63,7 @@ export default function Puissance4() {
   }, [])
 
   async function nouvellePartie(adversaireId: string) {
-    const { data } = await supabase.from('jeux_groupe').insert({
+    const { data, error } = await supabase.from('jeux_groupe').insert({
       groupe_id: params.id,
       type: 'puissance4',
       etat: { grille: vide },
@@ -71,6 +71,10 @@ export default function Puissance4() {
       joueur2_id: adversaireId,
       tour: user.id
     }).select().single()
+    if (error) {
+      alert('Erreur en créant la partie : ' + error.message)
+      return
+    }
     setPartie(data)
   }
 
@@ -86,12 +90,17 @@ export default function Puissance4() {
     grille[row][col] = joueurNum
     const gagnant = verifierGagnant(grille)
     const prochainTour = partie.tour === partie.joueur1_id ? partie.joueur2_id : partie.joueur1_id
-    await supabase.from('jeux_groupe').update({
+    const { error, data } = await supabase.from('jeux_groupe').update({
       etat: { grille },
       tour: gagnant ? partie.tour : prochainTour,
       gagnant: gagnant ? partie.tour : null,
       updated_at: new Date().toISOString()
-    }).eq('id', partie.id)
+    }).eq('id', partie.id).select().single()
+    if (error) {
+      alert('Erreur en jouant le coup : ' + error.message)
+      return
+    }
+    if (data) setPartie(data)
   }
 
   async function abandonner() {
