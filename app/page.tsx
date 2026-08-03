@@ -219,6 +219,19 @@ export default function Home() {
               <div style={{marginLeft:'auto',color:'rgba(255,255,255,0.5)',fontSize:'18px'}}>›</div>
             </div>
           </a>
+
+          <a href="/jeux" style={{textDecoration:'none',display:'block',marginTop:'10px'}}>
+            <div style={{background:'linear-gradient(135deg,rgba(212,168,67,0.25),rgba(249,115,22,0.2))',borderRadius:'14px',padding:'12px',display:'flex',alignItems:'center',gap:'12px',border:'1px solid rgba(212,168,67,0.3)'}}>
+              <div style={{width:'38px',height:'38px',borderRadius:'10px',background:'rgba(255,255,255,0.12)',border:'1px solid rgba(255,255,255,0.2)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F97316" strokeWidth="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+              </div>
+              <div>
+                <div style={{fontSize:'13px',fontWeight:'500',color:'#fff'}}>Jeux</div>
+                <div style={{fontSize:'11px',color:'rgba(255,255,255,0.6)',marginTop:'2px'}}>Block Blast, 2048, Snake, Memory</div>
+              </div>
+              <div style={{marginLeft:'auto',color:'rgba(255,255,255,0.5)',fontSize:'18px'}}>›</div>
+            </div>
+          </a>
         </div>
       )}
 
