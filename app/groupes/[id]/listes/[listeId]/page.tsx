@@ -53,7 +53,8 @@ export default function ListeDetailPage() {
   async function ajouterArticle() {
     if (!nom.trim()) return
     const { data: { user } } = await supabase.auth.getUser()
-    await supabase.from("liste_articles").insert({ liste_id: listeId, nom, quantite, unite, categorie, prix: parseFloat(String(prix).replace(",",".")) || 0, modifie_par: user?.id })
+    const statut = modeShopping ? "a_acheter" : "possede"
+    await supabase.from("liste_articles").insert({ liste_id: listeId, nom, quantite, unite, categorie, prix: parseFloat(String(prix).replace(",",".")) || 0, modifie_par: user?.id, statut })
     setNom(""); setQuantite(1); setPrix(""); setShowForm(false); charger()
   }
 
@@ -129,20 +130,15 @@ export default function ListeDetailPage() {
     if (w) { w.document.write(html); w.document.close(); setTimeout(() => w.print(), 500) }
   }
 
-  async function cocherShopping(art: any) {
+  async function marquerAchete(art: any) {
+    // Passage definitif de "a acheter" vers "possede" : ne revient plus tout seul dans la liste shopping
     const { data: { user: u } } = await supabase.auth.getUser()
-    const newCoche = !art.coche_shopping
-    await supabase.from('liste_articles').update({ 
-      coche_shopping: newCoche,
+    await supabase.from('liste_articles').update({
+      statut: 'possede',
       modifie_par: u?.id,
       updated_at: new Date().toISOString()
     }).eq('id', art.id)
-    setArticles(articles.map(a => a.id === art.id ? { ...a, coche_shopping: newCoche } : a))
-  }
-  
-  async function toggleAchete(art: any) {
-    await supabase.from('liste_articles').update({ achete: !art.achete }).eq('id', art.id)
-    setArticles(articles.map(a => a.id === art.id ? { ...a, achete: !a.achete } : a))
+    setArticles(articles.map(a => a.id === art.id ? { ...a, statut: 'possede' } : a))
   }
 
   async function supprimerArticle(artId: string) {
@@ -154,7 +150,7 @@ export default function ListeDetailPage() {
   const budgetListe = liste?.budget || 0
   const restebudget = budgetListe - totalDepense
   const articlesFiltres = articles.filter(a => filtre === 'Tous' || a.categorie === filtre)
-  const nonAchetes = modeShopping ? articles.filter(a => !a.coche_shopping).length : articles.filter(a => !a.achete).length
+  const nonAchetes = modeShopping ? articles.filter(a => a.statut === 'a_acheter').length : articles.filter(a => (a.statut || 'possede') === 'possede').length
 
   const inp = {width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 12px',fontSize:'16px',color:'#1a1a2e',background:'#fff',marginBottom:'8px',boxSizing:'border-box' as any}
 
@@ -211,6 +207,9 @@ export default function ListeDetailPage() {
         {showForm && (
           <div style={{background:'#EEF5FF',borderRadius:'14px',padding:'14px',marginBottom:'14px',border:'0.5px solid #DCE9FF'}}>
             <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',marginBottom:'10px'}}>Nouvel article</div>
+            <div style={{fontSize:'11px',color: modeShopping ? '#D4A843' : '#2B7FFF',fontWeight:'600',marginBottom:'10px',textTransform:'uppercase',letterSpacing:'.04em'}}>
+              {modeShopping ? 'Ajout dans : À acheter' : 'Ajout dans : Ce que je possède'}
+            </div>
             <input value={nom} onChange={e => setNom(e.target.value)} placeholder="Nom de l'article" style={inp}/>
             <div style={{display:'flex',gap:'8px',marginBottom:'8px'}}>
             <div style={{flex:1}}>
@@ -257,11 +256,11 @@ export default function ListeDetailPage() {
           Ajouter un article
         </button>
 
-        {articlesFiltres.filter(a => modeShopping ? !a.coche_shopping : !a.achete).map(art => (
-          <div key={art.id} style={{background: modeShopping && art.coche_shopping ? '#E1F5EE' : art.quantite <= 1 ? '#FFF8F8' : '#fff', border:`0.5px solid ${modeShopping && art.coche_shopping ? '#A7F3D0' : art.quantite <= 1 ? '#FECDD3' : '#E8F1FF'}`,borderRadius:'14px',padding:'14px',marginBottom:'8px'}}>
+        {articlesFiltres.filter(a => modeShopping ? a.statut === 'a_acheter' : (a.statut || 'possede') === 'possede').map(art => (
+          <div key={art.id} style={{background: art.quantite <= 1 && !modeShopping ? '#FFF8F8' : '#fff', border:`0.5px solid ${art.quantite <= 1 && !modeShopping ? '#FECDD3' : '#E8F1FF'}`,borderRadius:'14px',padding:'14px',marginBottom:'8px'}}>
             <div style={{display:'flex',alignItems:'center',gap:'12px'}}>
               {modeShopping && (
-                <input type="checkbox" checked={art.coche_shopping || false} onChange={() => cocherShopping(art)}
+                <input type="checkbox" checked={false} onChange={() => marquerAchete(art)}
                   style={{width:'20px',height:'20px',flexShrink:0,accentColor:'#10B981',cursor:'pointer'}}/>
               )}
               <div style={{flex:1}}>
@@ -272,7 +271,7 @@ export default function ListeDetailPage() {
                     color: CAT_COLORS[art.categorie]?.color || '#aaa'}}>
                     {art.categorie}
                   </span>
-                  {art.quantite <= 1 && <span style={{fontSize:'10px',padding:'2px 8px',borderRadius:'99px',background:'#FFE4E6',color:'#F43F5E',fontWeight:'500'}}>Stock bas</span>}
+                  {art.quantite <= 1 && !modeShopping && <span style={{fontSize:'10px',padding:'2px 8px',borderRadius:'99px',background:'#FFE4E6',color:'#F43F5E',fontWeight:'500'}}>Stock bas</span>}
                 </div>
                 <div style={{fontSize:'11px',color:'#aaa',display:'flex',gap:'8px',alignItems:'center'}}>
                   {profils[art.modifie_par] ? `Modifie par ${profils[art.modifie_par]}` : 'Ajoute'} · {art.unite}
@@ -298,21 +297,8 @@ export default function ListeDetailPage() {
           </div>
         ))}
 
-        {!modeShopping && articlesFiltres.filter(a => a.achete).length > 0 && (
-          <>
-            <div style={{fontSize:'11px',color:'#aaa',fontWeight:'500',textTransform:'uppercase',letterSpacing:'.05em',margin:'16px 0 8px'}}>Achetes</div>
-            {articlesFiltres.filter(a => a.achete).map(art => (
-              <div key={art.id} style={{background:'#F8FBFF',border:'0.5px solid #E8F1FF',borderRadius:'14px',padding:'14px',marginBottom:'8px',opacity:0.6,display:'flex',alignItems:'center',gap:'12px'}}>
-                <input type="checkbox" checked onChange={() => toggleAchete(art)} style={{width:'18px',height:'18px',accentColor:'#10B981',cursor:'pointer'}}/>
-                <span style={{fontSize:'13px',color:'#aaa',flex:1,textDecoration:'line-through'}}>{art.nom}</span>
-                <span style={{fontSize:'12px',color:'#10B981',fontWeight:'500'}}>OK</span>
-              </div>
-            ))}
-          </>
-        )}
-
-        {articlesFiltres.length === 0 && (
-          <div style={{textAlign:'center',padding:'32px 0',color:'#aaa',fontSize:'13px'}}>Aucun article dans cette categorie</div>
+        {articlesFiltres.filter(a => modeShopping ? a.statut === 'a_acheter' : (a.statut || 'possede') === 'possede').length === 0 && (
+          <div style={{textAlign:'center',padding:'32px 0',color:'#aaa',fontSize:'13px'}}>{modeShopping ? "Rien a acheter pour l'instant" : "Aucun article dans cette categorie"}</div>
         )}
       </div>
     </main>
