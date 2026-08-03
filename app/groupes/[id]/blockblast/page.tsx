@@ -163,6 +163,10 @@ export default function BlockBlast() {
         </div>
       </div>
 
+      <div style={{fontSize:'12px',color:'rgba(255,255,255,0.5)',textAlign:'center',marginBottom:'10px'}}>
+        {selection !== null ? '👆 Touche une case pour poser la pièce' : '👇 Touche une pièce pour la sélectionner'}
+      </div>
+
       <div style={{
         display:'grid',gridTemplateColumns:`repeat(${TAILLE}, 1fr)`,gap:'3px',
         width:'100%',maxWidth:'380px',aspectRatio:'1',background:'rgba(255,255,255,0.06)',
@@ -180,7 +184,8 @@ export default function BlockBlast() {
                 aspectRatio:'1',borderRadius:'5px',
                 background: cell || (estSurvole ? pieceSelectionnee.couleur+'88' : 'rgba(255,255,255,0.06)'),
                 cursor: selection !== null ? 'pointer' : 'default',
-                transition:'background 0.15s'
+                transition:'background 0.15s',
+                touchAction:'manipulation', WebkitTapHighlightColor:'transparent'
               }}>
             </div>
           )
@@ -195,12 +200,13 @@ export default function BlockBlast() {
           const taille = Math.max(maxR, maxC)
           const cellPx = Math.min(22, 84/taille)
           return (
-            <button key={piece.id} onClick={() => setSelection(selection === i ? null : i)}
+            <button key={piece.id} type="button" onClick={() => setSelection(selection === i ? null : i)}
               style={{
                 width:'90px',height:'90px',borderRadius:'14px',border:'none',cursor:'pointer',
                 background: selection === i ? 'rgba(43,127,255,0.25)' : 'rgba(255,255,255,0.06)',
                 display:'flex',alignItems:'center',justifyContent:'center',
-                boxShadow: selection === i ? '0 0 0 2px #2B7FFF' : 'none'
+                boxShadow: selection === i ? '0 0 0 2px #2B7FFF' : 'none',
+                touchAction:'manipulation', WebkitTapHighlightColor:'transparent'
               }}>
               <div style={{position:'relative',width: maxC*cellPx, height: maxR*cellPx}}>
                 {piece.forme.map(([dr,dc]: number[], idx: number) => (
