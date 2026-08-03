@@ -76,6 +76,16 @@ export default function Puissance4() {
       return
     }
     setPartie(data)
+
+    const { data: g } = await supabase.from('groupes').select('nom').eq('id', params.id).single()
+    const nomAffiche = profils[user.id]?.nom || 'Un membre'
+    await supabase.from('notifications').insert({
+      user_id: adversaireId,
+      type: 'puissance4',
+      titre: g?.nom || 'Groupe',
+      contenu: nomAffiche + ' te défie au Puissance 4 !',
+      lien: '/groupes/' + params.id + '/puissance4'
+    })
   }
 
   async function jouer(col: number) {
