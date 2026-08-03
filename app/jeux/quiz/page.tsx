@@ -1,15 +1,16 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 
-const COULEURS = ['#f97316','#1368ce','#26890c','#d89e00']
+const COULEURS = ['#F97316','#2B7FFF','#10B981','#D4A843']
 const FORMES = ['▲','◆','●','■']
 
 export default function QuizPage() {
-  const params = useParams() as { id: string }
   const router = useRouter()
   const [user, setUser] = useState<any>(null)
+  const [groupes, setGroupes] = useState<any[]>([])
+  const [groupeId, setGroupeId] = useState<string|null>(null)
   const [quizList, setQuizList] = useState<any[]>([])
   const [mode, setMode] = useState<'liste'|'creer'|'jouer'|'resultats'>('liste')
   const [quizActif, setQuizActif] = useState<any>(null)
@@ -20,25 +21,37 @@ export default function QuizPage() {
   const [titre, setTitre] = useState('')
   const [questions, setQuestions] = useState([{ question: '', options: ['','','',''], reponse: 0 }])
 
-  const bg = '#46178f'
-  const border = '1px solid rgba(255,255,255,0.2)'
+  const bg = 'linear-gradient(160deg,#0A1628,#1a3a6e)'
+  const border = '1px solid rgba(255,255,255,0.15)'
 
   useEffect(() => {
     async function init() {
       const { data: { user } } = await supabase.auth.getUser()
       setUser(user)
-      const { data } = await supabase.from('quiz').select('*').eq('groupe_id', params.id).order('created_at', { ascending: false })
-      setQuizList(data || [])
+      if (user) {
+        const { data: mb } = await supabase.from('membres_groupe').select('groupe_id').eq('user_id', user.id)
+        const ids = mb?.map((m: any) => m.groupe_id) || []
+        if (ids.length > 0) {
+          const { data: g } = await supabase.from('groupes').select('*').in('id', ids)
+          setGroupes(g || [])
+        }
+      }
     }
     init()
   }, [])
 
+  useEffect(() => {
+    if (!groupeId) return
+    supabase.from('quiz').select('*').eq('groupe_id', groupeId).order('created_at', { ascending: false })
+      .then(({ data }) => setQuizList(data || []))
+  }, [groupeId])
+
   async function sauvegarderQuiz() {
     if (!titre) return
     setLoading(true)
-    const { error } = await supabase.from('quiz').insert({ groupe_id: params.id, createur_id: user.id, titre, questions })
+    const { error } = await supabase.from('quiz').insert({ groupe_id: groupeId, createur_id: user.id, titre, questions })
     if (!error) {
-      const { data } = await supabase.from('quiz').select('*').eq('groupe_id', params.id).order('created_at', { ascending: false })
+      const { data } = await supabase.from('quiz').select('*').eq('groupe_id', groupeId).order('created_at', { ascending: false })
       setQuizList(data || [])
       setMode('liste')
       setTitre('')
@@ -66,6 +79,28 @@ export default function QuizPage() {
 
   const s = { main: { minHeight:'100vh', background: bg, padding:'20px 18px' } as any }
 
+  if (!groupeId) return (
+    <main style={s.main}>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'20px'}}>
+        <button onClick={() => router.push('/jeux')} style={{color:'rgba(255,255,255,0.6)',background:'none',border:'none',fontSize:'20px',cursor:'pointer'}}>←</button>
+        <span style={{color:'#fff',fontWeight:'500',fontSize:'15px'}}>Quiz</span>
+        <div style={{width:'32px'}}></div>
+      </div>
+      <div style={{color:'#fff',fontWeight:'500',fontSize:'15px',marginBottom:'14px',textAlign:'center'}}>Choisis un groupe</div>
+      {groupes.map(g => (
+        <button key={g.id} onClick={() => setGroupeId(g.id)}
+          style={{width:'100%',background:'rgba(255,255,255,0.08)',border:'1px solid rgba(255,255,255,0.15)',borderRadius:'16px',padding:'16px',marginBottom:'10px',display:'flex',alignItems:'center',gap:'12px',cursor:'pointer'}}>
+          <div style={{width:'40px',height:'40px',borderRadius:'50%',background:'linear-gradient(135deg,#2B7FFF,#87CEEB)',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:'500'}}>
+            {g.nom?.[0]?.toUpperCase()}
+          </div>
+          <span style={{color:'#fff',fontSize:'14px',fontWeight:'500'}}>{g.nom}</span>
+          <span style={{marginLeft:'auto',color:'rgba(255,255,255,0.4)',fontSize:'13px'}}>→</span>
+        </button>
+      ))}
+      {groupes.length === 0 && <div style={{textAlign:'center',color:'rgba(255,255,255,0.5)',fontSize:'13px',padding:'40px 0'}}>Rejoins ou crée un groupe pour jouer</div>}
+    </main>
+  )
+
   if (mode === 'jouer' && quizActif) {
     const q = quizActif.questions[questionIndex]
     const pct = (questionIndex / quizActif.questions.length) * 100
@@ -75,10 +110,10 @@ export default function QuizPage() {
           <button onClick={() => setMode('liste')} style={{color:'rgba(255,255,255,0.6)',background:'none',border:'none',fontSize:'20px',cursor:'pointer'}}>←</button>
           <span style={{background:'rgba(255,255,255,0.15)',color:'#fff',fontSize:'12px',padding:'4px 12px',borderRadius:'99px'}}>{questionIndex+1} / {quizActif.questions.length}</span>
         </div>
-        <div style={{background:'rgba(255,255,255,0.15)',borderRadius:'99px',height:'8px',marginBottom:'20px',overflow:'hidden'}}>
-          <div style={{height:'100%',width:pct+'%',background:'linear-gradient(90deg,#7c3aed,#a855f7)',borderRadius:'99px',transition:'width 0.3s'}}></div>
+        <div style={{background:'rgba(255,255,255,0.1)',borderRadius:'99px',height:'8px',marginBottom:'20px',overflow:'hidden'}}>
+          <div style={{height:'100%',width:pct+'%',background:'linear-gradient(90deg,#2B7FFF,#87CEEB)',borderRadius:'99px',transition:'width 0.3s'}}></div>
         </div>
-        <div style={{background:'rgba(255,255,255,0.12)',border,borderRadius:'20px',padding:'24px',marginBottom:'20px',textAlign:'center'}}>
+        <div style={{background:'rgba(255,255,255,0.08)',border,borderRadius:'20px',padding:'24px',marginBottom:'20px',textAlign:'center'}}>
           <div style={{color:'rgba(255,255,255,0.5)',fontSize:'11px',marginBottom:'8px',textTransform:'uppercase',letterSpacing:'0.05em'}}>Question {questionIndex+1}</div>
           <div style={{color:'#fff',fontSize:'18px',fontWeight:'500',lineHeight:'1.4'}}>{q.question}</div>
         </div>
@@ -100,10 +135,11 @@ export default function QuizPage() {
     const pct = Math.round((score! / total) * 100)
     return (
       <main style={{...s.main,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center'}}>
-        <div style={{fontSize:'48px',fontWeight:'500',color:'#fff',marginBottom:'16px'}}>{pct>=80?'Excellent':pct>=60?'Bien':pct>=40?'Pas mal':'Continue'}</div>
+        <div style={{fontSize:'44px',marginBottom:'8px'}}>{pct>=80?'🏆':pct>=60?'🎉':pct>=40?'👍':'💪'}</div>
+        <div style={{fontSize:'22px',fontWeight:'500',color:'#fff',marginBottom:'16px'}}>{pct>=80?'Excellent':pct>=60?'Bien':pct>=40?'Pas mal':'Continue comme ça'}</div>
         <div style={{color:'#fff',fontSize:'28px',fontWeight:'500',marginBottom:'4px'}}>{score}/{total}</div>
-        <div style={{color:'#a855f7',fontSize:'15px',marginBottom:'32px'}}>{pct}% de bonnes reponses</div>
-        <div style={{width:'100%',background:'rgba(255,255,255,0.1)',border,borderRadius:'20px',padding:'20px',marginBottom:'24px'}}>
+        <div style={{color:'#87CEEB',fontSize:'15px',marginBottom:'32px'}}>{pct}% de bonnes reponses</div>
+        <div style={{width:'100%',background:'rgba(255,255,255,0.08)',border,borderRadius:'20px',padding:'20px',marginBottom:'24px'}}>
           {quizActif.questions.map((q: any, i: number) => (
             <div key={i} style={{display:'flex',gap:'10px',marginBottom:'12px',alignItems:'flex-start'}}>
               <span style={{flexShrink:0,color:reponses[i]===q.reponse?'#4ade80':'#F43F5E',fontWeight:'500'}}>{reponses[i]===q.reponse?'✓':'✗'}</span>
@@ -114,7 +150,7 @@ export default function QuizPage() {
             </div>
           ))}
         </div>
-        <button onClick={() => setMode('liste')} style={{background:'#26890c',color:'#fff',border:'none',borderRadius:'14px',padding:'14px 32px',fontSize:'15px',fontWeight:'500',cursor:'pointer'}}>
+        <button onClick={() => setMode('liste')} style={{background:'#2B7FFF',color:'#fff',border:'none',borderRadius:'14px',padding:'14px 32px',fontSize:'15px',fontWeight:'500',cursor:'pointer'}}>
           Retour aux quiz
         </button>
       </main>
@@ -131,8 +167,8 @@ export default function QuizPage() {
         <input value={titre} onChange={e=>setTitre(e.target.value)} placeholder="Titre du quiz"
           style={{width:'100%',background:'rgba(255,255,255,0.1)',border,borderRadius:'12px',padding:'12px 14px',fontSize:'14px',color:'#fff',marginBottom:'14px'}}/>
         {questions.map((q,qi) => (
-          <div key={qi} style={{background:'rgba(255,255,255,0.08)',border,borderRadius:'16px',padding:'14px',marginBottom:'12px'}}>
-            <div style={{color:'#a855f7',fontSize:'12px',fontWeight:'500',marginBottom:'8px'}}>Question {qi+1}</div>
+          <div key={qi} style={{background:'rgba(255,255,255,0.06)',border,borderRadius:'16px',padding:'14px',marginBottom:'12px'}}>
+            <div style={{color:'#87CEEB',fontSize:'12px',fontWeight:'500',marginBottom:'8px'}}>Question {qi+1}</div>
             <input value={q.question} onChange={e=>{const nq=[...questions];nq[qi].question=e.target.value;setQuestions(nq)}}
               placeholder="Question..."
               style={{width:'100%',background:'rgba(255,255,255,0.1)',border,borderRadius:'10px',padding:'8px 12px',fontSize:'13px',color:'#fff',marginBottom:'8px'}}/>
@@ -150,11 +186,11 @@ export default function QuizPage() {
           </div>
         ))}
         <button onClick={()=>setQuestions([...questions,{question:'',options:['','','',''],reponse:0}])}
-          style={{width:'100%',background:'rgba(255,255,255,0.08)',color:'rgba(255,255,255,0.7)',border:'1px dashed rgba(255,255,255,0.3)',borderRadius:'12px',padding:'10px',fontSize:'13px',cursor:'pointer',marginBottom:'12px'}}>
+          style={{width:'100%',background:'rgba(255,255,255,0.06)',color:'rgba(255,255,255,0.7)',border:'1px dashed rgba(255,255,255,0.3)',borderRadius:'12px',padding:'10px',fontSize:'13px',cursor:'pointer',marginBottom:'12px'}}>
           + Ajouter une question
         </button>
         <button onClick={sauvegarderQuiz} disabled={loading}
-          style={{width:'100%',background:'#26890c',color:'#fff',border:'none',borderRadius:'14px',padding:'14px',fontSize:'14px',fontWeight:'500',cursor:'pointer',marginBottom:'24px'}}>
+          style={{width:'100%',background:'#10B981',color:'#fff',border:'none',borderRadius:'14px',padding:'14px',fontSize:'14px',fontWeight:'500',cursor:'pointer',marginBottom:'24px'}}>
           {loading?'Sauvegarde...':'Publier le quiz'}
         </button>
       </main>
@@ -165,10 +201,10 @@ export default function QuizPage() {
     <main style={s.main}>
       <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'20px'}}>
         <div style={{display:'flex',alignItems:'center',gap:'12px'}}>
-          <button onClick={()=>router.back()} style={{color:'rgba(255,255,255,0.6)',background:'none',border:'none',fontSize:'20px',cursor:'pointer'}}>←</button>
+          <button onClick={()=>setGroupeId(null)} style={{color:'rgba(255,255,255,0.6)',background:'none',border:'none',fontSize:'20px',cursor:'pointer'}}>←</button>
           <span style={{color:'#fff',fontWeight:'500',fontSize:'16px'}}>Quiz</span>
         </div>
-        <button onClick={()=>setMode('creer')} style={{background:'rgba(255,255,255,0.15)',border:'1px solid rgba(255,255,255,0.3)',color:'#fff',borderRadius:'99px',padding:'8px 16px',fontSize:'13px',cursor:'pointer',fontWeight:'500'}}>
+        <button onClick={()=>setMode('creer')} style={{background:'rgba(255,255,255,0.12)',border:'1px solid rgba(255,255,255,0.25)',color:'#fff',borderRadius:'99px',padding:'8px 16px',fontSize:'13px',cursor:'pointer',fontWeight:'500'}}>
           + Créer
         </button>
       </div>
@@ -176,24 +212,25 @@ export default function QuizPage() {
         <div style={{textAlign:'center',padding:'48px 0',color:'rgba(255,255,255,0.5)'}}>
           <svg width='48' height='48' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.4)' strokeWidth='1.5' style={{marginBottom:'12px'}}><circle cx='12' cy='12' r='10'/><path d='M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3'/><line x1='12' y1='17' x2='12.01' y2='17'/></svg>
           <div style={{fontSize:'14px',marginBottom:'8px'}}>Aucun quiz pour l'instant</div>
-          <button onClick={()=>setMode('creer')} style={{color:'#a855f7',fontSize:'13px',fontWeight:'500',background:'none',border:'none',cursor:'pointer'}}>
+          <button onClick={()=>setMode('creer')} style={{color:'#87CEEB',fontSize:'13px',fontWeight:'500',background:'none',border:'none',cursor:'pointer'}}>
             Crée le premier quiz →
           </button>
         </div>
       )}
       {quizList.map((quiz:any,idx:number) => (
-        <div key={quiz.id} style={{background:'rgba(255,255,255,0.08)',border,borderRadius:'20px',overflow:'hidden',marginBottom:'12px'}}>
+        <div key={quiz.id} style={{background:'rgba(255,255,255,0.06)',border,borderRadius:'20px',overflow:'hidden',marginBottom:'12px'}}>
           <div style={{padding:'18px'}}>
             <div style={{display:'flex',alignItems:'center',gap:'12px',marginBottom:'14px'}}>
-              <div style={{width:'44px',height:'44px',borderRadius:'12px',background:COULEURS[idx%4],display:'flex',alignItems:'center',justifyContent:'center',fontSize:'22px'}}>
-                              </div>
+              <div style={{width:'44px',height:'44px',borderRadius:'12px',background:COULEURS[idx%4],display:'flex',alignItems:'center',justifyContent:'center',fontSize:'20px',color:'#fff'}}>
+                ?
+              </div>
               <div>
                 <div style={{color:'#fff',fontWeight:'500',fontSize:'14px'}}>{quiz.titre}</div>
                 <div style={{color:'rgba(255,255,255,0.5)',fontSize:'11px',marginTop:'2px'}}>{quiz.questions.length} questions · {new Date(quiz.created_at).toLocaleDateString('fr-FR')}</div>
               </div>
             </div>
             <button onClick={()=>commencerQuiz(quiz)}
-              style={{width:'100%',background:'#26890c',color:'#fff',border:'none',borderRadius:'12px',padding:'12px',fontSize:'14px',fontWeight:'500',cursor:'pointer'}}>
+              style={{width:'100%',background:'#10B981',color:'#fff',border:'none',borderRadius:'12px',padding:'12px',fontSize:'14px',fontWeight:'500',cursor:'pointer'}}>
               🎮 Jouer
             </button>
           </div>

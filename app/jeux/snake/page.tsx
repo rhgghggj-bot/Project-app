@@ -6,6 +6,7 @@ const TAILLE = 15
 const VITESSE_MS = 140
 
 type Pos = { r: number, c: number }
+type Direction = 'haut'|'bas'|'gauche'|'droite'
 
 function vibrer(pattern: number | number[]) {
   if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(pattern)
@@ -23,12 +24,14 @@ export default function Snake() {
   const router = useRouter()
   const [serpent, setSerpent] = useState<Pos[]>([{ r: 7, c: 7 }, { r: 7, c: 6 }, { r: 7, c: 5 }])
   const [nourriture, setNourriture] = useState<Pos>({ r: 10, c: 10 })
+  const [direction, setDirectionAffichee] = useState<Direction>('droite')
   const [score, setScore] = useState(0)
   const [meilleur, setMeilleur] = useState(0)
   const [gameOver, setGameOver] = useState(false)
   const [enPause, setEnPause] = useState(true)
-  const directionRef = useRef<'haut'|'bas'|'gauche'|'droite'>('droite')
-  const prochaineDirectionRef = useRef<'haut'|'bas'|'gauche'|'droite'>('droite')
+  const [pulse, setPulse] = useState(false)
+  const directionRef = useRef<Direction>('droite')
+  const prochaineDirectionRef = useRef<Direction>('droite')
   const serpentRef = useRef(serpent)
   const nourritureRef = useRef(nourriture)
   const touchStart = useRef<{x:number,y:number}|null>(null)
@@ -45,6 +48,7 @@ export default function Snake() {
     if (enPause || gameOver) return
     const interval = setInterval(() => {
       directionRef.current = prochaineDirectionRef.current
+      setDirectionAffichee(directionRef.current)
       const s = serpentRef.current
       const tete = s[0]
       let nouvelleTete: Pos = { ...tete }
@@ -64,6 +68,8 @@ export default function Snake() {
       if (!mange) nouveauSerpent.pop()
       else {
         vibrer([15,20,15])
+        setPulse(true)
+        setTimeout(() => setPulse(false), 200)
         const nf = positionAleatoire(nouveauSerpent)
         setNourriture(nf)
         setScore(sc => {
@@ -77,7 +83,7 @@ export default function Snake() {
     return () => clearInterval(interval)
   }, [enPause, gameOver, meilleur])
 
-  function changerDirection(d: 'haut'|'bas'|'gauche'|'droite') {
+  function changerDirection(d: Direction) {
     const opposes: any = { haut:'bas', bas:'haut', gauche:'droite', droite:'gauche' }
     if (opposes[d] === directionRef.current) return
     prochaineDirectionRef.current = d
@@ -114,12 +120,24 @@ export default function Snake() {
     setScore(0)
     setGameOver(false)
     setEnPause(true)
+    setDirectionAffichee('droite')
     directionRef.current = 'droite'
     prochaineDirectionRef.current = 'droite'
   }
 
+  // Yeux de la tete selon la direction
+  function yeux() {
+    const pos: any = {
+      droite: [{left:'58%',top:'25%'},{left:'58%',top:'58%'}],
+      gauche: [{left:'18%',top:'25%'},{left:'18%',top:'58%'}],
+      haut:   [{left:'25%',top:'18%'},{left:'58%',top:'18%'}],
+      bas:    [{left:'25%',top:'58%'},{left:'58%',top:'58%'}],
+    }
+    return pos[direction]
+  }
+
   return (
-    <main style={{minHeight:'100vh',background:'linear-gradient(160deg,#0A1628,#1a3a6e)',padding:'20px 16px',display:'flex',flexDirection:'column',alignItems:'center'}}>
+    <main style={{minHeight:'100vh',background:'linear-gradient(160deg,#0A1628,#132a1f)',padding:'20px 16px',display:'flex',flexDirection:'column',alignItems:'center'}}>
       <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',width:'100%',maxWidth:'400px',marginBottom:'16px'}}>
         <button onClick={() => router.push('/jeux')} style={{color:'rgba(255,255,255,0.6)',background:'none',border:'none',fontSize:'20px',cursor:'pointer'}}>←</button>
         <span style={{color:'#fff',fontWeight:'500',fontSize:'15px'}}>Snake</span>
@@ -142,20 +160,48 @@ export default function Snake() {
       </div>
 
       <div onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}
-        style={{display:'grid',gridTemplateColumns:`repeat(${TAILLE}, 1fr)`,width:'100%',maxWidth:'340px',aspectRatio:'1',background:'rgba(255,255,255,0.06)',borderRadius:'14px',padding:'6px',marginBottom:'16px',touchAction:'none'}}>
+        style={{position:'relative',display:'grid',gridTemplateColumns:`repeat(${TAILLE}, 1fr)`,width:'100%',maxWidth:'340px',aspectRatio:'1',background:'rgba(255,255,255,0.05)',borderRadius:'14px',padding:'6px',marginBottom:'16px',touchAction:'none'}}>
         {Array.from({length: TAILLE*TAILLE}, (_, i) => {
           const r = Math.floor(i/TAILLE), c = i%TAILLE
-          const estTete = serpent[0].r === r && serpent[0].c === c
-          const estCorps = !estTete && serpent.some(s => s.r === r && s.c === c)
-          const estNourriture = nourriture.r === r && nourriture.c === c
+          const estDamier = (r+c) % 2 === 0
+          return <div key={i} style={{aspectRatio:'1',background: estDamier ? 'rgba(255,255,255,0.025)' : 'transparent'}}></div>
+        })}
+
+        {/* Nourriture */}
+        <div style={{
+          position:'absolute',
+          left: `calc(6px + ${nourriture.c} * (100% - 12px) / ${TAILLE})`,
+          top: `calc(6px + ${nourriture.r} * (100% - 12px) / ${TAILLE})`,
+          width: `calc((100% - 12px) / ${TAILLE})`,
+          height: `calc((100% - 12px) / ${TAILLE})`,
+          display:'flex',alignItems:'center',justifyContent:'center',
+          fontSize:'70%',
+          transform: pulse ? 'scale(1.3)' : 'scale(1)',
+          transition:'transform 0.15s'
+        }}>🍎</div>
+
+        {/* Corps du serpent (segments arrondis) */}
+        {serpent.map((seg, i) => {
+          const estTete = i === 0
+          const t = i / Math.max(serpent.length-1,1)
+          const couleur = estTete ? '#D4A843' : `rgba(16,${Math.round(185-t*60)},${Math.round(129-t*40)},1)`
           return (
             <div key={i} style={{
-              aspectRatio:'1',
-              background: estTete ? '#D4A843' : estCorps ? '#10B981' : estNourriture ? '#F43F5E' : 'transparent',
-              borderRadius: estTete || estCorps ? '4px' : estNourriture ? '50%' : '0',
-              margin: estNourriture ? '2px' : '0.5px',
-              transition:'background 0.1s'
-            }}></div>
+              position:'absolute',
+              left: `calc(5px + ${seg.c} * (100% - 12px) / ${TAILLE})`,
+              top: `calc(5px + ${seg.r} * (100% - 12px) / ${TAILLE})`,
+              width: `calc((100% - 12px) / ${TAILLE} + 2px)`,
+              height: `calc((100% - 12px) / ${TAILLE} + 2px)`,
+              background: couleur,
+              borderRadius: estTete ? '38%' : '32%',
+              boxShadow: estTete ? '0 0 8px rgba(212,168,67,0.6)' : 'none',
+              zIndex: estTete ? 2 : 1,
+              transition:'left 0.1s linear, top 0.1s linear'
+            }}>
+              {estTete && yeux().map((p: any, idx: number) => (
+                <div key={idx} style={{position:'absolute',left:p.left,top:p.top,width:'18%',height:'18%',borderRadius:'50%',background:'#0A1628'}}></div>
+              ))}
+            </div>
           )
         })}
       </div>
@@ -177,9 +223,9 @@ export default function Snake() {
           <div style={{background:'#fff',borderRadius:'20px',padding:'28px',textAlign:'center',maxWidth:'320px',width:'100%'}}>
             <div style={{fontSize:'40px',marginBottom:'8px'}}>🐍</div>
             <div style={{fontSize:'18px',fontWeight:'600',color:'#1a1a2e',marginBottom:'4px'}}>Aïe !</div>
-            <div style={{fontSize:'32px',fontWeight:'700',color:'#2B7FFF',marginBottom:'4px'}}>{score}</div>
+            <div style={{fontSize:'32px',fontWeight:'700',color:'#10B981',marginBottom:'4px'}}>{score}</div>
             {score >= meilleur && score > 0 && <div style={{fontSize:'12px',color:'#D4A843',fontWeight:'500',marginBottom:'16px'}}>🏆 Nouveau record !</div>}
-            <button onClick={recommencer} style={{width:'100%',background:'#2B7FFF',color:'#fff',border:'none',borderRadius:'12px',padding:'14px',fontSize:'14px',fontWeight:'500',cursor:'pointer'}}>Rejouer</button>
+            <button onClick={recommencer} style={{width:'100%',background:'#10B981',color:'#fff',border:'none',borderRadius:'12px',padding:'14px',fontSize:'14px',fontWeight:'500',cursor:'pointer'}}>Rejouer</button>
           </div>
         </div>
       )}

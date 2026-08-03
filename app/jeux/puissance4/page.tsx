@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState, useRef } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 
 const COLS = 7
@@ -22,9 +22,10 @@ function verifierGagnant(grille: number[][]): number {
 }
 
 export default function Puissance4() {
-  const params = useParams() as { id: string }
   const router = useRouter()
   const [user, setUser] = useState<any>(null)
+  const [groupes, setGroupes] = useState<any[]>([])
+  const [groupeId, setGroupeId] = useState<string|null>(null)
   const [profils, setProfils] = useState<any>({})
   const [membres, setMembres] = useState<any[]>([])
   const [partie, setPartie] = useState<any>(null)
@@ -35,7 +36,23 @@ export default function Puissance4() {
     async function init() {
       const { data: { user } } = await supabase.auth.getUser()
       setUser(user)
-      const { data: mb } = await supabase.from('membres_groupe').select('*').eq('groupe_id', params.id)
+      if (user) {
+        const { data: mb } = await supabase.from('membres_groupe').select('groupe_id').eq('user_id', user.id)
+        const ids = mb?.map((m: any) => m.groupe_id) || []
+        if (ids.length > 0) {
+          const { data: g } = await supabase.from('groupes').select('*').in('id', ids)
+          setGroupes(g || [])
+        }
+      }
+      setLoading(false)
+    }
+    init()
+  }, [])
+
+  useEffect(() => {
+    if (!groupeId || !user) return
+    async function chargerGroupe() {
+      const { data: mb } = await supabase.from('membres_groupe').select('*').eq('groupe_id', groupeId)
       setMembres(mb || [])
       if (mb && mb.length > 0) {
         const ids = mb.map((m: any) => m.user_id)
@@ -45,26 +62,24 @@ export default function Puissance4() {
         setProfils(map)
       }
       const { data: p } = await supabase.from('jeux_groupe')
-        .select('*').eq('groupe_id', params.id).eq('type','puissance4')
+        .select('*').eq('groupe_id', groupeId).eq('type','puissance4')
         .is('gagnant', null).order('created_at', { ascending: false }).limit(1)
       if (p && p.length > 0) setPartie(p[0])
-      setLoading(false)
 
       channelRef.current = supabase
-        .channel('puissance4-' + params.id)
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'jeux_groupe', filter: 'groupe_id=eq.' + params.id }, (payload) => {
+        .channel('puissance4-' + groupeId)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'jeux_groupe', filter: 'groupe_id=eq.' + groupeId }, (payload) => {
           setPartie(payload.new)
         })
         .subscribe()
-
-      return () => { if (channelRef.current) supabase.removeChannel(channelRef.current) }
     }
-    init()
-  }, [])
+    chargerGroupe()
+    return () => { if (channelRef.current) supabase.removeChannel(channelRef.current) }
+  }, [groupeId, user])
 
   async function nouvellePartie(adversaireId: string) {
     const { data, error } = await supabase.from('jeux_groupe').insert({
-      groupe_id: params.id,
+      groupe_id: groupeId,
       type: 'puissance4',
       etat: { grille: vide },
       joueur1_id: user.id,
@@ -77,14 +92,14 @@ export default function Puissance4() {
     }
     setPartie(data)
 
-    const { data: g } = await supabase.from('groupes').select('nom').eq('id', params.id).single()
+    const g = groupes.find(g => g.id === groupeId)
     const nomAffiche = profils[user.id]?.nom || 'Un membre'
     await supabase.from('notifications').insert({
       user_id: adversaireId,
       type: 'puissance4',
       titre: g?.nom || 'Groupe',
       contenu: nomAffiche + ' te défie au Puissance 4 !',
-      lien: '/groupes/' + params.id + '/puissance4'
+      lien: '/jeux/puissance4'
     })
   }
 
@@ -124,15 +139,37 @@ export default function Puissance4() {
   const nomJoueur = (id: string) => profils[id]?.nom || 'Joueur'
 
   if (loading) return (
-    <main style={{minHeight:'100vh',background:'linear-gradient(135deg,#1a1a2e,#16213e)',display:'flex',alignItems:'center',justifyContent:'center'}}>
+    <main style={{minHeight:'100vh',background:'linear-gradient(160deg,#0A1628,#1a3a6e)',display:'flex',alignItems:'center',justifyContent:'center'}}>
       <div style={{color:'#fff'}}>Chargement...</div>
     </main>
   )
 
-  return (
-    <main style={{minHeight:'100vh',background:'linear-gradient(135deg,#1a1a2e,#16213e)',padding:'20px 18px'}}>
+  if (!groupeId) return (
+    <main style={{minHeight:'100vh',background:'linear-gradient(160deg,#0A1628,#1a3a6e)',padding:'20px 18px'}}>
       <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'20px'}}>
-        <button onClick={() => router.back()} style={{color:'rgba(255,255,255,0.6)',background:'none',border:'none',fontSize:'20px',cursor:'pointer'}}>←</button>
+        <button onClick={() => router.push('/jeux')} style={{color:'rgba(255,255,255,0.6)',background:'none',border:'none',fontSize:'20px',cursor:'pointer'}}>←</button>
+        <span style={{color:'#fff',fontWeight:'500',fontSize:'15px'}}>Puissance 4</span>
+        <div style={{width:'32px'}}></div>
+      </div>
+      <div style={{color:'#fff',fontWeight:'500',fontSize:'15px',marginBottom:'14px',textAlign:'center'}}>Choisis un groupe</div>
+      {groupes.map(g => (
+        <button key={g.id} onClick={() => setGroupeId(g.id)}
+          style={{width:'100%',background:'rgba(255,255,255,0.08)',border:'1px solid rgba(255,255,255,0.15)',borderRadius:'16px',padding:'16px',marginBottom:'10px',display:'flex',alignItems:'center',gap:'12px',cursor:'pointer'}}>
+          <div style={{width:'40px',height:'40px',borderRadius:'50%',background:'linear-gradient(135deg,#2B7FFF,#87CEEB)',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:'500'}}>
+            {g.nom?.[0]?.toUpperCase()}
+          </div>
+          <span style={{color:'#fff',fontSize:'14px',fontWeight:'500'}}>{g.nom}</span>
+          <span style={{marginLeft:'auto',color:'rgba(255,255,255,0.4)',fontSize:'13px'}}>→</span>
+        </button>
+      ))}
+      {groupes.length === 0 && <div style={{textAlign:'center',color:'rgba(255,255,255,0.5)',fontSize:'13px',padding:'40px 0'}}>Rejoins ou crée un groupe pour jouer</div>}
+    </main>
+  )
+
+  return (
+    <main style={{minHeight:'100vh',background:'linear-gradient(160deg,#0A1628,#1a3a6e)',padding:'20px 18px'}}>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'20px'}}>
+        <button onClick={() => partie ? setGroupeId(null) : router.push('/jeux')} style={{color:'rgba(255,255,255,0.6)',background:'none',border:'none',fontSize:'20px',cursor:'pointer'}}>←</button>
         <span style={{color:'#fff',fontWeight:'500',fontSize:'15px'}}>Puissance 4</span>
         <div style={{width:'32px'}}></div>
       </div>
@@ -161,20 +198,20 @@ export default function Puissance4() {
       {partie && (
         <div>
           <div style={{display:'flex',justifyContent:'center',gap:'12px',marginBottom:'16px'}}>
-            <div style={{background: partie.joueur1_id === user?.id ? 'rgba(255,68,68,0.2)' : 'rgba(255,255,255,0.08)',border:`1px solid ${partie.joueur1_id === user?.id ? 'rgba(255,68,68,0.5)' : 'rgba(255,255,255,0.15)'}`,borderRadius:'12px',padding:'10px 16px',textAlign:'center'}}>
-              <div style={{width:'20px',height:'20px',borderRadius:'50%',background:'#FF4444',marginBottom:'4px'}}></div>
+            <div style={{background: partie.joueur1_id === user?.id ? 'rgba(244,63,94,0.2)' : 'rgba(255,255,255,0.08)',border:`1px solid ${partie.joueur1_id === user?.id ? 'rgba(244,63,94,0.5)' : 'rgba(255,255,255,0.15)'}`,borderRadius:'12px',padding:'10px 16px',textAlign:'center'}}>
+              <div style={{width:'20px',height:'20px',borderRadius:'50%',background:'#F43F5E',margin:'0 auto 4px'}}></div>
               <div style={{color:'#fff',fontSize:'12px',fontWeight:'500'}}>{nomJoueur(partie.joueur1_id)}</div>
             </div>
             <div style={{color:'rgba(255,255,255,0.4)',fontSize:'20px',display:'flex',alignItems:'center'}}>VS</div>
-            <div style={{background: partie.joueur2_id === user?.id ? 'rgba(255,215,0,0.2)' : 'rgba(255,255,255,0.08)',border:`1px solid ${partie.joueur2_id === user?.id ? 'rgba(255,215,0,0.5)' : 'rgba(255,255,255,0.15)'}`,borderRadius:'12px',padding:'10px 16px',textAlign:'center'}}>
-              <div style={{width:'20px',height:'20px',borderRadius:'50%',background:'#FFD700',marginBottom:'4px'}}></div>
+            <div style={{background: partie.joueur2_id === user?.id ? 'rgba(212,168,67,0.2)' : 'rgba(255,255,255,0.08)',border:`1px solid ${partie.joueur2_id === user?.id ? 'rgba(212,168,67,0.5)' : 'rgba(255,255,255,0.15)'}`,borderRadius:'12px',padding:'10px 16px',textAlign:'center'}}>
+              <div style={{width:'20px',height:'20px',borderRadius:'50%',background:'#D4A843',margin:'0 auto 4px'}}></div>
               <div style={{color:'#fff',fontSize:'12px',fontWeight:'500'}}>{nomJoueur(partie.joueur2_id)}</div>
             </div>
           </div>
 
           {gagnantId ? (
             <div style={{background:'rgba(212,168,67,0.2)',border:'1px solid rgba(212,168,67,0.5)',borderRadius:'14px',padding:'14px',textAlign:'center',marginBottom:'16px'}}>
-              <div style={{fontSize:'32px',marginBottom:'8px'}}>{gagnantId === user?.id ? '★' : '—'}</div>
+              <div style={{fontSize:'32px',marginBottom:'8px'}}>{gagnantId === user?.id ? '🏆' : '🙁'}</div>
               <div style={{color:'#D4A843',fontWeight:'500',fontSize:'15px'}}>{gagnantId === user?.id ? 'Tu as gagné !' : nomJoueur(gagnantId) + ' a gagné !'}</div>
               <button onClick={() => setPartie(null)} style={{background:'#2B7FFF',color:'#fff',border:'none',borderRadius:'10px',padding:'8px 20px',fontSize:'13px',cursor:'pointer',marginTop:'12px',fontWeight:'500'}}>
                 Nouvelle partie
@@ -192,7 +229,7 @@ export default function Puissance4() {
             <div style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:'5px'}}>
               {grille.map((row: number[], r: number) =>
                 row.map((cell: number, c: number) => (
-                  <div key={r+'-'+c} style={{aspectRatio:'1',borderRadius:'50%',background: cell===1 ? '#FF4444' : cell===2 ? '#FFD700' : 'rgba(0,0,40,0.6)',boxShadow: cell===1 ? '0 0 8px rgba(255,68,68,0.6)' : cell===2 ? '0 0 8px rgba(255,215,0,0.6)' : 'none',transition:'background 0.2s'}}></div>
+                  <div key={r+'-'+c} style={{aspectRatio:'1',borderRadius:'50%',background: cell===1 ? '#F43F5E' : cell===2 ? '#D4A843' : 'rgba(0,0,40,0.6)',boxShadow: cell===1 ? '0 0 8px rgba(244,63,94,0.6)' : cell===2 ? '0 0 8px rgba(212,168,67,0.6)' : 'none',transition:'background 0.2s'}}></div>
                 ))
               )}
             </div>
