@@ -76,7 +76,7 @@ export default function Semaine() {
   async function ajouterEvt() {
     if (!titre || !selectedDay) return
     const { data: { user: currentUser } } = await supabase.auth.getUser()
-    if (!currentUser) return
+    if (!currentUser) { window.location.href = "/connexion"; return }
     const { error } = await supabase.from("evenements_calendrier").insert({
       user_id: currentUser.id, titre, heure, couleur, duree,
       date: `${selectedDay.getFullYear()}-${String(selectedDay.getMonth()+1).padStart(2,'0')}-${String(selectedDay.getDate()).padStart(2,'0')}`,
@@ -280,13 +280,21 @@ export default function Semaine() {
           const isToday = jour.toDateString() === today.toDateString()
           return (
             <div key={i} style={{marginBottom:'12px'}}>
-              <div style={{fontSize:'12px',fontWeight:'500',color: isToday ? '#2B7FFF' : '#666',marginBottom:'6px'}}>
-                {isToday ? '📍 Aujourd\'hui' : ''} {jour.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})}
+              <div style={{fontSize:'12px',fontWeight:'500',color: isToday ? '#2B7FFF' : '#666',marginBottom:'6px',display:'flex',alignItems:'center',gap:'5px'}}>
+                {isToday && (
+                  <svg width="7" height="7" viewBox="0 0 24 24" fill="#2B7FFF"><circle cx="12" cy="12" r="12"/></svg>
+                )}
+                {isToday ? "Aujourd'hui · " : ''}{jour.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})}
               </div>
               {evts.map((e: any) => (
                 <div key={e.id} style={{background:'#fff',border:`0.5px solid ${e.couleur}44`,borderLeft:`3px solid ${e.couleur}`,borderRadius:'10px',padding:'10px 12px',marginBottom:'6px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
                   <div>
-                    <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e'}}>{e.recurrence_jours?.length > 0 ? '🔁 ' : ''}{e.titre}</div>
+                    <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',display:'flex',alignItems:'center',gap:'5px'}}>
+                      {e.recurrence_jours?.length > 0 && (
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0}}><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+                      )}
+                      {e.titre}
+                    </div>
                     {e.heure && <div style={{fontSize:'11px',color:'#aaa',marginTop:'2px'}}>{e.heure}{e.duree ? ` · ${e.duree >= 60 ? Math.floor(e.duree/60)+'h'+(e.duree%60 ? (e.duree%60)+'min' : '') : e.duree+'min'}` : ''}</div>}
                   </div>
                   <button onClick={() => supprimerEvt(e.id)} style={{background:'none',border:'none',color:'#ddd',cursor:'pointer',fontSize:'18px'}}>×</button>
