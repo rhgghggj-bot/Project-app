@@ -37,9 +37,24 @@ export default function DetailEvenement() {
     if (id) charger()
   }, [id])
 
+  async function geocoder(adresse: string): Promise<{ lat: number; lng: number } | null> {
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(adresse)}`)
+      const data = await res.json()
+      if (data && data[0]) return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) }
+    } catch {}
+    return null
+  }
+
   async function sauvegarder() {
+    let lat: number | null = null, lng: number | null = null
+    if (lieu.trim()) {
+      setMessage("Localisation du lieu...")
+      const geo = await geocoder(lieu.trim())
+      if (geo) { lat = geo.lat; lng = geo.lng }
+    }
     const { error } = await supabase.from("evenements_calendrier").update({
-      titre, date, heure, duree, couleur, description, lieu
+      titre, date, heure, duree, couleur, description, lieu, lat, lng
     }).eq("id", id)
     if (error) {
       setMessage("Erreur : " + error.message)
