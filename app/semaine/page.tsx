@@ -287,18 +287,28 @@ export default function Semaine() {
                 {isToday ? "Aujourd'hui · " : ''}{jour.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})}
               </div>
               {evts.map((e: any) => (
-                <div key={e.id} style={{background:'#fff',border:`0.5px solid ${e.couleur}44`,borderLeft:`3px solid ${e.couleur}`,borderRadius:'10px',padding:'10px 12px',marginBottom:'6px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-                  <div>
-                    <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',display:'flex',alignItems:'center',gap:'5px'}}>
-                      {e.recurrence_jours?.length > 0 && (
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0}}><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
-                      )}
-                      {e.titre}
+                <a key={e.id} href={`/evenement/${e.id}`} style={{textDecoration:'none',display:'block'}}>
+                  <div style={{background:'#fff',border:`0.5px solid ${e.couleur}44`,borderLeft:`3px solid ${e.couleur}`,borderRadius:'10px',padding:'10px 12px',marginBottom:'6px',display:'flex',alignItems:'center',justifyContent:'space-between',cursor:'pointer'}}>
+                    <div style={{minWidth:0}}>
+                      <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',display:'flex',alignItems:'center',gap:'5px'}}>
+                        {e.recurrence_jours?.length > 0 && (
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0}}><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+                        )}
+                        <span style={{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{e.titre}</span>
+                      </div>
+                      <div style={{fontSize:'11px',color:'#aaa',marginTop:'2px',display:'flex',alignItems:'center',gap:'6px'}}>
+                        {e.heure && <span>{e.heure}{e.duree ? ` · ${e.duree >= 60 ? Math.floor(e.duree/60)+'h'+(e.duree%60 ? (e.duree%60)+'min' : '') : e.duree+'min'}` : ''}</span>}
+                        {e.lieu && (
+                          <span style={{display:'flex',alignItems:'center',gap:'2px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0}}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                            {e.lieu}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    {e.heure && <div style={{fontSize:'11px',color:'#aaa',marginTop:'2px'}}>{e.heure}{e.duree ? ` · ${e.duree >= 60 ? Math.floor(e.duree/60)+'h'+(e.duree%60 ? (e.duree%60)+'min' : '') : e.duree+'min'}` : ''}</div>}
+                    <button onClick={(ev) => { ev.preventDefault(); ev.stopPropagation(); supprimerEvt(e.id) }} style={{background:'none',border:'none',color:'#ddd',cursor:'pointer',fontSize:'18px',flexShrink:0,marginLeft:'8px'}}>×</button>
                   </div>
-                  <button onClick={() => supprimerEvt(e.id)} style={{background:'none',border:'none',color:'#ddd',cursor:'pointer',fontSize:'18px'}}>×</button>
-                </div>
+                </a>
               ))}
             </div>
           )
