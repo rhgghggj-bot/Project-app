@@ -19,8 +19,13 @@ export default function Semaine() {
   const [dureeM, setDureeM] = useState(30)
   const [multiJours, setMultiJours] = useState(false)
   const [dateFin, setDateFin] = useState("")
+  const [recurrence, setRecurrence] = useState(false)
+  const [joursRecurrence, setJoursRecurrence] = useState<number[]>([])
+  const [recurrenceFin, setRecurrenceFin] = useState("")
   const [couleur, setCouleur] = useState("#2B7FFF")
   const [semaineOffset, setSemaineOffset] = useState(0)
+
+  const idxSemaine = (d: Date) => (d.getDay() + 6) % 7 // 0=Lun ... 6=Dim, aligné sur JOURS
 
   useEffect(() => {
     async function charger() {
@@ -54,6 +59,16 @@ export default function Semaine() {
 
   const evtDuJour = (date: Date) =>
     evenements.filter(e => {
+      if (e.recurrence_jours && e.recurrence_jours.length > 0) {
+        const debut = new Date(e.date); debut.setHours(0,0,0,0)
+        const d0 = new Date(date); d0.setHours(0,0,0,0)
+        if (d0 < debut) return false
+        if (e.recurrence_fin) {
+          const fin = new Date(e.recurrence_fin); fin.setHours(0,0,0,0)
+          if (d0 > fin) return false
+        }
+        return e.recurrence_jours.includes(idxSemaine(date))
+      }
       const ed = new Date(e.date)
       return ed.toDateString() === date.toDateString()
     })
@@ -65,10 +80,13 @@ export default function Semaine() {
     const { error } = await supabase.from("evenements_calendrier").insert({
       user_id: currentUser.id, titre, heure, couleur, duree,
       date: `${selectedDay.getFullYear()}-${String(selectedDay.getMonth()+1).padStart(2,'0')}-${String(selectedDay.getDate()).padStart(2,'0')}`,
-      date_fin: multiJours && dateFin ? dateFin : null
+      date_fin: multiJours && dateFin ? dateFin : null,
+      recurrence_jours: recurrence && joursRecurrence.length > 0 ? joursRecurrence : null,
+      recurrence_fin: recurrence && recurrenceFin ? recurrenceFin : null
     })
     if (!error) {
       setTitre(""); setHeure(""); setCouleur("#2B7FFF"); setDuree(30); setShowForm(false)
+      setRecurrence(false); setJoursRecurrence([]); setRecurrenceFin(""); setMultiJours(false); setDateFin("")
       const { data } = await supabase.from("evenements_calendrier").select("*").eq("user_id", currentUser.id).order("date", { ascending: true })
       setEvenements(data || [])
     }
@@ -107,7 +125,7 @@ export default function Semaine() {
             const evts = evtDuJour(jour)
             const isSelected = selectedDay?.toDateString() === jour.toDateString()
             return (
-              <div key={i} onClick={() => { setSelectedDay(jour); setShowForm(true) }}
+              <div key={i} onClick={() => { setSelectedDay(jour); setJoursRecurrence([idxSemaine(jour)]); setShowForm(true) }}
                 style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:'3px',cursor:'pointer',padding:'4px 2px',borderRadius:'10px',background: isSelected ? '#EEF5FF' : 'transparent'}}>
                 <div style={{fontSize:'10px',color:'#aaa',fontWeight:'500'}}>{JOURS[i]}</div>
                 <div style={{width:'28px',height:'28px',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'13px',fontWeight:'500',
@@ -141,7 +159,7 @@ export default function Semaine() {
               <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e'}}>Événement sur plusieurs jours</div>
               <div style={{fontSize:'11px',color:'#aaa',marginTop:'2px'}}>Du jour sélectionné jusqu'à une date de fin</div>
             </div>
-            <button onClick={() => setMultiJours(!multiJours)}
+            <button onClick={() => { const v=!multiJours; setMultiJours(v); if (v) { setRecurrence(false); setJoursRecurrence([]) } }}
               style={{width:'40px',height:'22px',borderRadius:'99px',border:'none',cursor:'pointer',position:'relative',background: multiJours ? '#2B7FFF' : '#E2E8F0'}}>
               <div style={{width:'18px',height:'18px',borderRadius:'50%',background:'#fff',position:'absolute',top:'2px',left: multiJours ? '20px' : '2px',transition:'left 0.2s',boxShadow:'0 1px 3px rgba(0,0,0,0.2)'}}></div>
             </button>
@@ -155,21 +173,54 @@ export default function Semaine() {
             </div>
           )}
 
+          {!multiJours && (
+            <div style={{background:'#F8FBFF',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 12px',marginBottom:'8px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+              <div>
+                <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e'}}>Se répète</div>
+                <div style={{fontSize:'11px',color:'#aaa',marginTop:'2px'}}>Toutes les semaines, les jours choisis</div>
+              </div>
+              <button onClick={() => { const v=!recurrence; setRecurrence(v); if (!v) { setJoursRecurrence([]); setRecurrenceFin("") } }}
+                style={{width:'40px',height:'22px',borderRadius:'99px',border:'none',cursor:'pointer',position:'relative',background: recurrence ? '#2B7FFF' : '#E2E8F0'}}>
+                <div style={{width:'18px',height:'18px',borderRadius:'50%',background:'#fff',position:'absolute',top:'2px',left: recurrence ? '20px' : '2px',transition:'left 0.2s',boxShadow:'0 1px 3px rgba(0,0,0,0.2)'}}></div>
+              </button>
+            </div>
+          )}
+
+          {!multiJours && recurrence && (
+            <div style={{background:'#F8FBFF',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 12px',marginBottom:'8px'}}>
+              <div style={{fontSize:'11px',color:'#2B7FFF',fontWeight:'600',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:'8px'}}>Répéter les</div>
+              <div style={{display:'flex',gap:'6px',marginBottom:'10px'}}>
+                {JOURS.map((j, i) => (
+                  <button key={j} onClick={() => setJoursRecurrence(prev => prev.includes(i) ? prev.filter(x => x !== i) : [...prev, i])}
+                    style={{flex:1,padding:'8px 0',borderRadius:'8px',border:'none',cursor:'pointer',fontSize:'11px',fontWeight:'600',
+                      background: joursRecurrence.includes(i) ? '#2B7FFF' : '#fff',
+                      color: joursRecurrence.includes(i) ? '#fff' : '#1a1a2e',
+                      boxShadow: joursRecurrence.includes(i) ? 'none' : '0 0 0 0.5px #E8F1FF'}}>
+                    {j}
+                  </button>
+                ))}
+              </div>
+              <div style={{fontSize:'11px',color:'#2B7FFF',fontWeight:'600',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:'6px'}}>Jusqu'au (optionnel)</div>
+              <input type="date" value={recurrenceFin} onChange={e => setRecurrenceFin(e.target.value)}
+                placeholder="Pas de fin"
+                style={{width:'100%',border:'none',fontSize:'16px',color:'#1a1a2e',outline:'none',background:'transparent'}}/>
+              {!recurrenceFin && <div style={{fontSize:'11px',color:'#aaa',marginTop:'2px'}}>Se répète indéfiniment si laissé vide</div>}
+            </div>
+          )}
+
           <div style={{background:'#F8FBFF',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 12px',marginBottom:'8px'}}>
             <div style={{fontSize:'11px',color:'#2B7FFF',fontWeight:'600',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:'8px'}}>Heure de debut</div>
-            <div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'6px'}}>
-              <span style={{fontSize:'24px',fontWeight:'600',color:'#1a1a2e',minWidth:'52px'}}>{heure || '09:00'}</span>
-              <input type="range" min="0" max="47" value={heure ? (parseInt(heure.split(':')[0])*2 + (parseInt(heure.split(':')[1])>=30?1:0)) : 18}
-                onChange={e => {
-                  const v = Number(e.target.value)
-                  const h = Math.floor(v/2).toString().padStart(2,'0')
-                  const m = v%2===0?'00':'30'
-                  setHeure(h+':'+m)
-                }}
-                style={{flex:1,accentColor:'#2B7FFF',cursor:'pointer'}}/>
-            </div>
-            <div style={{display:'flex',justifyContent:'space-between',fontSize:'10px',color:'#aaa'}}>
-              <span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>23:30</span>
+            <input type="time" value={heure || '09:00'} onChange={e => setHeure(e.target.value)}
+              style={{width:'100%',border:'0.5px solid #E8F1FF',borderRadius:'10px',padding:'10px 12px',fontSize:'22px',fontWeight:'600',color:'#1a1a2e',outline:'none',background:'#fff',marginBottom:'8px'}}/>
+            <div style={{display:'flex',gap:'6px',flexWrap:'wrap'}}>
+              {['08:00','09:00','12:00','14:00','18:00','20:00'].map(h => (
+                <button key={h} onClick={() => setHeure(h)}
+                  style={{padding:'5px 10px',borderRadius:'99px',border:'none',cursor:'pointer',fontSize:'11px',fontWeight:'500',
+                    background: heure===h ? '#2B7FFF' : '#EEF5FF',
+                    color: heure===h ? '#fff' : '#2B7FFF'}}>
+                  {h}
+                </button>
+              ))}
             </div>
           </div>
 
@@ -235,7 +286,7 @@ export default function Semaine() {
               {evts.map((e: any) => (
                 <div key={e.id} style={{background:'#fff',border:`0.5px solid ${e.couleur}44`,borderLeft:`3px solid ${e.couleur}`,borderRadius:'10px',padding:'10px 12px',marginBottom:'6px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
                   <div>
-                    <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e'}}>{e.titre}</div>
+                    <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e'}}>{e.recurrence_jours?.length > 0 ? '🔁 ' : ''}{e.titre}</div>
                     {e.heure && <div style={{fontSize:'11px',color:'#aaa',marginTop:'2px'}}>{e.heure}{e.duree ? ` · ${e.duree >= 60 ? Math.floor(e.duree/60)+'h'+(e.duree%60 ? (e.duree%60)+'min' : '') : e.duree+'min'}` : ''}</div>}
                   </div>
                   <button onClick={() => supprimerEvt(e.id)} style={{background:'none',border:'none',color:'#ddd',cursor:'pointer',fontSize:'18px'}}>×</button>
