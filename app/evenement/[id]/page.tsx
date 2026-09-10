@@ -45,7 +45,7 @@ export default function DetailEvenement() {
       setMessage("Erreur : " + error.message)
     } else {
       setMessage("Enregistré !")
-      setTimeout(() => setMessage(""), 2000)
+      setTimeout(() => { window.location.href = "/semaine" }, 800)
     }
   }
 
