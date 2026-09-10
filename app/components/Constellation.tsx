@@ -1,9 +1,11 @@
 "use client"
 import { useEffect, useRef, useState } from "react"
+import { supabase } from "@/lib/supabase"
 
 type Evt = { id: string; titre: string; heure?: string; couleur?: string; duree?: number }
 
-const DOMAINES: Record<string, string> = {
+const COULEURS_CONNUES = ["#2B7FFF", "#10B981", "#F43F5E", "#D4A843", "#8B5CF6", "#F59E0B", "#EC4899"]
+const NOMS_PAR_DEFAUT: Record<string, string> = {
   "#2B7FFF": "Travail",
   "#10B981": "Santé / Sport",
   "#F43F5E": "Urgent",
@@ -11,10 +13,6 @@ const DOMAINES: Record<string, string> = {
   "#8B5CF6": "Social",
   "#F59E0B": "Loisirs",
   "#EC4899": "Famille",
-}
-
-function nomDomaine(couleur?: string) {
-  return DOMAINES[(couleur || "").toUpperCase()] || DOMAINES[couleur || ""] || "Autre"
 }
 
 function formatDuree(min: number) {
@@ -27,7 +25,35 @@ export default function Constellation({ evenements }: { evenements: Evt[] }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [selected, setSelected] = useState<Evt | null>(null)
   const [domaineActif, setDomaineActif] = useState<string | null>(null)
+  const [modeEdition, setModeEdition] = useState(false)
+  const [noms, setNoms] = useState<Record<string, string>>(NOMS_PAR_DEFAUT)
   const stateRef = useRef({ rx: 0.4, ry: 0.6, dragging: false, lastX: 0, lastY: 0 })
+
+  useEffect(() => {
+    async function charger() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      const { data } = await supabase.from("domaines_couleur").select("*").eq("user_id", user.id)
+      if (data && data.length > 0) {
+        const surcharge: Record<string, string> = {}
+        data.forEach((d: any) => { surcharge[d.couleur.toUpperCase()] = d.nom })
+        setNoms({ ...NOMS_PAR_DEFAUT, ...surcharge })
+      }
+    }
+    charger()
+  }, [])
+
+  function nomDomaine(couleur?: string) {
+    const c = (couleur || "#2B7FFF").toUpperCase()
+    return noms[c] || noms[couleur || ""] || "Autre"
+  }
+
+  async function renommer(couleur: string, nom: string) {
+    setNoms(prev => ({ ...prev, [couleur]: nom }))
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    await supabase.from("domaines_couleur").upsert({ user_id: user.id, couleur, nom }, { onConflict: "user_id,couleur" })
+  }
 
   const parCouleur = new Map<string, { total: number; count: number; evts: Evt[] }>()
   evenements.forEach(e => {
@@ -177,24 +203,46 @@ export default function Constellation({ evenements }: { evenements: Evt[] }) {
             })()}
           </div>
 
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", borderTop: "0.5px solid rgba(255,255,255,0.15)", paddingTop: "10px" }}>
-            {domaines.map(([couleur, stats]) => (
-              <button key={couleur}
-                onClick={() => { setSelected(null); setDomaineActif(d => d === couleur ? null : couleur) }}
-                style={{
-                  display: "flex", alignItems: "center", gap: "5px",
-                  background: domaineActif === couleur ? couleur : "rgba(255,255,255,0.08)",
-                  border: "none", borderRadius: "99px", padding: "4px 10px", cursor: "pointer",
-                  fontSize: "11px", fontWeight: 500,
-                  color: domaineActif === couleur ? "#0A1628" : "rgba(255,255,255,0.75)"
-                }}>
-                <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: domaineActif === couleur ? "#0A1628" : couleur, flexShrink: 0 }}></span>
-                {nomDomaine(couleur)}
-              </button>
-            ))}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: "0.5px solid rgba(255,255,255,0.15)", paddingTop: "10px", marginBottom: modeEdition ? "8px" : "0" }}>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", flex: 1 }}>
+              {!modeEdition && domaines.map(([couleur]) => (
+                <button key={couleur}
+                  onClick={() => { setSelected(null); setDomaineActif(d => d === couleur ? null : couleur) }}
+                  style={{
+                    display: "flex", alignItems: "center", gap: "5px",
+                    background: domaineActif === couleur ? couleur : "rgba(255,255,255,0.08)",
+                    border: "none", borderRadius: "99px", padding: "4px 10px", cursor: "pointer",
+                    fontSize: "11px", fontWeight: 500,
+                    color: domaineActif === couleur ? "#0A1628" : "rgba(255,255,255,0.75)"
+                  }}>
+                  <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: domaineActif === couleur ? "#0A1628" : couleur, flexShrink: 0 }}></span>
+                  {nomDomaine(couleur)}
+                </button>
+              ))}
+            </div>
+            <button onClick={() => { setModeEdition(v => !v); setDomaineActif(null) }} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.5)", cursor: "pointer", fontSize: "11px", display: "flex", alignItems: "center", gap: "4px", flexShrink: 0, marginLeft: "8px" }}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+              {modeEdition ? "Terminé" : "Renommer"}
+            </button>
           </div>
 
-          {domaineActif && (
+          {modeEdition && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+              {COULEURS_CONNUES.map(couleur => (
+                <div key={couleur} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <span style={{ width: "12px", height: "12px", borderRadius: "50%", background: couleur, flexShrink: 0 }}></span>
+                  <input
+                    defaultValue={noms[couleur] || ""}
+                    onBlur={e => renommer(couleur, e.target.value)}
+                    placeholder="Nom du domaine"
+                    style={{ flex: 1, background: "rgba(255,255,255,0.08)", border: "0.5px solid rgba(255,255,255,0.2)", borderRadius: "8px", padding: "6px 10px", fontSize: "12px", color: "#fff", outline: "none" }}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+
+          {domaineActif && !modeEdition && (
             <div style={{ marginTop: "10px" }}>
               {parCouleur.get(domaineActif)!.evts.map(e => (
                 <a key={e.id} href={`/evenement/${e.id}`} style={{ textDecoration: "none", display: "block" }}>
