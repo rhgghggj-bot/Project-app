@@ -124,8 +124,9 @@ export default function Constellation({ evenements, periodeLabel = "cette semain
     const ctx = canvas.getContext("2d")
     if (!ctx) return
 
-    canvas.width = plein ? 800 : 640
-    canvas.height = plein ? 620 : 260
+    const rectInitial = canvas.getBoundingClientRect()
+    canvas.width = Math.max(280, Math.round(rectInitial.width))
+    canvas.height = plein ? Math.max(400, Math.round(rectInitial.height)) : 320
 
     const W = canvas.width, H = canvas.height
     const cx = W / 2, cy = H / 2
@@ -183,7 +184,7 @@ export default function Constellation({ evenements, periodeLabel = "cette semain
         ctx!.stroke()
       })
 
-      const rayonBase = Math.min(W, H) * (0.26 + Math.min(n, 300) / 300 * 0.16)
+      const rayonBase = Math.min(W, H) * (0.34 + Math.min(n, 300) / 300 * 0.20)
       const R = rayonBase
 
       const projected = pts.map(p => {
@@ -272,7 +273,7 @@ export default function Constellation({ evenements, periodeLabel = "cette semain
     function onClick(e: MouseEvent) {
       if (domaineActif) return
       const { x, y } = scaleCoords(e.clientX, e.clientY)
-      const rayonBase = Math.min(W, H) * (0.26 + Math.min(n, 300) / 300 * 0.16)
+      const rayonBase = Math.min(W, H) * (0.34 + Math.min(n, 300) / 300 * 0.20)
       let best: Evt | null = null, bestD = 22
       pts.forEach(p => {
         const r = rotated(p)
@@ -328,7 +329,7 @@ export default function Constellation({ evenements, periodeLabel = "cette semain
   const contenu = (
     <>
       <div style={{ position: "relative" }}>
-        <canvas ref={canvasRef} style={{ width: "100%", height: plein ? "58vh" : "260px", display: "block", cursor: "grab", touchAction: "none", borderRadius: "12px" }} />
+        <canvas ref={canvasRef} style={{ width: "100%", height: plein ? "calc(100vh - 130px)" : "300px", display: "block", cursor: "grab", touchAction: "none", borderRadius: "12px" }} />
         <button onClick={() => setPlein(v => !v)} aria-label={plein ? "Fermer le plein écran" : "Plein écran"}
           style={{ position: "absolute", top: "8px", right: "8px", background: "rgba(255,255,255,0.12)", border: "none", borderRadius: "8px", width: "30px", height: "30px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
           {plein ? (
