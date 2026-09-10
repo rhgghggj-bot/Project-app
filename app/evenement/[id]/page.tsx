@@ -148,7 +148,7 @@ export default function DetailEvenement() {
                 loading="lazy"
                 src={`https://www.google.com/maps?q=${encodeURIComponent(lieu)}&output=embed`}
               />
-              
+              <a
                 href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(lieu)}`}
                 target="_blank" rel="noopener noreferrer"
                 style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'6px',padding:'10px',fontSize:'12px',fontWeight:'500',color:'#2B7FFF',background:'#F8FBFF',textDecoration:'none'}}>
