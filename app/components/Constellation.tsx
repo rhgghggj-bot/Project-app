@@ -329,7 +329,7 @@ export default function Constellation({ evenements, periodeLabel = "cette semain
   const contenu = (
     <>
       <div style={{ position: "relative" }}>
-        <canvas ref={canvasRef} style={{ width: "100%", height: plein ? "calc(100vh - 130px)" : "300px", display: "block", cursor: "grab", touchAction: "none", borderRadius: "12px" }} />
+        <canvas ref={canvasRef} style={{ width: "100%", height: plein ? "70vh" : "300px", display: "block", cursor: "grab", touchAction: "none", borderRadius: "12px" }} />
         <button onClick={() => setPlein(v => !v)} aria-label={plein ? "Fermer le plein écran" : "Plein écran"}
           style={{ position: "absolute", top: "8px", right: "8px", background: "rgba(255,255,255,0.12)", border: "none", borderRadius: "8px", width: "30px", height: "30px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
           {plein ? (
@@ -469,14 +469,6 @@ export default function Constellation({ evenements, periodeLabel = "cette semain
         <div style={{ textAlign: "center", padding: "40px 0", color: "rgba(255,255,255,0.5)", fontSize: "13px" }}>
           Aucun événement à afficher
         </div>
-      </div>
-    )
-  }
-
-  if (plein) {
-    return (
-      <div style={{ position: "fixed", inset: 0, zIndex: 999, background: "linear-gradient(160deg,#0A1628,#1a3a6e)", padding: "16px", overflowY: "auto" }}>
-        {contenu}
       </div>
     )
   }
