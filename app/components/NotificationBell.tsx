@@ -18,8 +18,13 @@ export default function NotificationBell() {
       const { data } = await supabase.from("notifications").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(20)
       setNotifs(data || [])
 
+      const nomCanal = 'notifs-' + user.id
+      supabase.getChannels()
+        .filter((ch: any) => ch.topic?.includes(nomCanal))
+        .forEach((ch: any) => supabase.removeChannel(ch))
+
       channelRef.current = supabase
-        .channel('notifs-' + user.id)
+        .channel(nomCanal)
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: 'user_id=eq.' + user.id },
           (payload) => setNotifs(prev => [payload.new, ...prev]))
         .subscribe()
