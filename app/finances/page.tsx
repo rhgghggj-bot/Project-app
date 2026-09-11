@@ -289,7 +289,7 @@ function FinancesContent() {
           if (pct > 100) return (
             <div style={{margin:'8px 14px 0',background:'#FFE4E6',border:'0.5px solid #FECDD3',borderRadius:'10px',padding:'10px 14px',display:'flex',alignItems:'center',gap:'10px'}}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F43F5E" strokeWidth="2" style={{flexShrink:0}}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-              <span style={{fontSize:'12px',color:'#1a1a2e',flex:1}}>Budget depasse de <b style={{color:'#F43F5E'}}>{conv(Math.abs(reste)).toFixed(0)} {devise}</b> ce mois</span>
+              <span style={{fontSize:'12px',color:'#1a1a2e',flex:1}}>Budget dépassé de <b style={{color:'#F43F5E'}}>{conv(Math.abs(reste)).toFixed(0)} {devise}</b> ce mois</span>
             </div>
           )
           if (pct >= 80) return (
@@ -301,7 +301,7 @@ function FinancesContent() {
           return (
             <div style={{margin:'8px 14px 0',background:'#E1F5EE',border:'0.5px solid #A7F3D0',borderRadius:'10px',padding:'10px 14px',display:'flex',alignItems:'center',gap:'10px'}}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2" style={{flexShrink:0}}><polyline points="20 6 9 17 4 12"/></svg>
-              <span style={{fontSize:'12px',color:'#1a1a2e',flex:1}}>Bon rythme — tu peux epargner <b style={{color:'#10B981'}}>{conv(reste).toFixed(0)} {devise}</b> ce mois</span>
+              <span style={{fontSize:'12px',color:'#1a1a2e',flex:1}}>Bon rythme — tu peux épargner <b style={{color:'#10B981'}}>{conv(reste).toFixed(0)} {devise}</b> ce mois</span>
             </div>
           )
         })()}
@@ -312,11 +312,15 @@ function FinancesContent() {
             <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'8px'}}>
               <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e'}}>6 derniers mois</div>
               <div style={{display:'flex',gap:'10px'}}>
-                <span style={{fontSize:'11px',color:'#F43F5E'}}>■ Dépenses</span>
-                <span style={{fontSize:'11px',color:'#4ade80'}}>■ Revenus</span>
+                <span style={{fontSize:'11px',color:'#F43F5E',display:'flex',alignItems:'center',gap:'4px'}}><span style={{width:'8px',height:'8px',borderRadius:'2px',background:'linear-gradient(180deg,#FB7185,#F43F5E)',display:'inline-block'}}></span>Dépenses</span>
+                <span style={{fontSize:'11px',color:'#10B981',display:'flex',alignItems:'center',gap:'4px'}}><span style={{width:'8px',height:'8px',borderRadius:'2px',background:'linear-gradient(180deg,#6EE7B7,#10B981)',display:'inline-block'}}></span>Revenus</span>
               </div>
             </div>
-            <div style={{display:'flex',alignItems:'flex-end',gap:'6px',height:'120px',marginBottom:'8px'}}>
+            <div style={{position:'relative',height:'120px',marginBottom:'8px'}}>
+              <div style={{position:'absolute',inset:'0 0 20px 0',display:'flex',flexDirection:'column',justifyContent:'space-between',pointerEvents:'none'}}>
+                {[0,1,2].map(i => <div key={i} style={{borderTop:'0.5px dashed #EEF3FA'}}></div>)}
+              </div>
+              <div style={{position:'relative',display:'flex',alignItems:'flex-end',gap:'6px',height:'120px'}}>
               {donneesGraphique.map((d, i) => {
                 const estActuel = d.mois === moisActuel
                 const estSel = moisSelectionne?.mois === d.mois
@@ -326,16 +330,25 @@ function FinancesContent() {
                 return (
                   <div key={i} onClick={() => setMoisSelectionne(estSel ? null : d)} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:'3px',cursor:'pointer'}}>
                     <div style={{width:'100%',display:'flex',gap:'2px',alignItems:'flex-end',height:'100px'}}>
-                      <div style={{flex:1,height:`${hDep}%`,borderRadius:'4px 4px 0 0',background: estSel ? '#1a1a2e' : '#F43F5E',opacity: d.depenses === 0 ? 0.2 : 1}}></div>
-                      <div style={{flex:1,height:`${hRev}%`,borderRadius:'4px 4px 0 0',background: estSel ? '#D4A843' : '#4ade80',opacity: d.revenus === 0 ? 0.2 : 1}}></div>
+                      <div style={{flex:1,height:`${hDep}%`,borderRadius:'5px 5px 0 0',
+                        background: estSel ? '#1a1a2e' : 'linear-gradient(180deg,#FB7185,#F43F5E)',
+                        opacity: d.depenses === 0 ? 0.15 : 1,
+                        boxShadow: d.depenses > 0 ? '0 2px 6px rgba(244,63,94,0.25)' : 'none',
+                        transition:'all 0.2s'}}></div>
+                      <div style={{flex:1,height:`${hRev}%`,borderRadius:'5px 5px 0 0',
+                        background: estSel ? '#D4A843' : 'linear-gradient(180deg,#6EE7B7,#10B981)',
+                        opacity: d.revenus === 0 ? 0.15 : 1,
+                        boxShadow: d.revenus > 0 ? '0 2px 6px rgba(16,185,129,0.25)' : 'none',
+                        transition:'all 0.2s'}}></div>
                     </div>
                     <div style={{fontSize:'9px',color: soldeMois > 0 ? '#10B981' : soldeMois < 0 ? '#F43F5E' : '#aaa',fontWeight:'500'}}>
                       {soldeMois !== 0 ? (soldeMois > 0 ? '+' : '') + soldeMois.toFixed(0) : '-'}
                     </div>
-                    <div style={{fontSize:'10px',color: estActuel ? '#2B7FFF' : '#aaa',fontWeight: estActuel ? '500' : '400'}}>{d.label}</div>
+                    <div style={{fontSize:'10px',color: estActuel ? '#2B7FFF' : '#aaa',fontWeight: estActuel ? '600' : '400'}}>{d.label}</div>
                   </div>
                 )
               })}
+              </div>
             </div>
             {moisSelectionne && (
               <div style={{background:'#F8FBFF',borderRadius:'10px',padding:'10px 12px',marginTop:'6px',border:`0.5px solid ${moisSelectionne.revenus - moisSelectionne.depenses >= 0 ? '#A7F3D0' : '#FECDD3'}`}}>
@@ -355,35 +368,49 @@ function FinancesContent() {
           </div>
 
           <div style={{display:'flex',gap:'8px',marginBottom:'14px'}}>
-            <div style={{flex:1,background:'#E1F5EE',borderRadius:'14px',padding:'12px',border:'0.5px solid #A7F3D0'}}>
-              <div style={{fontSize:'10px',color:'#10B981',fontWeight:'500',marginBottom:'4px'}}>Revenus · mois min</div>
-              <div style={{fontSize:'15px',fontWeight:'500',color:'#1a1a2e'}}>{moisMinDep?.label || '-'}</div>
-              <div style={{fontSize:'12px',color:'#10B981'}}>{conv(moisMinDep?.depenses || 0).toFixed(0)} {devise}</div>
+            <div style={{flex:1,background:'linear-gradient(145deg,#E1F5EE,#F0FFF8)',borderRadius:'16px',padding:'14px',border:'0.5px solid #A7F3D0',boxShadow:'0 4px 16px rgba(16,185,129,0.08)'}}>
+              <div style={{width:'28px',height:'28px',borderRadius:'9px',background:'#fff',display:'flex',alignItems:'center',justifyContent:'center',marginBottom:'8px'}}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+              </div>
+              <div style={{fontSize:'10px',color:'#10B981',fontWeight:'600',textTransform:'uppercase',letterSpacing:'.04em',marginBottom:'3px'}}>Revenus · mois min</div>
+              <div style={{fontSize:'16px',fontWeight:'600',color:'#1a1a2e'}}>{moisMinDep?.label || '-'}</div>
+              <div style={{fontSize:'12px',color:'#10B981',fontWeight:'500'}}>{conv(moisMinDep?.depenses || 0).toFixed(0)} {devise}</div>
             </div>
-            <div style={{flex:1,background:'#FFE4E6',borderRadius:'14px',padding:'12px',border:'0.5px solid #FECDD3'}}>
-              <div style={{fontSize:'10px',color:'#F43F5E',fontWeight:'500',marginBottom:'4px'}}>Dépenses · mois max</div>
-              <div style={{fontSize:'15px',fontWeight:'500',color:'#1a1a2e'}}>{moisMaxDep.label}</div>
-              <div style={{fontSize:'12px',color:'#F43F5E'}}>{conv(moisMaxDep.depenses).toFixed(0)} {devise}</div>
+            <div style={{flex:1,background:'linear-gradient(145deg,#FFE4E6,#FFF5F5)',borderRadius:'16px',padding:'14px',border:'0.5px solid #FECDD3',boxShadow:'0 4px 16px rgba(244,63,94,0.08)'}}>
+              <div style={{width:'28px',height:'28px',borderRadius:'9px',background:'#fff',display:'flex',alignItems:'center',justifyContent:'center',marginBottom:'8px'}}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F43F5E" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>
+              </div>
+              <div style={{fontSize:'10px',color:'#F43F5E',fontWeight:'600',textTransform:'uppercase',letterSpacing:'.04em',marginBottom:'3px'}}>Dépenses · mois max</div>
+              <div style={{fontSize:'16px',fontWeight:'600',color:'#1a1a2e'}}>{moisMaxDep.label}</div>
+              <div style={{fontSize:'12px',color:'#F43F5E',fontWeight:'500'}}>{conv(moisMaxDep.depenses).toFixed(0)} {devise}</div>
             </div>
           </div>
 
-          {depensesParCat.length > 0 && (
+          {depensesParCat.length > 0 && (() => {
+            const palette = ['#F43F5E','#F59E0B','#8B5CF6','#2B7FFF','#10B981','#D4A843','#EC4899']
+            return (
             <div style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'16px',padding:'14px',marginBottom:'14px'}}>
               <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',marginBottom:'12px'}}>Répartition dépenses</div>
-              {depensesParCat.map((c, i) => (
-                <div key={i} style={{marginBottom:'8px'}}>
-                  <div style={{display:'flex',justifyContent:'space-between',marginBottom:'3px'}}>
-                    <span style={{fontSize:'12px',color:'#666'}}>{c.cat}</span>
+              {depensesParCat.map((c, i) => {
+                const coul = palette[i % palette.length]
+                return (
+                <div key={i} style={{marginBottom:'10px'}}>
+                  <div style={{display:'flex',justifyContent:'space-between',marginBottom:'4px',alignItems:'center'}}>
+                    <span style={{fontSize:'12px',color:'#444',display:'flex',alignItems:'center',gap:'6px'}}>
+                      <span style={{width:'8px',height:'8px',borderRadius:'50%',background:coul,flexShrink:0}}></span>
+                      {c.cat}
+                    </span>
                     <span style={{fontSize:'12px',fontWeight:'500',color:'#1a1a2e'}}>{conv(c.total).toFixed(0)} {devise} · {totalDep > 0 ? ((c.total/totalDep)*100).toFixed(0) : 0}%</span>
                   </div>
-                  <div style={{height:'6px',background:'#F0F8FF',borderRadius:'99px',overflow:'hidden'}}>
-                    <div style={{height:'100%',width:`${totalDep > 0 ? (c.total/totalDep)*100 : 0}%`,background:'linear-gradient(90deg,#F43F5E,#F59E0B)',borderRadius:'99px'}}></div>
+                  <div style={{height:'7px',background:'#F5F8FC',borderRadius:'99px',overflow:'hidden'}}>
+                    <div style={{height:'100%',width:`${totalDep > 0 ? (c.total/totalDep)*100 : 0}%`,background:coul,borderRadius:'99px',boxShadow:`0 1px 4px ${coul}55`}}></div>
                   </div>
-
                 </div>
-              ))}
+                )
+              })}
             </div>
-          )}
+            )
+          })()}
 
           <div style={{display:'flex',gap:'8px',marginBottom:'12px'}}>
             <button onClick={() => { setTypeForm("depense"); setShowForm(!showForm) }}
