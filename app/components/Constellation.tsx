@@ -17,7 +17,13 @@ const NOMS_PAR_DEFAUT: Record<string, string> = {
   "#F59E0B": "Loisirs",
   "#EC4899": "Famille",
 }
-const VITESSE_TRANSPORT_KMH = 20 // transports en commun
+const MODES_PAR_DEFAUT = [
+  { nom: "Transports en commun", kmh: 20 },
+  { nom: "Marche", kmh: 5 },
+  { nom: "Vélo", kmh: 15 },
+  { nom: "Trottinette", kmh: 25 },
+  { nom: "Voiture", kmh: 40 },
+]
 
 function formatDuree(min: number) {
   if (min < 60) return `${min}min`
@@ -42,7 +48,7 @@ function jourDe(e: Evt) {
   return e.date || ""
 }
 
-function calculerTrajets(evts: Evt[]) {
+function calculerTrajets(evts: Evt[], vitesseKmh: number) {
   const parJour = new Map<string, Evt[]>()
   evts.forEach(e => {
     const j = jourDe(e)
@@ -60,7 +66,7 @@ function calculerTrajets(evts: Evt[]) {
     for (let i = 0; i < avecLieu.length - 1; i++) {
       const a = avecLieu[i], b = avecLieu[i + 1]
       const km = distanceKm(a.lat!, a.lng!, b.lat!, b.lng!)
-      const min = Math.round((km / VITESSE_TRANSPORT_KMH) * 60)
+      const min = Math.round((km / vitesseKmh) * 60)
       totalMin += min
       segments.push({ de: a, a: b, km, min, jour: j })
     }
@@ -76,6 +82,13 @@ export default function Constellation({ evenements, periodeLabel = "cette semain
   const [domaineActif, setDomaineActif] = useState<string | null>(null)
   const [modeEdition, setModeEdition] = useState(false)
   const [voirTrajets, setVoirTrajets] = useState(false)
+  const [modesTransport, setModesTransport] = useState<{ nom: string; kmh: number }[]>(MODES_PAR_DEFAUT)
+  const [modeActif, setModeActif] = useState<{ nom: string; kmh: number }>(MODES_PAR_DEFAUT[0])
+  const [montrerModes, setMontrerModes] = useState(false)
+  const [nouveauModeNom, setNouveauModeNom] = useState("")
+  const [nouveauModeKmh, setNouveauModeKmh] = useState("")
+  const [segmentActif, setSegmentActif] = useState<number | null>(null)
+  const historiqueEnregistreRef = useRef<Set<string>>(new Set())
   const [plein, setPlein] = useState(false)
   const [noms, setNoms] = useState<Record<string, string>>(NOMS_PAR_DEFAUT)
   const stateRef = useRef({ rx: 0.4, ry: 0.6, dragging: false, lastX: 0, lastY: 0, vitesse: 2, cibleVitesse: 2 })
@@ -102,6 +115,46 @@ export default function Constellation({ evenements, periodeLabel = "cette semain
     return noms[c] || noms[couleur || ""] || "Autre"
   }
 
+  useEffect(() => {
+    try {
+      const sauvegardes = localStorage.getItem("jarvis_modes_transport")
+      if (sauvegardes) setModesTransport(JSON.parse(sauvegardes))
+      const choisi = localStorage.getItem("jarvis_mode_actif")
+      if (choisi) setModeActif(JSON.parse(choisi))
+    } catch {}
+  }, [])
+
+  function ajouterModePerso() {
+    const kmh = parseFloat(nouveauModeKmh)
+    if (!nouveauModeNom.trim() || !kmh || kmh <= 0) return
+    const nouveau = { nom: nouveauModeNom.trim(), kmh }
+    const suivant = [...modesTransport, nouveau]
+    setModesTransport(suivant)
+    localStorage.setItem("jarvis_modes_transport", JSON.stringify(suivant))
+    setModeActif(nouveau)
+    localStorage.setItem("jarvis_mode_actif", JSON.stringify(nouveau))
+    setNouveauModeNom(""); setNouveauModeKmh("")
+  }
+
+  function choisirMode(m: { nom: string; kmh: number }) {
+    setModeActif(m)
+    localStorage.setItem("jarvis_mode_actif", JSON.stringify(m))
+  }
+
+  async function enregistrerHistorique(segs: { de: Evt; a: Evt; km: number; min: number; jour: string }[]) {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    for (const seg of segs) {
+      const cle = `${seg.jour}|${seg.de.titre}|${seg.a.titre}`
+      if (historiqueEnregistreRef.current.has(cle)) continue
+      historiqueEnregistreRef.current.add(cle)
+      await supabase.from("trajets_historique").upsert({
+        user_id: user.id, jour: seg.jour, evenement_de: seg.de.titre, evenement_a: seg.a.titre,
+        km: seg.km, minutes: seg.min, mode: modeActif.nom, vitesse_kmh: modeActif.kmh
+      }, { onConflict: "user_id,jour,evenement_de,evenement_a" })
+    }
+  }
+
   async function renommer(couleur: string, nom: string) {
     setNoms(prev => ({ ...prev, [couleur]: nom }))
     const { data: { user } } = await supabase.auth.getUser()
@@ -120,7 +173,7 @@ export default function Constellation({ evenements, periodeLabel = "cette semain
     parCouleur.set(c, cur)
   })
   const domaines = Array.from(parCouleur.entries()).sort((a, b) => b[1].total - a[1].total)
-  const trajets = calculerTrajets(evenements)
+  const trajets = calculerTrajets(evenements, modeActif.kmh)
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -211,16 +264,20 @@ export default function Constellation({ evenements, periodeLabel = "cette semain
       }
 
       if (voirTrajets) {
-        trajets.segments.forEach(seg => {
+        trajets.segments.forEach((seg, idx) => {
           const iDe = pts.findIndex(p => p.e === seg.de)
           const iA = pts.findIndex(p => p.e === seg.a)
           if (iDe === -1 || iA === -1) return
-          const pDe = projected.find((_, idx) => idx === iDe)
-          const pA = projected.find((_, idx) => idx === iA)
+          const pDe = projected.find((_, idx2) => idx2 === iDe)
+          const pA = projected.find((_, idx2) => idx2 === iA)
           if (!pDe || !pA) return
           const intensite = Math.min(1, seg.km / 15)
-          ctx!.strokeStyle = `rgba(255,${Math.round(170 - intensite * 100)},80,${0.35 + intensite * 0.45})`
-          ctx!.lineWidth = 1 + intensite * 2.5
+          const estActif = segmentActif === idx
+          const estAttenue = segmentActif !== null && !estActif
+          ctx!.strokeStyle = estActif
+            ? "rgba(255,220,140,0.95)"
+            : `rgba(255,${Math.round(170 - intensite * 100)},80,${estAttenue ? 0.06 : 0.35 + intensite * 0.45})`
+          ctx!.lineWidth = estActif ? 3.2 : (estAttenue ? 0.6 : 1 + intensite * 2.5)
           ctx!.beginPath()
           ctx!.moveTo(pDe.sx, pDe.sy)
           ctx!.lineTo(pA.sx, pA.sy)
@@ -328,7 +385,7 @@ export default function Constellation({ evenements, periodeLabel = "cette semain
       canvas.removeEventListener("click", onClick)
       canvas.removeEventListener("wheel", onWheel)
     }
-  }, [evenements, domaineActif, plein, voirTrajets])
+  }, [evenements, domaineActif, plein, voirTrajets, segmentActif])
 
   const contenu = (
     <>
@@ -385,7 +442,29 @@ export default function Constellation({ evenements, periodeLabel = "cette semain
             <div style={{ fontSize: "13px", color: "#fff", marginBottom: "4px" }}>
               <strong style={{ fontWeight: 600 }}>{formatDuree(trajets.totalMin)}</strong> de trajet estimé {periodeLabel}
             </div>
-            <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)" }}>Estimation à vol d'oiseau · transports en commun (~{VITESSE_TRANSPORT_KMH}km/h)</div>
+            <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", marginBottom: "8px" }}>Estimation à vol d'oiseau · {modeActif.nom} (~{modeActif.kmh}km/h)</div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", justifyContent: "center" }}>
+              {modesTransport.map(m => (
+                <button key={m.nom} onClick={() => choisirMode(m)}
+                  style={{ fontSize: "11px", padding: "4px 10px", borderRadius: "99px", border: "none", cursor: "pointer",
+                    background: modeActif.nom === m.nom ? "#FFA34F" : "rgba(255,255,255,0.08)",
+                    color: modeActif.nom === m.nom ? "#0A1628" : "rgba(255,255,255,0.7)" }}>
+                  {m.nom} ({m.kmh}km/h)
+                </button>
+              ))}
+              <button onClick={() => setMontrerModes(v => !v)} style={{ fontSize: "11px", padding: "4px 10px", borderRadius: "99px", border: "0.5px dashed rgba(255,255,255,0.3)", background: "none", color: "rgba(255,255,255,0.5)", cursor: "pointer" }}>
+                + Ajouter
+              </button>
+            </div>
+            {montrerModes && (
+              <div style={{ display: "flex", gap: "6px", marginTop: "8px", justifyContent: "center" }}>
+                <input value={nouveauModeNom} onChange={e => setNouveauModeNom(e.target.value)} placeholder="Nom (ex: Rollers)"
+                  style={{ width: "110px", background: "rgba(255,255,255,0.08)", border: "0.5px solid rgba(255,255,255,0.2)", borderRadius: "8px", padding: "5px 8px", fontSize: "11px", color: "#fff", outline: "none" }} />
+                <input value={nouveauModeKmh} onChange={e => setNouveauModeKmh(e.target.value)} placeholder="km/h" type="number"
+                  style={{ width: "55px", background: "rgba(255,255,255,0.08)", border: "0.5px solid rgba(255,255,255,0.2)", borderRadius: "8px", padding: "5px 8px", fontSize: "11px", color: "#fff", outline: "none" }} />
+                <button onClick={ajouterModePerso} style={{ background: "#2B7FFF", color: "#fff", border: "none", borderRadius: "8px", padding: "5px 10px", fontSize: "11px", cursor: "pointer" }}>OK</button>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -409,7 +488,11 @@ export default function Constellation({ evenements, periodeLabel = "cette semain
         </div>
         <div style={{ display: "flex", gap: "10px", flexShrink: 0 }}>
           {trajets.segments.length > 0 && (
-            <button onClick={() => { setVoirTrajets(v => !v); setDomaineActif(null); setModeEdition(false) }} style={{ background: "none", border: "none", color: voirTrajets ? "#FFA34F" : "rgba(255,255,255,0.5)", cursor: "pointer", fontSize: "11px", display: "flex", alignItems: "center", gap: "4px" }}>
+            <button onClick={() => {
+              const v = !voirTrajets
+              setVoirTrajets(v); setDomaineActif(null); setModeEdition(false); setSegmentActif(null)
+              if (v && trajets.segments.length > 0) enregistrerHistorique(trajets.segments)
+            }} style={{ background: "none", border: "none", color: voirTrajets ? "#FFA34F" : "rgba(255,255,255,0.5)", cursor: "pointer", fontSize: "11px", display: "flex", alignItems: "center", gap: "4px" }}>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
               {voirTrajets ? "Fermer" : "Trajets"}
             </button>
@@ -459,12 +542,17 @@ export default function Constellation({ evenements, periodeLabel = "cette semain
               return (
                 <div key={jour} style={{ marginBottom: "10px" }}>
                   <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.45)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "5px" }}>{label}</div>
-                  {segs.map((seg, i) => (
-                    <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(255,255,255,0.06)", borderLeft: "3px solid #FFA34F", borderRadius: "8px", padding: "8px 10px", marginBottom: "5px" }}>
-                      <span style={{ fontSize: "12px", color: "#fff" }}>{seg.de.titre} <span style={{ color: "rgba(255,255,255,0.4)" }}>({seg.de.heure})</span> → {seg.a.titre} <span style={{ color: "rgba(255,255,255,0.4)" }}>({seg.a.heure})</span></span>
-                      <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0, marginLeft: "8px" }}>{fr(seg.km, 1)} km · {formatDuree(seg.min)}</span>
-                    </div>
-                  ))}
+                  {segs.map((seg, i) => {
+                    const indexGlobal = trajets.segments.indexOf(seg)
+                    const estActif = segmentActif === indexGlobal
+                    return (
+                      <div key={i} onClick={() => setSegmentActif(estActif ? null : indexGlobal)}
+                        style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: estActif ? "rgba(255,163,79,0.22)" : "rgba(255,255,255,0.06)", borderLeft: "3px solid #FFA34F", borderRadius: "8px", padding: "8px 10px", marginBottom: "5px", cursor: "pointer" }}>
+                        <span style={{ fontSize: "12px", color: "#fff" }}>{seg.de.titre} <span style={{ color: "rgba(255,255,255,0.4)" }}>({seg.de.heure})</span> → {seg.a.titre} <span style={{ color: "rgba(255,255,255,0.4)" }}>({seg.a.heure})</span></span>
+                        <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0, marginLeft: "8px" }}>{fr(seg.km, 1)} km · {formatDuree(seg.min)}</span>
+                      </div>
+                    )
+                  })}
                 </div>
               )
             })
