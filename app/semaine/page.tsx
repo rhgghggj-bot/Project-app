@@ -168,22 +168,22 @@ export default function Semaine() {
       </div>
 
       <div style={{padding:'16px 18px'}}>
-        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'10px'}}>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'12px'}}>
           <div style={{fontSize:'11px',color:'#aaa',textTransform:'uppercase',letterSpacing:'0.07em',fontWeight:'500'}}>
             {voirTouteLaSemaine
               ? 'Événements de la semaine'
               : (jourFiltreEstAujourdhui ? "Aujourd'hui" : jourFiltre.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'}))}
           </div>
-          <div style={{display:'flex',alignItems:'center',gap:'12px'}}>
-            <button onClick={() => setVoirTouteLaSemaine(v => !v)} style={{fontSize:'11px',color:'#2B7FFF',background:'none',border:'none',cursor:'pointer',fontWeight:'500',padding:0}}>
-              {voirTouteLaSemaine ? 'Réduire ↑' : 'Voir toute la semaine →'}
-            </button>
-            <a href={`/evenement/nouveau?date=${(selectedDay || jourFiltre).getFullYear()}-${String((selectedDay || jourFiltre).getMonth()+1).padStart(2,'0')}-${String((selectedDay || jourFiltre).getDate()).padStart(2,'0')}`}
-              style={{width:'26px',height:'26px',borderRadius:'50%',background:'#2B7FFF',color:'#fff',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'16px',fontWeight:'500',textDecoration:'none',flexShrink:0}}>
-              +
-            </a>
-          </div>
+          <button onClick={() => setVoirTouteLaSemaine(v => !v)} style={{fontSize:'11px',color:'#2B7FFF',background:'none',border:'none',cursor:'pointer',fontWeight:'500',padding:0}}>
+            {voirTouteLaSemaine ? 'Réduire ↑' : 'Voir toute la semaine →'}
+          </button>
         </div>
+
+        <a href={`/evenement/nouveau?date=${(selectedDay || jourFiltre).getFullYear()}-${String((selectedDay || jourFiltre).getMonth()+1).padStart(2,'0')}-${String((selectedDay || jourFiltre).getDate()).padStart(2,'0')}`}
+          style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'6px',width:'100%',boxSizing:'border-box',background:'#EEF5FF',color:'#2B7FFF',border:'1px dashed #B8D4FF',borderRadius:'10px',padding:'10px',fontSize:'13px',fontWeight:'500',textDecoration:'none',marginBottom:'14px'}}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2B7FFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Ajouter un événement
+        </a>
 
         <div style={{display:'flex',justifyContent:'flex-end',marginBottom:'10px'}}>
           <button onClick={() => setVue3D(v => !v)} style={{fontSize:'11px',color: vue3D ? '#fff' : '#8B5CF6',background: vue3D ? '#8B5CF6' : '#F5F1FF',border:'none',padding:'4px 10px',borderRadius:'99px',cursor:'pointer',fontWeight:'500',display:'flex',alignItems:'center',gap:'4px'}}>
