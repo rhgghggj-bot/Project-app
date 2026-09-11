@@ -57,6 +57,7 @@ const OUTILS = [
 ]
 
 const OUTILS_CLAUDE = [
+  { type: "web_search_20250305", name: "web_search", max_uses: 5 },
   {
     name: "obtenir_evenements",
     description: "Récupère les événements du calendrier de l'utilisateur pour une période donnée",
@@ -428,7 +429,7 @@ export default function Jarvis() {
           body: JSON.stringify({
             model: CLAUDE_MODEL,
             max_tokens: 1024,
-            system: SYSTEM_PROMPT,
+            system: SYSTEM_PROMPT + " Tu as aussi accès à un outil de recherche web — utilise-le dès qu'une question porte sur l'actualité, des faits récents ou toute info qui pourrait avoir changé depuis ta formation. Cite tes sources brièvement.",
             messages: messagesActuels,
             tools: OUTILS_CLAUDE
           })
