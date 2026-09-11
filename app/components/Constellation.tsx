@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase"
 type Evt = {
   id: string; titre: string; heure?: string; couleur?: string; duree?: number
   _occId?: string; date?: string; lat?: number | null; lng?: number | null
+  mode_transport?: string | null; vitesse_transport_kmh?: number | null
 }
 
 const COULEURS_CONNUES = ["#2B7FFF", "#10B981", "#F43F5E", "#D4A843", "#8B5CF6", "#F59E0B", "#EC4899"]
@@ -17,13 +18,6 @@ const NOMS_PAR_DEFAUT: Record<string, string> = {
   "#F59E0B": "Loisirs",
   "#EC4899": "Famille",
 }
-const MODES_PAR_DEFAUT = [
-  { nom: "Transports en commun", kmh: 20 },
-  { nom: "Marche", kmh: 5 },
-  { nom: "Vélo", kmh: 15 },
-  { nom: "Trottinette", kmh: 25 },
-  { nom: "Voiture", kmh: 40 },
-]
 
 function formatDuree(min: number) {
   if (min < 60) return `${min}min`
@@ -48,7 +42,20 @@ function jourDe(e: Evt) {
   return e.date || ""
 }
 
-function calculerTrajets(evts: Evt[], vitesseKmh: number) {
+const VITESSE_PAR_DEFAUT = 20 // transports en commun, si le trajet n'a pas de mode précisé
+const MODES_TRANSPORT = [
+  { nom: "Transports en commun", kmh: 20 },
+  { nom: "Marche", kmh: 5 },
+  { nom: "Vélo", kmh: 15 },
+  { nom: "Trottinette", kmh: 25 },
+  { nom: "Voiture", kmh: 40 },
+]
+
+function cleSegment(jour: string, deTitre: string, aTitre: string) {
+  return `${jour}|${deTitre}|${aTitre}`
+}
+
+function calculerTrajets(evts: Evt[], overrides: Record<string, { nom: string; kmh: number }>) {
   const parJour = new Map<string, Evt[]>()
   evts.forEach(e => {
     const j = jourDe(e)
@@ -57,7 +64,7 @@ function calculerTrajets(evts: Evt[], vitesseKmh: number) {
     parJour.get(j)!.push(e)
   })
   let totalMin = 0
-  const segments: { de: Evt; a: Evt; km: number; min: number; jour: string }[] = []
+  const segments: { de: Evt; a: Evt; km: number; min: number; jour: string; mode: string; cle: string }[] = []
   const joursTries = Array.from(parJour.keys()).sort()
   joursTries.forEach(j => {
     const liste = parJour.get(j)!
@@ -65,10 +72,14 @@ function calculerTrajets(evts: Evt[], vitesseKmh: number) {
       .sort((a, b) => (a.heure! < b.heure! ? -1 : a.heure! > b.heure! ? 1 : 0))
     for (let i = 0; i < avecLieu.length - 1; i++) {
       const a = avecLieu[i], b = avecLieu[i + 1]
+      const cle = cleSegment(j, a.titre, b.titre)
+      const override = overrides[cle]
+      const vitesse = override?.kmh || VITESSE_PAR_DEFAUT
+      const mode = override?.nom || "Transports en commun (par défaut)"
       const km = distanceKm(a.lat!, a.lng!, b.lat!, b.lng!)
-      const min = Math.round((km / vitesseKmh) * 60)
+      const min = Math.round((km / vitesse) * 60)
       totalMin += min
-      segments.push({ de: a, a: b, km, min, jour: j })
+      segments.push({ de: a, a: b, km, min, jour: j, mode, cle })
     }
   })
   return { totalMin, segments }
@@ -82,12 +93,11 @@ export default function Constellation({ evenements, periodeLabel = "cette semain
   const [domaineActif, setDomaineActif] = useState<string | null>(null)
   const [modeEdition, setModeEdition] = useState(false)
   const [voirTrajets, setVoirTrajets] = useState(false)
-  const [modesTransport, setModesTransport] = useState<{ nom: string; kmh: number }[]>(MODES_PAR_DEFAUT)
-  const [modeActif, setModeActif] = useState<{ nom: string; kmh: number }>(MODES_PAR_DEFAUT[0])
-  const [montrerModes, setMontrerModes] = useState(false)
-  const [nouveauModeNom, setNouveauModeNom] = useState("")
-  const [nouveauModeKmh, setNouveauModeKmh] = useState("")
   const [segmentActif, setSegmentActif] = useState<number | null>(null)
+  const [modesSegments, setModesSegments] = useState<Record<string, { nom: string; kmh: number }>>({})
+  const [editionModeSegment, setEditionModeSegment] = useState<string | null>(null)
+  const [modePersoNom, setModePersoNom] = useState("")
+  const [modePersoKmh, setModePersoKmh] = useState("")
   const historiqueEnregistreRef = useRef<Set<string>>(new Set())
   const [plein, setPlein] = useState(false)
   const [noms, setNoms] = useState<Record<string, string>>(NOMS_PAR_DEFAUT)
@@ -116,41 +126,41 @@ export default function Constellation({ evenements, periodeLabel = "cette semain
   }
 
   useEffect(() => {
-    try {
-      const sauvegardes = localStorage.getItem("jarvis_modes_transport")
-      if (sauvegardes) setModesTransport(JSON.parse(sauvegardes))
-      const choisi = localStorage.getItem("jarvis_mode_actif")
-      if (choisi) setModeActif(JSON.parse(choisi))
-    } catch {}
+    async function chargerModes() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      const { data } = await supabase.from("trajets_historique").select("jour,evenement_de,evenement_a,mode,vitesse_kmh").eq("user_id", user.id)
+      if (data) {
+        const m: Record<string, { nom: string; kmh: number }> = {}
+        data.forEach((d: any) => { m[cleSegment(d.jour, d.evenement_de, d.evenement_a)] = { nom: d.mode, kmh: d.vitesse_kmh } })
+        setModesSegments(m)
+      }
+    }
+    chargerModes()
   }, [])
 
-  function ajouterModePerso() {
-    const kmh = parseFloat(nouveauModeKmh)
-    if (!nouveauModeNom.trim() || !kmh || kmh <= 0) return
-    const nouveau = { nom: nouveauModeNom.trim(), kmh }
-    const suivant = [...modesTransport, nouveau]
-    setModesTransport(suivant)
-    localStorage.setItem("jarvis_modes_transport", JSON.stringify(suivant))
-    setModeActif(nouveau)
-    localStorage.setItem("jarvis_mode_actif", JSON.stringify(nouveau))
-    setNouveauModeNom(""); setNouveauModeKmh("")
+  async function changerModeSegment(cle: string, m: { nom: string; kmh: number }, segRef: { de: Evt; a: Evt; km: number; jour: string }) {
+    setModesSegments(prev => ({ ...prev, [cle]: m }))
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    const min = Math.round((segRef.km / m.kmh) * 60)
+    await supabase.from("trajets_historique").upsert({
+      user_id: user.id, jour: segRef.jour, evenement_de: segRef.de.titre, evenement_a: segRef.a.titre,
+      km: segRef.km, minutes: min, mode: m.nom, vitesse_kmh: m.kmh
+    }, { onConflict: "user_id,jour,evenement_de,evenement_a" })
   }
 
-  function choisirMode(m: { nom: string; kmh: number }) {
-    setModeActif(m)
-    localStorage.setItem("jarvis_mode_actif", JSON.stringify(m))
-  }
-
-  async function enregistrerHistorique(segs: { de: Evt; a: Evt; km: number; min: number; jour: string }[]) {
+  async function enregistrerHistorique(segs: { de: Evt; a: Evt; km: number; min: number; jour: string; mode: string; cle: string }[]) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
     for (const seg of segs) {
-      const cle = `${seg.jour}|${seg.de.titre}|${seg.a.titre}`
-      if (historiqueEnregistreRef.current.has(cle)) continue
-      historiqueEnregistreRef.current.add(cle)
+      if (historiqueEnregistreRef.current.has(seg.cle)) continue
+      if (modesSegments[seg.cle]) continue // déjà choisi manuellement, ne pas écraser
+      historiqueEnregistreRef.current.add(seg.cle)
+      const vitesse = seg.min > 0 ? (seg.km / seg.min) * 60 : VITESSE_PAR_DEFAUT
       await supabase.from("trajets_historique").upsert({
         user_id: user.id, jour: seg.jour, evenement_de: seg.de.titre, evenement_a: seg.a.titre,
-        km: seg.km, minutes: seg.min, mode: modeActif.nom, vitesse_kmh: modeActif.kmh
+        km: seg.km, minutes: seg.min, mode: seg.mode, vitesse_kmh: vitesse
       }, { onConflict: "user_id,jour,evenement_de,evenement_a" })
     }
   }
@@ -173,7 +183,7 @@ export default function Constellation({ evenements, periodeLabel = "cette semain
     parCouleur.set(c, cur)
   })
   const domaines = Array.from(parCouleur.entries()).sort((a, b) => b[1].total - a[1].total)
-  const trajets = calculerTrajets(evenements, modeActif.kmh)
+  const trajets = calculerTrajets(evenements, modesSegments)
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -442,29 +452,7 @@ export default function Constellation({ evenements, periodeLabel = "cette semain
             <div style={{ fontSize: "13px", color: "#fff", marginBottom: "4px" }}>
               <strong style={{ fontWeight: 600 }}>{formatDuree(trajets.totalMin)}</strong> de trajet estimé {periodeLabel}
             </div>
-            <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", marginBottom: "8px" }}>Estimation à vol d'oiseau · {modeActif.nom} (~{modeActif.kmh}km/h)</div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", justifyContent: "center" }}>
-              {modesTransport.map(m => (
-                <button key={m.nom} onClick={() => choisirMode(m)}
-                  style={{ fontSize: "11px", padding: "4px 10px", borderRadius: "99px", border: "none", cursor: "pointer",
-                    background: modeActif.nom === m.nom ? "#FFA34F" : "rgba(255,255,255,0.08)",
-                    color: modeActif.nom === m.nom ? "#0A1628" : "rgba(255,255,255,0.7)" }}>
-                  {m.nom} ({m.kmh}km/h)
-                </button>
-              ))}
-              <button onClick={() => setMontrerModes(v => !v)} style={{ fontSize: "11px", padding: "4px 10px", borderRadius: "99px", border: "0.5px dashed rgba(255,255,255,0.3)", background: "none", color: "rgba(255,255,255,0.5)", cursor: "pointer" }}>
-                + Ajouter
-              </button>
-            </div>
-            {montrerModes && (
-              <div style={{ display: "flex", gap: "6px", marginTop: "8px", justifyContent: "center" }}>
-                <input value={nouveauModeNom} onChange={e => setNouveauModeNom(e.target.value)} placeholder="Nom (ex: Rollers)"
-                  style={{ width: "110px", background: "rgba(255,255,255,0.08)", border: "0.5px solid rgba(255,255,255,0.2)", borderRadius: "8px", padding: "5px 8px", fontSize: "11px", color: "#fff", outline: "none" }} />
-                <input value={nouveauModeKmh} onChange={e => setNouveauModeKmh(e.target.value)} placeholder="km/h" type="number"
-                  style={{ width: "55px", background: "rgba(255,255,255,0.08)", border: "0.5px solid rgba(255,255,255,0.2)", borderRadius: "8px", padding: "5px 8px", fontSize: "11px", color: "#fff", outline: "none" }} />
-                <button onClick={ajouterModePerso} style={{ background: "#2B7FFF", color: "#fff", border: "none", borderRadius: "8px", padding: "5px 10px", fontSize: "11px", cursor: "pointer" }}>OK</button>
-              </div>
-            )}
+            <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)" }}>Estimation à vol d'oiseau · selon le mode de transport choisi sur chaque événement</div>
           </div>
         )}
       </div>
@@ -546,10 +534,43 @@ export default function Constellation({ evenements, periodeLabel = "cette semain
                     const indexGlobal = trajets.segments.indexOf(seg)
                     const estActif = segmentActif === indexGlobal
                     return (
-                      <div key={i} onClick={() => setSegmentActif(estActif ? null : indexGlobal)}
-                        style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: estActif ? "rgba(255,163,79,0.22)" : "rgba(255,255,255,0.06)", borderLeft: "3px solid #FFA34F", borderRadius: "8px", padding: "8px 10px", marginBottom: "5px", cursor: "pointer" }}>
-                        <span style={{ fontSize: "12px", color: "#fff" }}>{seg.de.titre} <span style={{ color: "rgba(255,255,255,0.4)" }}>({seg.de.heure})</span> → {seg.a.titre} <span style={{ color: "rgba(255,255,255,0.4)" }}>({seg.a.heure})</span></span>
-                        <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0, marginLeft: "8px" }}>{fr(seg.km, 1)} km · {formatDuree(seg.min)}</span>
+                      <div key={i}
+                        style={{ background: estActif ? "rgba(255,163,79,0.22)" : "rgba(255,255,255,0.06)", borderLeft: "3px solid #FFA34F", borderRadius: "8px", padding: "8px 10px", marginBottom: "5px" }}>
+                        <div onClick={() => setSegmentActif(estActif ? null : indexGlobal)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer" }}>
+                          <span style={{ fontSize: "12px", color: "#fff" }}>{seg.de.titre} <span style={{ color: "rgba(255,255,255,0.4)" }}>({seg.de.heure})</span> → {seg.a.titre} <span style={{ color: "rgba(255,255,255,0.4)" }}>({seg.a.heure})</span></span>
+                          <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0, marginLeft: "8px" }}>{fr(seg.km, 1)} km · {formatDuree(seg.min)}</span>
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "3px" }}>
+                          <span style={{ fontSize: "10px", color: "rgba(255,163,79,0.7)" }}>{seg.mode}</span>
+                          <button onClick={(e) => { e.stopPropagation(); setEditionModeSegment(editionModeSegment === seg.cle ? null : seg.cle) }}
+                            style={{ fontSize: "10px", color: "rgba(255,255,255,0.4)", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>
+                            changer
+                          </button>
+                        </div>
+                        {editionModeSegment === seg.cle && (
+                          <div style={{ marginTop: "6px", paddingTop: "6px", borderTop: "0.5px solid rgba(255,255,255,0.12)" }} onClick={e => e.stopPropagation()}>
+                            <div style={{ display: "flex", flexWrap: "wrap", gap: "5px" }}>
+                              {MODES_TRANSPORT.map(m => (
+                                <button key={m.nom} onClick={() => { changerModeSegment(seg.cle, m, seg); setEditionModeSegment(null) }}
+                                  style={{ fontSize: "10px", padding: "4px 8px", borderRadius: "99px", border: "none", cursor: "pointer", background: "rgba(255,255,255,0.1)", color: "#fff" }}>
+                                  {m.nom} ({m.kmh}km/h)
+                                </button>
+                              ))}
+                            </div>
+                            <div style={{ display: "flex", gap: "5px", marginTop: "6px" }}>
+                              <input value={modePersoNom} onChange={e => setModePersoNom(e.target.value)} placeholder="Nom (ex: Train)"
+                                style={{ flex: 1, background: "rgba(255,255,255,0.08)", border: "0.5px solid rgba(255,255,255,0.2)", borderRadius: "6px", padding: "4px 7px", fontSize: "10px", color: "#fff", outline: "none" }} />
+                              <input value={modePersoKmh} onChange={e => setModePersoKmh(e.target.value)} placeholder="km/h" type="number"
+                                style={{ width: "45px", background: "rgba(255,255,255,0.08)", border: "0.5px solid rgba(255,255,255,0.2)", borderRadius: "6px", padding: "4px 7px", fontSize: "10px", color: "#fff", outline: "none" }} />
+                              <button onClick={() => {
+                                const kmh = parseFloat(modePersoKmh)
+                                if (!modePersoNom.trim() || !kmh || kmh <= 0) return
+                                changerModeSegment(seg.cle, { nom: modePersoNom.trim(), kmh }, seg)
+                                setEditionModeSegment(null); setModePersoNom(""); setModePersoKmh("")
+                              }} style={{ background: "#2B7FFF", color: "#fff", border: "none", borderRadius: "6px", padding: "4px 8px", fontSize: "10px", cursor: "pointer" }}>OK</button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )
                   })}
