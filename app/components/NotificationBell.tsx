@@ -23,10 +23,9 @@ export default function NotificationBell() {
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: 'user_id=eq.' + user.id },
           (payload) => setNotifs(prev => [payload.new, ...prev]))
         .subscribe()
-
-      return () => { if (channelRef.current) supabase.removeChannel(channelRef.current) }
     }
     init()
+    return () => { if (channelRef.current) { supabase.removeChannel(channelRef.current); channelRef.current = null } }
   }, [])
 
   const nonLues = notifs.filter(n => !n.lu).length
