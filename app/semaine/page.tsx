@@ -11,23 +11,12 @@ const COULEURS_EVT = ["#2B7FFF","#10B981","#F43F5E","#D4A843","#8B5CF6","#F59E0B
 export default function Semaine() {
   const [evenements, setEvenements] = useState<any[]>([])
   const [user, setUser] = useState<any>(null)
-  const [showForm, setShowForm] = useState(false)
   const [selectedDay, setSelectedDay] = useState<any>(null)
-  const [titre, setTitre] = useState("")
-  const [heure, setHeure] = useState("")
-  const [duree, setDuree] = useState(30)
-  const [dureeH, setDureeH] = useState(0)
-  const [dureeM, setDureeM] = useState(30)
-  const [multiJours, setMultiJours] = useState(false)
-  const [dateFin, setDateFin] = useState("")
-  const [recurrence, setRecurrence] = useState(false)
-  const [joursRecurrence, setJoursRecurrence] = useState<number[]>([])
-  const [recurrenceFin, setRecurrenceFin] = useState("")
-  const [couleur, setCouleur] = useState("#2B7FFF")
   const [semaineOffset, setSemaineOffset] = useState(0)
   const [jourFiltre, setJourFiltre] = useState<Date>(() => new Date())
   const [voirTouteLaSemaine, setVoirTouteLaSemaine] = useState(false)
   const [vue3D, setVue3D] = useState(false)
+  const [periode3D, setPeriode3D] = useState<'semaine' | 'mois' | 'annee'>('semaine')
 
   const idxSemaine = (d: Date) => (d.getDay() + 6) % 7 // 0=Lun ... 6=Dim, aligné sur JOURS
 
@@ -77,25 +66,6 @@ export default function Semaine() {
       return ed.toDateString() === date.toDateString()
     })
 
-  async function ajouterEvt() {
-    if (!titre || !selectedDay) return
-    const { data: { user: currentUser } } = await supabase.auth.getUser()
-    if (!currentUser) { window.location.href = "/connexion"; return }
-    const { error } = await supabase.from("evenements_calendrier").insert({
-      user_id: currentUser.id, titre, heure, couleur, duree,
-      date: `${selectedDay.getFullYear()}-${String(selectedDay.getMonth()+1).padStart(2,'0')}-${String(selectedDay.getDate()).padStart(2,'0')}`,
-      date_fin: multiJours && dateFin ? dateFin : null,
-      recurrence_jours: recurrence && joursRecurrence.length > 0 ? joursRecurrence : null,
-      recurrence_fin: recurrence && recurrenceFin ? recurrenceFin : null
-    })
-    if (!error) {
-      setTitre(""); setHeure(""); setCouleur("#2B7FFF"); setDuree(30); setShowForm(false)
-      setRecurrence(false); setJoursRecurrence([]); setRecurrenceFin(""); setMultiJours(false); setDateFin("")
-      const { data } = await supabase.from("evenements_calendrier").select("*").eq("user_id", currentUser.id).order("date", { ascending: true })
-      setEvenements(data || [])
-    }
-  }
-
   async function supprimerEvt(id: string) {
     await supabase.from("evenements_calendrier").delete().eq("id", id)
     setEvenements(evenements.filter(e => e.id !== id))
@@ -130,6 +100,24 @@ export default function Semaine() {
   )
 
   const evtsJourFiltre = evtDuJour(jourFiltre)
+
+  const evtsPour3D = (() => {
+    let dates: Date[] = jours
+    if (periode3D === 'mois') {
+      const ref = jours[0]
+      const debut = new Date(ref.getFullYear(), ref.getMonth(), 1)
+      const fin = new Date(ref.getFullYear(), ref.getMonth() + 1, 0)
+      dates = []
+      for (let d = new Date(debut); d <= fin; d.setDate(d.getDate() + 1)) dates.push(new Date(d))
+    } else if (periode3D === 'annee') {
+      const ref = jours[0]
+      const debut = new Date(ref.getFullYear(), 0, 1)
+      const fin = new Date(ref.getFullYear(), 11, 31)
+      dates = []
+      for (let d = new Date(debut); d <= fin; d.setDate(d.getDate() + 1)) dates.push(new Date(d))
+    }
+    return dates.flatMap(d => evtDuJour(d).map((e: any) => ({ ...e, _occId: `${e.id}-${d.toISOString().slice(0,10)}` })))
+  })()
   const jourFiltreEstAujourdhui = jourFiltre.toDateString() === today.toDateString()
 
   return (
@@ -157,7 +145,7 @@ export default function Semaine() {
             const evts = evtDuJour(jour)
             const isSelected = selectedDay?.toDateString() === jour.toDateString()
             return (
-              <div key={i} onClick={() => { setSelectedDay(jour); setJoursRecurrence([idxSemaine(jour)]); setShowForm(true); setJourFiltre(jour); setVoirTouteLaSemaine(false) }}
+              <div key={i} onClick={() => { setSelectedDay(jour); setJourFiltre(jour); setVoirTouteLaSemaine(false) }}
                 style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:'3px',cursor:'pointer',padding:'4px 2px',borderRadius:'10px',background: isSelected ? '#EEF5FF' : 'transparent'}}>
                 <div style={{fontSize:'10px',color:'#aaa',fontWeight:'500'}}>{JOURS[i]}</div>
                 <div style={{width:'28px',height:'28px',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'13px',fontWeight:'500',
@@ -179,130 +167,6 @@ export default function Semaine() {
         </div>
       </div>
 
-      {showForm && selectedDay && (
-        <div style={{margin:'16px 14px 0',background:'#EEF5FF',borderRadius:'16px',padding:'14px',border:'0.5px solid #DCE9FF'}}>
-          <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',marginBottom:'10px'}}>
-            + Événement le {selectedDay.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})}
-          </div>
-          <input value={titre} onChange={e => setTitre(e.target.value)} placeholder="Titre de l'événement"
-            style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 12px',fontSize:'14px',color:'#1a1a2e',background:'#fff',marginBottom:'8px',boxSizing:'border-box'}}/>
-          <div style={{background:'#F8FBFF',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 12px',marginBottom:'8px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-            <div>
-              <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e'}}>Événement sur plusieurs jours</div>
-              <div style={{fontSize:'11px',color:'#aaa',marginTop:'2px'}}>Du jour sélectionné jusqu'à une date de fin</div>
-            </div>
-            <button onClick={() => { const v=!multiJours; setMultiJours(v); if (v) { setRecurrence(false); setJoursRecurrence([]) } }}
-              style={{width:'40px',height:'22px',borderRadius:'99px',border:'none',cursor:'pointer',position:'relative',background: multiJours ? '#2B7FFF' : '#E2E8F0'}}>
-              <div style={{width:'18px',height:'18px',borderRadius:'50%',background:'#fff',position:'absolute',top:'2px',left: multiJours ? '20px' : '2px',transition:'left 0.2s',boxShadow:'0 1px 3px rgba(0,0,0,0.2)'}}></div>
-            </button>
-          </div>
-
-          {multiJours && (
-            <div style={{background:'#F8FBFF',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 12px',marginBottom:'8px'}}>
-              <div style={{fontSize:'11px',color:'#2B7FFF',fontWeight:'600',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:'6px'}}>Date de fin</div>
-              <input type="date" value={dateFin} onChange={e => setDateFin(e.target.value)}
-                style={{width:'100%',border:'none',fontSize:'16px',color:'#1a1a2e',outline:'none',background:'transparent'}}/>
-            </div>
-          )}
-
-          {!multiJours && (
-            <div style={{background:'#F8FBFF',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 12px',marginBottom:'8px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-              <div>
-                <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e'}}>Se répète</div>
-                <div style={{fontSize:'11px',color:'#aaa',marginTop:'2px'}}>Toutes les semaines, les jours choisis</div>
-              </div>
-              <button onClick={() => { const v=!recurrence; setRecurrence(v); if (!v) { setJoursRecurrence([]); setRecurrenceFin("") } }}
-                style={{width:'40px',height:'22px',borderRadius:'99px',border:'none',cursor:'pointer',position:'relative',background: recurrence ? '#2B7FFF' : '#E2E8F0'}}>
-                <div style={{width:'18px',height:'18px',borderRadius:'50%',background:'#fff',position:'absolute',top:'2px',left: recurrence ? '20px' : '2px',transition:'left 0.2s',boxShadow:'0 1px 3px rgba(0,0,0,0.2)'}}></div>
-              </button>
-            </div>
-          )}
-
-          {!multiJours && recurrence && (
-            <div style={{background:'#F8FBFF',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 12px',marginBottom:'8px'}}>
-              <div style={{fontSize:'11px',color:'#2B7FFF',fontWeight:'600',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:'8px'}}>Répéter les</div>
-              <div style={{display:'flex',gap:'6px',marginBottom:'10px'}}>
-                {JOURS.map((j, i) => (
-                  <button key={j} onClick={() => setJoursRecurrence(prev => prev.includes(i) ? prev.filter(x => x !== i) : [...prev, i])}
-                    style={{flex:1,padding:'8px 0',borderRadius:'8px',border:'none',cursor:'pointer',fontSize:'11px',fontWeight:'600',
-                      background: joursRecurrence.includes(i) ? '#2B7FFF' : '#fff',
-                      color: joursRecurrence.includes(i) ? '#fff' : '#1a1a2e',
-                      boxShadow: joursRecurrence.includes(i) ? 'none' : '0 0 0 0.5px #E8F1FF'}}>
-                    {j}
-                  </button>
-                ))}
-              </div>
-              <div style={{fontSize:'11px',color:'#2B7FFF',fontWeight:'600',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:'6px'}}>Jusqu'au (optionnel)</div>
-              <input type="date" value={recurrenceFin} onChange={e => setRecurrenceFin(e.target.value)}
-                placeholder="Pas de fin"
-                style={{width:'100%',border:'none',fontSize:'16px',color:'#1a1a2e',outline:'none',background:'transparent'}}/>
-              {!recurrenceFin && <div style={{fontSize:'11px',color:'#aaa',marginTop:'2px'}}>Se répète indéfiniment si laissé vide</div>}
-            </div>
-          )}
-
-          <div style={{background:'#F8FBFF',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 12px',marginBottom:'8px'}}>
-            <div style={{fontSize:'11px',color:'#2B7FFF',fontWeight:'600',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:'8px'}}>Heure de debut</div>
-            <input type="time" value={heure || '09:00'} onChange={e => setHeure(e.target.value)}
-              style={{width:'100%',border:'0.5px solid #E8F1FF',borderRadius:'10px',padding:'10px 12px',fontSize:'22px',fontWeight:'600',color:'#1a1a2e',outline:'none',background:'#fff',marginBottom:'8px'}}/>
-            <div style={{display:'flex',gap:'6px',flexWrap:'wrap'}}>
-              {['08:00','09:00','12:00','14:00','18:00','20:00'].map(h => (
-                <button key={h} onClick={() => setHeure(h)}
-                  style={{padding:'5px 10px',borderRadius:'99px',border:'none',cursor:'pointer',fontSize:'11px',fontWeight:'500',
-                    background: heure===h ? '#2B7FFF' : '#EEF5FF',
-                    color: heure===h ? '#fff' : '#2B7FFF'}}>
-                  {h}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div style={{background:'#F8FBFF',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 12px',marginBottom:'8px'}}>
-            <div style={{fontSize:'11px',color:'#D4A843',fontWeight:'600',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:'10px'}}>Durée</div>
-            <div style={{display:'flex',gap:'8px',marginBottom:'8px'}}>
-              <div style={{flex:1}}>
-                <div style={{fontSize:'10px',color:'#aaa',marginBottom:'4px',textAlign:'center'}}>Heures</div>
-                <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',background:'#fff',borderRadius:'10px',padding:'6px 10px',border:'0.5px solid #E8F1FF'}}>
-                  <button onClick={() => { const h=Math.max(0,dureeH-1); setDureeH(h); setDuree(h*60+dureeM) }}
-                    style={{width:'22px',height:'22px',borderRadius:'50%',background:'#EEF5FF',border:'none',fontSize:'14px',color:'#2B7FFF',cursor:'pointer',lineHeight:'1',display:'flex',alignItems:'center',justifyContent:'center'}}>−</button>
-                  <span style={{fontSize:'20px',fontWeight:'600',color:'#1a1a2e'}}>{dureeH}</span>
-                  <button onClick={() => { const h=Math.min(12,dureeH+1); setDureeH(h); setDuree(h*60+dureeM) }}
-                    style={{width:'22px',height:'22px',borderRadius:'50%',background:'#2B7FFF',border:'none',fontSize:'14px',color:'#fff',cursor:'pointer',lineHeight:'1',display:'flex',alignItems:'center',justifyContent:'center'}}>+</button>
-                </div>
-              </div>
-              <div style={{flex:1}}>
-                <div style={{fontSize:'10px',color:'#aaa',marginBottom:'4px',textAlign:'center'}}>Minutes</div>
-                <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',background:'#fff',borderRadius:'10px',padding:'6px 10px',border:'0.5px solid #E8F1FF'}}>
-                  <button onClick={() => { const m=(dureeM-15+60)%60; setDureeM(m); setDuree(dureeH*60+m) }}
-                    style={{width:'22px',height:'22px',borderRadius:'50%',background:'#EEF5FF',border:'none',fontSize:'14px',color:'#2B7FFF',cursor:'pointer',lineHeight:'1',display:'flex',alignItems:'center',justifyContent:'center'}}>−</button>
-                  <span style={{fontSize:'20px',fontWeight:'600',color:'#1a1a2e'}}>{dureeM.toString().padStart(2,'0')}</span>
-                  <button onClick={() => { const m=(dureeM+15)%60; setDureeM(m); setDuree(dureeH*60+m) }}
-                    style={{width:'22px',height:'22px',borderRadius:'50%',background:'#2B7FFF',border:'none',fontSize:'14px',color:'#fff',cursor:'pointer',lineHeight:'1',display:'flex',alignItems:'center',justifyContent:'center'}}>+</button>
-                </div>
-              </div>
-            </div>
-            <div style={{display:'flex',gap:'6px',flexWrap:'wrap'}}>
-              {[{h:0,m:30,l:'30min'},{h:1,m:0,l:'1h'},{h:1,m:30,l:'1h30'},{h:2,m:0,l:'2h'},{h:3,m:0,l:'3h'}].map(r=>(
-                <button key={r.l} onClick={() => { setDureeH(r.h); setDureeM(r.m); setDuree(r.h*60+r.m) }}
-                  style={{padding:'5px 10px',borderRadius:'99px',border:'none',cursor:'pointer',fontSize:'11px',fontWeight:'500',
-                    background: duree===r.h*60+r.m ? '#2B7FFF' : '#EEF5FF',
-                    color: duree===r.h*60+r.m ? '#fff' : '#2B7FFF'}}>
-                  {r.l}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div style={{display:'flex',gap:'6px',marginBottom:'10px'}}>
-            {COULEURS_EVT.map(c => (
-              <div key={c} onClick={() => setCouleur(c)} style={{width:'28px',height:'28px',borderRadius:'50%',background:c,cursor:'pointer',border: couleur === c ? '3px solid #1a1a2e' : '3px solid transparent'}}/>
-            ))}
-          </div>
-          <div style={{display:'flex',gap:'8px'}}>
-            <button onClick={() => setShowForm(false)} style={{flex:1,background:'#fff',color:'#aaa',fontSize:'13px',padding:'9px',borderRadius:'10px',border:'0.5px solid #E8F1FF',cursor:'pointer'}}>Annuler</button>
-            <button onClick={ajouterEvt} style={{flex:2,background:'#2B7FFF',color:'#fff',fontSize:'13px',fontWeight:'500',padding:'9px',borderRadius:'10px',border:'none',cursor:'pointer'}}>Ajouter</button>
-          </div>
-        </div>
-      )}
-
       <div style={{padding:'16px 18px'}}>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'10px'}}>
           <div style={{fontSize:'11px',color:'#aaa',textTransform:'uppercase',letterSpacing:'0.07em',fontWeight:'500'}}>
@@ -310,9 +174,15 @@ export default function Semaine() {
               ? 'Événements de la semaine'
               : (jourFiltreEstAujourdhui ? "Aujourd'hui" : jourFiltre.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'}))}
           </div>
-          <button onClick={() => setVoirTouteLaSemaine(v => !v)} style={{fontSize:'11px',color:'#2B7FFF',background:'none',border:'none',cursor:'pointer',fontWeight:'500',padding:0}}>
-            {voirTouteLaSemaine ? 'Réduire ↑' : 'Voir toute la semaine →'}
-          </button>
+          <div style={{display:'flex',alignItems:'center',gap:'12px'}}>
+            <button onClick={() => setVoirTouteLaSemaine(v => !v)} style={{fontSize:'11px',color:'#2B7FFF',background:'none',border:'none',cursor:'pointer',fontWeight:'500',padding:0}}>
+              {voirTouteLaSemaine ? 'Réduire ↑' : 'Voir toute la semaine →'}
+            </button>
+            <a href={`/evenement/nouveau?date=${(selectedDay || jourFiltre).getFullYear()}-${String((selectedDay || jourFiltre).getMonth()+1).padStart(2,'0')}-${String((selectedDay || jourFiltre).getDate()).padStart(2,'0')}`}
+              style={{width:'26px',height:'26px',borderRadius:'50%',background:'#2B7FFF',color:'#fff',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'16px',fontWeight:'500',textDecoration:'none',flexShrink:0}}>
+              +
+            </a>
+          </div>
         </div>
 
         <div style={{display:'flex',justifyContent:'flex-end',marginBottom:'10px'}}>
@@ -324,9 +194,17 @@ export default function Semaine() {
 
         {vue3D && (
           <div style={{marginBottom:'14px'}}>
-            <Constellation evenements={
-              Array.from(new Map(jours.flatMap(j => evtDuJour(j)).map((e: any) => [e.id, e])).values())
-            } />
+            <div style={{display:'flex',gap:'6px',marginBottom:'10px'}}>
+              {(['semaine','mois','annee'] as const).map(p => (
+                <button key={p} onClick={() => setPeriode3D(p)}
+                  style={{flex:1,padding:'6px 0',borderRadius:'8px',border:'none',cursor:'pointer',fontSize:'11px',fontWeight:'600',
+                    background: periode3D===p ? '#8B5CF6' : '#F5F1FF',
+                    color: periode3D===p ? '#fff' : '#8B5CF6'}}>
+                  {p === 'semaine' ? 'Semaine' : p === 'mois' ? 'Mois' : 'Année'}
+                </button>
+              ))}
+            </div>
+            <Constellation evenements={evtsPour3D} periodeLabel={periode3D === 'semaine' ? 'cette semaine' : periode3D === 'mois' ? 'ce mois-ci' : 'cette année'} />
           </div>
         )}
 
@@ -366,7 +244,7 @@ export default function Semaine() {
               <div style={{textAlign:'center',padding:'32px 0',color:'#aaa'}}>
                 <svg width='32' height='32' viewBox='0 0 24 24' fill='none' stroke='#aaa' strokeWidth='1.5' style={{marginBottom:'8px'}}><rect x='3' y='4' width='18' height='18' rx='2' ry='2'/><line x1='16' y1='2' x2='16' y2='6'/><line x1='8' y1='2' x2='8' y2='6'/><line x1='3' y1='10' x2='21' y2='10'/></svg>
                 <div style={{fontSize:'13px',marginBottom:'6px'}}>Aucun événement cette semaine</div>
-                <div style={{fontSize:'12px'}}>Clique sur un jour pour en ajouter un !</div>
+                <div style={{fontSize:'12px'}}>Touche le + en haut pour en ajouter un</div>
               </div>
             )}
           </>
