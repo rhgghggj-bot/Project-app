@@ -15,9 +15,28 @@ Règles strictes de comportement :
 - Reste concis et conversationnel, comme à l'oral. Ne liste jamais tous les événements/dépenses en vrac sauf si Pierre te le demande explicitement.
 - Si Pierre corrige, reformule ou clarifie ta réponse précédente, fais-le simplement à partir de ce que tu as déjà dit — NE RECONSULTE PAS un outil pour ça, tu as déjà l'information.
 - N'utilise un outil que pour une VRAIE nouvelle question sur ses données (calendrier, finances, groupes). Une seule consultation suffit, n'en fais pas plus que nécessaire.
+- N'écris JAMAIS en markdown (pas d'astérisques **, pas de tirets de liste, pas de titres #). Écris en texte simple, comme une vraie conversation orale, car tes réponses sont aussi lues à voix haute par une synthèse vocale.
+- N'utilise JAMAIS d'emojis dans tes réponses.
+- TU PEUX CRÉER DES IMAGES via l'outil generer_image. Ne dis JAMAIS que tu ne peux pas créer d'images — c'est faux, tu en es capable. Dès que Pierre demande une image, un dessin ou une illustration, appelle immédiatement l'outil generer_image avec une description en anglais, sans jamais refuser ni renvoyer vers un autre outil.
 - Toutes tes réponses restent strictement locales sur la machine de Pierre, rien ne sort jamais de son Mac.`
 
+const IMAGEGEN_URL = "http://localhost:5007/generer"
+
 const OUTILS = [
+  {
+    type: "function",
+    function: {
+      name: "generer_image",
+      description: "Génère une image à partir d'une description textuelle. Utilise-la quand Pierre demande de créer, dessiner ou générer une image.",
+      parameters: {
+        type: "object",
+        properties: {
+          prompt: { type: "string", description: "La description détaillée de l'image à générer, en anglais de préférence pour de meilleurs résultats" }
+        },
+        required: ["prompt"]
+      }
+    }
+  },
   {
     type: "function",
     function: {
@@ -59,6 +78,15 @@ const OUTILS = [
 const OUTILS_CLAUDE = [
   { type: "web_search_20250305", name: "web_search", max_uses: 5 },
   {
+    name: "generer_image",
+    description: "Génère une image à partir d'une description textuelle. Utilise-la quand Pierre demande de créer, dessiner ou générer une image.",
+    input_schema: {
+      type: "object",
+      properties: { prompt: { type: "string", description: "La description détaillée de l'image à générer, en anglais de préférence pour de meilleurs résultats" } },
+      required: ["prompt"]
+    }
+  },
+  {
     name: "obtenir_evenements",
     description: "Récupère les événements du calendrier de l'utilisateur pour une période donnée",
     input_schema: {
@@ -87,7 +115,7 @@ type Msg = { role: "system" | "user" | "assistant"; content: string }
 
 export default function Jarvis() {
   const [historique, setHistorique] = useState<Msg[]>([{ role: "system", content: SYSTEM_PROMPT }])
-  const [messages, setMessages] = useState<{ role: "user" | "assistant"; texte: string; erreur?: boolean }[]>([
+  const [messages, setMessages] = useState<{ role: "user" | "assistant"; texte: string; erreur?: boolean; image?: string }[]>([
     { role: "assistant", texte: "Bonjour Pierre. Jarvis est en ligne, en local, sur ton Mac. Comment puis-je t'aider ?" }
   ])
   const [input, setInput] = useState("")
@@ -99,6 +127,8 @@ export default function Jarvis() {
   const [voixActive, setVoixActive] = useState(true)
   const [voixDisponibles, setVoixDisponibles] = useState<SpeechSynthesisVoice[]>([])
   const [voixChoisie, setVoixChoisie] = useState<string>("")
+  const [documentJoint, setDocumentJoint] = useState<{ nom: string; contenu: string } | null>(null)
+  const fichierInputRef = useRef<HTMLInputElement>(null)
   const [modeCloud, setModeCloud] = useState(false)
   const [claudeKey, setClaudeKey] = useState("")
   const [montrerConfigCloud, setMontrerConfigCloud] = useState(false)
@@ -106,9 +136,11 @@ export default function Jarvis() {
   const [statut, setStatut] = useState<{ texte: string; ok: boolean | null }>({ texte: "Connexion à Ollama...", ok: null })
   const chatRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const fondCanvasRef = useRef<HTMLCanvasElement>(null)
   const angleRef = useRef({ a: 0, a2: 0 })
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const chunksRef = useRef<Blob[]>([])
+  const imageGenereeRef = useRef<string | null>(null)
   const etincellesRef = useRef<{ theta: number; phi: number; vitesse: number; vie: number }[]>([])
   const reflechitRef = useRef(false)
   const parlantRef = useRef(false)
@@ -187,13 +219,13 @@ export default function Jarvis() {
     }
 
     function dessiner() {
-      const refl = reflechitRef.current
+      const actif = reflechitRef.current || parlantRef.current
       gctx!.clearRect(0, 0, GW, GH)
       const baseR = 34
-      const pulse = refl ? 1 + Math.sin(Date.now() / 140) * 0.05 : 1 + Math.sin(Date.now() / 900) * 0.015
+      const pulse = actif ? 1 + Math.sin(Date.now() / 140) * 0.05 : 1 + Math.sin(Date.now() / 900) * 0.015
       const R = baseR * pulse
-      const intensite = refl ? 1 : 0.55
-      const vitRot = refl ? 0.014 : 0.005
+      const intensite = actif ? 1 : 0.55
+      const vitRot = actif ? 0.014 : 0.005
 
       angleRef.current.a += vitRot
       angleRef.current.a2 += vitRot * 0.6
@@ -228,7 +260,7 @@ export default function Jarvis() {
       })
 
       etincellesRef.current.forEach(e => {
-        e.vie += 0.006 * e.vitesse * (refl ? 2.2 : 1)
+        e.vie += 0.006 * e.vitesse * (actif ? 2.2 : 1)
         if (e.vie > 1) { e.vie = 0; e.theta = Math.random() * Math.PI * 2; e.phi = Math.acos(1 - 2 * Math.random()) }
         const r = R * (0.55 + e.vie * 0.9)
         const p = rotateGlobe(point3D(e.theta, e.phi, r), a, a2)
@@ -262,6 +294,71 @@ export default function Jarvis() {
     dessiner()
     return () => cancelAnimationFrame(raf)
   }, [])
+
+  useEffect(() => {
+    const canvas = fondCanvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext("2d")
+    if (!ctx) return
+    let raf: number
+    let W = 0, H = 0
+
+    function redimensionner() {
+      W = canvas!.width = window.innerWidth
+      H = canvas!.height = window.innerHeight
+    }
+    redimensionner()
+    window.addEventListener("resize", redimensionner)
+
+    const etoiles = Array.from({ length: 110 }, () => ({
+      x: Math.random(), y: Math.random(), r: Math.random() * 1.1 + 0.3, phase: Math.random() * Math.PI * 2,
+      vx: (Math.random() - 0.5) * 0.00025, vy: (Math.random() - 0.5) * 0.00025 + 0.00012
+    }))
+
+    function dessiner(t: number) {
+      ctx!.clearRect(0, 0, W, H)
+      const neb1 = ctx!.createRadialGradient(W * 0.15, H * 0.1, 0, W * 0.15, H * 0.1, W * 0.6)
+      neb1.addColorStop(0, "rgba(255,150,40,0.05)")
+      neb1.addColorStop(1, "rgba(255,150,40,0)")
+      ctx!.fillStyle = neb1
+      ctx!.fillRect(0, 0, W, H)
+      const neb2 = ctx!.createRadialGradient(W * 0.85, H * 0.9, 0, W * 0.85, H * 0.9, W * 0.6)
+      neb2.addColorStop(0, "rgba(90,60,180,0.06)")
+      neb2.addColorStop(1, "rgba(90,60,180,0)")
+      ctx!.fillStyle = neb2
+      ctx!.fillRect(0, 0, W, H)
+
+      etoiles.forEach(s => {
+        s.x += s.vx
+        s.y += s.vy
+        if (s.x < 0) s.x += 1; if (s.x > 1) s.x -= 1
+        if (s.y < 0) s.y += 1; if (s.y > 1) s.y -= 1
+        const scintille = 0.25 + Math.sin(t / 1100 + s.phase) * 0.2 + 0.2
+        ctx!.beginPath()
+        ctx!.arc(s.x * W, s.y * H, s.r, 0, Math.PI * 2)
+        ctx!.fillStyle = `rgba(255,255,255,${Math.max(0, scintille)})`
+        ctx!.fill()
+      })
+      raf = requestAnimationFrame(dessiner)
+    }
+    raf = requestAnimationFrame(dessiner)
+
+    return () => { cancelAnimationFrame(raf); window.removeEventListener("resize", redimensionner) }
+  }, [])
+
+  function fichierSelectionne(e: React.ChangeEvent<HTMLInputElement>) {
+    const fichier = e.target.files?.[0]
+    if (!fichier) return
+    const lecteur = new FileReader()
+    lecteur.onload = () => {
+      let contenu = String(lecteur.result || "")
+      const LIMITE = 12000
+      if (contenu.length > LIMITE) contenu = contenu.slice(0, LIMITE) + "\n\n[... document tronqué, trop long ...]"
+      setDocumentJoint({ nom: fichier.name, contenu })
+    }
+    lecteur.readAsText(fichier)
+    e.target.value = ""
+  }
 
   function parler(texte: string) {
     if (!voixActive || !("speechSynthesis" in window)) return
@@ -370,6 +467,24 @@ export default function Jarvis() {
   }, [modeVocal])
 
   async function executerOutil(nom: string, args: any) {
+    if (nom === "generer_image") {
+      try {
+        const res = await fetch(IMAGEGEN_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt: args.prompt })
+        })
+        const data = await res.json()
+        if (data.image) {
+          imageGenereeRef.current = data.image
+          return { succes: true, message: "Image générée avec succès, elle s'affiche à l'utilisateur." }
+        }
+        return { erreur: data.erreur || "Échec de la génération" }
+      } catch {
+        return { erreur: "Serveur de génération d'images non détecté — lance imagegen_server.py" }
+      }
+    }
+
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { erreur: "Utilisateur non connecté" }
 
@@ -409,7 +524,11 @@ export default function Jarvis() {
   }
 
   async function envoyerCloud(texte: string) {
-    let messagesActuels: any[] = [...historiqueCloud, { role: "user", content: texte }]
+    imageGenereeRef.current = null
+    const texteEnvoye = documentJoint
+      ? `[Document joint : "${documentJoint.nom}"]\n\n${documentJoint.contenu}\n\n---\n\nQuestion de Pierre : ${texte}`
+      : texte
+    let messagesActuels: any[] = [...historiqueCloud, { role: "user", content: texteEnvoye }]
     setHistoriqueCloud(messagesActuels)
     setMessages(prev => [...prev, { role: "user", texte }, { role: "assistant", texte: "Jarvis (cloud) réfléchit..." }])
 
@@ -465,7 +584,7 @@ export default function Jarvis() {
       }
       setMessages(prev => {
         const copie = [...prev]
-        copie[copie.length - 1] = { role: "assistant", texte: reponseFinaleTexte }
+        copie[copie.length - 1] = { role: "assistant", texte: reponseFinaleTexte, image: imageGenereeRef.current || undefined }
         return copie
       })
       setHistoriqueCloud(messagesActuels)
@@ -491,6 +610,7 @@ export default function Jarvis() {
     if (!texte) return
     if (!texteDirect) setInput("")
     setReflechit(true)
+    imageGenereeRef.current = null
 
     if (modeCloud) {
       if (!claudeKey) {
@@ -502,7 +622,10 @@ export default function Jarvis() {
       return
     }
 
-    const nouvelHistorique: any[] = [...historique, { role: "user" as const, content: texte }]
+    const texteEnvoye = documentJoint
+      ? `[Document joint : "${documentJoint.nom}"]\n\n${documentJoint.contenu}\n\n---\n\nQuestion de Pierre : ${texte}`
+      : texte
+    const nouvelHistorique: any[] = [...historique, { role: "user" as const, content: texteEnvoye }]
     setHistorique(nouvelHistorique)
     setMessages(prev => [...prev, { role: "user", texte }, { role: "assistant", texte: "Jarvis réfléchit..." }])
 
@@ -568,6 +691,13 @@ export default function Jarvis() {
           } catch {}
         }
       }
+      if (imageGenereeRef.current) {
+        setMessages(prev => {
+          const copie = [...prev]
+          copie[copie.length - 1] = { role: "assistant", texte: reponseComplete, image: imageGenereeRef.current || undefined }
+          return copie
+        })
+      }
       const nouveauxMessages = historiquePourFinal.slice(nouvelHistorique.length)
       setHistorique(prev => [...prev, ...nouveauxMessages, { role: "assistant", content: reponseComplete }])
       parler(reponseComplete)
@@ -582,9 +712,11 @@ export default function Jarvis() {
   }
 
   return (
-    <main style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "radial-gradient(ellipse at top, #0A1628 0%, #050810 100%)", color: "#E8F1FF" }}>
+    <main style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "radial-gradient(ellipse at top, #0A1628 0%, #050810 100%)", color: "#E8F1FF", position: "relative" }}>
+      <canvas ref={fondCanvasRef} style={{ position: "fixed", inset: 0, width: "100%", height: "100%", zIndex: 0, pointerEvents: "none" }} />
+      <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", flex: 1, minHeight: "100vh" }}>
       <style>{`@keyframes pulseRing { 0% { opacity: 0.9; transform: scale(0.9); } 100% { opacity: 0; transform: scale(1.35); } }`}</style>
-      <div style={{ padding: "14px 18px", display: "flex", alignItems: "center", gap: "14px", borderBottom: "0.5px solid rgba(43,127,255,0.2)", background: "rgba(10,22,40,0.6)" }}>
+      <div style={{ padding: "14px 18px", display: "flex", alignItems: "center", gap: "14px", borderBottom: "0.5px solid rgba(43,127,255,0.2)", background: "rgba(10,22,40,0.35)", backdropFilter: "blur(10px)" }}>
         <a href="/" style={{ fontSize: "12px", color: "rgba(255,255,255,0.5)", textDecoration: "none", marginRight: "4px" }}>←</a>
         <canvas ref={canvasRef} width={112} height={112} style={{ width: "50px", height: "50px", flexShrink: 0 }} />
         <div style={{ fontSize: "15px", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "#fff" }}>Jarvis</div>
@@ -640,19 +772,38 @@ export default function Jarvis() {
           <div key={i} style={{
             maxWidth: "82%", padding: "12px 16px", borderRadius: "14px", fontSize: "14px", lineHeight: 1.5, whiteSpace: "pre-wrap",
             alignSelf: m.role === "user" ? "flex-end" : "flex-start",
-            background: m.role === "user" ? "#2B7FFF" : "rgba(255,255,255,0.06)",
-            color: m.erreur ? "#F43F5E" : m.role === "user" ? "#fff" : "#E8F1FF",
-            border: m.role === "assistant" ? "0.5px solid rgba(43,127,255,0.25)" : "none",
+            background: m.role === "user" ? "rgba(43,127,255,0.16)" : "rgba(255,178,60,0.07)",
+            backdropFilter: "blur(8px)",
+            color: m.erreur ? "#F43F5E" : "#E8F1FF",
+            border: "0.5px solid " + (m.role === "user" ? "rgba(90,160,255,0.45)" : "rgba(255,178,60,0.3)"),
+            boxShadow: m.role === "user" ? "0 0 16px rgba(43,127,255,0.12)" : "0 0 16px rgba(255,178,60,0.08)",
             borderBottomRightRadius: m.role === "user" ? "3px" : "14px",
             borderBottomLeftRadius: m.role === "assistant" ? "3px" : "14px",
           }}>
             {m.texte}
+            {m.image && (
+              <img src={`data:image/png;base64,${m.image}`} alt="Image générée par Jarvis" style={{ width: "100%", maxWidth: "320px", borderRadius: "10px", marginTop: "10px", display: "block" }} />
+            )}
           </div>
         ))}
       </div>
 
-      <div style={{ padding: "14px 18px 20px", borderTop: "0.5px solid rgba(43,127,255,0.2)", background: "rgba(10,22,40,0.6)" }}>
+      <div style={{ padding: "14px 18px 20px", borderTop: "0.5px solid rgba(43,127,255,0.2)", background: "rgba(10,22,40,0.35)", backdropFilter: "blur(10px)" }}>
+        {documentJoint && (
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", background: "rgba(255,178,60,0.1)", border: "0.5px solid rgba(255,178,60,0.35)", borderRadius: "99px", padding: "5px 10px", marginBottom: "8px", width: "fit-content" }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFB74D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <span style={{ fontSize: "12px", color: "#FFB74D" }}>{documentJoint.nom}</span>
+            <button onClick={() => setDocumentJoint(null)} aria-label="Retirer le document" style={{ background: "none", border: "none", color: "#FFB74D", cursor: "pointer", fontSize: "14px", lineHeight: 1, padding: 0 }}>×</button>
+          </div>
+        )}
+        <input ref={fichierInputRef} type="file" accept=".txt,.md" onChange={fichierSelectionne} style={{ display: "none" }} />
         <div style={{ display: "flex", gap: "10px", alignItems: "flex-end" }}>
+          <button
+            onClick={() => fichierInputRef.current?.click()}
+            aria-label="Joindre un document"
+            style={{ background: "rgba(255,255,255,0.08)", border: "0.5px solid rgba(43,127,255,0.3)", borderRadius: "12px", width: "44px", height: "44px", flexShrink: 0, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+          </button>
           <textarea
             value={input}
             onChange={e => setInput(e.target.value)}
@@ -681,6 +832,7 @@ export default function Jarvis() {
           </button>
         </div>
         <div style={{ fontSize: "11px", color: "rgba(232,241,255,0.3)", marginTop: "8px", textAlign: "center" }}>100% local · tes messages ne quittent jamais ton Mac</div>
+      </div>
       </div>
     </main>
   )
