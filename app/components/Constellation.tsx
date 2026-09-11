@@ -105,8 +105,9 @@ export default function Constellation({ evenements, periodeLabel = "cette semain
   async function renommer(couleur: string, nom: string) {
     setNoms(prev => ({ ...prev, [couleur]: nom }))
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-    await supabase.from("domaines_couleur").upsert({ user_id: user.id, couleur, nom }, { onConflict: "user_id,couleur" })
+    if (!user) { console.error("Renommage impossible : utilisateur non connecté"); return }
+    const { error } = await supabase.from("domaines_couleur").upsert({ user_id: user.id, couleur, nom }, { onConflict: "user_id,couleur" })
+    if (error) console.error("Erreur d'enregistrement du renommage :", error.message)
   }
 
   const parCouleur = new Map<string, { total: number; count: number; evts: Evt[] }>()
@@ -430,12 +431,7 @@ export default function Constellation({ evenements, periodeLabel = "cette semain
                 onChange={e => {
                   const valeur = e.target.value
                   setNoms(prev => ({ ...prev, [couleur]: valeur }))
-                  if (debounceRef.current[couleur]) clearTimeout(debounceRef.current[couleur])
-                  debounceRef.current[couleur] = setTimeout(() => { renommer(couleur, valeur) }, 500)
-                }}
-                onBlur={e => {
-                  if (debounceRef.current[couleur]) clearTimeout(debounceRef.current[couleur])
-                  renommer(couleur, e.target.value)
+                  renommer(couleur, valeur)
                 }}
                 placeholder="Nom du domaine"
                 style={{ flex: 1, background: "rgba(255,255,255,0.08)", border: "0.5px solid rgba(255,255,255,0.2)", borderRadius: "8px", padding: "6px 10px", fontSize: "12px", color: "#fff", outline: "none" }}

@@ -142,6 +142,7 @@ export default function Jarvis() {
   const chunksRef = useRef<Blob[]>([])
   const imageGenereeRef = useRef<string | null>(null)
   const etincellesRef = useRef<{ theta: number; phi: number; vitesse: number; vie: number }[]>([])
+  const pointsGlobeRef = useRef<{ theta: number; phi: number }[]>([])
   const reflechitRef = useRef(false)
   const parlantRef = useRef(false)
   const streamRef = useRef<MediaStream | null>(null)
@@ -201,10 +202,18 @@ export default function Jarvis() {
     let raf: number
 
     if (etincellesRef.current.length === 0) {
-      etincellesRef.current = Array.from({ length: 22 }, () => ({
+      etincellesRef.current = Array.from({ length: 36 }, () => ({
         theta: Math.random() * Math.PI * 2, phi: Math.acos(1 - 2 * Math.random()),
         vitesse: 0.3 + Math.random() * 0.5, vie: Math.random()
       }))
+    }
+    if (pointsGlobeRef.current.length === 0) {
+      const N = 60
+      pointsGlobeRef.current = Array.from({ length: N }, (_, i) => {
+        const phi = Math.acos(1 - 2 * (i + 0.5) / N)
+        const theta = Math.PI * (1 + Math.sqrt(5)) * i
+        return { theta, phi }
+      })
     }
 
     function point3D(theta: number, phi: number, r: number) {
@@ -221,7 +230,8 @@ export default function Jarvis() {
     function dessiner() {
       const actif = reflechitRef.current || parlantRef.current
       gctx!.clearRect(0, 0, GW, GH)
-      const baseR = 34
+      const echelle = GW / 112
+      const baseR = 34 * echelle
       const pulse = actif ? 1 + Math.sin(Date.now() / 140) * 0.05 : 1 + Math.sin(Date.now() / 900) * 0.015
       const R = baseR * pulse
       const intensite = actif ? 1 : 0.55
@@ -231,32 +241,44 @@ export default function Jarvis() {
       angleRef.current.a2 += vitRot * 0.6
       const { a, a2 } = angleRef.current
 
-      const grillage: { x: number; y: number; z: number }[][] = []
-      const NB_LAT = 8, NB_LON = 12
-      for (let i = 0; i <= NB_LAT; i++) {
-        const phi = (i / NB_LAT) * Math.PI
-        const pts = []
-        for (let j = 0; j <= 32; j++) pts.push(rotateGlobe(point3D((j / 32) * Math.PI * 2, phi, R), a, a2))
-        grillage.push(pts)
-      }
-      for (let j = 0; j < NB_LON; j++) {
-        const theta = (j / NB_LON) * Math.PI * 2
-        const pts = []
-        for (let i = 0; i <= 32; i++) pts.push(rotateGlobe(point3D(theta, (i / 32) * Math.PI, R), a, a2))
-        grillage.push(pts)
+      const projetes = pointsGlobeRef.current.map(pt => {
+        const p = rotateGlobe(point3D(pt.theta, pt.phi, R), a, a2)
+        return { sx: gcx + p.x, sy: gcy + p.y, z: p.z }
+      })
+
+      for (let i = 0; i < projetes.length; i++) {
+        for (let j = i + 1; j < projetes.length; j++) {
+          const dx = projetes[i].sx - projetes[j].sx, dy = projetes[i].sy - projetes[j].sy
+          const dist = Math.hypot(dx, dy)
+          if (dist < R * 0.85) {
+            gctx!.beginPath()
+            gctx!.moveTo(projetes[i].sx, projetes[i].sy)
+            gctx!.lineTo(projetes[j].sx, projetes[j].sy)
+            const zMoy = (projetes[i].z + projetes[j].z) / 2
+            const depthAlpha = 0.08 + Math.max(0, (zMoy + R) / (2 * R)) * 0.22
+            gctx!.strokeStyle = `rgba(255,178,60,${depthAlpha * intensite})`
+            gctx!.lineWidth = 0.5 * echelle
+            gctx!.stroke()
+          }
+        }
       }
 
-      grillage.forEach(pts => {
+      projetes.sort((x, y) => x.z - y.z)
+      projetes.forEach(p => {
+        const tailleBase = (1 + (p.z / R + 1) * 0.7) * echelle
+        const eclat = 0.5 + (p.z / R + 1) * 0.25
+        const haloPt = gctx!.createRadialGradient(p.sx, p.sy, 0, p.sx, p.sy, tailleBase * 2.2)
+        haloPt.addColorStop(0, `rgba(255,210,140,${eclat * 0.28 * intensite})`)
+        haloPt.addColorStop(1, "rgba(255,210,140,0)")
         gctx!.beginPath()
-        pts.forEach((p, idx) => {
-          const sx = gcx + p.x, sy = gcy + p.y
-          if (idx === 0) gctx!.moveTo(sx, sy); else gctx!.lineTo(sx, sy)
-        })
-        const zAvg = pts.reduce((s, p) => s + p.z, 0) / pts.length
-        const depthAlpha = 0.15 + Math.max(0, (zAvg + R) / (2 * R)) * 0.45
-        gctx!.strokeStyle = `rgba(255,178,60,${depthAlpha * intensite})`
-        gctx!.lineWidth = 0.6
-        gctx!.stroke()
+        gctx!.arc(p.sx, p.sy, tailleBase * 2.2, 0, Math.PI * 2)
+        gctx!.fillStyle = haloPt
+        gctx!.fill()
+
+        gctx!.beginPath()
+        gctx!.arc(p.sx, p.sy, tailleBase, 0, Math.PI * 2)
+        gctx!.fillStyle = `rgba(255,225,170,${eclat * intensite})`
+        gctx!.fill()
       })
 
       etincellesRef.current.forEach(e => {
@@ -267,7 +289,7 @@ export default function Jarvis() {
         const sx = gcx + p.x, sy = gcy + p.y
         const alpha = (1 - e.vie) * intensite
         gctx!.beginPath()
-        gctx!.arc(sx, sy, 1.1, 0, Math.PI * 2)
+        gctx!.arc(sx, sy, 1.1 * echelle, 0, Math.PI * 2)
         gctx!.fillStyle = `rgba(255,220,150,${alpha})`
         gctx!.fill()
       })
@@ -281,11 +303,11 @@ export default function Jarvis() {
       gctx!.fillStyle = halo
       gctx!.fill()
 
-      const noyau = gctx!.createRadialGradient(gcx, gcy, 0, gcx, gcy, 6 * pulse)
+      const noyau = gctx!.createRadialGradient(gcx, gcy, 0, gcx, gcy, 6 * echelle * pulse)
       noyau.addColorStop(0, `rgba(255,240,210,${0.9 * intensite})`)
       noyau.addColorStop(1, "rgba(255,200,110,0)")
       gctx!.beginPath()
-      gctx!.arc(gcx, gcy, 6 * pulse, 0, Math.PI * 2)
+      gctx!.arc(gcx, gcy, 6 * echelle * pulse, 0, Math.PI * 2)
       gctx!.fillStyle = noyau
       gctx!.fill()
 
@@ -718,7 +740,6 @@ export default function Jarvis() {
       <style>{`@keyframes pulseRing { 0% { opacity: 0.9; transform: scale(0.9); } 100% { opacity: 0; transform: scale(1.35); } }`}</style>
       <div style={{ padding: "14px 18px", display: "flex", alignItems: "center", gap: "14px", borderBottom: "0.5px solid rgba(43,127,255,0.2)", background: "rgba(10,22,40,0.35)", backdropFilter: "blur(10px)" }}>
         <a href="/" style={{ fontSize: "12px", color: "rgba(255,255,255,0.5)", textDecoration: "none", marginRight: "4px" }}>←</a>
-        <canvas ref={canvasRef} width={112} height={112} style={{ width: "50px", height: "50px", flexShrink: 0 }} />
         <div style={{ fontSize: "15px", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "#fff" }}>Jarvis</div>
         <div style={{ fontSize: "11px", color: modeCloud ? (claudeKey ? "#10B981" : "#F43F5E") : (statut.ok === true ? "#10B981" : statut.ok === false ? "#F43F5E" : "rgba(232,241,255,0.4)"), marginLeft: "auto" }}>
           {modeCloud ? (claudeKey ? "Cloud (Claude) actif" : "Ajoute ta clé API →") : statut.texte}
@@ -768,6 +789,9 @@ export default function Jarvis() {
       )}
 
       <div ref={chatRef} style={{ flex: 1, overflowY: "auto", padding: "20px 18px", display: "flex", flexDirection: "column", gap: "12px" }}>
+        <div style={{ display: "flex", justifyContent: "center", padding: "8px 0 12px" }}>
+          <canvas ref={canvasRef} width={320} height={320} style={{ width: "200px", height: "200px" }} />
+        </div>
         {messages.map((m, i) => (
           <div key={i} style={{
             maxWidth: "82%", padding: "12px 16px", borderRadius: "14px", fontSize: "14px", lineHeight: 1.5, whiteSpace: "pre-wrap",
