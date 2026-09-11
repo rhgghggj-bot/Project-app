@@ -51,8 +51,10 @@ function calculerTrajets(evts: Evt[]) {
     parJour.get(j)!.push(e)
   })
   let totalMin = 0
-  const segments: { de: Evt; a: Evt; km: number; min: number }[] = []
-  parJour.forEach(liste => {
+  const segments: { de: Evt; a: Evt; km: number; min: number; jour: string }[] = []
+  const joursTries = Array.from(parJour.keys()).sort()
+  joursTries.forEach(j => {
+    const liste = parJour.get(j)!
     const avecLieu = liste.filter(e => e.lat != null && e.lng != null && e.heure)
       .sort((a, b) => (a.heure! < b.heure! ? -1 : a.heure! > b.heure! ? 1 : 0))
     for (let i = 0; i < avecLieu.length - 1; i++) {
@@ -60,7 +62,7 @@ function calculerTrajets(evts: Evt[]) {
       const km = distanceKm(a.lat!, a.lng!, b.lat!, b.lng!)
       const min = Math.round((km / VITESSE_TRANSPORT_KMH) * 60)
       totalMin += min
-      segments.push({ de: a, a: b, km, min })
+      segments.push({ de: a, a: b, km, min, jour: j })
     }
   })
   return { totalMin, segments }
@@ -77,6 +79,7 @@ export default function Constellation({ evenements, periodeLabel = "cette semain
   const [plein, setPlein] = useState(false)
   const [noms, setNoms] = useState<Record<string, string>>(NOMS_PAR_DEFAUT)
   const stateRef = useRef({ rx: 0.4, ry: 0.6, dragging: false, lastX: 0, lastY: 0, vitesse: 2, cibleVitesse: 2 })
+  const debounceRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({})
   const starsRef = useRef<Star[]>([])
   const rafRef = useRef<number | null>(null)
 
@@ -423,8 +426,17 @@ export default function Constellation({ evenements, periodeLabel = "cette semain
             <div key={couleur} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <span style={{ width: "12px", height: "12px", borderRadius: "50%", background: couleur, flexShrink: 0 }}></span>
               <input
-                defaultValue={noms[couleur] || ""}
-                onBlur={e => renommer(couleur, e.target.value)}
+                value={noms[couleur] || ""}
+                onChange={e => {
+                  const valeur = e.target.value
+                  setNoms(prev => ({ ...prev, [couleur]: valeur }))
+                  if (debounceRef.current[couleur]) clearTimeout(debounceRef.current[couleur])
+                  debounceRef.current[couleur] = setTimeout(() => { renommer(couleur, valeur) }, 500)
+                }}
+                onBlur={e => {
+                  if (debounceRef.current[couleur]) clearTimeout(debounceRef.current[couleur])
+                  renommer(couleur, e.target.value)
+                }}
                 placeholder="Nom du domaine"
                 style={{ flex: 1, background: "rgba(255,255,255,0.08)", border: "0.5px solid rgba(255,255,255,0.2)", borderRadius: "8px", padding: "6px 10px", fontSize: "12px", color: "#fff", outline: "none" }}
               />
@@ -439,12 +451,28 @@ export default function Constellation({ evenements, periodeLabel = "cette semain
             <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.4)", textAlign: "center", padding: "12px 0" }}>
               Ajoute des lieux à tes événements pour voir tes trajets estimés
             </div>
-          ) : trajets.segments.map((seg, i) => (
-            <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(255,255,255,0.06)", borderLeft: "3px solid #FFA34F", borderRadius: "8px", padding: "8px 10px", marginBottom: "5px" }}>
-              <span style={{ fontSize: "12px", color: "#fff" }}>{seg.de.titre} → {seg.a.titre}</span>
-              <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.5)" }}>{fr(seg.km, 1)} km · {formatDuree(seg.min)}</span>
-            </div>
-          ))}
+          ) : (() => {
+            const parJour = new Map<string, typeof trajets.segments>()
+            trajets.segments.forEach(seg => {
+              if (!parJour.has(seg.jour)) parJour.set(seg.jour, [])
+              parJour.get(seg.jour)!.push(seg)
+            })
+            return Array.from(parJour.entries()).map(([jour, segs]) => {
+              const dateObj = new Date(jour + "T00:00:00")
+              const label = dateObj.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })
+              return (
+                <div key={jour} style={{ marginBottom: "10px" }}>
+                  <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.45)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "5px" }}>{label}</div>
+                  {segs.map((seg, i) => (
+                    <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(255,255,255,0.06)", borderLeft: "3px solid #FFA34F", borderRadius: "8px", padding: "8px 10px", marginBottom: "5px" }}>
+                      <span style={{ fontSize: "12px", color: "#fff" }}>{seg.de.titre} <span style={{ color: "rgba(255,255,255,0.4)" }}>({seg.de.heure})</span> → {seg.a.titre} <span style={{ color: "rgba(255,255,255,0.4)" }}>({seg.a.heure})</span></span>
+                      <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0, marginLeft: "8px" }}>{fr(seg.km, 1)} km · {formatDuree(seg.min)}</span>
+                    </div>
+                  ))}
+                </div>
+              )
+            })
+          })()}
         </div>
       )}
 
