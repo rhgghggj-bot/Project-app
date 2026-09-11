@@ -1,7 +1,6 @@
 "use client"
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
-import NotificationBell from "./components/NotificationBell"
 import { syncActivitesGroupeVersCalendrier } from "@/lib/syncActivites"
 
 const JOURS = ["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"]
@@ -115,7 +114,6 @@ export default function Home() {
                 </svg>
                 <span style={{fontSize:'16px',fontWeight:'700',color:'#fff',letterSpacing:'2px'}}>NEXIA</span>
               </div>
-              <NotificationBell />
             </div>
             <div style={{fontSize:'12px',color:'rgba(255,255,255,0.5)',marginBottom:'4px'}}>
               {today.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}
