@@ -11,7 +11,10 @@ export default function ProfilPublic() {
   const [profil, setProfil] = useState<any>(null)
   const [projets, setProjets] = useState<any[]>([])
   const [followers, setFollowers] = useState<any[]>([])
+  const [abonnements, setAbonnements] = useState<any[]>([])
   const [chargement, setChargement] = useState(true)
+  const [listeOuverte, setListeOuverte] = useState<"followers" | "abonnements" | null>(null)
+  const [profilsListe, setProfilsListe] = useState<any[]>([])
 
   useEffect(() => {
     async function charger() {
@@ -24,6 +27,8 @@ export default function ProfilPublic() {
       setProjets(pj || [])
       const { data: f } = await supabase.from("app_followers").select("*").eq("suivi_id", profilId)
       setFollowers(f || [])
+      const { data: ab } = await supabase.from("app_followers").select("*").eq("follower_id", profilId)
+      setAbonnements(ab || [])
       setChargement(false)
     }
     if (profilId) charger()
@@ -47,6 +52,15 @@ export default function ProfilPublic() {
     if (idConv) window.location.href = "/groupes/" + idConv
   }
 
+  async function ouvrirListe(type: "followers" | "abonnements") {
+    const source = type === "followers" ? followers : abonnements
+    const ids = source.map(f => type === "followers" ? f.follower_id : f.suivi_id)
+    if (ids.length === 0) { setProfilsListe([]); setListeOuverte(type); return }
+    const { data } = await supabase.from("profiles").select("id,nom,avatar_url").in("id", ids)
+    setProfilsListe(data || [])
+    setListeOuverte(type)
+  }
+
   if (chargement) return <div style={{padding:'32px',textAlign:'center',color:'#aaa',fontSize:'14px'}}>Chargement...</div>
   if (!profil) return <div style={{padding:'32px',textAlign:'center',color:'#aaa',fontSize:'14px'}}>Profil introuvable</div>
 
@@ -67,7 +81,15 @@ export default function ProfilPublic() {
           )}
           <div style={{flex:1,minWidth:0}}>
             <div style={{fontSize:'19px',fontWeight:'600',color:'#fff'}}>{nom}</div>
-            <div style={{fontSize:'13px',color:'rgba(255,255,255,0.6)',marginTop:'2px'}}>{followers.length} follower{followers.length>1?'s':''} · {projets.length} projet{projets.length>1?'s':''}</div>
+            <div style={{display:'flex',gap:'10px',marginTop:'4px'}}>
+              <button onClick={() => ouvrirListe("followers")} style={{background:'none',border:'none',padding:0,cursor:'pointer',fontSize:'13px',color:'rgba(255,255,255,0.75)'}}>
+                <b style={{color:'#fff'}}>{followers.length}</b> follower{followers.length>1?'s':''}
+              </button>
+              <button onClick={() => ouvrirListe("abonnements")} style={{background:'none',border:'none',padding:0,cursor:'pointer',fontSize:'13px',color:'rgba(255,255,255,0.75)'}}>
+                <b style={{color:'#fff'}}>{abonnements.length}</b> abonnement{abonnements.length>1?'s':''}
+              </button>
+            </div>
+            <div style={{fontSize:'12px',color:'rgba(255,255,255,0.5)',marginTop:'2px'}}>{projets.length} projet{projets.length>1?'s':''}</div>
           </div>
         </div>
         {profil.bio && <div style={{fontSize:'13px',color:'rgba(255,255,255,0.75)',marginTop:'12px',lineHeight:'1.5'}}>{profil.bio}</div>}
@@ -100,6 +122,28 @@ export default function ProfilPublic() {
           </a>
         ))}
       </div>
+
+      {listeOuverte && (
+        <div onClick={() => setListeOuverte(null)} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',zIndex:200,display:'flex',alignItems:'flex-end'}}>
+          <div onClick={e => e.stopPropagation()} style={{width:'100%',maxHeight:'70vh',overflowY:'auto',background:'#fff',borderRadius:'22px 22px 0 0',padding:'10px 18px 24px'}}>
+            <div style={{width:'36px',height:'4px',background:'#E8F1FF',borderRadius:'99px',margin:'6px auto 14px'}}></div>
+            <div style={{fontSize:'15px',fontWeight:'600',color:'#1a1a2e',marginBottom:'12px'}}>{listeOuverte === "followers" ? "Followers" : "Abonnements"}</div>
+            {profilsListe.length === 0 && <div style={{textAlign:'center',padding:'24px 0',color:'#aaa',fontSize:'13px'}}>Personne pour l'instant</div>}
+            {profilsListe.map((p: any) => (
+              <a key={p.id} href={'/profil/'+p.id} style={{textDecoration:'none',display:'flex',alignItems:'center',gap:'12px',padding:'10px 0',borderBottom:'0.5px solid #F5F8FC'}}>
+                {p.avatar_url ? (
+                  <img src={p.avatar_url} alt={p.nom} style={{width:'40px',height:'40px',borderRadius:'50%',objectFit:'cover'}}/>
+                ) : (
+                  <div style={{width:'40px',height:'40px',borderRadius:'50%',background:'linear-gradient(135deg,#2B7FFF,#8B5CF6)',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:'14px',fontWeight:'600'}}>
+                    {(p.nom || "M")[0]?.toUpperCase()}
+                  </div>
+                )}
+                <div style={{fontSize:'14px',color:'#1a1a2e',fontWeight:'500'}}>{p.nom || "Membre"}</div>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
     </main>
   )
 }

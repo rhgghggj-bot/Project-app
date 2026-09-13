@@ -8,6 +8,7 @@ const COULEURS = ["#2B7FFF","#F43F5E","#10B981","#D4A843","#8B5CF6","#F59E0B","#
 export default function Profile() {
   const [projets, setProjets] = useState<any[]>([])
   const [nbFollowers, setNbFollowers] = useState(0)
+  const [nbAbonnements, setNbAbonnements] = useState(0)
   const [user, setUser] = useState<any>(null)
   const [profil, setProfil] = useState<any>(null)
   const [onglet, setOnglet] = useState("projets")
@@ -33,6 +34,8 @@ export default function Profile() {
         setProjets(data || [])
         const { count } = await supabase.from("app_followers").select("*", { count: "exact", head: true }).eq("suivi_id", user.id)
         setNbFollowers(count || 0)
+        const { count: countAb } = await supabase.from("app_followers").select("*", { count: "exact", head: true }).eq("follower_id", user.id)
+        setNbAbonnements(countAb || 0)
       }
     }
     charger()
@@ -95,7 +98,7 @@ export default function Profile() {
         </div>
 
         <div style={{fontSize:'18px',fontWeight:'500',color:'#1a1a2e'}}>{profil?.nom || user?.email}</div>
-        <div style={{fontSize:'13px',color:'#2B7FFF',fontWeight:'500',marginTop:'2px'}}>{nbFollowers} follower{nbFollowers>1?'s':''}</div>
+        <div style={{fontSize:'13px',color:'#2B7FFF',fontWeight:'500',marginTop:'2px'}}>{nbFollowers} follower{nbFollowers>1?'s':''} · {nbAbonnements} abonnement{nbAbonnements>1?'s':''}</div>
         {profil?.ville && <div style={{fontSize:'13px',color:'#aaa',marginTop:'2px'}}>{profil.ville}</div>}
         {profil?.bio && <div style={{fontSize:'13px',color:'#666',marginTop:'6px',lineHeight:'1.5',marginBottom:'8px'}}>{profil.bio}</div>}
 
