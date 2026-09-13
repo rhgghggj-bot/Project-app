@@ -40,7 +40,7 @@ export default function NouveauProjet() {
     else { setMessage("Projet publié !"); setTimeout(() => window.location.href = "/profile", 1500) }
   }
 
-  const cats = ["Tech","Restauration","Commerce","Musique","Art","Sport","Education","Autre"]
+  const cats = ["Tech","Restauration","Commerce","Musique","Art","Sport","Éducation","Autre"]
 
   return (
     <main style={{minHeight:'100vh',background:'#f8faff'}}>

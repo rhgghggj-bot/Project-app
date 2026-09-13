@@ -12,6 +12,8 @@ export default function Home() {
   const [evenements, setEvenements] = useState<any[]>([])
   const [depenses, setDepenses] = useState<any[]>([])
   const [revenus, setRevenus] = useState<any[]>([])
+  const [likesProjets, setLikesProjets] = useState<any[]>([])
+  const [commentairesCount, setCommentairesCount] = useState<Record<string, number>>({})
 
   useEffect(() => {
     async function charger() {
@@ -23,6 +25,14 @@ export default function Home() {
       }
       const { data: p } = await supabase.from("projets").select("*").is("groupe_id", null).eq("prive", false).order("created_at", { ascending: false })
       setProjets(p || [])
+      const { data: lp } = await supabase.from("projets_likes").select("*")
+      setLikesProjets(lp || [])
+      const { data: com } = await supabase.from("commentaires").select("projet_id")
+      if (com) {
+        const compte: Record<string, number> = {}
+        com.forEach((c: any) => { compte[c.projet_id] = (compte[c.projet_id] || 0) + 1 })
+        setCommentairesCount(compte)
+      }
       if (user) {
         await syncActivitesGroupeVersCalendrier(user.id)
         const { data: e } = await supabase.from("evenements_calendrier").select("*").eq("user_id", user.id)
@@ -35,6 +45,19 @@ export default function Home() {
     }
     charger()
   }, [])
+
+  async function toggleLikeProjet(projetId: string) {
+    if (!user) { window.location.href = "/connexion"; return }
+    const dejaLike = likesProjets.find(l => l.projet_id === projetId && l.user_id === user.id)
+    if (dejaLike) {
+      await supabase.from("projets_likes").delete().eq("id", dejaLike.id)
+      setLikesProjets(prev => prev.filter(l => l.id !== dejaLike.id))
+    } else {
+      const { data } = await supabase.from("projets_likes").insert({ projet_id: projetId, user_id: user.id }).select().single()
+      if (data) setLikesProjets(prev => [...prev, data])
+    }
+  }
+
 
   const today = new Date()
   const getLundi = () => {
@@ -239,7 +262,7 @@ export default function Home() {
           <div style={{fontSize:'11px',color:'#aaa',marginBottom:'4px'}}>Réseau Nexia</div>
           <div style={{fontSize:'20px',fontWeight:'500',color:'#1a1a2e',marginBottom:'12px'}}>Découvrir</div>
           <div style={{display:'flex',gap:'8px',overflowX:'auto',paddingBottom:'4px'}}>
-            {['Tous','Tech','Business','Art','Sport','Education','Sante','Autre'].map(cat => (
+            {['Tous','Tech','Business','Art','Sport','Éducation','Santé','Autre'].map(cat => (
               <button key={cat} onClick={() => setCategorie(cat)}
                 style={{whiteSpace:'nowrap',padding:'6px 14px',borderRadius:'99px',border:'none',cursor:'pointer',fontSize:'12px',fontWeight:'500',
                   background: categorie === cat ? '#2B7FFF' : '#EEF5FF',
@@ -300,8 +323,12 @@ export default function Home() {
           {projets
             .filter((p: any) => categorie === 'Tous' || p.categorie === categorie)
             .filter((p: any) => p.id !== (projets.filter((pr: any) => categorie === 'Tous' || pr.categorie === categorie)[0]?.id))
-            .map((projet: any) => (
-            <a key={projet.id} href={'/projet/'+projet.id} style={{textDecoration:'none',display:'block',marginBottom:'10px'}}>
+            .map((projet: any) => {
+              const nbLikes = likesProjets.filter(l => l.projet_id === projet.id).length
+              const jaimeMoi = likesProjets.some(l => l.projet_id === projet.id && l.user_id === user?.id)
+              const nbCommentaires = commentairesCount[projet.id] || 0
+              return (
+            <div key={projet.id} onClick={() => window.location.href = '/projet/'+projet.id} style={{cursor:'pointer',display:'block',marginBottom:'10px'}}>
               <div style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'16px',padding:'14px'}}>
                 <div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'10px'}}>
                   <div style={{width:'40px',height:'40px',borderRadius:'12px',background:'linear-gradient(135deg,#EEF5FF,#DCE9FF)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
@@ -316,31 +343,31 @@ export default function Home() {
                   </div>
                 </div>
                 <div style={{fontSize:'12px',color:'#666',marginBottom:'12px',lineHeight:'1.5'}}>{projet.description}</div>
-                <div style={{background:'#F8FBFF',borderRadius:'10px',padding:'8px 12px',marginBottom:'10px'}}>
-                  <div style={{display:'flex',justifyContent:'space-between',fontSize:'12px',marginBottom:'4px'}}>
-                    <span style={{color:'#666'}}>Cagnotte</span>
-                    <span style={{fontWeight:'500',color:'#2B7FFF'}}>0 / 1 000 CHF</span>
-                  </div>
-                  <div style={{height:'4px',background:'#DCE9FF',borderRadius:'99px'}}></div>
-                </div>
                 <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
                   <div style={{display:'flex',gap:'12px'}}>
-                    <span style={{fontSize:'12px',color:'#aaa',display:'flex',alignItems:'center',gap:'4px'}}>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-                      0
-                    </span>
+                    <button onClick={e => { e.stopPropagation(); toggleLikeProjet(projet.id) }}
+                      style={{background:'none',border:'none',padding:0,cursor:'pointer',fontSize:'12px',color: jaimeMoi ? '#F43F5E' : '#aaa',display:'flex',alignItems:'center',gap:'4px'}}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill={jaimeMoi ? '#F43F5E' : 'none'} stroke="currentColor" strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                      {nbLikes}
+                    </button>
                     <span style={{fontSize:'12px',color:'#aaa',display:'flex',alignItems:'center',gap:'4px'}}>
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                      0
+                      {nbCommentaires}
                     </span>
                   </div>
-                  <button style={{background:'#D4A843',color:'#fff',fontSize:'11px',fontWeight:'500',padding:'6px 14px',borderRadius:'99px',border:'none',cursor:'pointer'}}>
-                    Soutenir
-                  </button>
+                  {projet.image_url ? (
+                    <a href={projet.image_url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
+                      style={{background:'#D4A843',color:'#fff',fontSize:'11px',fontWeight:'500',padding:'6px 14px',borderRadius:'99px',border:'none',cursor:'pointer',textDecoration:'none'}}>
+                      Soutenir
+                    </a>
+                  ) : (
+                    <span style={{fontSize:'11px',color:'#ccc'}}>Pas de lien de soutien</span>
+                  )}
                 </div>
               </div>
-            </a>
-          ))}
+            </div>
+              )
+          })}
 
           {user && (
             <a href="/nouveau-projet" style={{textDecoration:'none',display:'block',marginTop:'8px'}}>
