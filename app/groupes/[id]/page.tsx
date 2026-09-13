@@ -140,7 +140,7 @@ export default function GroupePage() {
     channelRef.current = supabase
       .channel(nomCanal)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages_groupe', filter: 'groupe_id=eq.' + id },
-        (payload) => setMessages(prev => [...prev, payload.new]))
+        (payload) => setMessages(prev => prev.some(m => m.id === payload.new.id) ? prev : [...prev, payload.new]))
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages_groupe', filter: 'groupe_id=eq.' + id },
         (payload) => setMessages(prev => prev.map(m => m.id === payload.new.id ? payload.new : m)))
       .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'messages_groupe', filter: 'groupe_id=eq.' + id },
