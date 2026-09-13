@@ -117,6 +117,8 @@ function FinancesContent() {
 
   function haptic(t='light') { if(typeof navigator !== 'undefined' && navigator.vibrate) { if(t==='light') navigator.vibrate(10); else if(t==='success') navigator.vibrate([10,30,10]); else if(t==='error') navigator.vibrate([50,30,50]); } }
 
+  function fermerForm() { setShowForm(false); setTitre(""); setMontant(""); setCategorie(""); setRecurrent(false) }
+
   async function ajouter() {
     if (!titre || !montant) { haptic("error"); return }
     const table = typeForm === "depense" ? "depenses" : "revenus"
@@ -278,7 +280,7 @@ function FinancesContent() {
               </svg>
               <div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center'}}>
                 <div style={{fontSize:'17px',fontWeight:'700',color:'#fff'}}>{pctDepenses.toFixed(0)}%</div>
-                <div style={{fontSize:'8px',color:'rgba(255,255,255,0.5)',textTransform:'uppercase'}}>budget</div>
+                <div style={{fontSize:'8px',color:'rgba(255,255,255,0.5)'}}>Budget</div>
               </div>
             </div>
             <div style={{flex:1,minWidth:0}}>
@@ -494,7 +496,7 @@ function FinancesContent() {
                     ))}
                   </svg>
                   <div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center'}}>
-                    <div style={{fontSize:'9px',color:'#aaa',textTransform:'uppercase',letterSpacing:'.04em'}}>Total</div>
+                    <div style={{fontSize:'9px',color:'#aaa'}}>Total</div>
                     <div style={{fontSize:'16px',fontWeight:'600',color:'#1a1a2e'}}>{conv(totalDep).toFixed(0)}</div>
                     <div style={{fontSize:'10px',color:'#aaa'}}>{devise}</div>
                   </div>
@@ -518,54 +520,17 @@ function FinancesContent() {
           })()}
 
           <div style={{display:'flex',gap:'8px',marginBottom:'12px'}}>
-            <button onClick={() => { setTypeForm("depense"); setShowForm(!showForm) }}
+            <button onClick={() => { setTypeForm("depense"); setShowForm(true) }}
               style={{flex:1,background:'#FFE4E6',color:'#F43F5E',fontSize:'13px',fontWeight:'500',padding:'10px',borderRadius:'12px',border:'none',cursor:'pointer'}}>
               Dépense
             </button>
-            <button onClick={() => { setTypeForm("revenu"); setShowForm(!showForm) }}
+            <button onClick={() => { setTypeForm("revenu"); setShowForm(true) }}
               style={{flex:1,background:'#E1F5EE',color:'#10B981',fontSize:'13px',fontWeight:'500',padding:'10px',borderRadius:'12px',border:'none',cursor:'pointer'}}>
               Revenu
             </button>
           </div>
 
-          {showForm && (
-            <div style={{background: typeForm === "depense" ? '#FFF5F5' : '#F0FFF8',borderRadius:'16px',padding:'14px',marginBottom:'12px',border:`0.5px solid ${typeForm === "depense" ? '#FECDD3' : '#A7F3D0'}`}}>
-              <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',marginBottom:'10px'}}>{typeForm === "depense" ? 'Nouvelle dépense' : 'Nouveau revenu'}</div>
-              <input value={titre} onChange={e => setTitre(e.target.value)} placeholder={typeForm === "depense" ? "Ex: Loyer..." : "Ex: Salaire..."}
-                style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'8px 12px',fontSize:'13px',color:'#1a1a2e',background:'#fff',marginBottom:'8px'}}/>
-              <div style={{display:'flex',gap:'8px',marginBottom:'8px'}}>
-                <input value={montant} onChange={e => setMontant(e.target.value)} placeholder="Montant CHF" type="number"
-                  style={{flex:1,border:'1px solid #E8F1FF',borderRadius:'10px',padding:'8px 12px',fontSize:'13px',color:'#1a1a2e',background:'#fff'}}/>
-                <input value={date} onChange={e => setDate(e.target.value)} type="date"
-                  style={{flex:1,border:'1px solid #E8F1FF',borderRadius:'10px',padding:'8px 12px',fontSize:'13px',color:'#1a1a2e',background:'#fff'}}/>
-              </div>
-              <div style={{marginBottom:'10px'}}>
-                <div style={{fontSize:'11px',color:'#888',marginBottom:'6px'}}>Catégorie</div>
-                <div style={{display:'flex',flexWrap:'wrap',gap:'6px'}}>
-                  {(typeForm === "depense" ? CAT_DEPENSES : CAT_REVENUS).map(c => (
-                    <button key={c} type="button" onClick={() => setCategorie(c)}
-                      style={{display:'flex',alignItems:'center',gap:'5px',padding:'6px 10px',borderRadius:'99px',
-                        border: '1px solid ' + (categorie === c ? (typeForm === "depense" ? '#F43F5E' : '#10B981') : '#E8F1FF'),
-                        background: categorie === c ? (typeForm === "depense" ? '#F43F5E' : '#10B981') : '#fff',
-                        color: categorie === c ? '#fff' : '#666', fontSize:'11px', fontWeight:'500', cursor:'pointer'}}>
-                      <IconeCategorie cat={c} size={12}/>
-                      {c}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'10px'}}>
-                <input type="checkbox" checked={recurrent} onChange={e => setRecurrent(e.target.checked)} id="rec"/>
-                <label htmlFor="rec" style={{fontSize:'13px',color:'#666'}}>Récurrent (mensuel)</label>
-              </div>
-              <button onClick={ajouter}
-                style={{width:'100%',background: typeForm === "depense" ? '#F43F5E' : '#10B981',color:'#fff',fontSize:'13px',fontWeight:'500',padding:'10px',borderRadius:'10px',border:'none',cursor:'pointer'}}>
-                Enregistrer
-              </button>
-            </div>
-          )}
-
-          <div style={{fontSize:'11px',color:'#aaa',textTransform:'uppercase',letterSpacing:'0.07em',fontWeight:'500',marginBottom:'10px'}}>
+          <div style={{fontSize:'11px',color:'#aaa',fontWeight:'500',marginBottom:'10px'}}>
             {moisSelectionne ? `${moisSelectionne.label} ${moisSelectionne.annee}` : 'Ce mois'}
           </div>
 
@@ -586,45 +551,10 @@ function FinancesContent() {
       {onglet === "revenus" && (
         <div style={{padding:'16px 18px'}}>
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'12px'}}>
-            <div style={{fontSize:'11px',color:'#aaa',textTransform:'uppercase',letterSpacing:'0.07em',fontWeight:'500'}}>Tous les revenus</div>
-            <button onClick={() => { setTypeForm("revenu"); setShowForm(!showForm) }}
+            <div style={{fontSize:'11px',color:'#aaa',fontWeight:'500'}}>Tous les revenus</div>
+            <button onClick={() => { setTypeForm("revenu"); setShowForm(true) }}
               style={{fontSize:'12px',background:'#10B981',color:'#fff',border:'none',padding:'6px 14px',borderRadius:'99px',cursor:'pointer',fontWeight:'500'}}>+ Revenu</button>
           </div>
-          {showForm && (
-            <div style={{background:'#F0FFF8',borderRadius:'16px',padding:'14px',marginBottom:'12px',border:'0.5px solid #A7F3D0'}}>
-              <input value={titre} onChange={e => setTitre(e.target.value)} placeholder="Ex: Salaire juin"
-                style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'8px 12px',fontSize:'13px',color:'#1a1a2e',background:'#fff',marginBottom:'8px'}}/>
-              <div style={{display:'flex',gap:'8px',marginBottom:'8px'}}>
-                <input value={montant} onChange={e => setMontant(e.target.value)} placeholder="Montant" type="number"
-                  style={{flex:1,border:'1px solid #E8F1FF',borderRadius:'10px',padding:'8px 12px',fontSize:'13px',color:'#1a1a2e',background:'#fff'}}/>
-                <input value={date} onChange={e => setDate(e.target.value)} type="date"
-                  style={{flex:1,border:'1px solid #E8F1FF',borderRadius:'10px',padding:'8px 12px',fontSize:'13px',color:'#1a1a2e',background:'#fff'}}/>
-              </div>
-              <div style={{marginBottom:'10px'}}>
-                <div style={{fontSize:'11px',color:'#888',marginBottom:'6px'}}>Catégorie</div>
-                <div style={{display:'flex',flexWrap:'wrap',gap:'6px'}}>
-                  {CAT_REVENUS.map(c => (
-                    <button key={c} type="button" onClick={() => setCategorie(c)}
-                      style={{display:'flex',alignItems:'center',gap:'5px',padding:'6px 10px',borderRadius:'99px',
-                        border: '1px solid ' + (categorie === c ? '#10B981' : '#E8F1FF'),
-                        background: categorie === c ? '#10B981' : '#fff',
-                        color: categorie === c ? '#fff' : '#666', fontSize:'11px', fontWeight:'500', cursor:'pointer'}}>
-                      <IconeCategorie cat={c} size={12}/>
-                      {c}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'10px'}}>
-                <input type="checkbox" checked={recurrent} onChange={e => setRecurrent(e.target.checked)} id="rec2"/>
-                <label htmlFor="rec2" style={{fontSize:'13px',color:'#666'}}>Récurrent (mensuel)</label>
-              </div>
-              <button onClick={ajouter}
-                style={{width:'100%',background:'#10B981',color:'#fff',fontSize:'13px',fontWeight:'500',padding:'10px',borderRadius:'10px',border:'none',cursor:'pointer'}}>
-                Enregistrer
-              </button>
-            </div>
-          )}
           {revenus.length === 0 && (
             <div style={{textAlign:'center',padding:'32px 0',color:'#aaa'}}>
               <svg width='32' height='32' viewBox='0 0 24 24' fill='none' stroke='#aaa' strokeWidth='1.5' style={{marginBottom:'8px'}}><line x1='12' y1='1' x2='12' y2='23'/><path d='M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6'/></svg>
@@ -637,7 +567,7 @@ function FinancesContent() {
 
       {onglet === "charges" && (
         <div style={{padding:'16px 18px'}}>
-          <div style={{fontSize:'11px',color:'#aaa',textTransform:'uppercase',letterSpacing:'0.07em',fontWeight:'500',marginBottom:'10px'}}>Charges fixes mensuelles</div>
+          <div style={{fontSize:'11px',color:'#aaa',fontWeight:'500',marginBottom:'10px'}}>Charges fixes mensuelles</div>
           {depenses.filter(d => d.recurrent).length === 0 && revenus.filter(r => r.recurrent).length === 0 && (
             <div style={{textAlign:'center',padding:'32px 0',color:'#aaa'}}>
               <svg width='32' height='32' viewBox='0 0 24 24' fill='none' stroke='#aaa' strokeWidth='1.5' style={{marginBottom:'8px'}}><polyline points='23 4 23 10 17 10'/><polyline points='1 20 1 14 7 14'/><path d='M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15'/></svg>
@@ -711,7 +641,7 @@ function FinancesContent() {
 
                   <div style={{display:'flex',gap:'10px',marginBottom:'16px'}}>
                     <div style={{flex:1}}>
-                      <div style={{fontSize:'11px',color:'rgba(255,255,255,0.6)',marginBottom:'6px',textTransform:'uppercase',letterSpacing:'.05em'}}>Années</div>
+                      <div style={{fontSize:'11px',color:'rgba(255,255,255,0.6)',marginBottom:'6px'}}>Années</div>
                       <div style={{background:'#fff',borderRadius:'12px',padding:'10px 14px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
                         <button onClick={() => { const na = Math.max(0, annees-1); setAnnees(na); setDureeObjectif(na*12+moisExtra) }}
                           style={{width:'32px',height:'32px',borderRadius:'50%',background:'#EEF5FF',border:'none',fontSize:'20px',color:'#2B7FFF',cursor:'pointer',lineHeight:'1'}}>−</button>
@@ -724,7 +654,7 @@ function FinancesContent() {
                       </div>
                     </div>
                     <div style={{flex:1}}>
-                      <div style={{fontSize:'11px',color:'rgba(255,255,255,0.6)',marginBottom:'6px',textTransform:'uppercase',letterSpacing:'.05em'}}>Mois</div>
+                      <div style={{fontSize:'11px',color:'rgba(255,255,255,0.6)',marginBottom:'6px'}}>Mois</div>
                       <div style={{background:'#fff',borderRadius:'12px',padding:'10px 14px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
                         <button onClick={() => { const nm = Math.max(0, moisExtra-1); setMoisExtra(nm); setDureeObjectif(annees*12+nm) }}
                           style={{width:'32px',height:'32px',borderRadius:'50%',background:'#EEF5FF',border:'none',fontSize:'20px',color:'#2B7FFF',cursor:'pointer',lineHeight:'1'}}>−</button>
@@ -790,6 +720,49 @@ function FinancesContent() {
 
           {/* Onglet placements */}
           <PlacementsSection />
+        </div>
+      )}
+
+      {showForm && (
+        <div onClick={fermerForm} style={{position:'fixed',inset:0,background:'rgba(10,22,40,0.45)',zIndex:100,display:'flex',alignItems:'flex-end'}}>
+          <div onClick={e => e.stopPropagation()} style={{width:'100%',maxHeight:'86vh',overflowY:'auto',background:'#fff',borderRadius:'22px 22px 0 0',padding:'10px 18px 24px',boxShadow:'0 -8px 30px rgba(0,0,0,0.15)'}}>
+            <div style={{width:'36px',height:'4px',background:'#E8F1FF',borderRadius:'99px',margin:'6px auto 14px'}}></div>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'14px'}}>
+              <div style={{fontSize:'15px',fontWeight:'600',color:'#1a1a2e'}}>{typeForm === "depense" ? 'Nouvelle dépense' : 'Nouveau revenu'}</div>
+              <button onClick={fermerForm} style={{background:'#F5F8FC',border:'none',borderRadius:'50%',width:'28px',height:'28px',fontSize:'15px',color:'#888',cursor:'pointer'}}>×</button>
+            </div>
+            <input value={titre} onChange={e => setTitre(e.target.value)} placeholder={typeForm === "depense" ? "Ex: Loyer..." : "Ex: Salaire..."}
+              style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 12px',fontSize:'14px',color:'#1a1a2e',background:'#F8FBFF',marginBottom:'10px',boxSizing:'border-box'}}/>
+            <div style={{display:'flex',gap:'8px',marginBottom:'10px'}}>
+              <input value={montant} onChange={e => setMontant(e.target.value)} placeholder="Montant" type="number"
+                style={{flex:1,border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 12px',fontSize:'14px',color:'#1a1a2e',background:'#F8FBFF'}}/>
+              <input value={date} onChange={e => setDate(e.target.value)} type="date"
+                style={{flex:1,border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 12px',fontSize:'14px',color:'#1a1a2e',background:'#F8FBFF'}}/>
+            </div>
+            <div style={{marginBottom:'12px'}}>
+              <div style={{fontSize:'11px',color:'#888',marginBottom:'6px'}}>Catégorie</div>
+              <div style={{display:'flex',flexWrap:'wrap',gap:'6px'}}>
+                {(typeForm === "depense" ? CAT_DEPENSES : CAT_REVENUS).map(c => (
+                  <button key={c} type="button" onClick={() => setCategorie(c)}
+                    style={{display:'flex',alignItems:'center',gap:'5px',padding:'6px 10px',borderRadius:'99px',
+                      border: '1px solid ' + (categorie === c ? (typeForm === "depense" ? '#F43F5E' : '#10B981') : '#E8F1FF'),
+                      background: categorie === c ? (typeForm === "depense" ? '#F43F5E' : '#10B981') : '#fff',
+                      color: categorie === c ? '#fff' : '#666', fontSize:'11px', fontWeight:'500', cursor:'pointer'}}>
+                    <IconeCategorie cat={c} size={12}/>
+                    {c}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'14px'}}>
+              <input type="checkbox" checked={recurrent} onChange={e => setRecurrent(e.target.checked)} id="rec"/>
+              <label htmlFor="rec" style={{fontSize:'13px',color:'#666'}}>Récurrent (mensuel)</label>
+            </div>
+            <button onClick={ajouter}
+              style={{width:'100%',background: typeForm === "depense" ? '#F43F5E' : '#10B981',color:'#fff',fontSize:'14px',fontWeight:'600',padding:'13px',borderRadius:'12px',border:'none',cursor:'pointer'}}>
+              Enregistrer
+            </button>
+          </div>
         </div>
       )}
 

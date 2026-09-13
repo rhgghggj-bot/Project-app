@@ -3,11 +3,11 @@ import { useState } from "react"
 import Tutorial from "./Tutorial"
 
 const CANTONS: any = {
-  GE:{nom:'Geneve',t:[{m:20000,r:.053},{m:40000,r:.072},{m:60000,r:.091},{m:80000,r:.107},{m:100000,r:.114},{m:150000,r:.120},{m:1e9,r:.130}],ef:13000,em:8000},
+  GE:{nom:'Genève',t:[{m:20000,r:.053},{m:40000,r:.072},{m:60000,r:.091},{m:80000,r:.107},{m:100000,r:.114},{m:150000,r:.120},{m:1e9,r:.130}],ef:13000,em:8000},
   VD:{nom:'Vaud',t:[{m:20000,r:.048},{m:40000,r:.068},{m:60000,r:.088},{m:80000,r:.105},{m:100000,r:.118},{m:150000,r:.128},{m:1e9,r:.138}],ef:9000,em:6700},
   VS:{nom:'Valais',t:[{m:20000,r:.038},{m:40000,r:.055},{m:60000,r:.072},{m:80000,r:.085},{m:100000,r:.095},{m:150000,r:.105},{m:1e9,r:.115}],ef:8500,em:6000},
   FR:{nom:'Fribourg',t:[{m:20000,r:.042},{m:40000,r:.060},{m:60000,r:.078},{m:80000,r:.092},{m:100000,r:.103},{m:150000,r:.112},{m:1e9,r:.122}],ef:8000,em:6000},
-  NE:{nom:'Neuchatel',t:[{m:20000,r:.050},{m:40000,r:.072},{m:60000,r:.093},{m:80000,r:.110},{m:100000,r:.122},{m:150000,r:.132},{m:1e9,r:.140}],ef:8500,em:6700},
+  NE:{nom:'Neuchâtel',t:[{m:20000,r:.050},{m:40000,r:.072},{m:60000,r:.093},{m:80000,r:.110},{m:100000,r:.122},{m:150000,r:.132},{m:1e9,r:.140}],ef:8500,em:6700},
   JU:{nom:'Jura',t:[{m:20000,r:.045},{m:40000,r:.065},{m:60000,r:.084},{m:80000,r:.099},{m:100000,r:.110},{m:150000,r:.120},{m:1e9,r:.130}],ef:8000,em:6000}
 }
 
@@ -64,21 +64,22 @@ export default function FiscaliteSection() {
     <div>
       <Tutorial page="fiscalite" />
       <div style={{display:'flex',gap:'8px',marginBottom:'16px'}}>
-        {['ch','fr','sn'].map(p => (
-          <button key={p} onClick={() => setPays(p)}
-            style={{flex:1,padding:'8px',borderRadius:'10px',border:'none',cursor:'pointer',fontSize:'11px',fontWeight:'500',
-              background: pays===p ? '#2B7FFF' : '#EEF5FF',
-              color: pays===p ? '#fff' : '#2B7FFF'}}>
-            {p==='ch' ? '🇨🇭 Suisse' : p==='fr' ? '🇫🇷 France' : '🇸🇳 Senegal'}
+        {[{k:'ch',l:'Suisse'},{k:'fr',l:'France'},{k:'sn',l:'Sénégal'}].map(p => (
+          <button key={p.k} onClick={() => setPays(p.k)}
+            style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',gap:'6px',padding:'9px',borderRadius:'10px',border:'none',cursor:'pointer',fontSize:'12px',fontWeight:'500',
+              background: pays===p.k ? '#2B7FFF' : '#EEF5FF',
+              color: pays===p.k ? '#fff' : '#2B7FFF'}}>
+            <span style={{width:'18px',height:'18px',borderRadius:'50%',background: pays===p.k ? 'rgba(255,255,255,0.25)' : '#DCE9FF',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'9px',fontWeight:'700'}}>{p.k.toUpperCase()}</span>
+            {p.l}
           </button>
         ))}
       </div>
       {pays === 'sn' ? (
         <div>
           <div style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'14px',padding:'14px',marginBottom:'10px'}}>
-            <div style={{fontSize:'13px',fontWeight:'600',color:'#1a1a2e',marginBottom:'8px'}}>Bareme IRPP 2025</div>
-            <div style={{fontSize:'12px',color:'#666',marginBottom:'8px'}}>Abattement 30% sur salaire max 900 000 XOF/an</div>
-            {[['0 a 630 000 XOF','0%','#10B981'],['630 001 a 1 500 000 XOF','20%','#2B7FFF'],['1 500 001 a 4 000 000 XOF','25%','#2B7FFF'],['4 000 001 a 8 000 000 XOF','30%','#D4A843'],['8 000 001 a 13 500 000 XOF','35%','#F43F5E'],['Au-dela 13 500 000 XOF','37-43%','#F43F5E']].map(([t,r,col],i) => (
+            <div style={{fontSize:'13px',fontWeight:'600',color:'#1a1a2e',marginBottom:'8px'}}>Barème IRPP 2025</div>
+            <div style={{fontSize:'12px',color:'#666',marginBottom:'8px'}}>Abattement de 30% sur le salaire, plafonné à 900 000 XOF/an</div>
+            {[['0 à 630 000 XOF','0%','#10B981'],['630 001 à 1 500 000 XOF','20%','#2B7FFF'],['1 500 001 à 4 000 000 XOF','25%','#2B7FFF'],['4 000 001 à 8 000 000 XOF','30%','#D4A843'],['8 000 001 à 13 500 000 XOF','35%','#F43F5E'],['Au-delà de 13 500 000 XOF','37 à 43%','#F43F5E']].map(([t,r,col],i) => (
               <div key={i} style={{display:'flex',justifyContent:'space-between',padding:'7px 10px',background:'#F8FBFF',borderRadius:'8px',marginBottom:'4px'}}>
                 <span style={{fontSize:'12px',color:'#444'}}>{t}</span>
                 <span style={{fontSize:'12px',fontWeight:'600',color:col}}>{r}</span>
@@ -87,7 +88,7 @@ export default function FiscaliteSection() {
           </div>
           <div style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'14px',padding:'14px'}}>
             <div style={{fontSize:'13px',fontWeight:'600',color:'#1a1a2e',marginBottom:'8px'}}>Placements disponibles</div>
-            {[['Bons du Tresor 1-10 ans','6.4-6.95%','#10B981'],['BRVM Actions Sonatel CBAO','8-10%/an','#10B981'],['Diaspora Bonds UEMOA','6%/an','#D4A843'],['Fonds OPCVM Jappoo CGF','5-8%/an','#10B981']].map(([n,r,col],i) => (
+            {[['Bons du Trésor 1 à 10 ans','6,4 à 6,95%','#10B981'],['BRVM Actions Sonatel CBAO','8 à 10% / an','#10B981'],['Diaspora Bonds UEMOA','6% / an','#D4A843'],['Fonds OPCVM Jappoo CGF','5 à 8% / an','#10B981']].map(([n,r,col],i) => (
               <div key={i} style={{display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom:i<3?'0.5px solid #F0F0F0':'none'}}>
                 <span style={{fontSize:'12px',color:'#444'}}>{n}</span>
                 <span style={{fontSize:'12px',fontWeight:'600',color:col}}>{r}</span>
@@ -99,11 +100,11 @@ export default function FiscaliteSection() {
         <div>
         <div style={{fontSize:'14px',fontWeight:'500',color:'#1a1a2e',marginBottom:'12px'}}>Calculateur fiscal 2025</div>
       <div style={{display:'flex',gap:'6px',overflowX:'auto',paddingBottom:'8px',marginBottom:'14px'}}>
-        {['revenus','deductions','situation','resultat'].map(o => (
-          <button key={o} onClick={()=>setOnglet(o)}
+        {[{k:'revenus',l:'Revenus'},{k:'deductions',l:'Déductions'},{k:'situation',l:'Situation'},{k:'resultat',l:'Résultat'}].map(o => (
+          <button key={o.k} onClick={()=>setOnglet(o.k)}
             style={{whiteSpace:'nowrap',padding:'6px 14px',borderRadius:'99px',border:'none',cursor:'pointer',fontSize:'12px',fontWeight:'500',
-              background:onglet===o?'#2B7FFF':'#F8FBFF',color:onglet===o?'#fff':'#666'}}>
-            {o.charAt(0).toUpperCase()+o.slice(1)}
+              background:onglet===o.k?'#2B7FFF':'#F8FBFF',color:onglet===o.k?'#fff':'#666'}}>
+            {o.l}
           </button>
         ))}
       </div>
@@ -122,27 +123,27 @@ export default function FiscaliteSection() {
 
       {onglet==='deductions' && (
         <div style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'16px',padding:'14px',marginBottom:'12px'}}>
-          <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',marginBottom:'12px'}}>Mes deductions</div>
-          <div style={{fontSize:'11px',color:'#2B7FFF',fontWeight:'500',marginBottom:'8px'}}>PREVOYANCE</div>
+          <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',marginBottom:'12px'}}>Mes déductions</div>
+          <div style={{fontSize:'11px',color:'#2B7FFF',fontWeight:'600',marginBottom:'8px'}}>Prévoyance</div>
           <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>3e pilier 3a (max 7 258 CHF)</label>
           <input type="number" value={pilier3} onChange={e=>setPilier3(Number(e.target.value))} style={{...inp,marginBottom:'10px'}}/>
           <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Rachat 2e pilier (CHF)</label>
           <input type="number" value={pilier2} onChange={e=>setPilier2(Number(e.target.value))} style={{...inp,marginBottom:'10px'}}/>
-          <div style={{fontSize:'11px',color:'#2B7FFF',fontWeight:'500',margin:'4px 0 8px'}}>FRAIS PROFESSIONNELS</div>
+          <div style={{fontSize:'11px',color:'#2B7FFF',fontWeight:'600',margin:'4px 0 8px'}}>Frais professionnels</div>
           <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Transport (max 3 200 CHF)</label>
           <input type="number" value={transport} onChange={e=>setTransport(Number(e.target.value))} style={{...inp,marginBottom:'10px'}}/>
           <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Frais de repas (max 3 200 CHF)</label>
           <input type="number" value={repas} onChange={e=>setRepas(Number(e.target.value))} style={{...inp,marginBottom:'10px'}}/>
           <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Formation (max 12 700 CHF)</label>
           <input type="number" value={formation} onChange={e=>setFormation(Number(e.target.value))} style={{...inp,marginBottom:'10px'}}/>
-          <div style={{fontSize:'11px',color:'#2B7FFF',fontWeight:'500',margin:'4px 0 8px'}}>AUTRES DEDUCTIONS</div>
-          <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Interets hypothecaires (CHF)</label>
+          <div style={{fontSize:'11px',color:'#2B7FFF',fontWeight:'600',margin:'4px 0 8px'}}>Autres déductions</div>
+          <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Intérêts hypothécaires (CHF)</label>
           <input type="number" value={hypo} onChange={e=>setHypo(Number(e.target.value))} style={{...inp,marginBottom:'10px'}}/>
-          <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Primes maladie deductibles (CHF)</label>
+          <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Primes maladie déductibles (CHF)</label>
           <input type="number" value={maladie} onChange={e=>setMaladie(Number(e.target.value))} style={{...inp,marginBottom:'10px'}}/>
-          <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Dons associations (max 20%)</label>
+          <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Dons à des associations (max 20%)</label>
           <input type="number" value={dons} onChange={e=>setDons(Number(e.target.value))} style={{...inp,marginBottom:'10px'}}/>
-          <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Frais garde enfants (CHF)</label>
+          <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Frais de garde d'enfants (CHF)</label>
           <input type="number" value={garde} onChange={e=>setGarde(Number(e.target.value))} style={inp}/>
         </div>
       )}
@@ -150,17 +151,17 @@ export default function FiscaliteSection() {
       {onglet==='situation' && (
         <div style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'16px',padding:'14px',marginBottom:'12px'}}>
           <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',marginBottom:'12px'}}>Ma situation</div>
-          <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Canton de residence</label>
+          <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Canton de résidence</label>
           <select value={canton} onChange={e=>setCanton(e.target.value)} style={{...sel,marginBottom:'10px'}}>
             {Object.entries(CANTONS).map(([k,v]: any)=><option key={k} value={k}>{v.nom}</option>)}
           </select>
           <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Situation familiale</label>
           <select value={situation} onChange={e=>setSituation(e.target.value)} style={{...sel,marginBottom:'10px'}}>
-            <option value="cel">Celibataire</option>
-            <option value="mar">Marie(e)</option>
+            <option value="cel">Célibataire</option>
+            <option value="mar">Marié(e)</option>
             <option value="mon">Famille monoparentale</option>
           </select>
-          <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Nombre enfants</label>
+          <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Nombre d'enfants</label>
           <select value={enfants} onChange={e=>setEnfants(Number(e.target.value))} style={sel}>
             {[0,1,2,3,4].map(n=><option key={n} value={n}>{n===4?'4+':n}</option>)}
           </select>
@@ -170,37 +171,48 @@ export default function FiscaliteSection() {
       {onglet==='resultat' && (
         <div>
           <div style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'16px',padding:'14px',marginBottom:'12px'}}>
-            <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',marginBottom:'12px'}}>Resume fiscal 2025 — {c.nom}</div>
+            <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',marginBottom:'12px'}}>Résumé fiscal 2025 — {c.nom}</div>
             {[
               {l:'Revenu brut',v:brut.toLocaleString('fr-CH')+' CHF',col:'#1a1a2e'},
-              {l:'Total deductions',v:'−'+totDed.toLocaleString('fr-CH')+' CHF',col:'#10B981'},
+              {l:'Total des déductions',v:'−'+totDed.toLocaleString('fr-CH')+' CHF',col:'#10B981'},
               {l:'Revenu imposable',v:imposable.toLocaleString('fr-CH')+' CHF',col:'#2B7FFF'},
-              {l:'IFD federal',v:ifdV.toLocaleString('fr-CH')+' CHF',col:'#F43F5E'},
-              {l:'Impot cantonal',v:cantV.toLocaleString('fr-CH')+' CHF',col:'#F43F5E'},
+              {l:'IFD fédéral',v:ifdV.toLocaleString('fr-CH')+' CHF',col:'#F43F5E'},
+              {l:'Impôt cantonal',v:cantV.toLocaleString('fr-CH')+' CHF',col:'#F43F5E'},
             ].map((r,i)=>(
               <div key={i} style={{display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom:'0.5px solid #E8F1FF'}}>
                 <span style={{fontSize:'12px',color:'#666'}}>{r.l}</span>
                 <span style={{fontSize:'13px',fontWeight:'500',color:r.col}}>{r.v}</span>
               </div>
             ))}
-            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'8px',marginTop:'12px'}}>
-              <div style={{background:'#FFE4E6',border:'0.5px solid #FECDD3',borderRadius:'10px',padding:'10px 12px'}}>
-                <div style={{fontSize:'10px',color:'#F43F5E',marginBottom:'2px'}}>Impot total estime</div>
-                <div style={{fontSize:'16px',fontWeight:'500',color:'#F43F5E'}}>{total.toLocaleString('fr-CH')} CHF</div>
+
+            <div style={{display:'flex',alignItems:'center',gap:'16px',marginTop:'16px'}}>
+              <div style={{position:'relative',width:'84px',height:'84px',flexShrink:0}}>
+                <svg width="84" height="84" viewBox="0 0 84 84" style={{transform:'rotate(-90deg)'}}>
+                  <circle cx="42" cy="42" r="35" fill="none" stroke="#F5F8FC" strokeWidth="10"/>
+                  <circle cx="42" cy="42" r="35" fill="none" stroke="#F43F5E" strokeWidth="10"
+                    strokeDasharray={`${(Math.min(parseFloat(taux),100)/100) * 2 * Math.PI * 35} ${2 * Math.PI * 35}`}
+                    strokeLinecap="round"/>
+                </svg>
+                <div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center'}}>
+                  <div style={{fontSize:'15px',fontWeight:'700',color:'#1a1a2e'}}>{taux}%</div>
+                  <div style={{fontSize:'8px',color:'#aaa'}}>taux effectif</div>
+                </div>
               </div>
-              <div style={{background:'#E1F5EE',border:'0.5px solid #A7F3D0',borderRadius:'10px',padding:'10px 12px'}}>
-                <div style={{fontSize:'10px',color:'#10B981',marginBottom:'2px'}}>Taux effectif</div>
-                <div style={{fontSize:'16px',fontWeight:'500',color:'#10B981'}}>{taux}%</div>
+              <div style={{flex:1,display:'flex',flexDirection:'column',gap:'8px'}}>
+                <div style={{background:'#FFE4E6',border:'0.5px solid #FECDD3',borderRadius:'10px',padding:'8px 12px'}}>
+                  <div style={{fontSize:'10px',color:'#F43F5E',marginBottom:'2px'}}>Impôt total estimé</div>
+                  <div style={{fontSize:'15px',fontWeight:'600',color:'#F43F5E'}}>{total.toLocaleString('fr-CH')} CHF</div>
+                </div>
+                <div style={{background:'#E1F5EE',border:'0.5px solid #A7F3D0',borderRadius:'10px',padding:'8px 12px'}}>
+                  <div style={{fontSize:'10px',color:'#10B981',marginBottom:'2px'}}>Économie grâce aux déductions</div>
+                  <div style={{fontSize:'15px',fontWeight:'600',color:'#10B981'}}>+{eco.toLocaleString('fr-CH')} CHF</div>
+                </div>
               </div>
-            </div>
-            <div style={{background:'#EEF5FF',border:'0.5px solid #DCE9FF',borderRadius:'12px',padding:'12px',marginTop:'12px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-              <span style={{fontSize:'13px',fontWeight:'500',color:'#2B7FFF'}}>Economie deductions</span>
-              <span style={{fontSize:'18px',fontWeight:'500',color:'#10B981'}}>+{eco.toLocaleString('fr-CH')} CHF</span>
             </div>
           </div>
           <div style={{background:'#FDF8EC',border:'0.5px solid #F0D88A',borderRadius:'12px',padding:'12px'}}>
-            <div style={{fontSize:'12px',fontWeight:'500',color:'#D4A843',marginBottom:'4px'}}>Estimation uniquement</div>
-            <div style={{fontSize:'12px',color:'#666',lineHeight:'1.6'}}>Base sur les baremes 2025. Impot communal non inclus. Consultez un fiduciaire pour un calcul exact.</div>
+            <div style={{fontSize:'12px',fontWeight:'600',color:'#D4A843',marginBottom:'4px'}}>Estimation uniquement</div>
+            <div style={{fontSize:'12px',color:'#666',lineHeight:'1.6'}}>Basé sur les barèmes 2025. L'impôt communal n'est pas inclus. Consulte un fiduciaire pour un calcul exact.</div>
           </div>
         </div>
       )}
