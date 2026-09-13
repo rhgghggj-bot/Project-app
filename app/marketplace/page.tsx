@@ -93,9 +93,9 @@ export default function Marketplace() {
     setCommentaires(data || [])
     if (data && data.length > 0) {
       const ids = Array.from(new Set(data.map((c: any) => c.user_id)))
-      const { data: profs } = await supabase.from("profiles").select("id,prenom,nom").in("id", ids)
+      const { data: profs } = await supabase.from("profiles").select("id,nom").in("id", ids)
       const map: any = {}
-      profs?.forEach((p: any) => { map[p.id] = p.prenom || p.nom || "Membre" })
+      profs?.forEach((p: any) => { map[p.id] = p.nom || "Membre" })
       setProfilsCommentaires(map)
     }
   }
@@ -139,9 +139,9 @@ export default function Marketplace() {
     setAnnonces(data || [])
     if (data && data.length > 0) {
       const ids = Array.from(new Set(data.map((a: any) => a.user_id)))
-      const { data: profs } = await supabase.from("profiles").select("id,prenom,nom").in("id", ids)
+      const { data: profs } = await supabase.from("profiles").select("id,nom").in("id", ids)
       const map: any = {}
-      profs?.forEach((p: any) => { map[p.id] = p.prenom || p.nom || "Membre" })
+      profs?.forEach((p: any) => { map[p.id] = p.nom || "Membre" })
       setProfilsVendeurs(map)
     }
   }
@@ -340,19 +340,21 @@ export default function Marketplace() {
         <div style={{position:"absolute",top:"-40px",right:"-40px",width:"160px",height:"160px",borderRadius:"50%",background:"rgba(255,255,255,0.06)"}}></div>
         <div style={{fontSize:"22px",fontWeight:"600",color:"#fff",marginBottom:"4px"}}>Marketplace</div>
         <div style={{fontSize:"13px",color:"rgba(255,255,255,0.5)",marginBottom:"16px"}}>Achète, vends, échange</div>
-        <div style={{display:"flex",gap:"8px"}}>
-          <button onClick={() => setOnglet("portfolio")}
-            style={{flex:1,padding:"8px",borderRadius:"10px",border:"none",cursor:"pointer",fontSize:"13px",fontWeight:onglet==="portfolio"?"600":"400",background:onglet==="portfolio"?"#fff":"rgba(255,255,255,0.15)",color:onglet==="portfolio"?"#1a3a6e":"#fff"}}>
-            Mon portefeuille
-          </button>
+        <div style={{display:"flex",flexDirection:"column",gap:"8px"}}>
           <button onClick={() => setOnglet("decouvrir")}
-            style={{flex:1,padding:"8px",borderRadius:"10px",border:onglet==="decouvrir"?"none":"0.5px solid rgba(255,255,255,0.25)",cursor:"pointer",fontSize:"13px",fontWeight:onglet==="decouvrir"?"600":"400",background:onglet==="decouvrir"?"#fff":"rgba(255,255,255,0.15)",color:onglet==="decouvrir"?"#1a3a6e":"#fff"}}>
+            style={{width:"100%",padding:"12px",borderRadius:"12px",border:"none",cursor:"pointer",fontSize:"15px",fontWeight:onglet==="decouvrir"?"700":"500",background:onglet==="decouvrir"?"#fff":"rgba(255,255,255,0.18)",color:onglet==="decouvrir"?"#1a3a6e":"#fff"}}>
             Découvrir
           </button>
-          <button onClick={() => setOnglet("enregistres")}
-            style={{flex:1,padding:"8px",borderRadius:"10px",border:onglet==="enregistres"?"none":"0.5px solid rgba(255,255,255,0.25)",cursor:"pointer",fontSize:"13px",fontWeight:onglet==="enregistres"?"600":"400",background:onglet==="enregistres"?"#fff":"rgba(255,255,255,0.15)",color:onglet==="enregistres"?"#1a3a6e":"#fff"}}>
-            Enregistrés
-          </button>
+          <div style={{display:"flex",gap:"8px"}}>
+            <button onClick={() => setOnglet("portfolio")}
+              style={{flex:1,padding:"7px",borderRadius:"9px",border:onglet==="portfolio"?"none":"0.5px solid rgba(255,255,255,0.22)",cursor:"pointer",fontSize:"12px",fontWeight:onglet==="portfolio"?"600":"400",background:onglet==="portfolio"?"#fff":"rgba(255,255,255,0.08)",color:onglet==="portfolio"?"#1a3a6e":"rgba(255,255,255,0.8)"}}>
+              Mon portefeuille
+            </button>
+            <button onClick={() => setOnglet("enregistres")}
+              style={{flex:1,padding:"7px",borderRadius:"9px",border:onglet==="enregistres"?"none":"0.5px solid rgba(255,255,255,0.22)",cursor:"pointer",fontSize:"12px",fontWeight:onglet==="enregistres"?"600":"400",background:onglet==="enregistres"?"#fff":"rgba(255,255,255,0.08)",color:onglet==="enregistres"?"#1a3a6e":"rgba(255,255,255,0.8)"}}>
+              Enregistrés
+            </button>
+          </div>
         </div>
       </div>
 

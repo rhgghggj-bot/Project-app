@@ -222,6 +222,7 @@ function FinancesContent() {
   const solde = moisActuelData.revenus - moisActuelData.depenses
   const maxVal = Math.max(...donneesGraphique.map(d => Math.max(d.depenses, d.revenus)), 1)
   const pctDepenses = moisActuelData.revenus > 0 ? Math.min((moisActuelData.depenses / moisActuelData.revenus) * 100, 100) : 0
+  const pctEpargne = moisActuelData.revenus > 0 ? Math.max(0, Math.min(100 - pctDepenses, 100)) : 0
   const statutSolde = solde > 0 ? "benefice" : solde < 0 ? "deficit" : "equilibre"
   const couleurSolde = statutSolde === "benefice" ? "#10B981" : statutSolde === "deficit" ? "#F43F5E" : "#D4A843"
   const iconeSolde = ""
@@ -279,12 +280,12 @@ function FinancesContent() {
             <div style={{position:'relative',width:'84px',height:'84px',flexShrink:0}}>
               <svg width="84" height="84" viewBox="0 0 100 100" style={{transform:'rotate(-90deg)'}}>
                 <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="10"/>
-                <circle cx="50" cy="50" r="40" fill="none" stroke={pctDepenses > 90 ? '#F43F5E' : pctDepenses > 70 ? '#D4A843' : '#10B981'} strokeWidth="10"
-                  strokeDasharray={`${(Math.min(pctDepenses,100)/100) * 251.3} 251.3`} strokeLinecap="round" style={{transition:'all 0.4s'}}/>
+                <circle cx="50" cy="50" r="40" fill="none" stroke={pctEpargne < 10 ? '#F43F5E' : pctEpargne < 30 ? '#D4A843' : '#10B981'} strokeWidth="10"
+                  strokeDasharray={`${(Math.min(pctEpargne,100)/100) * 251.3} 251.3`} strokeLinecap="round" style={{transition:'all 0.4s'}}/>
               </svg>
               <div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center'}}>
-                <div style={{fontSize:'17px',fontWeight:'700',color:'#fff'}}>{pctDepenses.toFixed(0)}%</div>
-                <div style={{fontSize:'8px',color:'rgba(255,255,255,0.5)'}}>Budget</div>
+                <div style={{fontSize:'17px',fontWeight:'700',color:'#fff'}}>{pctEpargne.toFixed(0)}%</div>
+                <div style={{fontSize:'7px',color:'rgba(255,255,255,0.5)',lineHeight:1.2,textAlign:'center'}}>épargné<br/>des revenus</div>
               </div>
             </div>
             <div style={{flex:1,minWidth:0}}>
@@ -292,8 +293,8 @@ function FinancesContent() {
               <div style={{fontSize:'28px',fontWeight:'600',color:'#fff',marginBottom:'6px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
                 {solde >= 0 ? '+' : ''}{conv(solde).toFixed(0)} {devise}
               </div>
-              <div style={{fontSize:'11px',color: pctDepenses > 90 ? '#F43F5E' : pctDepenses > 70 ? '#D4A843' : '#10B981',fontWeight:'500',background: pctDepenses > 90 ? 'rgba(244,63,94,0.15)' : pctDepenses > 70 ? 'rgba(212,168,67,0.15)' : 'rgba(16,185,129,0.15)',display:'inline-block',padding:'3px 9px',borderRadius:'99px'}}>
-                {pctDepenses > 90 ? 'Attention' : pctDepenses > 70 ? 'Surveille' : 'Bon rythme'}
+              <div style={{fontSize:'11px',color: pctEpargne < 10 ? '#F43F5E' : pctEpargne < 30 ? '#D4A843' : '#10B981',fontWeight:'500',background: pctEpargne < 10 ? 'rgba(244,63,94,0.15)' : pctEpargne < 30 ? 'rgba(212,168,67,0.15)' : 'rgba(16,185,129,0.15)',display:'inline-block',padding:'3px 9px',borderRadius:'99px'}}>
+                {pctEpargne < 10 ? 'Attention' : pctEpargne < 30 ? 'Surveille' : 'Bon rythme'}
               </div>
             </div>
           </div>
