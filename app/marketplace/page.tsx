@@ -39,6 +39,10 @@ export default function Marketplace() {
   const [annonceOuverte, setAnnonceOuverte] = useState<any>(null)
   const [profilsVendeurs, setProfilsVendeurs] = useState<any>({})
   const [animCoeurs, setAnimCoeurs] = useState<Record<string, { id: number; x: number; delay: number; size: number; rot: number; couleur: string }[]>>({})
+  const [menuOuvertId, setMenuOuvertId] = useState<string | null>(null)
+  const [confirmSupprId, setConfirmSupprId] = useState<string | null>(null)
+  const [favoris, setFavoris] = useState<any[]>([])
+  const [signales, setSignales] = useState<string[]>([])
   const [likes, setLikes] = useState<any[]>([])
   const [commentaires, setCommentaires] = useState<any[]>([])
   const [profilsCommentaires, setProfilsCommentaires] = useState<any>({})
@@ -50,9 +54,34 @@ export default function Marketplace() {
       chargerAnnonces()
       chargerLikes()
       chargerCommentaires()
-      if (user) chargerArticles()
+      if (user) { chargerArticles(); chargerFavoris(user.id) }
     })
   }, [])
+
+  async function chargerFavoris(userId: string) {
+    const { data } = await supabase.from("marketplace_favoris").select("*").eq("user_id", userId)
+    setFavoris(data || [])
+  }
+
+  async function toggleFavori(annonceId: string) {
+    if (!user) { alert("Connecte-toi pour enregistrer une annonce"); return }
+    const dejaFavori = favoris.find(f => f.annonce_id === annonceId && f.user_id === user.id)
+    if (dejaFavori) {
+      await supabase.from("marketplace_favoris").delete().eq("id", dejaFavori.id)
+      setFavoris(prev => prev.filter(f => f.id !== dejaFavori.id))
+    } else {
+      const { data } = await supabase.from("marketplace_favoris").insert({ annonce_id: annonceId, user_id: user.id }).select().single()
+      if (data) setFavoris(prev => [...prev, data])
+    }
+    setMenuOuvertId(null)
+  }
+
+  async function signalerAnnonce(annonceId: string) {
+    if (!user) { alert("Connecte-toi pour signaler une annonce"); return }
+    await supabase.from("marketplace_signalements").insert({ annonce_id: annonceId, user_id: user.id })
+    setSignales(prev => [...prev, annonceId])
+    setMenuOuvertId(null)
+  }
 
   async function chargerLikes() {
     const { data } = await supabase.from("marketplace_likes").select("*")
@@ -347,7 +376,7 @@ export default function Marketplace() {
           </div>
 
           <style>{`@keyframes coeurVole { 0% { opacity: 0; transform: translateY(0) scale(0.3); } 12% { opacity: 1; transform: translateY(-6px) scale(1); } 100% { opacity: 0; transform: translateY(-120px) scale(1.1); } }`}</style>
-          <div style={{display:"flex",flexDirection:"column",gap:"18px"}}>
+          <div style={{display:"flex",flexDirection:"column",gap:"28px"}}>
             {annoncesFiltrees.map(a => {
               const nbLikes = likes.filter(l => l.annonce_id === a.id).length
               const jaime = likes.some(l => l.annonce_id === a.id && l.user_id === user?.id)
@@ -363,9 +392,36 @@ export default function Marketplace() {
                     <div style={{fontSize:"11px",color:"#aaa"}}>{a.categorie}</div>
                   </div>
                   {a.etat && <div style={{flexShrink:0,background:a.etat==="Neuf"?"#10B981":a.etat==="Urgent"?"#F43F5E":"#D4A843",borderRadius:"99px",padding:"3px 10px",fontSize:"10px",color:"#fff",fontWeight:"500"}}>{a.etat}</div>}
-                  {user && a.user_id === user.id && (
-                    <button onClick={() => supprimerAnnonce(a.id)} style={{background:"none",border:"none",color:"#ccc",cursor:"pointer",fontSize:"18px",marginLeft:"2px",flexShrink:0}}>×</button>
-                  )}
+                  <div style={{position:"relative",flexShrink:0}}>
+                    <button onClick={() => setMenuOuvertId(menuOuvertId===a.id?null:a.id)} style={{background:"none",border:"none",color:"#888",cursor:"pointer",padding:"4px",display:"flex"}}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>
+                    </button>
+                    {menuOuvertId === a.id && (() => {
+                      const estFavori = favoris.some(f => f.annonce_id === a.id && f.user_id === user?.id)
+                      const estSignale = signales.includes(a.id)
+                      return (
+                      <>
+                        <div onClick={() => setMenuOuvertId(null)} style={{position:"fixed",inset:0,zIndex:200}}/>
+                        <div style={{position:"absolute",top:"26px",right:0,background:"#fff",borderRadius:"12px",boxShadow:"0 6px 24px rgba(0,0,0,0.15)",border:"0.5px solid #E8F1FF",overflow:"hidden",zIndex:201,minWidth:"190px"}}>
+                          <button onClick={() => toggleFavori(a.id)} style={{width:"100%",textAlign:"left",padding:"11px 16px",background:"none",border:"none",fontSize:"13px",color:"#1a1a2e",cursor:"pointer",display:"flex",alignItems:"center",gap:"8px"}}>
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill={estFavori?"#2B7FFF":"none"} stroke="#2B7FFF" strokeWidth="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+                            {estFavori ? "Retirer des enregistrements" : "Enregistrer"}
+                          </button>
+                          <button onClick={() => signalerAnnonce(a.id)} disabled={estSignale} style={{width:"100%",textAlign:"left",padding:"11px 16px",background:"none",border:"none",borderTop:"0.5px solid #F0F4FA",fontSize:"13px",color: estSignale?"#aaa":"#1a1a2e",cursor: estSignale?"default":"pointer",display:"flex",alignItems:"center",gap:"8px"}}>
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+                            {estSignale ? "Publication signalée" : "Signaler la publication"}
+                          </button>
+                          {user && a.user_id === user.id && (
+                            <button onClick={() => { setMenuOuvertId(null); setConfirmSupprId(a.id) }} style={{width:"100%",textAlign:"left",padding:"11px 16px",background:"none",border:"none",borderTop:"0.5px solid #F0F4FA",fontSize:"13px",color:"#F43F5E",cursor:"pointer",display:"flex",alignItems:"center",gap:"8px"}}>
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#F43F5E" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+                              Retirer la publication
+                            </button>
+                          )}
+                        </div>
+                      </>
+                      )
+                    })()}
+                  </div>
                 </div>
 
                 <div onClick={() => onTapImage(a)}
@@ -404,8 +460,14 @@ export default function Marketplace() {
                   <div style={{padding:"4px 14px 0",fontSize:"13px",fontWeight:"600",color:"#1a1a2e"}}>{nbLikes} j'aime</div>
                 )}
 
-                <div style={{padding:"4px 14px 14px",fontSize:"13px",color:"#333",lineHeight:"1.5"}}>
-                  <span style={{fontWeight:"600",color:"#1a1a2e"}}>{vendeur} </span>{a.titre}
+                <div style={{padding:"4px 14px 16px",fontSize:"13px",color:"#333",lineHeight:"1.5"}}>
+                  <div><span style={{fontWeight:"600",color:"#1a1a2e"}}>{vendeur} </span>{a.titre}</div>
+                  {a.description && <div style={{marginTop:"4px",color:"#555"}}>{a.description}</div>}
+                  {commentaires.filter(c => c.annonce_id === a.id).length > 0 && (
+                    <button onClick={() => setAnnonceOuverte(a)} style={{background:"none",border:"none",padding:0,marginTop:"6px",fontSize:"12px",color:"#aaa",cursor:"pointer"}}>
+                      Voir les {commentaires.filter(c => c.annonce_id === a.id).length} commentaire{commentaires.filter(c => c.annonce_id === a.id).length>1?"s":""}
+                    </button>
+                  )}
                 </div>
               </div>
               )
@@ -414,6 +476,19 @@ export default function Marketplace() {
 
           {annoncesFiltrees.length === 0 && (
             <div style={{textAlign:"center",padding:"48px 0",color:"#aaa",fontSize:"13px"}}>Aucune annonce pour l'instant</div>
+          )}
+
+          {confirmSupprId && (
+            <div onClick={() => setConfirmSupprId(null)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",zIndex:2000,display:"flex",alignItems:"center",justifyContent:"center",padding:"20px"}}>
+              <div onClick={e => e.stopPropagation()} style={{background:"#fff",borderRadius:"18px",padding:"22px",maxWidth:"320px",width:"100%",textAlign:"center"}}>
+                <div style={{fontSize:"15px",fontWeight:"600",color:"#1a1a2e",marginBottom:"8px"}}>Retirer cette publication ?</div>
+                <div style={{fontSize:"13px",color:"#666",marginBottom:"18px",lineHeight:"1.5"}}>Cette action est définitive. La publication sera supprimée pour tout le monde.</div>
+                <div style={{display:"flex",gap:"8px"}}>
+                  <button onClick={() => setConfirmSupprId(null)} style={{flex:1,background:"#F5F8FC",color:"#666",border:"none",borderRadius:"10px",padding:"11px",fontSize:"13px",fontWeight:"500",cursor:"pointer"}}>Annuler</button>
+                  <button onClick={() => { supprimerAnnonce(confirmSupprId); setConfirmSupprId(null) }} style={{flex:1,background:"#F43F5E",color:"#fff",border:"none",borderRadius:"10px",padding:"11px",fontSize:"13px",fontWeight:"500",cursor:"pointer"}}>Supprimer</button>
+                </div>
+              </div>
+            </div>
           )}
 
           {annonceOuverte && (
