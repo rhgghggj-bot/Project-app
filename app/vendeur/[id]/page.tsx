@@ -26,7 +26,7 @@ export default function FicheVendeur() {
       setAnnonces(a || [])
       const { data: f } = await supabase.from("marketplace_followers").select("*").eq("suivi_id", vendeurId)
       setFollowers(f || [])
-      const { data: ab } = await supabase.from("marketplace_followers").select("*").eq("follower_id", vendeurId)
+      const { data: ab } = await supabase.from("marketplace_followers").select("*").eq("suiveur_id", vendeurId)
       setAbonnements(ab || [])
       setChargement(false)
     }
@@ -35,12 +35,12 @@ export default function FicheVendeur() {
 
   async function toggleSuivre() {
     if (!user) { window.location.href = "/connexion"; return }
-    const dejaSuivi = followers.find(f => f.follower_id === user.id)
+    const dejaSuivi = followers.find(f => f.suiveur_id === user.id)
     if (dejaSuivi) {
       await supabase.from("marketplace_followers").delete().eq("id", dejaSuivi.id)
       setFollowers(prev => prev.filter(f => f.id !== dejaSuivi.id))
     } else {
-      const { data } = await supabase.from("marketplace_followers").insert({ follower_id: user.id, suivi_id: vendeurId }).select().single()
+      const { data } = await supabase.from("marketplace_followers").insert({ suiveur_id: user.id, suivi_id: vendeurId }).select().single()
       if (data) setFollowers(prev => [...prev, data])
     }
   }
@@ -53,7 +53,7 @@ export default function FicheVendeur() {
 
   async function ouvrirListe(type: "followers" | "abonnements") {
     const source = type === "followers" ? followers : abonnements
-    const ids = source.map(f => type === "followers" ? f.follower_id : f.suivi_id)
+    const ids = source.map(f => type === "followers" ? f.suiveur_id : f.suivi_id)
     if (ids.length === 0) { setProfilsListe([]); setListeOuverte(type); return }
     const { data } = await supabase.from("profiles").select("id,nom,avatar_url").in("id", ids)
     setProfilsListe(data || [])
@@ -63,7 +63,7 @@ export default function FicheVendeur() {
   if (chargement) return <div style={{padding:'32px',textAlign:'center',color:'#aaa',fontSize:'14px'}}>Chargement...</div>
   if (!profil) return <div style={{padding:'32px',textAlign:'center',color:'#aaa',fontSize:'14px'}}>Vendeur introuvable</div>
 
-  const jeSuis = followers.some(f => f.follower_id === user?.id)
+  const jeSuis = followers.some(f => f.suiveur_id === user?.id)
   const estMoi = user?.id === vendeurId
   const nomVendeur = profil.nom || "Membre"
 
