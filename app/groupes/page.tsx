@@ -6,7 +6,8 @@ import { supabase } from "@/lib/supabase"
 
 export default function Groupes() {
   const [groupes, setGroupes] = useState<any[]>([])
-  const [mesGroupes, setMesGroupes] = useState<string[]>([])
+  const [conversations, setConversations] = useState<any[]>([])
+  const [profilsDM, setProfilsDM] = useState<any>({})
   const [user, setUser] = useState<any>(null)
   const [nom, setNom] = useState("")
   const [description, setDescription] = useState("")
@@ -19,17 +20,39 @@ export default function Groupes() {
       setUser(user)
       if (!user) {
         setGroupes([])
-        setMesGroupes([])
+        setConversations([])
         return
       }
       const { data: membres } = await supabase.from("membres_groupe").select("groupe_id").eq("user_id", user.id)
       const idsGroupes = membres?.map((m: any) => m.groupe_id) || []
-      setMesGroupes(idsGroupes)
       if (idsGroupes.length > 0) {
         const { data } = await supabase.from("groupes").select("*").in("id", idsGroupes).order("created_at", { ascending: false })
-        setGroupes(data || [])
+        const tousGroupes = data || []
+        const vraisGroupes = tousGroupes.filter((g: any) => !g.est_dm)
+        const dms = tousGroupes.filter((g: any) => g.est_dm)
+        setGroupes(vraisGroupes)
+
+        if (dms.length > 0) {
+          const dmsAvecAutre: any[] = []
+          const idsAutres: string[] = []
+          for (const dm of dms) {
+            const { data: mb } = await supabase.from("membres_groupe").select("user_id").eq("groupe_id", dm.id)
+            const autre = (mb || []).find((m: any) => m.user_id !== user.id)
+            if (autre) { dmsAvecAutre.push({ ...dm, autreId: autre.user_id }); idsAutres.push(autre.user_id) }
+          }
+          setConversations(dmsAvecAutre)
+          if (idsAutres.length > 0) {
+            const { data: profs } = await supabase.from("profiles").select("id,nom,avatar_url").in("id", idsAutres)
+            const map: any = {}
+            profs?.forEach((p: any) => { map[p.id] = p })
+            setProfilsDM(map)
+          }
+        } else {
+          setConversations([])
+        }
       } else {
         setGroupes([])
+        setConversations([])
       }
     }
     charger()
@@ -57,10 +80,10 @@ export default function Groupes() {
     <main className="min-h-screen bg-white">
       <div style={{background:'linear-gradient(160deg,#0A1628,#1a3a6e,#2B7FFF)',padding:'20px 18px 24px'}}>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-          <div style={{fontSize:'22px',fontWeight:'600',color:'#fff'}}>Groupes</div>
+          <div style={{fontSize:'22px',fontWeight:'600',color:'#fff'}}>Discussions</div>
           <button onClick={() => setShowForm(!showForm)}
             style={{background:'rgba(255,255,255,0.15)',border:'0.5px solid rgba(255,255,255,0.25)',color:'#fff',borderRadius:'99px',padding:'8px 16px',fontSize:'13px',fontWeight:'500',cursor:'pointer'}}>
-            + Créer
+            + Créer un groupe
           </button>
         </div>
       </div>
@@ -78,7 +101,37 @@ export default function Groupes() {
         </div>
       )}
 
+      {conversations.length > 0 && (
+        <div>
+          <div style={{padding:'14px 18px 4px',fontSize:'11px',color:'#aaa',fontWeight:'600'}}>Messages</div>
+          {conversations.map(c => {
+            const profil = profilsDM[c.autreId]
+            const nomAutre = profil?.nom || "Membre"
+            return (
+              <a key={c.id} href={'/groupes/'+c.id} style={{textDecoration:'none',display:'block'}}>
+                <div style={{display:'flex',alignItems:'center',gap:'14px',padding:'12px 18px',borderBottom:'0.5px solid #f5f5f5',cursor:'pointer'}}>
+                  {profil?.avatar_url ? (
+                    <img src={profil.avatar_url} alt={nomAutre} style={{width:'48px',height:'48px',borderRadius:'50%',objectFit:'cover',flexShrink:0}}/>
+                  ) : (
+                    <div style={{width:'48px',height:'48px',borderRadius:'50%',background:'linear-gradient(135deg,#2B7FFF,#8B5CF6)',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:'16px',fontWeight:'600',flexShrink:0}}>
+                      {nomAutre[0]?.toUpperCase()}
+                    </div>
+                  )}
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontSize:'15px',fontWeight:'500',color:'#1a1a2e'}}>{nomAutre}</div>
+                    <div style={{fontSize:'12px',color:'#aaa'}}>Message privé</div>
+                  </div>
+                </div>
+              </a>
+            )
+          })}
+        </div>
+      )}
+
       <div>
+        {groupes.length > 0 && (
+          <div style={{padding:'14px 18px 4px',fontSize:'11px',color:'#aaa',fontWeight:'600'}}>Groupes</div>
+        )}
         {groupes.map((g, i) => {
           const couleur = [
             {bg:'#EEF5FF',stroke:'#2B7FFF'},
@@ -105,11 +158,11 @@ export default function Groupes() {
           )
         })}
 
-        {groupes.length === 0 && (
+        {groupes.length === 0 && conversations.length === 0 && (
           <div style={{textAlign:'center',padding:'60px 20px'}}>
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ddd" strokeWidth="1.5" style={{margin:'0 auto 12px',display:'block'}}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg>
-            <div style={{fontSize:'14px',color:'#aaa'}}>Aucun groupe pour l'instant</div>
-            <div style={{fontSize:'12px',color:'#ccc',marginTop:'4px'}}>Crée un groupe ou rejoins-en un</div>
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ddd" strokeWidth="1.5" style={{margin:'0 auto 12px',display:'block'}}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <div style={{fontSize:'14px',color:'#aaa'}}>Aucune discussion pour l'instant</div>
+            <div style={{fontSize:'12px',color:'#ccc',marginTop:'4px'}}>Crée un groupe, ou écris à quelqu'un depuis une publication</div>
           </div>
         )}
       </div>
