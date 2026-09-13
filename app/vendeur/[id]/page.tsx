@@ -71,27 +71,30 @@ export default function FicheVendeur() {
     <main style={{minHeight:'100vh',background:'#f8faff'}}>
       <div style={{background:'linear-gradient(160deg,#0A1628,#1a3a6e,#2B7FFF)',padding:'20px 18px 28px'}}>
         <a href="/marketplace" style={{fontSize:'12px',color:'rgba(255,255,255,0.5)',textDecoration:'none'}}>← Marketplace</a>
-        <div style={{display:'flex',alignItems:'center',gap:'14px',marginTop:'16px'}}>
+        <div style={{display:'flex',alignItems:'center',gap:'16px',marginTop:'16px'}}>
           {profil.avatar_url ? (
-            <img src={profil.avatar_url} alt={nomVendeur} style={{width:'64px',height:'64px',borderRadius:'50%',objectFit:'cover',flexShrink:0,border:'2px solid rgba(255,255,255,0.3)'}}/>
+            <img src={profil.avatar_url} alt={nomVendeur} style={{width:'72px',height:'72px',borderRadius:'50%',objectFit:'cover',flexShrink:0,border:'2px solid rgba(255,255,255,0.3)'}}/>
           ) : (
-            <div style={{width:'64px',height:'64px',borderRadius:'50%',background:'rgba(255,255,255,0.15)',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:'24px',fontWeight:'600',flexShrink:0}}>
+            <div style={{width:'72px',height:'72px',borderRadius:'50%',background:'rgba(255,255,255,0.15)',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:'26px',fontWeight:'600',flexShrink:0}}>
               {nomVendeur[0]?.toUpperCase()}
             </div>
           )}
-          <div style={{flex:1,minWidth:0}}>
-            <div style={{fontSize:'19px',fontWeight:'600',color:'#fff'}}>{nomVendeur}</div>
-            <div style={{display:'flex',gap:'10px',marginTop:'4px'}}>
-              <button onClick={() => ouvrirListe("followers")} style={{background:'none',border:'none',padding:0,cursor:'pointer',fontSize:'13px',color:'rgba(255,255,255,0.75)'}}>
-                <b style={{color:'#fff'}}>{followers.length}</b> follower{followers.length>1?'s':''}
-              </button>
-              <button onClick={() => ouvrirListe("abonnements")} style={{background:'none',border:'none',padding:0,cursor:'pointer',fontSize:'13px',color:'rgba(255,255,255,0.75)'}}>
-                <b style={{color:'#fff'}}>{abonnements.length}</b> abonnement{abonnements.length>1?'s':''}
-              </button>
+          <div style={{flex:1,display:'flex',justifyContent:'space-around'}}>
+            <div style={{textAlign:'center'}}>
+              <div style={{fontSize:'22px',fontWeight:'700',color:'#fff'}}>{annonces.length}</div>
+              <div style={{fontSize:'11px',color:'rgba(255,255,255,0.6)',marginTop:'2px'}}>publication{annonces.length>1?'s':''}</div>
             </div>
-            <div style={{fontSize:'12px',color:'rgba(255,255,255,0.5)',marginTop:'2px'}}>{annonces.length} publication{annonces.length>1?'s':''}</div>
+            <button onClick={() => ouvrirListe("followers")} style={{background:'none',border:'none',cursor:'pointer',textAlign:'center'}}>
+              <div style={{fontSize:'22px',fontWeight:'700',color:'#fff'}}>{followers.length}</div>
+              <div style={{fontSize:'11px',color:'rgba(255,255,255,0.6)',marginTop:'2px'}}>follower{followers.length>1?'s':''}</div>
+            </button>
+            <button onClick={() => ouvrirListe("abonnements")} style={{background:'none',border:'none',cursor:'pointer',textAlign:'center'}}>
+              <div style={{fontSize:'22px',fontWeight:'700',color:'#fff'}}>{abonnements.length}</div>
+              <div style={{fontSize:'11px',color:'rgba(255,255,255,0.6)',marginTop:'2px'}}>abonnement{abonnements.length>1?'s':''}</div>
+            </button>
           </div>
         </div>
+        <div style={{fontSize:'17px',fontWeight:'600',color:'#fff',marginTop:'14px'}}>{nomVendeur}</div>
         {!estMoi && (
           <div style={{display:'flex',gap:'8px',marginTop:'16px'}}>
             <button onClick={toggleSuivre}

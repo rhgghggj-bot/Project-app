@@ -9,6 +9,8 @@ export default function Profile() {
   const [projets, setProjets] = useState<any[]>([])
   const [nbFollowers, setNbFollowers] = useState(0)
   const [nbAbonnements, setNbAbonnements] = useState(0)
+  const [listeOuverte, setListeOuverte] = useState<"followers" | "abonnements" | null>(null)
+  const [profilsListe, setProfilsListe] = useState<any[]>([])
   const [user, setUser] = useState<any>(null)
   const [profil, setProfil] = useState<any>(null)
   const [onglet, setOnglet] = useState("projets")
@@ -40,6 +42,17 @@ export default function Profile() {
     }
     charger()
   }, [])
+
+  async function ouvrirListe(type: "followers" | "abonnements") {
+    if (!user) return
+    const champ = type === "followers" ? "suivi_id" : "follower_id"
+    const { data: liens } = await supabase.from("app_followers").select("*").eq(champ, user.id)
+    const ids = (liens || []).map((l: any) => type === "followers" ? l.follower_id : l.suivi_id)
+    if (ids.length === 0) { setProfilsListe([]); setListeOuverte(type); return }
+    const { data } = await supabase.from("profiles").select("id,nom,avatar_url").in("id", ids)
+    setProfilsListe(data || [])
+    setListeOuverte(type)
+  }
 
   async function sauvegarderProfil() {
     const { error } = await supabase.from("profiles").update({ nom, bio, ville, couleur }).eq("id", user.id)
@@ -98,11 +111,21 @@ export default function Profile() {
         </div>
 
         <div style={{fontSize:'18px',fontWeight:'500',color:'#1a1a2e'}}>{profil?.nom || user?.email}</div>
-        <div style={{fontSize:'13px',color:'#2B7FFF',fontWeight:'500',marginTop:'2px'}}>{nbFollowers} follower{nbFollowers>1?'s':''} · {nbAbonnements} abonnement{nbAbonnements>1?'s':''}</div>
         {profil?.ville && <div style={{fontSize:'13px',color:'#aaa',marginTop:'2px'}}>{profil.ville}</div>}
         {profil?.bio && <div style={{fontSize:'13px',color:'#666',marginTop:'6px',lineHeight:'1.5',marginBottom:'8px'}}>{profil.bio}</div>}
 
         <div style={{display:'flex',gap:'8px',margin:'14px 0'}}>
+          <button onClick={() => ouvrirListe("followers")} style={{flex:1,background:'#EEF5FF',borderRadius:'12px',padding:'10px',textAlign:'center',border:'0.5px solid #DCE9FF',cursor:'pointer'}}>
+            <div style={{fontSize:'17px',fontWeight:'700',color:'#2B7FFF'}}>{nbFollowers}</div>
+            <div style={{fontSize:'11px',color:'#aaa'}}>follower{nbFollowers>1?'s':''}</div>
+          </button>
+          <button onClick={() => ouvrirListe("abonnements")} style={{flex:1,background:'#EEF5FF',borderRadius:'12px',padding:'10px',textAlign:'center',border:'0.5px solid #DCE9FF',cursor:'pointer'}}>
+            <div style={{fontSize:'17px',fontWeight:'700',color:'#2B7FFF'}}>{nbAbonnements}</div>
+            <div style={{fontSize:'11px',color:'#aaa'}}>abonnement{nbAbonnements>1?'s':''}</div>
+          </button>
+        </div>
+
+        <div style={{display:'flex',gap:'8px',margin:'0 0 14px'}}>
           <div style={{flex:1,background:'#EEF5FF',borderRadius:'12px',padding:'10px',textAlign:'center',border:'0.5px solid #DCE9FF'}}>
             <div style={{fontSize:'17px',fontWeight:'500',color:couleurProfil}}>{projets.filter(p => !p.prive).length}</div>
             <div style={{fontSize:'11px',color:'#aaa'}}>publics</div>
@@ -264,6 +287,28 @@ export default function Profile() {
           </div>
         )}
       </div>
+
+      {listeOuverte && (
+        <div onClick={() => setListeOuverte(null)} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',zIndex:200,display:'flex',alignItems:'flex-end'}}>
+          <div onClick={e => e.stopPropagation()} style={{width:'100%',maxHeight:'70vh',overflowY:'auto',background:'#fff',borderRadius:'22px 22px 0 0',padding:'10px 18px 24px'}}>
+            <div style={{width:'36px',height:'4px',background:'#E8F1FF',borderRadius:'99px',margin:'6px auto 14px'}}></div>
+            <div style={{fontSize:'15px',fontWeight:'600',color:'#1a1a2e',marginBottom:'12px'}}>{listeOuverte === "followers" ? "Followers" : "Abonnements"}</div>
+            {profilsListe.length === 0 && <div style={{textAlign:'center',padding:'24px 0',color:'#aaa',fontSize:'13px'}}>Personne pour l'instant</div>}
+            {profilsListe.map((p: any) => (
+              <a key={p.id} href={'/profil/'+p.id} style={{textDecoration:'none',display:'flex',alignItems:'center',gap:'12px',padding:'10px 0',borderBottom:'0.5px solid #F5F8FC'}}>
+                {p.avatar_url ? (
+                  <img src={p.avatar_url} alt={p.nom} style={{width:'40px',height:'40px',borderRadius:'50%',objectFit:'cover'}}/>
+                ) : (
+                  <div style={{width:'40px',height:'40px',borderRadius:'50%',background:'linear-gradient(135deg,#2B7FFF,#8B5CF6)',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:'14px',fontWeight:'600'}}>
+                    {(p.nom || "M")[0]?.toUpperCase()}
+                  </div>
+                )}
+                <div style={{fontSize:'14px',color:'#1a1a2e',fontWeight:'500'}}>{p.nom || "Membre"}</div>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
     </main>
   )
 }
