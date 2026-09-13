@@ -248,7 +248,7 @@ export default function Marketplace() {
                     {vendeur[0]?.toUpperCase()}
                   </div>
                   <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontSize:"13px",fontWeight:"600",color:"#1a1a2e"}}>{vendeur}</div>
+                    <a href={'/vendeur/'+a.user_id} onClick={e => e.stopPropagation()} style={{fontSize:"13px",fontWeight:"600",color:"#1a1a2e",textDecoration:"none"}}>{vendeur}</a>
                     <div style={{fontSize:"11px",color:"#aaa"}}>{a.categorie}</div>
                   </div>
                   {a.etat && <div style={{flexShrink:0,background:a.etat==="Neuf"?"#10B981":a.etat==="Urgent"?"#F43F5E":"#D4A843",borderRadius:"99px",padding:"3px 10px",fontSize:"10px",color:"#fff",fontWeight:"500"}}>{a.etat}</div>}
@@ -321,7 +321,7 @@ export default function Marketplace() {
                 )}
 
                 <div style={{padding:"4px 14px 16px",fontSize:"13px",color:"#333",lineHeight:"1.5"}}>
-                  <div><span style={{fontWeight:"600",color:"#1a1a2e"}}>{vendeur} </span>{a.titre}</div>
+                  <div><a href={'/vendeur/'+a.user_id} onClick={e => e.stopPropagation()} style={{fontWeight:"600",color:"#1a1a2e",textDecoration:"none"}}>{vendeur}</a> {a.titre}</div>
                   {a.description && <div style={{marginTop:"4px",color:"#555"}}>{a.description}</div>}
                   {commentaires.filter(c => c.annonce_id === a.id).length > 0 && (
                     <button onClick={() => setAnnonceOuverte(a)} style={{background:"none",border:"none",padding:0,marginTop:"6px",fontSize:"12px",color:"#aaa",cursor:"pointer"}}>

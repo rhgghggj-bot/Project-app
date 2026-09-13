@@ -13,6 +13,7 @@ export default function Home() {
   const [depenses, setDepenses] = useState<any[]>([])
   const [revenus, setRevenus] = useState<any[]>([])
   const [likesProjets, setLikesProjets] = useState<any[]>([])
+  const [profilsCreateurs, setProfilsCreateurs] = useState<Record<string, string>>({})
   const [commentairesCount, setCommentairesCount] = useState<Record<string, number>>({})
 
   useEffect(() => {
@@ -25,6 +26,13 @@ export default function Home() {
       }
       const { data: p } = await supabase.from("projets").select("*").is("groupe_id", null).eq("prive", false).order("created_at", { ascending: false })
       setProjets(p || [])
+      if (p && p.length > 0) {
+        const idsCreateurs = Array.from(new Set(p.map((pr: any) => pr.user_id)))
+        const { data: profs } = await supabase.from("profiles").select("id,nom").in("id", idsCreateurs)
+        const map: Record<string, string> = {}
+        profs?.forEach((pf: any) => { map[pf.id] = pf.nom || "Membre" })
+        setProfilsCreateurs(map)
+      }
       const { data: lp } = await supabase.from("projets_likes").select("*")
       setLikesProjets(lp || [])
       const { data: com } = await supabase.from("commentaires").select("projet_id")
@@ -336,10 +344,13 @@ export default function Home() {
                   </div>
                   <div style={{flex:1}}>
                     <div style={{fontSize:'14px',fontWeight:'500',color:'#1a1a2e',marginBottom:'3px'}}>{projet.titre}</div>
-                    <div style={{display:'flex',alignItems:'center',gap:'6px'}}>
+                    <div style={{display:'flex',alignItems:'center',gap:'6px',marginBottom:'3px'}}>
                       <span style={{fontSize:'10px',background:'#EEF5FF',color:'#2B7FFF',padding:'2px 8px',borderRadius:'99px',fontWeight:'500'}}>{projet.categorie}</span>
                       <span style={{fontSize:'11px',color:'#aaa'}}>{new Date(projet.created_at).toLocaleDateString('fr-FR',{day:'numeric',month:'short'})}</span>
                     </div>
+                    <a href={'/profil/'+projet.user_id} onClick={e => e.stopPropagation()} style={{fontSize:'11px',color:'#2B7FFF',textDecoration:'none'}}>
+                      par {profilsCreateurs[projet.user_id] || 'Membre'}
+                    </a>
                   </div>
                 </div>
                 <div style={{fontSize:'12px',color:'#666',marginBottom:'12px',lineHeight:'1.5'}}>{projet.description}</div>

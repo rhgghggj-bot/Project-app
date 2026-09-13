@@ -69,6 +69,9 @@ export default function Projet() {
           </div>
           <div style={{padding:'16px'}}>
             <span style={{fontSize:'11px',background:'#EEF5FF',color:'#2B7FFF',padding:'3px 10px',borderRadius:'99px',fontWeight:'500'}}>{projet.categorie}</span>
+            {projet.user_id && (
+              <a href={'/profil/'+projet.user_id} style={{display:'block',fontSize:'12px',color:'#2B7FFF',marginTop:'8px',textDecoration:'none'}}>Voir le profil du créateur →</a>
+            )}
             <h2 style={{fontSize:'16px',fontWeight:'600',color:'#1a1a2e',marginTop:'10px',marginBottom:'8px'}}>{projet.titre}</h2>
             <p style={{fontSize:'13px',color:'#666',lineHeight:'1.6',marginBottom:'14px'}}>{projet.description}</p>
 
