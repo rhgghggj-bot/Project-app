@@ -50,6 +50,10 @@ function FinancesContent() {
   const [moisSelectionne, setMoisSelectionne] = useState<any>(null)
   const chartRef = useRef<HTMLDivElement>(null)
   const [chartW, setChartW] = useState(300)
+  const [moisOuverts, setMoisOuverts] = useState<Set<string>>(() => {
+    const d = new Date()
+    return new Set([`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`])
+  })
 
   useEffect(() => {
     function mesurer() { if (chartRef.current) setChartW(chartRef.current.clientWidth || 300) }
@@ -561,7 +565,32 @@ function FinancesContent() {
               <div style={{fontSize:'13px'}}>Aucun revenu enregistré</div>
             </div>
           )}
-          {revenus.map((r: any) => <ItemDepense key={r.id} d={r} type="revenu" />)}
+          {(() => {
+            const cleMois = (dStr: string) => { const d = new Date(dStr); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}` }
+            const groupes = new Map<string, any[]>()
+            revenus.forEach(r => { const cle = cleMois(r.date); if (!groupes.has(cle)) groupes.set(cle, []); groupes.get(cle)!.push(r) })
+            const clesTriees = Array.from(groupes.keys()).sort().reverse()
+            return clesTriees.map(cle => {
+              const items = groupes.get(cle)!
+              const [an, m] = cle.split('-')
+              const label = new Date(parseInt(an), parseInt(m)-1, 1).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })
+              const total = items.reduce((s, r) => s + parseFloat(r.montant), 0)
+              const ouvert = moisOuverts.has(cle)
+              return (
+                <div key={cle} style={{marginBottom:'10px'}}>
+                  <button onClick={() => setMoisOuverts(prev => { const n = new Set(prev); if (ouvert) n.delete(cle); else n.add(cle); return n })}
+                    style={{width:'100%',display:'flex',alignItems:'center',justifyContent:'space-between',background:'#F8FBFF',border:'0.5px solid #E8F1FF',borderRadius:'12px',padding:'10px 14px',cursor:'pointer'}}>
+                    <span style={{fontSize:'13px',fontWeight:'600',color:'#1a1a2e',textTransform:'capitalize'}}>{label} <span style={{fontWeight:'400',color:'#aaa'}}>· {items.length}</span></span>
+                    <span style={{display:'flex',alignItems:'center',gap:'8px'}}>
+                      <span style={{fontSize:'13px',fontWeight:'600',color:'#10B981'}}>+{conv(total).toFixed(0)} {devise}</span>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2" style={{transform: ouvert ? 'rotate(180deg)' : 'none',transition:'transform 0.2s'}}><polyline points="6 9 12 15 18 9"/></svg>
+                    </span>
+                  </button>
+                  {ouvert && <div style={{marginTop:'8px'}}>{items.map((r: any) => <ItemDepense key={r.id} d={r} type="revenu" />)}</div>}
+                </div>
+              )
+            })
+          })()}
         </div>
       )}
 
