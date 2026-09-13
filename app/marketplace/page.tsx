@@ -1,5 +1,5 @@
 "use client"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { supabase } from "@/lib/supabase"
 
 const CATEGORIES = ["Tout","Mode","Électronique","Maison","Sport","Autre"]
@@ -37,6 +37,8 @@ export default function Marketplace() {
   const [prixAnnonce, setPrixAnnonce] = useState("")
   const [catAnnonce, setCatAnnonce] = useState("Autre")
   const [annonceOuverte, setAnnonceOuverte] = useState<any>(null)
+  const [profilsVendeurs, setProfilsVendeurs] = useState<any>({})
+  const [animCoeurs, setAnimCoeurs] = useState<Record<string, { id: number; x: number; delay: number; size: number; rot: number; couleur: string }[]>>({})
   const [likes, setLikes] = useState<any[]>([])
   const [commentaires, setCommentaires] = useState<any[]>([])
   const [profilsCommentaires, setProfilsCommentaires] = useState<any>({})
@@ -106,6 +108,45 @@ export default function Marketplace() {
   async function chargerAnnonces() {
     const { data } = await supabase.from("marketplace_annonces").select("*").order("created_at", { ascending: false })
     setAnnonces(data || [])
+    if (data && data.length > 0) {
+      const ids = Array.from(new Set(data.map((a: any) => a.user_id)))
+      const { data: profs } = await supabase.from("profiles").select("id,prenom,nom").in("id", ids)
+      const map: any = {}
+      profs?.forEach((p: any) => { map[p.id] = p.prenom || p.nom || "Membre" })
+      setProfilsVendeurs(map)
+    }
+  }
+
+  const ROUGES = ['#F43F5E', '#FF6B81', '#FB7185', '#E11D48', '#DC2626', '#FF8FA3', '#BE123C']
+  const dernierTapRef = useRef<{ id: string; heure: number }>({ id: "", heure: 0 })
+  const tapTimeoutRef = useRef<any>(null)
+
+  function onTapImage(a: any) {
+    const maintenant = Date.now()
+    if (dernierTapRef.current.id === a.id && maintenant - dernierTapRef.current.heure < 300) {
+      if (tapTimeoutRef.current) { clearTimeout(tapTimeoutRef.current); tapTimeoutRef.current = null }
+      dernierTapRef.current = { id: "", heure: 0 }
+      doubleTapLike(a.id)
+    } else {
+      dernierTapRef.current = { id: a.id, heure: maintenant }
+      tapTimeoutRef.current = setTimeout(() => { setAnnonceOuverte(a) }, 280)
+    }
+  }
+
+  function doubleTapLike(annonceId: string) {
+    if (!user) { alert("Connecte-toi pour aimer une annonce"); return }
+    const dejaLike = likes.find(l => l.annonce_id === annonceId && l.user_id === user.id)
+    if (!dejaLike) toggleLike(annonceId)
+    const coeurs = Array.from({ length: 14 }, (_, i) => ({
+      id: Date.now() + i,
+      x: 15 + Math.random() * 70,
+      delay: Math.random() * 0.25,
+      size: 18 + Math.random() * 30,
+      rot: (Math.random() - 0.5) * 50,
+      couleur: ROUGES[Math.floor(Math.random() * ROUGES.length)]
+    }))
+    setAnimCoeurs(prev => ({ ...prev, [annonceId]: coeurs }))
+    setTimeout(() => setAnimCoeurs(prev => { const n = { ...prev }; delete n[annonceId]; return n }), 1100)
   }
 
   async function ajouterArticle() {
@@ -305,37 +346,70 @@ export default function Marketplace() {
             ))}
           </div>
 
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"10px"}}>
-            {annoncesFiltrees.map(a => (
-              <div key={a.id} onClick={() => setAnnonceOuverte(a)} style={{background:"#fff",border:"0.5px solid #E8F1FF",borderRadius:"16px",overflow:"hidden",cursor:"pointer",boxShadow:"0 4px 16px rgba(43,127,255,0.06)"}}>
-                <div style={{height:"130px",background:"linear-gradient(135deg,#EEF5FF,#DCE9FF)",position:"relative",overflow:"hidden"}}>
+          <style>{`@keyframes coeurVole { 0% { opacity: 0; transform: translateY(0) scale(0.3); } 12% { opacity: 1; transform: translateY(-6px) scale(1); } 100% { opacity: 0; transform: translateY(-120px) scale(1.1); } }`}</style>
+          <div style={{display:"flex",flexDirection:"column",gap:"18px"}}>
+            {annoncesFiltrees.map(a => {
+              const nbLikes = likes.filter(l => l.annonce_id === a.id).length
+              const jaime = likes.some(l => l.annonce_id === a.id && l.user_id === user?.id)
+              const vendeur = profilsVendeurs[a.user_id] || "Membre"
+              return (
+              <div key={a.id} style={{background:"#fff",borderRadius:"16px",border:"0.5px solid #E8F1FF",overflow:"hidden",boxShadow:"0 4px 16px rgba(43,127,255,0.06)"}}>
+                <div style={{display:"flex",alignItems:"center",gap:"10px",padding:"12px 14px"}}>
+                  <div style={{width:"34px",height:"34px",borderRadius:"50%",background:"linear-gradient(135deg,#2B7FFF,#8B5CF6)",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:"13px",fontWeight:"600",flexShrink:0}}>
+                    {vendeur[0]?.toUpperCase()}
+                  </div>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontSize:"13px",fontWeight:"600",color:"#1a1a2e"}}>{vendeur}</div>
+                    <div style={{fontSize:"11px",color:"#aaa"}}>{a.categorie}</div>
+                  </div>
+                  {a.etat && <div style={{flexShrink:0,background:a.etat==="Neuf"?"#10B981":a.etat==="Urgent"?"#F43F5E":"#D4A843",borderRadius:"99px",padding:"3px 10px",fontSize:"10px",color:"#fff",fontWeight:"500"}}>{a.etat}</div>}
+                  {user && a.user_id === user.id && (
+                    <button onClick={() => supprimerAnnonce(a.id)} style={{background:"none",border:"none",color:"#ccc",cursor:"pointer",fontSize:"18px",marginLeft:"2px",flexShrink:0}}>×</button>
+                  )}
+                </div>
+
+                <div onClick={() => onTapImage(a)}
+                  style={{width:"100%",minHeight:"220px",maxHeight:"420px",background:"linear-gradient(135deg,#EEF5FF,#DCE9FF)",position:"relative",overflow:"hidden",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
                   {a.image_url ? (
-                    <img src={a.image_url} alt={a.titre} style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+                    <img src={a.image_url} alt={a.titre} style={{width:"100%",height:"100%",maxHeight:"420px",objectFit:"contain"}}/>
                   ) : (
                     <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center"}}>
-                      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#2B7FFF" strokeWidth="1.2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#2B7FFF" strokeWidth="1.2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
                     </div>
                   )}
-                  {a.etat && <div style={{position:"absolute",top:"8px",left:"8px",background:a.etat==="Neuf"?"#10B981":a.etat==="Urgent"?"#F43F5E":"#D4A843",borderRadius:"99px",padding:"3px 8px",fontSize:"10px",color:"#fff",fontWeight:"500"}}>{a.etat}</div>}
-                  {user && a.user_id === user.id && (
-                    <button onClick={(e) => { e.stopPropagation(); supprimerAnnonce(a.id) }}
-                      style={{position:"absolute",top:"8px",right:"8px",background:"rgba(255,255,255,0.9)",border:"none",borderRadius:"50%",width:"24px",height:"24px",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#F43F5E" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                    </button>
+                  {animCoeurs[a.id] && (
+                    <div style={{position:"absolute",inset:0,pointerEvents:"none",overflow:"hidden"}}>
+                      {animCoeurs[a.id].map(h => (
+                        <div key={h.id} style={{position:"absolute",left:`${h.x}%`,bottom:"6%",transform:`rotate(${h.rot}deg)`}}>
+                          <div style={{animation:`coeurVole 0.95s ease-out ${h.delay}s forwards`,opacity:0}}>
+                            <svg width={h.size} height={h.size} viewBox="0 0 24 24" fill={h.couleur} style={{filter:"drop-shadow(0 2px 4px rgba(0,0,0,0.2))"}}><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </div>
-                <div style={{padding:"10px"}}>
-                  <div style={{fontSize:"13px",fontWeight:"500",color:"#1a1a2e",marginBottom:"4px"}}>{a.titre}</div>
-                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-                    <div style={{fontSize:"15px",fontWeight:"700",color:"#2B7FFF"}}>{parseFloat(a.prix).toFixed(0)} CHF</div>
-                    <div style={{display:"flex",alignItems:"center",gap:"3px",fontSize:"11px",color:"#aaa"}}>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill={likes.some(l=>l.annonce_id===a.id&&l.user_id===user?.id)?"#F43F5E":"none"} stroke={likes.some(l=>l.annonce_id===a.id&&l.user_id===user?.id)?"#F43F5E":"#aaa"} strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-                      {likes.filter(l => l.annonce_id === a.id).length}
-                    </div>
-                  </div>
+
+                <div style={{padding:"10px 14px 2px",display:"flex",alignItems:"center",gap:"14px"}}>
+                  <button onClick={() => toggleLike(a.id)} style={{background:"none",border:"none",padding:0,cursor:"pointer",display:"flex"}}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill={jaime?"#F43F5E":"none"} stroke={jaime?"#F43F5E":"#1a1a2e"} strokeWidth="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                  </button>
+                  <button onClick={() => setAnnonceOuverte(a)} style={{background:"none",border:"none",padding:0,cursor:"pointer",display:"flex"}}>
+                    <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#1a1a2e" strokeWidth="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                  </button>
+                  <div style={{marginLeft:"auto",fontSize:"16px",fontWeight:"700",color:"#2B7FFF"}}>{parseFloat(a.prix).toFixed(0)} CHF</div>
+                </div>
+
+                {nbLikes > 0 && (
+                  <div style={{padding:"4px 14px 0",fontSize:"13px",fontWeight:"600",color:"#1a1a2e"}}>{nbLikes} j'aime</div>
+                )}
+
+                <div style={{padding:"4px 14px 14px",fontSize:"13px",color:"#333",lineHeight:"1.5"}}>
+                  <span style={{fontWeight:"600",color:"#1a1a2e"}}>{vendeur} </span>{a.titre}
                 </div>
               </div>
-            ))}
+              )
+            })}
           </div>
 
           {annoncesFiltrees.length === 0 && (
@@ -347,7 +421,9 @@ export default function Marketplace() {
               <div onClick={(e) => e.stopPropagation()} style={{background:"#fff",borderRadius:"20px 20px 0 0",width:"100%",maxHeight:"88vh",overflowY:"auto"}}>
                 <div style={{position:"relative"}}>
                   {annonceOuverte.image_url ? (
-                    <img src={annonceOuverte.image_url} alt={annonceOuverte.titre} style={{width:"100%",height:"260px",objectFit:"cover"}}/>
+                    <div style={{width:"100%",maxHeight:"50vh",background:"linear-gradient(135deg,#EEF5FF,#DCE9FF)",display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden"}}>
+                      <img src={annonceOuverte.image_url} alt={annonceOuverte.titre} style={{width:"100%",maxHeight:"50vh",objectFit:"contain"}}/>
+                    </div>
                   ) : (
                     <div style={{width:"100%",height:"260px",background:"linear-gradient(135deg,#EEF5FF,#DCE9FF)",display:"flex",alignItems:"center",justifyContent:"center"}}>
                       <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#2B7FFF" strokeWidth="1.2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
