@@ -2,7 +2,19 @@
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 
-const CATEGORIES = ["Tout","Mode","Electronique","Maison","Sport","Autre"]
+const CATEGORIES = ["Tout","Mode","Électronique","Maison","Sport","Autre"]
+
+function IconeCat({ cat, size = 14 }: { cat: string; size?: number }) {
+  const p = { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round" as const, strokeLinejoin: "round" as const }
+  switch (cat) {
+    case "Mode": return <svg {...p}><path d="M20.38 3.46L16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"/></svg>
+    case "Électronique": return <svg {...p}><rect x="4" y="4" width="16" height="12" rx="1"/><line x1="8" y1="20" x2="16" y2="20"/><line x1="12" y1="16" x2="12" y2="20"/></svg>
+    case "Maison": return <svg {...p}><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    case "Sport": return <svg {...p}><circle cx="12" cy="12" r="10"/><path d="M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20M2 12h20"/></svg>
+    case "Alimentation": return <svg {...p}><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+    default: return <svg {...p}><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+  }
+}
 
 export default function Marketplace() {
   const [onglet, setOnglet] = useState("portfolio")
@@ -193,7 +205,7 @@ export default function Marketplace() {
               <div style={{display:"flex",gap:"8px",marginBottom:"8px"}}>
                 <input type="text" value={prix} onChange={e => setPrix(e.target.value)} placeholder="Prix (CHF)" style={{...inp,flex:1,marginBottom:0}}/>
                 <select value={categorie} onChange={e => setCategorie(e.target.value)} style={{flex:1,border:"1px solid #E8F1FF",borderRadius:"10px",padding:"10px 8px",fontSize:"14px",color:"#1a1a2e",background:"#fff"}}>
-                  {["Mode","Electronique","Maison","Sport","Alimentation","Autre"].map(c => <option key={c} value={c}>{c}</option>)}
+                  {["Mode","Électronique","Maison","Sport","Alimentation","Autre"].map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
               <div style={{display:"flex",gap:"8px"}}>
@@ -210,7 +222,7 @@ export default function Marketplace() {
                 <div style={{flex:1}}>
                   <div style={{display:"flex",alignItems:"center",gap:"6px",marginBottom:"2px"}}>
                     <span style={{fontSize:"13px",fontWeight:"500",color:"#1a1a2e",textDecoration:modeShopping&&art.coche_shopping?"line-through":"none",opacity:modeShopping&&art.coche_shopping?0.6:1}}>{art.nom}</span>
-                    <span style={{fontSize:"10px",padding:"2px 6px",borderRadius:"99px",background:"#EEF5FF",color:"#2B7FFF",fontWeight:"500"}}>{art.categorie}</span>
+                    <span style={{fontSize:"10px",padding:"2px 6px 2px 4px",borderRadius:"99px",background:"#EEF5FF",color:"#2B7FFF",fontWeight:"500",display:"inline-flex",alignItems:"center",gap:"3px"}}><IconeCat cat={art.categorie} size={9}/>{art.categorie}</span>
                   </div>
                   {art.prix > 0 && <div style={{fontSize:"11px",color:"#2B7FFF",fontWeight:"500"}}>{parseFloat(art.prix).toFixed(2)} CHF × {art.quantite} = {(parseFloat(art.prix)*art.quantite).toFixed(2)} CHF</div>}
                 </div>
@@ -273,7 +285,7 @@ export default function Marketplace() {
               <div style={{display:"flex",gap:"8px",marginBottom:"8px"}}>
                 <input type="text" value={prixAnnonce} onChange={e => setPrixAnnonce(e.target.value)} placeholder="Prix CHF" style={{...inp,flex:1,marginBottom:0}}/>
                 <select value={catAnnonce} onChange={e => setCatAnnonce(e.target.value)} style={{flex:1,border:"1px solid #E8F1FF",borderRadius:"10px",padding:"10px 8px",fontSize:"14px",color:"#1a1a2e",background:"#fff"}}>
-                  {["Mode","Electronique","Maison","Sport","Alimentation","Autre"].map(c => <option key={c} value={c}>{c}</option>)}
+                  {["Mode","Électronique","Maison","Sport","Alimentation","Autre"].map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
               <div style={{display:"flex",gap:"8px"}}>
@@ -286,7 +298,8 @@ export default function Marketplace() {
           <div style={{display:"flex",gap:"6px",marginBottom:"14px",overflowX:"auto"}}>
             {CATEGORIES.map(c => (
               <button key={c} onClick={() => setFiltre(c)}
-                style={{whiteSpace:"nowrap",padding:"6px 14px",borderRadius:"99px",border:"none",cursor:"pointer",fontSize:"12px",fontWeight:"500",background:filtre===c?"#2B7FFF":"#EEF5FF",color:filtre===c?"#fff":"#2B7FFF"}}>
+                style={{whiteSpace:"nowrap",display:"flex",alignItems:"center",gap:"5px",padding:"6px 14px",borderRadius:"99px",border:"none",cursor:"pointer",fontSize:"12px",fontWeight:"500",background:filtre===c?"#2B7FFF":"#EEF5FF",color:filtre===c?"#fff":"#2B7FFF"}}>
+                {c !== "Tout" && <IconeCat cat={c} size={12}/>}
                 {c}
               </button>
             ))}
@@ -294,7 +307,7 @@ export default function Marketplace() {
 
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"10px"}}>
             {annoncesFiltrees.map(a => (
-              <div key={a.id} onClick={() => setAnnonceOuverte(a)} style={{background:"#fff",border:"0.5px solid #E8F1FF",borderRadius:"16px",overflow:"hidden",cursor:"pointer"}}>
+              <div key={a.id} onClick={() => setAnnonceOuverte(a)} style={{background:"#fff",border:"0.5px solid #E8F1FF",borderRadius:"16px",overflow:"hidden",cursor:"pointer",boxShadow:"0 4px 16px rgba(43,127,255,0.06)"}}>
                 <div style={{height:"130px",background:"linear-gradient(135deg,#EEF5FF,#DCE9FF)",position:"relative",overflow:"hidden"}}>
                   {a.image_url ? (
                     <img src={a.image_url} alt={a.titre} style={{width:"100%",height:"100%",objectFit:"cover"}}/>
@@ -326,7 +339,7 @@ export default function Marketplace() {
           </div>
 
           {annoncesFiltrees.length === 0 && (
-            <div style={{textAlign:"center",padding:"48px 0",color:"#aaa",fontSize:"13px"}}>Aucune annonce pour l instant</div>
+            <div style={{textAlign:"center",padding:"48px 0",color:"#aaa",fontSize:"13px"}}>Aucune annonce pour l'instant</div>
           )}
 
           {annonceOuverte && (
