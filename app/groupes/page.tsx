@@ -3,16 +3,21 @@ import Tutorial from "../components/Tutorial"
 
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
+import { ouvrirConversationPrivee } from "@/lib/dm"
 
 export default function Groupes() {
   const [groupes, setGroupes] = useState<any[]>([])
   const [conversations, setConversations] = useState<any[]>([])
   const [profilsDM, setProfilsDM] = useState<any>({})
   const [user, setUser] = useState<any>(null)
-  const [nom, setNom] = useState("")
-  const [description, setDescription] = useState("")
-  const [showForm, setShowForm] = useState(false)
   const [message, setMessage] = useState("")
+
+  const [composeOuvert, setComposeOuvert] = useState(false)
+  const [recherche, setRecherche] = useState("")
+  const [resultats, setResultats] = useState<any[]>([])
+  const [selectionnes, setSelectionnes] = useState<any[]>([])
+  const [nomGroupe, setNomGroupe] = useState("")
+  const [enCreation, setEnCreation] = useState(false)
 
   useEffect(() => {
     async function charger() {
@@ -58,22 +63,57 @@ export default function Groupes() {
     charger()
   }, [])
 
-  async function creerGroupe() {
-    if (!user) { window.location.href = "/connexion"; return }
-    if (!nom) { setMessage("Donne un nom au groupe !"); return }
-    const { data, error } = await supabase.from("groupes").insert({
-      nom, description, created_by: user.id
-    }).select().single()
-    if (error) {
-      setMessage("Erreur : " + error.message)
-    } else {
-      await supabase.from("membres_groupe").insert({ groupe_id: data.id, user_id: user.id })
-      setMessage("Groupe créé !")
-      setNom("")
-      setDescription("")
-      setShowForm(false)
-      window.location.href = `/groupes/${data.id}`
+  useEffect(() => {
+    async function rechercher() {
+      if (!recherche.trim() || !user) { setResultats([]); return }
+      const { data } = await supabase.from("profiles").select("id,nom,avatar_url").ilike("nom", `%${recherche.trim()}%`).neq("id", user.id).limit(15)
+      setResultats((data || []).filter((p: any) => !selectionnes.some(s => s.id === p.id)))
     }
+    const t = setTimeout(rechercher, 250)
+    return () => clearTimeout(t)
+  }, [recherche, selectionnes, user])
+
+  function ajouterSelection(p: any) {
+    setSelectionnes(prev => [...prev, p])
+    setRecherche("")
+    setResultats([])
+  }
+
+  function retirerSelection(id: string) {
+    setSelectionnes(prev => prev.filter(p => p.id !== id))
+  }
+
+  function fermerCompose() {
+    setComposeOuvert(false)
+    setSelectionnes([])
+    setRecherche("")
+    setResultats([])
+    setNomGroupe("")
+  }
+
+  async function demarrerDiscussion() {
+    if (!user || selectionnes.length === 0) return
+    setEnCreation(true)
+
+    if (selectionnes.length === 1) {
+      const idConv = await ouvrirConversationPrivee(supabase, user.id, selectionnes[0].id)
+      setEnCreation(false)
+      if (idConv) window.location.href = "/groupes/" + idConv
+      return
+    }
+
+    if (!nomGroupe.trim()) { setEnCreation(false); setMessage("Donne un nom au groupe"); return }
+    const { data, error } = await supabase.from("groupes").insert({
+      nom: nomGroupe.trim(), description: "", created_by: user.id
+    }).select().single()
+    if (error || !data) { setEnCreation(false); setMessage("Erreur : " + (error?.message || "")); return }
+
+    await supabase.from("membres_groupe").insert([
+      { groupe_id: data.id, user_id: user.id },
+      ...selectionnes.map(p => ({ groupe_id: data.id, user_id: p.id }))
+    ])
+    setEnCreation(false)
+    window.location.href = `/groupes/${data.id}`
   }
 
   return (
@@ -81,25 +121,12 @@ export default function Groupes() {
       <div style={{background:'linear-gradient(160deg,#0A1628,#1a3a6e,#2B7FFF)',padding:'20px 18px 24px'}}>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
           <div style={{fontSize:'22px',fontWeight:'600',color:'#fff'}}>Discussions</div>
-          <button onClick={() => setShowForm(!showForm)}
-            style={{background:'rgba(255,255,255,0.15)',border:'0.5px solid rgba(255,255,255,0.25)',color:'#fff',borderRadius:'99px',padding:'8px 16px',fontSize:'13px',fontWeight:'500',cursor:'pointer'}}>
-            + Créer un groupe
+          <button onClick={() => setComposeOuvert(true)}
+            style={{background:'#fff',border:'none',color:'#1a3a6e',borderRadius:'99px',width:'48px',height:'48px',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',boxShadow:'0 4px 14px rgba(0,0,0,0.25)'}}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1a3a6e" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>
           </button>
         </div>
       </div>
-
-      {showForm && (
-        <div style={{padding:'14px',background:'#EEF5FF',borderBottom:'0.5px solid #DCE9FF'}}>
-          <input value={nom} onChange={e => setNom(e.target.value)} placeholder="Nom du groupe"
-            style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 12px',fontSize:'16px',marginBottom:'8px',boxSizing:'border-box'}}/>
-          <input value={description} onChange={e => setDescription(e.target.value)} placeholder="Description (optionnel)"
-            style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 12px',fontSize:'16px',marginBottom:'8px',boxSizing:'border-box'}}/>
-          <div style={{display:'flex',gap:'8px'}}>
-            <button onClick={creerGroupe} style={{flex:1,background:'#2B7FFF',color:'#fff',border:'none',borderRadius:'10px',padding:'10px',fontSize:'13px',fontWeight:'500',cursor:'pointer'}}>Créer</button>
-            <button onClick={() => setShowForm(false)} style={{flex:1,background:'#fff',color:'#666',border:'0.5px solid #E8F1FF',borderRadius:'10px',padding:'10px',fontSize:'13px',cursor:'pointer'}}>Annuler</button>
-          </div>
-        </div>
-      )}
 
       {conversations.length > 0 && (
         <div>
@@ -162,10 +189,76 @@ export default function Groupes() {
           <div style={{textAlign:'center',padding:'60px 20px'}}>
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ddd" strokeWidth="1.5" style={{margin:'0 auto 12px',display:'block'}}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
             <div style={{fontSize:'14px',color:'#aaa'}}>Aucune discussion pour l'instant</div>
-            <div style={{fontSize:'12px',color:'#ccc',marginTop:'4px'}}>Crée un groupe, ou écris à quelqu'un depuis une publication</div>
+            <div style={{fontSize:'12px',color:'#ccc',marginTop:'4px'}}>Touche le + en haut pour écrire à quelqu'un</div>
           </div>
         )}
       </div>
+
+      {composeOuvert && (
+        <div style={{position:'fixed',inset:0,background:'#fff',zIndex:300,display:'flex',flexDirection:'column'}}>
+          <div style={{padding:'16px 18px',borderBottom:'0.5px solid #E8F1FF',display:'flex',alignItems:'center',gap:'14px'}}>
+            <button onClick={fermerCompose} style={{background:'none',border:'none',fontSize:'14px',color:'#2B7FFF',cursor:'pointer',padding:0}}>Annuler</button>
+            <div style={{fontSize:'15px',fontWeight:'600',color:'#1a1a2e',flex:1,textAlign:'center',marginRight:'40px'}}>Nouvelle discussion</div>
+          </div>
+
+          <div style={{padding:'14px 18px',borderBottom:'0.5px solid #E8F1FF'}}>
+            <div style={{display:'flex',flexWrap:'wrap',gap:'8px',alignItems:'center'}}>
+              {selectionnes.map(p => (
+                <span key={p.id} style={{display:'flex',alignItems:'center',gap:'7px',background:'#2B7FFF',color:'#fff',borderRadius:'99px',padding:'5px 8px 5px 5px',fontSize:'14px',fontWeight:'600',boxShadow:'0 2px 6px rgba(43,127,255,0.3)'}}>
+                  <span style={{width:'22px',height:'22px',borderRadius:'50%',background:'rgba(255,255,255,0.25)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'11px',fontWeight:'700'}}>{(p.nom || 'M')[0]?.toUpperCase()}</span>
+                  {p.nom || 'Membre'}
+                  <button onClick={() => retirerSelection(p.id)} style={{background:'rgba(255,255,255,0.25)',border:'none',color:'#fff',cursor:'pointer',fontSize:'13px',lineHeight:1,padding:0,width:'18px',height:'18px',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center'}}>×</button>
+                </span>
+              ))}
+              <input value={recherche} onChange={e => setRecherche(e.target.value)} placeholder={selectionnes.length ? "Ajouter..." : "À :"}
+                style={{flex:1,minWidth:'100px',border:'none',outline:'none',fontSize:'16px',padding:'6px 0'}}/>
+            </div>
+          </div>
+
+          <div style={{flex:1,overflowY:'auto'}}>
+            {resultats.map(p => (
+              <div key={p.id} onClick={() => ajouterSelection(p)} style={{display:'flex',alignItems:'center',gap:'12px',padding:'12px 18px',cursor:'pointer',borderBottom:'0.5px solid #F5F8FC'}}>
+                {p.avatar_url ? (
+                  <img src={p.avatar_url} alt={p.nom} style={{width:'44px',height:'44px',borderRadius:'50%',objectFit:'cover'}}/>
+                ) : (
+                  <div style={{width:'44px',height:'44px',borderRadius:'50%',background:'linear-gradient(135deg,#2B7FFF,#8B5CF6)',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:'15px',fontWeight:'600'}}>
+                    {(p.nom || "M")[0]?.toUpperCase()}
+                  </div>
+                )}
+                <div style={{fontSize:'14px',color:'#1a1a2e',fontWeight:'500'}}>{p.nom || "Membre"}</div>
+              </div>
+            ))}
+            {recherche.trim() && resultats.length === 0 && (
+              <div style={{textAlign:'center',padding:'24px',color:'#aaa',fontSize:'13px'}}>Personne trouvé</div>
+            )}
+          </div>
+
+          {selectionnes.length > 1 && (
+            <div style={{padding:'12px 18px',borderTop:'0.5px solid #E8F1FF'}}>
+              <input value={nomGroupe} onChange={e => setNomGroupe(e.target.value)} placeholder="Nom du groupe"
+                style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 12px',fontSize:'14px',boxSizing:'border-box'}}/>
+            </div>
+          )}
+
+          {message && <div style={{padding:'0 18px 8px',fontSize:'12px',color:'#F43F5E'}}>{message}</div>}
+
+          {selectionnes.length > 0 && (
+            <div style={{padding:'14px 18px 22px',background:'#fff',boxShadow:'0 -4px 14px rgba(0,0,0,0.06)'}}>
+              <button onClick={demarrerDiscussion} disabled={enCreation}
+                style={{width:'100%',display:'flex',alignItems:'center',justifyContent:'center',gap:'8px',background:'#2B7FFF',color:'#fff',border:'none',borderRadius:'14px',padding:'16px',fontSize:'16px',fontWeight:'700',cursor: enCreation ? 'default' : 'pointer',opacity: enCreation ? 0.6 : 1,boxShadow:'0 6px 18px rgba(43,127,255,0.4)'}}>
+                {!enCreation && (
+                  selectionnes.length === 1 ? (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                  ) : (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                  )
+                )}
+                {enCreation ? 'Création...' : selectionnes.length === 1 ? 'Discuter avec ' + (selectionnes[0].nom || 'ce membre') : 'Créer le groupe'}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
     </main>
   )
 }
