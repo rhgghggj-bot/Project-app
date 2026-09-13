@@ -3,7 +3,7 @@ import DeviseSelector from "../components/DeviseSelector"
 import Tutorial from "../components/Tutorial"
 import PlacementsSection from "../components/PlacementsSection"
 import FiscaliteSection from "../components/FiscaliteSection"
-import { useEffect, useState, Suspense } from "react"
+import { useEffect, useState, useRef, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 
@@ -48,6 +48,15 @@ function FinancesContent() {
   const [date, setDate] = useState(new Date().toISOString().split("T")[0])
   const [recurrent, setRecurrent] = useState(false)
   const [moisSelectionne, setMoisSelectionne] = useState<any>(null)
+  const chartRef = useRef<HTMLDivElement>(null)
+  const [chartW, setChartW] = useState(300)
+
+  useEffect(() => {
+    function mesurer() { if (chartRef.current) setChartW(chartRef.current.clientWidth || 300) }
+    mesurer()
+    window.addEventListener('resize', mesurer)
+    return () => window.removeEventListener('resize', mesurer)
+  }, [])
   const [objectif, setObjectif] = useState("")
   const [montantEpargne, setMontantEpargne] = useState("")
   const [dureeObjectif, setDureeObjectif] = useState(12)
@@ -343,7 +352,7 @@ function FinancesContent() {
               const soldes = donneesGraphique.map(d => d.revenus - d.depenses)
               const maxS = Math.max(0, ...soldes), minS = Math.min(0, ...soldes)
               const range = (maxS - minS) || 1
-              const W = 300, H = 110, padX = 18, padTop = 14, padBot = 26
+              const W = chartW, H = 120, padX = 18, padTop = 14, padBot = 26
               const xAt = (i: number) => padX + (i * (W - padX*2)) / (soldes.length - 1)
               const yAt = (v: number) => padTop + ((maxS - v) / range) * (H - padTop - padBot)
               const zeroY = yAt(0)
@@ -351,8 +360,8 @@ function FinancesContent() {
               const linePath = pts.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ')
               const areaPath = `${linePath} L ${pts[pts.length-1].x} ${H - padBot} L ${pts[0].x} ${H - padBot} Z`
               return (
-                <div style={{position:'relative'}}>
-                  <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{display:'block',overflow:'visible'}}>
+                <div ref={chartRef} style={{position:'relative'}}>
+                  <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{display:'block',overflow:'visible'}}>
                     <defs>
                       <linearGradient id="soldeFill" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor="#D4A843" stopOpacity="0.35"/>
@@ -366,9 +375,13 @@ function FinancesContent() {
                       const d = donneesGraphique[p.i]
                       const estSel = moisSelectionne?.mois === d.mois
                       const estActuel = d.mois === moisActuel
+                      const auDessus = p.y > H / 2
+                      const coul = p.v >= 0 ? '#B8862E' : '#E15367'
+                      const texteVal = p.v === 0 ? '0' : (p.v > 0 ? '+' : '') + conv(p.v).toFixed(0)
                       return (
                         <g key={p.i} onClick={() => setMoisSelectionne(estSel ? null : d)} style={{cursor:'pointer'}}>
-                          <circle cx={p.x} cy={p.y} r="10" fill="transparent"/>
+                          <circle cx={p.x} cy={p.y} r="14" fill="transparent"/>
+                          <text x={p.x} y={auDessus ? p.y - 12 : p.y + 20} textAnchor="middle" fontSize="10" fontWeight="600" fill={coul}>{texteVal}</text>
                           <circle cx={p.x} cy={p.y} r={estSel || estActuel ? 5 : 3.5} fill={p.v >= 0 ? '#D4A843' : '#E15367'} stroke="#fff" strokeWidth="2"/>
                           <text x={p.x} y={H - 6} textAnchor="middle" fontSize="9" fill={estActuel ? '#2B7FFF' : '#aaa'} fontWeight={estActuel ? 600 : 400}>{d.label}</text>
                         </g>
