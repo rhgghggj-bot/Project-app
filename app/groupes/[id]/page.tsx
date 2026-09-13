@@ -3,9 +3,77 @@ import { useEffect, useState, useRef } from "react"
 import { useParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 
+function GlisserConfirmer({ label, couleur, onConfirm }: { label: string; couleur: string; onConfirm: () => void }) {
+  const [pos, setPos] = useState(0)
+  const [dragging, setDragging] = useState(false)
+  const [fait, setFait] = useState(false)
+  const trackRef = useRef<HTMLDivElement>(null)
+  const posRef = useRef(0)
+
+  useEffect(() => {
+    if (!dragging) return
+    function calc(clientX: number) {
+      const track = trackRef.current
+      if (!track) return
+      const rect = track.getBoundingClientRect()
+      const utile = rect.width - 52
+      let pct = ((clientX - rect.left - 26) / utile) * 100
+      pct = Math.max(0, Math.min(100, pct))
+      posRef.current = pct
+      setPos(pct)
+    }
+    function onMove(e: any) {
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX
+      calc(clientX)
+    }
+    function onUp() {
+      setDragging(false)
+      if (posRef.current > 78) {
+        setPos(100)
+        setFait(true)
+        onConfirm()
+      } else {
+        setPos(0)
+        posRef.current = 0
+      }
+    }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+    window.addEventListener('touchmove', onMove, { passive: false })
+    window.addEventListener('touchend', onUp)
+    return () => {
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+      window.removeEventListener('touchmove', onMove)
+      window.removeEventListener('touchend', onUp)
+    }
+  }, [dragging])
+
+  return (
+    <div ref={trackRef} style={{position:'relative', height:'52px', background: fait ? couleur : '#F0F4FA', borderRadius:'26px', overflow:'hidden', userSelect:'none', touchAction:'none'}}>
+      <div style={{position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'13px', fontWeight:600, color: fait ? '#fff' : '#888', pointerEvents:'none'}}>
+        {fait ? '✓ Confirmé' : label}
+      </div>
+      <div
+        onMouseDown={() => !fait && setDragging(true)}
+        onTouchStart={() => !fait && setDragging(true)}
+        style={{
+          position:'absolute', top:'2px', left: `calc(2px + (100% - 52px) * ${(pos/100).toFixed(4)})`,
+          width:'48px', height:'48px', borderRadius:'50%', background: couleur,
+          display:'flex', alignItems:'center', justifyContent:'center', cursor: fait ? 'default' : 'grab',
+          boxShadow:'0 2px 8px rgba(0,0,0,0.25)', transition: dragging ? 'none' : 'left 0.25s ease'
+        }}>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+    </div>
+  )
+}
+
 export default function GroupePage() {
   const { id } = useParams()
   const [groupe, setGroupe] = useState<any>(null)
+  const [autreProfilDM, setAutreProfilDM] = useState<any>(null)
+  const [annonceLiee, setAnnonceLiee] = useState<any>(null)
   const [messages, setMessages] = useState<any[]>([])
   const [projets, setProjets] = useState<any[]>([])
   const [membres, setMembres] = useState<any[]>([])
@@ -32,6 +100,18 @@ export default function GroupePage() {
       setUser(user)
       const { data: g } = await supabase.from("groupes").select("*").eq("id", id).single()
       setGroupe(g)
+      if (g?.annonce_id) {
+        const { data: ann } = await supabase.from("marketplace_annonces").select("*").eq("id", g.annonce_id).single()
+        setAnnonceLiee(ann)
+      }
+      if (g?.est_dm && user) {
+        const { data: mbDm } = await supabase.from("membres_groupe").select("user_id").eq("groupe_id", id)
+        const autre = (mbDm || []).find((m: any) => m.user_id !== user.id)
+        if (autre) {
+          const { data: prof } = await supabase.from("profiles").select("id,nom,avatar_url").eq("id", autre.user_id).single()
+          setAutreProfilDM(prof)
+        }
+      }
       const { data: m } = await supabase.from("messages_groupe").select("*").eq("groupe_id", id).order("created_at", { ascending: true })
       setMessages(m || [])
       const { data: mb } = await supabase.from("membres_groupe").select("*").eq("groupe_id", id)
@@ -73,6 +153,24 @@ export default function GroupePage() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
+
+  async function marquerReserve() {
+    if (!annonceLiee) return
+    await supabase.from("marketplace_annonces").update({ statut: "réservé" }).eq("id", annonceLiee.id)
+    setAnnonceLiee((prev: any) => ({ ...prev, statut: "réservé" }))
+    await supabase.from("messages_groupe").insert({ groupe_id: id, user_id: user.id, contenu: `📦 "${annonceLiee.titre}" a été marquée comme réservée.` })
+  }
+
+  async function marquerRecu() {
+    if (!annonceLiee || !user) return
+    await supabase.from("marketplace_annonces").update({ statut: "vendu" }).eq("id", annonceLiee.id)
+    await supabase.from("revenus").insert({
+      user_id: user.id, titre: "Vente : " + annonceLiee.titre, montant: parseFloat(annonceLiee.prix),
+      categorie: "Autre", date: new Date().toISOString().slice(0, 10), recurrent: false
+    })
+    setAnnonceLiee((prev: any) => ({ ...prev, statut: "vendu" }))
+    await supabase.from("messages_groupe").insert({ groupe_id: id, user_id: user.id, contenu: `✅ Vente confirmée pour "${annonceLiee.titre}" — ajoutée à tes revenus.` })
+  }
 
   async function genererInvitation() {
     const { data, error } = await supabase.from("invitations").insert({ groupe_id: id, created_by: user.id }).select().single()
@@ -164,9 +262,10 @@ export default function GroupePage() {
       <div className="bg-white border-b border-blue-50 px-5 py-4 flex items-center justify-between">
         <a href="/groupes" className="text-gray-400 text-sm">← Retour</a>
         <div className="text-center">
-          <p className="text-base font-medium text-gray-900">{groupe.nom}</p>
-          <p className="text-xs text-gray-400">{membres.length} membres</p>
+          <p className="text-base font-medium text-gray-900">{groupe.est_dm ? (autreProfilDM?.nom || "Conversation") : groupe.nom}</p>
+          <p className="text-xs text-gray-400">{groupe.est_dm ? "Message privé" : `${membres.length} membres`}</p>
         </div>
+        {!groupe.est_dm && (
         <div style={{position:'relative'}}>
           <div style={{display:'flex',gap:'10px',alignItems:'center'}}>
             <a href={'/groupes/' + id + '/appel'}>
@@ -196,7 +295,41 @@ export default function GroupePage() {
             </>
           )}
         </div>
+        )}
       </div>
+
+      {annonceLiee && (
+        <div style={{padding:'14px 18px', borderBottom:'0.5px solid #F0F4FA', background:'#FAFCFF'}}>
+          <div style={{display:'flex', alignItems:'center', gap:'12px', marginBottom:'12px'}}>
+            <div style={{width:'46px', height:'46px', borderRadius:'12px', background:'linear-gradient(135deg,#EEF5FF,#DCE9FF)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, overflow:'hidden'}}>
+              {annonceLiee.image_url ? (
+                <img src={annonceLiee.image_url} alt={annonceLiee.titre} style={{width:'100%', height:'100%', objectFit:'cover'}}/>
+              ) : (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2B7FFF" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              )}
+            </div>
+            <div style={{flex:1, minWidth:0}}>
+              <div style={{fontSize:'13px', fontWeight:'600', color:'#1a1a2e', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{annonceLiee.titre}</div>
+              <div style={{fontSize:'13px', fontWeight:'700', color:'#2B7FFF'}}>{parseFloat(annonceLiee.prix).toFixed(0)} CHF</div>
+            </div>
+            <span style={{fontSize:'10px', fontWeight:'600', padding:'4px 10px', borderRadius:'99px', flexShrink:0,
+              background: annonceLiee.statut === 'vendu' ? '#E1F5EE' : annonceLiee.statut === 'réservé' ? '#FDF8EC' : '#EEF5FF',
+              color: annonceLiee.statut === 'vendu' ? '#10B981' : annonceLiee.statut === 'réservé' ? '#D4A843' : '#2B7FFF'}}>
+              {annonceLiee.statut === 'vendu' ? 'Vendu' : annonceLiee.statut === 'réservé' ? 'Réservé' : 'Disponible'}
+            </span>
+          </div>
+
+          {user && annonceLiee.user_id === user.id && annonceLiee.statut === 'disponible' && (
+            <GlisserConfirmer label="Glisser quand vous êtes d'accord sur le prix" couleur="#2B7FFF" onConfirm={marquerReserve} />
+          )}
+          {user && annonceLiee.user_id === user.id && annonceLiee.statut === 'réservé' && (
+            <GlisserConfirmer label="Glisser une fois l'argent ou l'objet reçu" couleur="#10B981" onConfirm={marquerRecu} />
+          )}
+          {user && annonceLiee.user_id !== user.id && annonceLiee.statut !== 'vendu' && (
+            <div style={{fontSize:'12px', color:'#aaa', textAlign:'center'}}>En attente du vendeur pour confirmer l'étape suivante</div>
+          )}
+        </div>
+      )}
 
       {lienInvitation && (
         <div className="mx-5 mt-3 bg-blue-50 border border-blue-100 rounded-xl p-3">
@@ -210,6 +343,7 @@ export default function GroupePage() {
         </div>
       )}
 
+      {!groupe.est_dm && (
       <div className="flex border-b border-blue-50" style={{overflowX:"auto",whiteSpace:"nowrap"}}>
         <button onClick={() => setOnglet("discussion")}
           className={`flex-1 py-3 text-sm font-medium ${onglet === "discussion" ? "text-blue-500 border-b-2 border-blue-500" : "text-gray-400"}`}>
@@ -227,6 +361,7 @@ export default function GroupePage() {
           Listes
         </button>
       </div>
+      )}
 
       {onglet === 'listes' && (
         <div style={{padding:'14px'}}>

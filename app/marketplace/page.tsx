@@ -1,6 +1,7 @@
 "use client"
 import { useEffect, useState, useRef } from "react"
 import { supabase } from "@/lib/supabase"
+import { ouvrirConversationPrivee } from "@/lib/dm"
 
 const CATEGORIES = ["Tout","Mode","Électronique","Maison","Sport","Autre"]
 
@@ -76,6 +77,16 @@ export default function Marketplace() {
     setMenuOuvertId(null)
   }
 
+  async function contacterVendeur(annonce: any) {
+    if (!user) { window.location.href = "/connexion"; return }
+    if (annonce.user_id === user.id) return
+    const idConv = await ouvrirConversationPrivee(supabase, user.id, annonce.user_id)
+    if (idConv) {
+      await supabase.from("groupes").update({ annonce_id: annonce.id }).eq("id", idConv)
+      window.location.href = "/groupes/" + idConv
+    }
+  }
+
   async function signalerAnnonce(annonceId: string) {
     if (!user) { alert("Connecte-toi pour signaler une annonce"); return }
     await supabase.from("marketplace_signalements").insert({ annonce_id: annonceId, user_id: user.id })
@@ -135,7 +146,7 @@ export default function Marketplace() {
   }
 
   async function chargerAnnonces() {
-    const { data } = await supabase.from("marketplace_annonces").select("*").order("created_at", { ascending: false })
+    const { data } = await supabase.from("marketplace_annonces").select("*").neq("statut", "vendu").order("created_at", { ascending: false })
     setAnnonces(data || [])
     if (data && data.length > 0) {
       const ids = Array.from(new Set(data.map((a: any) => a.user_id)))
@@ -251,6 +262,7 @@ export default function Marketplace() {
                     <a href={'/vendeur/'+a.user_id} onClick={e => e.stopPropagation()} style={{fontSize:"13px",fontWeight:"600",color:"#1a1a2e",textDecoration:"none"}}>{vendeur}</a>
                     <div style={{fontSize:"11px",color:"#aaa"}}>{a.categorie}</div>
                   </div>
+                  {a.statut === "réservé" && <div style={{flexShrink:0,background:"#D4A843",borderRadius:"99px",padding:"3px 10px",fontSize:"10px",color:"#fff",fontWeight:"600"}}>Réservé</div>}
                   {a.etat && <div style={{flexShrink:0,background:a.etat==="Neuf"?"#10B981":a.etat==="Urgent"?"#F43F5E":"#D4A843",borderRadius:"99px",padding:"3px 10px",fontSize:"10px",color:"#fff",fontWeight:"500"}}>{a.etat}</div>}
                   <div style={{position:"relative",flexShrink:0}}>
                     <button onClick={() => setMenuOuvertId(menuOuvertId===a.id?null:a.id)} style={{background:"none",border:"none",color:"#888",cursor:"pointer",padding:"4px",display:"flex"}}>
@@ -571,6 +583,14 @@ export default function Marketplace() {
                       <div style={{fontSize:"12px",color:"#aaa",marginTop:"8px"}}>Connecte-toi pour commenter</div>
                     )}
                   </div>
+
+                  {user && annonceOuverte.user_id !== user.id && (
+                    <button onClick={() => contacterVendeur(annonceOuverte)}
+                      style={{width:"100%",marginTop:"18px",background:"#2B7FFF",color:"#fff",border:"none",borderRadius:"12px",padding:"13px",fontSize:"14px",fontWeight:"600",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:"8px"}}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                      Contacter à propos de cette annonce
+                    </button>
+                  )}
 
                   {user && annonceOuverte.user_id === user.id && (
                     <button onClick={() => { supprimerAnnonce(annonceOuverte.id); setAnnonceOuverte(null) }}

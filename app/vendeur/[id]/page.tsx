@@ -22,7 +22,7 @@ export default function FicheVendeur() {
       setUser(user)
       const { data: p } = await supabase.from("profiles").select("*").eq("id", vendeurId).single()
       setProfil(p)
-      const { data: a } = await supabase.from("marketplace_annonces").select("*").eq("user_id", vendeurId).order("created_at", { ascending: false })
+      const { data: a } = await supabase.from("marketplace_annonces").select("*").eq("user_id", vendeurId).neq("statut", "vendu").order("created_at", { ascending: false })
       setAnnonces(a || [])
       const { data: f } = await supabase.from("marketplace_followers").select("*").eq("suivi_id", vendeurId)
       setFollowers(f || [])
