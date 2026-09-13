@@ -66,8 +66,11 @@ export default function Puissance4() {
         .is('gagnant', null).order('created_at', { ascending: false }).limit(1)
       if (p && p.length > 0) setPartie(p[0])
 
+      const nomCanal = 'puissance4-' + groupeId
+      supabase.getChannels().filter((ch: any) => ch.topic?.includes(nomCanal)).forEach((ch: any) => supabase.removeChannel(ch))
+
       channelRef.current = supabase
-        .channel('puissance4-' + groupeId)
+        .channel(nomCanal)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'jeux_groupe', filter: 'groupe_id=eq.' + groupeId }, (payload) => {
           setPartie(payload.new)
         })

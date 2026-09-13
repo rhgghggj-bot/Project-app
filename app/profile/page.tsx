@@ -181,7 +181,7 @@ export default function Profile() {
         {onglet === "settings" && (
           <div>
             <div style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'16px',padding:'16px',marginBottom:'12px'}}>
-              <div style={{fontSize:'13px',fontWeight:'500',color:'#aaa',textTransform:'uppercase',letterSpacing:'0.06em',marginBottom:'12px'}}>Mon profil</div>
+              <div style={{fontSize:'14px',fontWeight:'600',color:'#666',marginBottom:'12px'}}>Mon profil</div>
               <div style={{marginBottom:'10px'}}>
                 <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Prénom & Nom</label>
                 <input value={nom} onChange={e => setNom(e.target.value)} placeholder="Pierre Diatta"

@@ -54,8 +54,11 @@ export default function GroupePage() {
     }
     charger()
 
+    const nomCanal = 'messages-' + id
+    supabase.getChannels().filter((ch: any) => ch.topic?.includes(nomCanal)).forEach((ch: any) => supabase.removeChannel(ch))
+
     channelRef.current = supabase
-      .channel('messages-' + id)
+      .channel(nomCanal)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages_groupe', filter: 'groupe_id=eq.' + id },
         (payload) => setMessages(prev => [...prev, payload.new]))
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages_groupe', filter: 'groupe_id=eq.' + id },

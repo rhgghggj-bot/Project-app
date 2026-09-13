@@ -277,7 +277,7 @@ export default function Home() {
                 <a href={'/projet/'+vedette.id} style={{textDecoration:'none',display:'block',marginBottom:'14px'}}>
                   <div style={{background:'linear-gradient(135deg,#1a3a6e,#2B7FFF)',borderRadius:'20px',padding:'20px',position:'relative',overflow:'hidden'}}>
                     <div style={{position:'absolute',top:'-20px',right:'-20px',width:'100px',height:'100px',borderRadius:'50%',background:'rgba(255,255,255,0.08)'}}></div>
-                    <div style={{fontSize:'10px',color:'rgba(255,255,255,0.6)',marginBottom:'6px',textTransform:'uppercase',letterSpacing:'.05em'}}>En vedette</div>
+                    <div style={{fontSize:'11px',color:'rgba(255,255,255,0.65)',marginBottom:'6px',fontWeight:'500',display:'flex',alignItems:'center',gap:'5px'}}><span style={{width:'6px',height:'6px',borderRadius:'50%',background:'#D4A843',display:'inline-block'}}></span>En vedette</div>
                     <div style={{fontSize:'17px',fontWeight:'500',color:'#fff',marginBottom:'6px'}}>{vedette.titre}</div>
                     <div style={{fontSize:'12px',color:'rgba(255,255,255,0.7)',marginBottom:'14px',lineHeight:'1.5'}}>{vedette.description}</div>
                     <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>

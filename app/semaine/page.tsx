@@ -169,7 +169,7 @@ export default function Semaine() {
 
       <div style={{padding:'16px 18px'}}>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'12px'}}>
-          <div style={{fontSize:'11px',color:'#aaa',textTransform:'uppercase',letterSpacing:'0.07em',fontWeight:'500'}}>
+          <div style={{fontSize:'15px',color:'#1a1a2e',fontWeight:'600'}}>
             {voirTouteLaSemaine
               ? 'Événements de la semaine'
               : (jourFiltreEstAujourdhui ? "Aujourd'hui" : jourFiltre.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'}))}

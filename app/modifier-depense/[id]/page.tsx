@@ -3,7 +3,7 @@ import { useEffect, useState } from "react"
 import { useParams, useSearchParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 
-const CAT_DEPENSES = ["Logement","Assurance maladie","Assurance voiture","Assurance maison","Transport","Alimentation","Santé","Téléphone","Énergie","Loisirs","Autres"]
+const CAT_DEPENSES = ["Logement","Assurance maladie","Assurance voiture","Assurance maison","Transport","Alimentation","Santé","Téléphone","Énergie","Loisirs","Épargne","Autres"]
 const CAT_REVENUS = ["Salaire","Freelance","Investissement","Don / Cadeau","Allocation","Autre revenu"]
 
 export default function ModifierDepense() {

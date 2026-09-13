@@ -7,9 +7,29 @@ import { useEffect, useState, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 
-const CAT_DEPENSES = ["Logement","Assurance maladie","Assurance voiture","Assurance maison","Transport","Alimentation","Santé","Téléphone","Énergie","Loisirs","Autres"]
+const CAT_DEPENSES = ["Logement","Assurance maladie","Assurance voiture","Assurance maison","Transport","Alimentation","Santé","Téléphone","Énergie","Loisirs","Épargne","Autres"]
 const CAT_REVENUS = ["Salaire","Freelance","Investissement","Don / Cadeau","Allocation","Autre revenu"]
 const MOIS_NOMS = ["Jan","Fév","Mar","Avr","Mai","Jun","Jul","Aoû","Sep","Oct","Nov","Déc"]
+
+function IconeCategorie({ cat, size = 15 }: { cat: string; size?: number }) {
+  const p = { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round" as const, strokeLinejoin: "round" as const }
+  switch (cat) {
+    case "Logement": return <svg {...p}><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    case "Assurance maladie": case "Assurance voiture": case "Assurance maison": return <svg {...p}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    case "Transport": return <svg {...p}><rect x="1" y="7" width="15" height="10"/><path d="M16 10h4l3 3v4h-7z"/><circle cx="5.5" cy="18.5" r="1.5"/><circle cx="17.5" cy="18.5" r="1.5"/></svg>
+    case "Alimentation": return <svg {...p}><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+    case "Santé": return <svg {...p}><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+    case "Téléphone": return <svg {...p}><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+    case "Énergie": return <svg {...p}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+    case "Loisirs": return <svg {...p}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26"/></svg>
+    case "Épargne": return <svg {...p}><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M2 10h20"/><circle cx="16" cy="14" r="1.5"/></svg>
+    case "Salaire": case "Freelance": return <svg {...p}><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+    case "Investissement": return <svg {...p}><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+    case "Don / Cadeau": return <svg {...p}><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
+    case "Allocation": return <svg {...p}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    default: return <svg {...p}><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+  }
+}
 
 function FinancesContent() {
   const [depenses, setDepenses] = useState<any[]>([])
@@ -206,16 +226,16 @@ function FinancesContent() {
 
   const ItemDepense = ({ d, type }: { d: any, type: "depense"|"revenu" }) => (
     <div style={{background: type === "revenu" ? '#F0FFF8' : '#fff', border:`0.5px solid ${type === "revenu" ? '#A7F3D0' : '#E8F1FF'}`,borderRadius:'14px',padding:'12px 14px',marginBottom:'8px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-      <div style={{display:'flex',alignItems:'center',gap:'10px',flex:1}}>
-        <div style={{width:'36px',height:'36px',background: type === "revenu" ? '#E1F5EE' : '#EEF5FF',borderRadius:'10px',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'16px'}}>
-          {type === "revenu" ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>}
+      <div style={{display:'flex',alignItems:'center',gap:'10px',flex:1,minWidth:0}}>
+        <div style={{width:'36px',height:'36px',background: type === "revenu" ? '#E1F5EE' : '#EEF5FF',color: type === "revenu" ? '#10B981' : '#2B7FFF',borderRadius:'10px',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+          <IconeCategorie cat={d.categorie} size={16}/>
         </div>
-        <div style={{flex:1}}>
-          <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e'}}>{d.titre}</div>
-          <div style={{fontSize:'11px',color:'#aaa'}}>{new Date(d.date).toLocaleDateString('fr-FR')} {d.recurrent ? '· récurrent' : ''}</div>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{d.titre}</div>
+          <div style={{fontSize:'11px',color:'#aaa'}}>{new Date(d.date).toLocaleDateString('fr-FR')}{d.categorie ? ` · ${d.categorie}` : ''}{d.recurrent ? ' · récurrent' : ''}</div>
         </div>
       </div>
-      <div style={{display:'flex',alignItems:'center',gap:'6px'}}>
+      <div style={{display:'flex',alignItems:'center',gap:'6px',flexShrink:0}}>
         <div style={{fontSize:'14px',fontWeight:'500',color: type === "revenu" ? '#10B981' : '#F43F5E'}}>
           {type === "revenu" ? '+' : '-'}{conv(parseFloat(d.montant)).toFixed(0)} {devise}
         </div>
@@ -240,21 +260,27 @@ function FinancesContent() {
         </div>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'8px'}}><div style={{fontSize:'12px',color:'rgba(255,255,255,0.5)'}}>Bilan du mois</div><button onClick={exporterPDF} style={{background:'rgba(255,255,255,0.15)',color:'#fff',border:'0.5px solid rgba(255,255,255,0.3)',borderRadius:'10px',padding:'6px 12px',fontSize:'12px',fontWeight:'500',cursor:'pointer',display:'flex',alignItems:'center',gap:'5px'}}><svg width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='#fff' strokeWidth='2'><path d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4'/><polyline points='7 10 12 15 17 10'/><line x1='12' y1='15' x2='12' y2='3'/></svg>PDF</button></div>
         <div style={{background:'rgba(255,255,255,0.08)',borderRadius:'16px',padding:'16px',marginBottom:'12px',border:`1px solid ${couleurSolde}44`}}>
-          <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'8px'}}>
-            <span style={{fontSize:'20px'}}>{iconeSolde}</span>
-            <span style={{fontSize:'14px',fontWeight:'500',color:couleurSolde}}>{texteSolde}</span>
-          </div>
-          <div style={{fontSize:'32px',fontWeight:'500',color:couleurSolde,marginBottom:'8px'}}>
-            {solde >= 0 ? '+' : ''}{conv(solde).toFixed(0)} {devise}
-          </div>
-          <div style={{height:'8px',background:'rgba(255,255,255,0.1)',borderRadius:'99px',overflow:'hidden',marginBottom:'6px'}}>
-            <div style={{height:'100%',width:`${pctDepenses}%`,background: pctDepenses > 90 ? '#F43F5E' : pctDepenses > 70 ? '#D4A843' : '#10B981',borderRadius:'99px'}}></div>
-          </div>
-          <div style={{display:'flex',justifyContent:'space-between'}}>
-            <span style={{fontSize:'12px',color:'rgba(255,255,255,0.6)'}}>Dépenses : {pctDepenses.toFixed(0)}% des revenus</span>
-            <span style={{fontSize:'12px',color: pctDepenses > 90 ? '#F43F5E' : pctDepenses > 70 ? '#D4A843' : '#10B981',fontWeight:'500'}}>
-              {pctDepenses > 90 ? 'Attention' : pctDepenses > 70 ? 'Surveille' : 'Bon rythme'}
-            </span>
+          <div style={{display:'flex',alignItems:'center',gap:'16px'}}>
+            <div style={{position:'relative',width:'84px',height:'84px',flexShrink:0}}>
+              <svg width="84" height="84" viewBox="0 0 100 100" style={{transform:'rotate(-90deg)'}}>
+                <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="10"/>
+                <circle cx="50" cy="50" r="40" fill="none" stroke={pctDepenses > 90 ? '#F43F5E' : pctDepenses > 70 ? '#D4A843' : '#10B981'} strokeWidth="10"
+                  strokeDasharray={`${(Math.min(pctDepenses,100)/100) * 251.3} 251.3`} strokeLinecap="round" style={{transition:'all 0.4s'}}/>
+              </svg>
+              <div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center'}}>
+                <div style={{fontSize:'17px',fontWeight:'700',color:'#fff'}}>{pctDepenses.toFixed(0)}%</div>
+                <div style={{fontSize:'8px',color:'rgba(255,255,255,0.5)',textTransform:'uppercase'}}>budget</div>
+              </div>
+            </div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:'13px',fontWeight:'500',color:couleurSolde,marginBottom:'2px'}}>{texteSolde}</div>
+              <div style={{fontSize:'28px',fontWeight:'600',color:'#fff',marginBottom:'6px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+                {solde >= 0 ? '+' : ''}{conv(solde).toFixed(0)} {devise}
+              </div>
+              <div style={{fontSize:'11px',color: pctDepenses > 90 ? '#F43F5E' : pctDepenses > 70 ? '#D4A843' : '#10B981',fontWeight:'500',background: pctDepenses > 90 ? 'rgba(244,63,94,0.15)' : pctDepenses > 70 ? 'rgba(212,168,67,0.15)' : 'rgba(16,185,129,0.15)',display:'inline-block',padding:'3px 9px',borderRadius:'99px'}}>
+                {pctDepenses > 90 ? 'Attention' : pctDepenses > 70 ? 'Surveille' : 'Bon rythme'}
+              </div>
+            </div>
           </div>
         </div>
         <div style={{display:'flex',gap:'8px'}}>
@@ -309,58 +335,60 @@ function FinancesContent() {
         
         <div style={{padding:'16px 18px'}}>
           <div style={{background:'rgba(255,255,255,0.9)',border:'0.5px solid #E8F1FF',borderRadius:'18px',padding:'16px',marginBottom:'14px',boxShadow:'0 4px 24px rgba(43,127,255,0.08)'}}>
-            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'8px'}}>
-              <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e'}}>6 derniers mois</div>
-              <div style={{display:'flex',gap:'10px'}}>
-                <span style={{fontSize:'11px',color:'#F43F5E',display:'flex',alignItems:'center',gap:'4px'}}><span style={{width:'8px',height:'8px',borderRadius:'2px',background:'linear-gradient(180deg,#FB7185,#F43F5E)',display:'inline-block'}}></span>Dépenses</span>
-                <span style={{fontSize:'11px',color:'#10B981',display:'flex',alignItems:'center',gap:'4px'}}><span style={{width:'8px',height:'8px',borderRadius:'2px',background:'linear-gradient(180deg,#6EE7B7,#10B981)',display:'inline-block'}}></span>Revenus</span>
-              </div>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'4px'}}>
+              <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e'}}>Évolution du solde</div>
+              <div style={{fontSize:'11px',color:'#aaa'}}>6 derniers mois</div>
             </div>
-            <div style={{position:'relative',height:'120px',marginBottom:'8px'}}>
-              <div style={{position:'absolute',inset:'0 0 20px 0',display:'flex',flexDirection:'column',justifyContent:'space-between',pointerEvents:'none'}}>
-                {[0,1,2].map(i => <div key={i} style={{borderTop:'0.5px dashed #EEF3FA'}}></div>)}
-              </div>
-              <div style={{position:'relative',display:'flex',alignItems:'flex-end',gap:'6px',height:'120px'}}>
-              {donneesGraphique.map((d, i) => {
-                const estActuel = d.mois === moisActuel
-                const estSel = moisSelectionne?.mois === d.mois
-                const hDep = d.depenses > 0 ? Math.max(Math.min((d.depenses/maxVal)*90, 90), 8) : 3
-                const hRev = d.revenus > 0 ? Math.max(Math.min((d.revenus/maxVal)*90, 90), 8) : 3
-                const soldeMois = d.revenus - d.depenses
-                return (
-                  <div key={i} onClick={() => setMoisSelectionne(estSel ? null : d)} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:'3px',cursor:'pointer'}}>
-                    <div style={{width:'100%',display:'flex',gap:'2px',alignItems:'flex-end',height:'100px'}}>
-                      <div style={{flex:1,height:`${hDep}%`,borderRadius:'5px 5px 0 0',
-                        background: estSel ? '#1a1a2e' : 'linear-gradient(180deg,#FB7185,#F43F5E)',
-                        opacity: d.depenses === 0 ? 0.15 : 1,
-                        boxShadow: d.depenses > 0 ? '0 2px 6px rgba(244,63,94,0.25)' : 'none',
-                        transition:'all 0.2s'}}></div>
-                      <div style={{flex:1,height:`${hRev}%`,borderRadius:'5px 5px 0 0',
-                        background: estSel ? '#D4A843' : 'linear-gradient(180deg,#6EE7B7,#10B981)',
-                        opacity: d.revenus === 0 ? 0.15 : 1,
-                        boxShadow: d.revenus > 0 ? '0 2px 6px rgba(16,185,129,0.25)' : 'none',
-                        transition:'all 0.2s'}}></div>
-                    </div>
-                    <div style={{fontSize:'9px',color: soldeMois > 0 ? '#10B981' : soldeMois < 0 ? '#F43F5E' : '#aaa',fontWeight:'500'}}>
-                      {soldeMois !== 0 ? (soldeMois > 0 ? '+' : '') + soldeMois.toFixed(0) : '-'}
-                    </div>
-                    <div style={{fontSize:'10px',color: estActuel ? '#2B7FFF' : '#aaa',fontWeight: estActuel ? '600' : '400'}}>{d.label}</div>
-                  </div>
-                )
-              })}
-              </div>
-            </div>
+            {(() => {
+              const soldes = donneesGraphique.map(d => d.revenus - d.depenses)
+              const maxS = Math.max(0, ...soldes), minS = Math.min(0, ...soldes)
+              const range = (maxS - minS) || 1
+              const W = 300, H = 110, padX = 18, padTop = 14, padBot = 26
+              const xAt = (i: number) => padX + (i * (W - padX*2)) / (soldes.length - 1)
+              const yAt = (v: number) => padTop + ((maxS - v) / range) * (H - padTop - padBot)
+              const zeroY = yAt(0)
+              const pts = soldes.map((v, i) => ({ x: xAt(i), y: yAt(v), v, i }))
+              const linePath = pts.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ')
+              const areaPath = `${linePath} L ${pts[pts.length-1].x} ${H - padBot} L ${pts[0].x} ${H - padBot} Z`
+              return (
+                <div style={{position:'relative'}}>
+                  <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{display:'block',overflow:'visible'}}>
+                    <defs>
+                      <linearGradient id="soldeFill" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#D4A843" stopOpacity="0.35"/>
+                        <stop offset="100%" stopColor="#D4A843" stopOpacity="0"/>
+                      </linearGradient>
+                    </defs>
+                    {minS < 0 && <line x1={padX} y1={zeroY} x2={W-padX} y2={zeroY} stroke="#EEF3FA" strokeWidth="1" strokeDasharray="3 3"/>}
+                    <path d={areaPath} fill="url(#soldeFill)"/>
+                    <path d={linePath} fill="none" stroke="#D4A843" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round"/>
+                    {pts.map((p) => {
+                      const d = donneesGraphique[p.i]
+                      const estSel = moisSelectionne?.mois === d.mois
+                      const estActuel = d.mois === moisActuel
+                      return (
+                        <g key={p.i} onClick={() => setMoisSelectionne(estSel ? null : d)} style={{cursor:'pointer'}}>
+                          <circle cx={p.x} cy={p.y} r="10" fill="transparent"/>
+                          <circle cx={p.x} cy={p.y} r={estSel || estActuel ? 5 : 3.5} fill={p.v >= 0 ? '#D4A843' : '#E15367'} stroke="#fff" strokeWidth="2"/>
+                          <text x={p.x} y={H - 6} textAnchor="middle" fontSize="9" fill={estActuel ? '#2B7FFF' : '#aaa'} fontWeight={estActuel ? 600 : 400}>{d.label}</text>
+                        </g>
+                      )
+                    })}
+                  </svg>
+                </div>
+              )
+            })()}
             {moisSelectionne && (
-              <div style={{background:'#F8FBFF',borderRadius:'10px',padding:'10px 12px',marginTop:'6px',border:`0.5px solid ${moisSelectionne.revenus - moisSelectionne.depenses >= 0 ? '#A7F3D0' : '#FECDD3'}`}}>
+              <div style={{background:'#F8FBFF',borderRadius:'10px',padding:'10px 12px',marginTop:'10px',border:`0.5px solid ${moisSelectionne.revenus - moisSelectionne.depenses >= 0 ? '#E9D9A8' : '#F3C6CB'}`}}>
                 <div style={{display:'flex',justifyContent:'space-between',marginBottom:'4px'}}>
                   <span style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e'}}>{moisSelectionne.label} {moisSelectionne.annee}</span>
-                  <span style={{fontSize:'13px',fontWeight:'500',color: moisSelectionne.revenus - moisSelectionne.depenses >= 0 ? '#10B981' : '#F43F5E'}}>
+                  <span style={{fontSize:'13px',fontWeight:'500',color: moisSelectionne.revenus - moisSelectionne.depenses >= 0 ? '#B8862E' : '#E15367'}}>
                     {moisSelectionne.revenus - moisSelectionne.depenses >= 0 ? '+' : ''}{conv(moisSelectionne.revenus - moisSelectionne.depenses).toFixed(0)} {devise}
                   </span>
                 </div>
                 <div style={{display:'flex',gap:'12px'}}>
-                  <span style={{fontSize:'12px',color:'#F43F5E'}}>Dép. {conv(moisSelectionne.depenses).toFixed(0)} {devise}</span>
-                  <span style={{fontSize:'12px',color:'#4ade80'}}>Rev. {conv(moisSelectionne.revenus).toFixed(0)} {devise}</span>
+                  <span style={{fontSize:'12px',color:'#E15367'}}>Dép. {conv(moisSelectionne.depenses).toFixed(0)} {devise}</span>
+                  <span style={{fontSize:'12px',color:'#6B9A82'}}>Rev. {conv(moisSelectionne.revenus).toFixed(0)} {devise}</span>
                 </div>
                 <button onClick={() => setMoisSelectionne(null)} style={{fontSize:'11px',color:'#aaa',background:'none',border:'none',cursor:'pointer',marginTop:'4px'}}>× Fermer</button>
               </div>
@@ -372,7 +400,7 @@ function FinancesContent() {
               <div style={{width:'28px',height:'28px',borderRadius:'9px',background:'#fff',display:'flex',alignItems:'center',justifyContent:'center',marginBottom:'8px'}}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
               </div>
-              <div style={{fontSize:'10px',color:'#10B981',fontWeight:'600',textTransform:'uppercase',letterSpacing:'.04em',marginBottom:'3px'}}>Revenus · mois min</div>
+              <div style={{fontSize:'11px',color:'#10B981',fontWeight:'600',marginBottom:'3px'}}>Revenus · mois min</div>
               <div style={{fontSize:'16px',fontWeight:'600',color:'#1a1a2e'}}>{moisMinDep?.label || '-'}</div>
               <div style={{fontSize:'12px',color:'#10B981',fontWeight:'500'}}>{conv(moisMinDep?.depenses || 0).toFixed(0)} {devise}</div>
             </div>
@@ -380,7 +408,7 @@ function FinancesContent() {
               <div style={{width:'28px',height:'28px',borderRadius:'9px',background:'#fff',display:'flex',alignItems:'center',justifyContent:'center',marginBottom:'8px'}}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F43F5E" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>
               </div>
-              <div style={{fontSize:'10px',color:'#F43F5E',fontWeight:'600',textTransform:'uppercase',letterSpacing:'.04em',marginBottom:'3px'}}>Dépenses · mois max</div>
+              <div style={{fontSize:'11px',color:'#F43F5E',fontWeight:'600',marginBottom:'3px'}}>Dépenses · mois max</div>
               <div style={{fontSize:'16px',fontWeight:'600',color:'#1a1a2e'}}>{moisMaxDep.label}</div>
               <div style={{fontSize:'12px',color:'#F43F5E',fontWeight:'500'}}>{conv(moisMaxDep.depenses).toFixed(0)} {devise}</div>
             </div>
@@ -388,26 +416,47 @@ function FinancesContent() {
 
           {depensesParCat.length > 0 && (() => {
             const palette = ['#F43F5E','#F59E0B','#8B5CF6','#2B7FFF','#10B981','#D4A843','#EC4899']
+            const R = 52, C = 2 * Math.PI * R
+            let cumule = 0
+            const segments = depensesParCat.map((c, i) => {
+              const pct = totalDep > 0 ? c.total / totalDep : 0
+              const seg = { cat: c.cat, total: c.total, pct, coul: palette[i % palette.length], offset: cumule }
+              cumule += pct
+              return seg
+            })
             return (
             <div style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'16px',padding:'14px',marginBottom:'14px'}}>
-              <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',marginBottom:'12px'}}>Répartition dépenses</div>
-              {depensesParCat.map((c, i) => {
-                const coul = palette[i % palette.length]
-                return (
-                <div key={i} style={{marginBottom:'10px'}}>
-                  <div style={{display:'flex',justifyContent:'space-between',marginBottom:'4px',alignItems:'center'}}>
-                    <span style={{fontSize:'12px',color:'#444',display:'flex',alignItems:'center',gap:'6px'}}>
-                      <span style={{width:'8px',height:'8px',borderRadius:'50%',background:coul,flexShrink:0}}></span>
-                      {c.cat}
-                    </span>
-                    <span style={{fontSize:'12px',fontWeight:'500',color:'#1a1a2e'}}>{conv(c.total).toFixed(0)} {devise} · {totalDep > 0 ? ((c.total/totalDep)*100).toFixed(0) : 0}%</span>
-                  </div>
-                  <div style={{height:'7px',background:'#F5F8FC',borderRadius:'99px',overflow:'hidden'}}>
-                    <div style={{height:'100%',width:`${totalDep > 0 ? (c.total/totalDep)*100 : 0}%`,background:coul,borderRadius:'99px',boxShadow:`0 1px 4px ${coul}55`}}></div>
+              <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',marginBottom:'14px'}}>Répartition dépenses</div>
+              <div style={{display:'flex',alignItems:'center',gap:'18px'}}>
+                <div style={{position:'relative',width:'128px',height:'128px',flexShrink:0}}>
+                  <svg width="128" height="128" viewBox="0 0 120 120" style={{transform:'rotate(-90deg)'}}>
+                    <circle cx="60" cy="60" r={R} fill="none" stroke="#F5F8FC" strokeWidth="16"/>
+                    {segments.map((s, i) => (
+                      <circle key={i} cx="60" cy="60" r={R} fill="none" stroke={s.coul} strokeWidth="16"
+                        strokeDasharray={`${s.pct * C} ${C}`} strokeDashoffset={-s.offset * C}
+                        strokeLinecap={segments.length === 1 ? "butt" : "round"} style={{transition:'all 0.3s'}}/>
+                    ))}
+                  </svg>
+                  <div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center'}}>
+                    <div style={{fontSize:'9px',color:'#aaa',textTransform:'uppercase',letterSpacing:'.04em'}}>Total</div>
+                    <div style={{fontSize:'16px',fontWeight:'600',color:'#1a1a2e'}}>{conv(totalDep).toFixed(0)}</div>
+                    <div style={{fontSize:'10px',color:'#aaa'}}>{devise}</div>
                   </div>
                 </div>
-                )
-              })}
+                <div style={{flex:1,display:'flex',flexDirection:'column',gap:'9px'}}>
+                  {segments.map((s, i) => (
+                    <div key={i} style={{display:'flex',alignItems:'center',gap:'8px'}}>
+                      <div style={{width:'24px',height:'24px',borderRadius:'8px',background:s.coul+'1a',color:s.coul,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                        <IconeCategorie cat={s.cat} size={12}/>
+                      </div>
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{fontSize:'11px',color:'#444',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{s.cat}</div>
+                      </div>
+                      <div style={{fontSize:'11px',fontWeight:'600',color:'#1a1a2e',flexShrink:0}}>{(s.pct*100).toFixed(0)}%</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
             )
           })()}
@@ -434,11 +483,21 @@ function FinancesContent() {
                 <input value={date} onChange={e => setDate(e.target.value)} type="date"
                   style={{flex:1,border:'1px solid #E8F1FF',borderRadius:'10px',padding:'8px 12px',fontSize:'13px',color:'#1a1a2e',background:'#fff'}}/>
               </div>
-              <select value={categorie} onChange={e => setCategorie(e.target.value)}
-                style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'8px 12px',fontSize:'13px',color:'#1a1a2e',background:'#fff',marginBottom:'8px'}}>
-                <option value="">Catégorie</option>
-                {(typeForm === "depense" ? CAT_DEPENSES : CAT_REVENUS).map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
+              <div style={{marginBottom:'10px'}}>
+                <div style={{fontSize:'11px',color:'#888',marginBottom:'6px'}}>Catégorie</div>
+                <div style={{display:'flex',flexWrap:'wrap',gap:'6px'}}>
+                  {(typeForm === "depense" ? CAT_DEPENSES : CAT_REVENUS).map(c => (
+                    <button key={c} type="button" onClick={() => setCategorie(c)}
+                      style={{display:'flex',alignItems:'center',gap:'5px',padding:'6px 10px',borderRadius:'99px',
+                        border: '1px solid ' + (categorie === c ? (typeForm === "depense" ? '#F43F5E' : '#10B981') : '#E8F1FF'),
+                        background: categorie === c ? (typeForm === "depense" ? '#F43F5E' : '#10B981') : '#fff',
+                        color: categorie === c ? '#fff' : '#666', fontSize:'11px', fontWeight:'500', cursor:'pointer'}}>
+                      <IconeCategorie cat={c} size={12}/>
+                      {c}
+                    </button>
+                  ))}
+                </div>
+              </div>
               <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'10px'}}>
                 <input type="checkbox" checked={recurrent} onChange={e => setRecurrent(e.target.checked)} id="rec"/>
                 <label htmlFor="rec" style={{fontSize:'13px',color:'#666'}}>Récurrent (mensuel)</label>
@@ -485,11 +544,21 @@ function FinancesContent() {
                 <input value={date} onChange={e => setDate(e.target.value)} type="date"
                   style={{flex:1,border:'1px solid #E8F1FF',borderRadius:'10px',padding:'8px 12px',fontSize:'13px',color:'#1a1a2e',background:'#fff'}}/>
               </div>
-              <select value={categorie} onChange={e => setCategorie(e.target.value)}
-                style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'8px 12px',fontSize:'13px',color:'#1a1a2e',background:'#fff',marginBottom:'8px'}}>
-                <option value="">Catégorie</option>
-                {CAT_REVENUS.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
+              <div style={{marginBottom:'10px'}}>
+                <div style={{fontSize:'11px',color:'#888',marginBottom:'6px'}}>Catégorie</div>
+                <div style={{display:'flex',flexWrap:'wrap',gap:'6px'}}>
+                  {CAT_REVENUS.map(c => (
+                    <button key={c} type="button" onClick={() => setCategorie(c)}
+                      style={{display:'flex',alignItems:'center',gap:'5px',padding:'6px 10px',borderRadius:'99px',
+                        border: '1px solid ' + (categorie === c ? '#10B981' : '#E8F1FF'),
+                        background: categorie === c ? '#10B981' : '#fff',
+                        color: categorie === c ? '#fff' : '#666', fontSize:'11px', fontWeight:'500', cursor:'pointer'}}>
+                      <IconeCategorie cat={c} size={12}/>
+                      {c}
+                    </button>
+                  ))}
+                </div>
+              </div>
               <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'10px'}}>
                 <input type="checkbox" checked={recurrent} onChange={e => setRecurrent(e.target.checked)} id="rec2"/>
                 <label htmlFor="rec2" style={{fontSize:'13px',color:'#666'}}>Récurrent (mensuel)</label>
