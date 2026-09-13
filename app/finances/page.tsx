@@ -350,44 +350,87 @@ function FinancesContent() {
             </div>
             {(() => {
               const soldes = donneesGraphique.map(d => d.revenus - d.depenses)
-              const maxS = Math.max(0, ...soldes), minS = Math.min(0, ...soldes)
+              const maxSRaw = Math.max(0, ...soldes), minSRaw = Math.min(0, ...soldes)
+              const rangeRaw = (maxSRaw - minSRaw) || 100
+              const pas = Math.pow(10, Math.floor(Math.log10(rangeRaw / 4)))
+              const arrondi = (v: number, dir: 'up'|'down') => dir === 'up' ? Math.ceil(v / pas) * pas : Math.floor(v / pas) * pas
+              const maxS = arrondi(maxSRaw, 'up'), minS = arrondi(minSRaw, 'down')
               const range = (maxS - minS) || 1
-              const W = chartW, H = 120, padX = 18, padTop = 14, padBot = 26
-              const xAt = (i: number) => padX + (i * (W - padX*2)) / (soldes.length - 1)
+              const NB_TICKS = 4
+              const ticks = Array.from({length: NB_TICKS + 1}, (_, i) => maxS - (i * range) / NB_TICKS)
+
+              const W = chartW, H = 150, padLeft = 46, padRight = 10, padTop = 12, padBot = 26
+              const xAt = (i: number) => padLeft + (i * (W - padLeft - padRight)) / (soldes.length - 1)
               const yAt = (v: number) => padTop + ((maxS - v) / range) * (H - padTop - padBot)
-              const zeroY = yAt(0)
               const pts = soldes.map((v, i) => ({ x: xAt(i), y: yAt(v), v, i }))
               const linePath = pts.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ')
-              const areaPath = `${linePath} L ${pts[pts.length-1].x} ${H - padBot} L ${pts[0].x} ${H - padBot} Z`
+              const areaPath = `${linePath} L ${pts[pts.length-1].x} ${yAt(minS)} L ${pts[0].x} ${yAt(minS)} Z`
+
               return (
                 <div ref={chartRef} style={{position:'relative'}}>
                   <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{display:'block',overflow:'visible'}}>
                     <defs>
                       <linearGradient id="soldeFill" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#D4A843" stopOpacity="0.35"/>
+                        <stop offset="0%" stopColor="#D4A843" stopOpacity="0.3"/>
                         <stop offset="100%" stopColor="#D4A843" stopOpacity="0"/>
                       </linearGradient>
                     </defs>
-                    {minS < 0 && <line x1={padX} y1={zeroY} x2={W-padX} y2={zeroY} stroke="#EEF3FA" strokeWidth="1" strokeDasharray="3 3"/>}
+
+                    {ticks.map((t, i) => {
+                      const y = yAt(t)
+                      const estZero = Math.abs(t) < pas / 2
+                      return (
+                        <g key={i}>
+                          <line x1={padLeft} y1={y} x2={W - padRight} y2={y}
+                            stroke={estZero ? '#D8DEE8' : '#EEF3FA'} strokeWidth={estZero ? 1.2 : 1}
+                            strokeDasharray={estZero ? undefined : '3 3'}/>
+                          <text x={padLeft - 8} y={y + 3} textAnchor="end" fontSize="9" fill="#aaa">{conv(t).toFixed(0)}</text>
+                        </g>
+                      )
+                    })}
+
                     <path d={areaPath} fill="url(#soldeFill)"/>
                     <path d={linePath} fill="none" stroke="#D4A843" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round"/>
+
                     {pts.map((p) => {
                       const d = donneesGraphique[p.i]
                       const estSel = moisSelectionne?.mois === d.mois
                       const estActuel = d.mois === moisActuel
-                      const auDessus = p.y > H / 2
-                      const coul = p.v >= 0 ? '#B8862E' : '#E15367'
-                      const texteVal = p.v === 0 ? '0' : (p.v > 0 ? '+' : '') + conv(p.v).toFixed(0)
                       return (
-                        <g key={p.i} onClick={() => setMoisSelectionne(estSel ? null : d)} style={{cursor:'pointer'}}>
+                        <g key={p.i}
+                          onClick={() => setMoisSelectionne(estSel ? null : d)}
+                          onMouseEnter={() => setMoisSelectionne(d)}
+                          style={{cursor:'pointer'}}>
                           <circle cx={p.x} cy={p.y} r="14" fill="transparent"/>
-                          <text x={p.x} y={auDessus ? p.y - 12 : p.y + 20} textAnchor="middle" fontSize="10" fontWeight="600" fill={coul}>{texteVal}</text>
-                          <circle cx={p.x} cy={p.y} r={estSel || estActuel ? 5 : 3.5} fill={p.v >= 0 ? '#D4A843' : '#E15367'} stroke="#fff" strokeWidth="2"/>
+                          <circle cx={p.x} cy={p.y} r={estSel || estActuel ? 5.5 : 3.5} fill={p.v >= 0 ? '#D4A843' : '#E15367'} stroke="#fff" strokeWidth="2"/>
                           <text x={p.x} y={H - 6} textAnchor="middle" fontSize="9" fill={estActuel ? '#2B7FFF' : '#aaa'} fontWeight={estActuel ? 600 : 400}>{d.label}</text>
                         </g>
                       )
                     })}
+
+                    {moisSelectionne && (() => {
+                      const iSel = pts.findIndex(p => donneesGraphique[p.i].mois === moisSelectionne.mois)
+                      if (iSel === -1) return null
+                      const p = pts[iSel]
+                      const val = p.v
+                      const texte = (val === 0 ? '0' : (val > 0 ? '+' : '') + conv(val).toFixed(0)) + ' ' + devise
+                      const coul = val >= 0 ? '#B8862E' : '#E15367'
+                      const largeurBulle = Math.max(58, texte.length * 6.5 + 16)
+                      const auDessus = p.y > 40
+                      const bulleY = auDessus ? p.y - 34 : p.y + 14
+                      let bulleX = p.x - largeurBulle / 2
+                      bulleX = Math.max(padLeft, Math.min(W - padRight - largeurBulle, bulleX))
+                      return (
+                        <g style={{pointerEvents:'none'}}>
+                          <line x1={p.x} y1={p.y} x2={p.x} y2={padTop} stroke={coul} strokeWidth="1" strokeDasharray="2 3" opacity="0.4"/>
+                          <rect x={bulleX} y={bulleY} width={largeurBulle} height="24" rx="7" fill="#1a1a2e"/>
+                          <polygon points={auDessus ? `${p.x-5},${bulleY+24} ${p.x+5},${bulleY+24} ${p.x},${bulleY+30}` : `${p.x-5},${bulleY} ${p.x+5},${bulleY} ${p.x},${bulleY-6}`} fill="#1a1a2e"/>
+                          <text x={bulleX + largeurBulle/2} y={bulleY + 16} textAnchor="middle" fontSize="11" fontWeight="700" fill="#fff">{texte}</text>
+                        </g>
+                      )
+                    })()}
                   </svg>
+                  <div style={{fontSize:'10px',color:'#bbb',marginTop:'4px'}}>Solde net par mois, en {devise}</div>
                 </div>
               )
             })()}
