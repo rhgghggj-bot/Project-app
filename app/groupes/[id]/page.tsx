@@ -181,6 +181,18 @@ export default function GroupePage() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
 
+  useEffect(() => {
+    if (!groupe?.annonce_id) return
+    const nomCanalAnnonce = 'annonce-liee-' + groupe.annonce_id
+    supabase.getChannels().filter((ch: any) => ch.topic?.includes(nomCanalAnnonce)).forEach((ch: any) => supabase.removeChannel(ch))
+    const canalAnnonce = supabase
+      .channel(nomCanalAnnonce)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'marketplace_annonces', filter: 'id=eq.' + groupe.annonce_id },
+        (payload: any) => setAnnonceLiee(payload.new))
+      .subscribe()
+    return () => { supabase.removeChannel(canalAnnonce) }
+  }, [groupe?.annonce_id])
+
   async function marquerReserve() {
     if (!annonceLiee) return
     await supabase.from("marketplace_annonces").update({ statut: "réservé" }).eq("id", annonceLiee.id)
@@ -195,8 +207,14 @@ export default function GroupePage() {
       user_id: user.id, titre: "Vente : " + annonceLiee.titre, montant: parseFloat(annonceLiee.prix),
       categorie: "Autre", date: new Date().toISOString().slice(0, 10), recurrent: false
     })
+    if (autreProfilDM?.id) {
+      await supabase.from("depenses").insert({
+        user_id: autreProfilDM.id, titre: "Achat : " + annonceLiee.titre, montant: parseFloat(annonceLiee.prix),
+        categorie: "Autre", date: new Date().toISOString().slice(0, 10), recurrent: false
+      })
+    }
     setAnnonceLiee((prev: any) => ({ ...prev, statut: "vendu" }))
-    await supabase.from("messages_groupe").insert({ groupe_id: id, user_id: user.id, contenu: `✅ Vente confirmée pour "${annonceLiee.titre}" — ajoutée à tes revenus.` })
+    await supabase.from("messages_groupe").insert({ groupe_id: id, user_id: user.id, contenu: `✅ Vente confirmée pour "${annonceLiee.titre}" — un reçu a été ajouté dans les Finances de chacun.` })
   }
 
   async function genererInvitation() {
@@ -325,7 +343,7 @@ export default function GroupePage() {
         )}
       </div>
 
-      {annonceLiee && (
+      {annonceLiee && annonceLiee.statut !== "vendu" && (
         <div style={{padding:'14px 18px', borderBottom:'0.5px solid #F0F4FA', background:'#FAFCFF'}}>
           <div style={{display:'flex', alignItems:'center', gap:'12px', marginBottom:'12px'}}>
             <div style={{width:'46px', height:'46px', borderRadius:'12px', background:'linear-gradient(135deg,#EEF5FF,#DCE9FF)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, overflow:'hidden'}}>
