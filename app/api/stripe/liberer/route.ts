@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { stripe } from '@/lib/stripe'
+import { getStripe } from '@/lib/stripe'
 import { createClient } from '@supabase/supabase-js'
 
 const supabaseAdmin = createClient(
@@ -19,10 +19,10 @@ export async function POST(request: NextRequest) {
   const { data: vendeur } = await supabaseAdmin.from('profiles').select('stripe_account_id').eq('id', annonce.user_id).single()
   if (!vendeur?.stripe_account_id) return NextResponse.json({ error: 'Compte vendeur introuvable' }, { status: 400 })
 
-  const paymentIntent: any = await stripe.paymentIntents.retrieve(annonce.stripe_payment_intent_id)
+  const paymentIntent: any = await getStripe().paymentIntents.retrieve(annonce.stripe_payment_intent_id)
   const montantRecu = paymentIntent.amount_received
 
-  const transfer = await stripe.transfers.create({
+  const transfer = await getStripe().transfers.create({
     amount: montantRecu,
     currency: 'chf',
     destination: vendeur.stripe_account_id,

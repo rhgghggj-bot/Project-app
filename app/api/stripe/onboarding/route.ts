@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { stripe } from '@/lib/stripe'
+import { getStripe } from '@/lib/stripe'
 import { createClient } from '@supabase/supabase-js'
 
 const supabaseAdmin = createClient(
@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
   let accountId = profil?.stripe_account_id
 
   if (!accountId) {
-    const account = await stripe.accounts.create({
+    const account = await getStripe().accounts.create({
       type: 'express',
       email,
       capabilities: {
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     await supabaseAdmin.from('profiles').update({ stripe_account_id: accountId }).eq('id', userId)
   }
 
-  const lien = await stripe.accountLinks.create({
+  const lien = await getStripe().accountLinks.create({
     account: accountId,
     refresh_url: retourUrl,
     return_url: retourUrl,
