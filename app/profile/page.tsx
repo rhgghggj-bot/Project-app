@@ -49,15 +49,22 @@ export default function Profile() {
   async function demarrerStripe() {
     if (!user) return
     setChargementStripe(true)
-    const res = await fetch("/api/stripe/onboarding", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId: user.id, email: user.email, retourUrl: window.location.href }),
-    })
-    const data = await res.json()
-    setChargementStripe(false)
-    if (data.url) window.location.href = data.url
-    else alert(data.error || "Erreur lors de la connexion à Stripe")
+    try {
+      const res = await fetch("/api/stripe/onboarding", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user.id, email: user.email, retourUrl: window.location.href }),
+      })
+      const texte = await res.text()
+      let data: any = {}
+      try { data = JSON.parse(texte) } catch { data = { error: "Réponse invalide du serveur : " + texte.slice(0, 200) } }
+      if (data.url) { window.location.href = data.url; return }
+      alert(data.error || "Erreur lors de la connexion à Stripe")
+    } catch (e: any) {
+      alert("Erreur réseau : " + e.message)
+    } finally {
+      setChargementStripe(false)
+    }
   }
 
   async function ouvrirListe(type: "followers" | "abonnements") {
