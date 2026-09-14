@@ -1,22 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getStripe } from '@/lib/stripe'
-import { createClient } from '@supabase/supabase-js'
-
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+import { getSupabaseAdmin } from '@/lib/supabaseAdmin'
 
 export async function POST(request: NextRequest) {
   const { annonceId, acheteurId } = await request.json()
   if (!annonceId || !acheteurId) return NextResponse.json({ error: 'Paramètres manquants' }, { status: 400 })
 
-  const { data: annonce } = await supabaseAdmin.from('marketplace_annonces').select('*').eq('id', annonceId).single()
+  const { data: annonce } = await getSupabaseAdmin().from('marketplace_annonces').select('*').eq('id', annonceId).single()
   if (!annonce) return NextResponse.json({ error: 'Annonce introuvable' }, { status: 404 })
   if (annonce.acheteur_id !== acheteurId) return NextResponse.json({ error: "Seul l'acheteur peut confirmer la réception" }, { status: 403 })
   if (annonce.paiement_statut !== 'retenu') return NextResponse.json({ error: 'Aucun paiement en attente pour cette annonce' }, { status: 400 })
 
-  const { data: vendeur } = await supabaseAdmin.from('profiles').select('stripe_account_id').eq('id', annonce.user_id).single()
+  const { data: vendeur } = await getSupabaseAdmin().from('profiles').select('stripe_account_id').eq('id', annonce.user_id).single()
   if (!vendeur?.stripe_account_id) return NextResponse.json({ error: 'Compte vendeur introuvable' }, { status: 400 })
 
   const paymentIntent: any = await getStripe().paymentIntents.retrieve(annonce.stripe_payment_intent_id)
@@ -30,16 +25,16 @@ export async function POST(request: NextRequest) {
     source_transaction: paymentIntent.latest_charge,
   })
 
-  await supabaseAdmin.from('marketplace_annonces').update({
+  await getSupabaseAdmin().from('marketplace_annonces').update({
     statut: 'vendu',
     paiement_statut: 'libere',
   }).eq('id', annonceId)
 
-  await supabaseAdmin.from('revenus').insert({
+  await getSupabaseAdmin().from('revenus').insert({
     user_id: annonce.user_id, titre: 'Vente : ' + annonce.titre, montant: parseFloat(annonce.prix),
     categorie: 'Autre', date: new Date().toISOString().slice(0, 10), recurrent: false,
   })
-  await supabaseAdmin.from('depenses').insert({
+  await getSupabaseAdmin().from('depenses').insert({
     user_id: acheteurId, titre: 'Achat : ' + annonce.titre, montant: parseFloat(annonce.prix),
     categorie: 'Autre', date: new Date().toISOString().slice(0, 10), recurrent: false,
   })
