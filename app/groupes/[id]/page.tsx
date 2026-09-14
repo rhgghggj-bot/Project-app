@@ -3,12 +3,21 @@ import { useEffect, useState, useRef } from "react"
 import { useParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 
+function hexVersRgb(hex: string) {
+  const h = hex.replace('#', '')
+  const r = parseInt(h.substring(0, 2), 16)
+  const g = parseInt(h.substring(2, 4), 16)
+  const b = parseInt(h.substring(4, 6), 16)
+  return `${r},${g},${b}`
+}
+
 function GlisserConfirmer({ label, couleur, onConfirm }: { label: string; couleur: string; onConfirm: () => void }) {
   const [pos, setPos] = useState(0)
   const [dragging, setDragging] = useState(false)
   const [fait, setFait] = useState(false)
   const trackRef = useRef<HTMLDivElement>(null)
   const posRef = useRef(0)
+  const rgb = hexVersRgb(couleur)
 
   useEffect(() => {
     if (!dragging) return
@@ -16,8 +25,8 @@ function GlisserConfirmer({ label, couleur, onConfirm }: { label: string; couleu
       const track = trackRef.current
       if (!track) return
       const rect = track.getBoundingClientRect()
-      const utile = rect.width - 52
-      let pct = ((clientX - rect.left - 26) / utile) * 100
+      const utile = rect.width - 56
+      let pct = ((clientX - rect.left - 28) / utile) * 100
       pct = Math.max(0, Math.min(100, pct))
       posRef.current = pct
       setPos(pct)
@@ -50,20 +59,38 @@ function GlisserConfirmer({ label, couleur, onConfirm }: { label: string; couleu
   }, [dragging])
 
   return (
-    <div ref={trackRef} style={{position:'relative', height:'52px', background: fait ? couleur : '#F0F4FA', borderRadius:'26px', overflow:'hidden', userSelect:'none', touchAction:'none'}}>
-      <div style={{position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'13px', fontWeight:600, color: fait ? '#fff' : '#888', pointerEvents:'none'}}>
+    <div ref={trackRef} style={{
+      position:'relative', height:'58px', borderRadius:'29px', overflow:'hidden', userSelect:'none', touchAction:'none',
+      background: fait ? couleur : 'rgba(255,255,255,0.4)',
+      backdropFilter: fait ? 'none' : 'blur(14px) saturate(180%)',
+      WebkitBackdropFilter: fait ? 'none' : 'blur(14px) saturate(180%)',
+      border: fait ? 'none' : '1px solid rgba(255,255,255,0.7)',
+      boxShadow: fait ? `0 4px 14px rgba(${rgb},0.35)` : `inset 0 1px 1px rgba(255,255,255,0.8), 0 4px 16px rgba(${rgb},0.15)`,
+      transition:'background 0.3s'
+    }}>
+      {!fait && (
+        <div style={{position:'absolute', top:0, left:0, right:0, height:'50%', background:'linear-gradient(rgba(255,255,255,0.35),transparent)', pointerEvents:'none'}}/>
+      )}
+      {!fait && (
+        <div style={{position:'absolute', inset:0, width:`${Math.min(pos + 15, 100)}%`, background:`linear-gradient(135deg, rgba(${rgb},0.4), rgba(${rgb},0.28))`, transition: dragging ? 'none' : 'width 0.25s ease'}}/>
+      )}
+      <div style={{position:'relative', inset:0, height:'100%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'13px', fontWeight:600, color: fait ? '#fff' : '#1a3a6e', opacity: fait ? 1 : Math.max(0, 1 - pos/45), pointerEvents:'none', textShadow: fait ? 'none' : '0 1px 2px rgba(255,255,255,0.5)'}}>
         {fait ? '✓ Confirmé' : label}
       </div>
       <div
         onMouseDown={() => !fait && setDragging(true)}
         onTouchStart={() => !fait && setDragging(true)}
         style={{
-          position:'absolute', top:'2px', left: `calc(2px + (100% - 52px) * ${(pos/100).toFixed(4)})`,
-          width:'48px', height:'48px', borderRadius:'50%', background: couleur,
+          position:'absolute', top:'3px', left: `calc(3px + (100% - 56px) * ${(pos/100).toFixed(4)})`,
+          width:'52px', height:'52px', borderRadius:'50%',
+          background: fait ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.55)',
+          backdropFilter:'blur(10px) saturate(180%)', WebkitBackdropFilter:'blur(10px) saturate(180%)',
+          border: fait ? '1px solid rgba(255,255,255,0.5)' : '1px solid rgba(255,255,255,0.85)',
           display:'flex', alignItems:'center', justifyContent:'center', cursor: fait ? 'default' : 'grab',
-          boxShadow:'0 2px 8px rgba(0,0,0,0.25)', transition: dragging ? 'none' : 'left 0.25s ease'
+          boxShadow: `0 4px 12px rgba(0,0,0,0.15), inset 0 1px 2px rgba(255,255,255,0.9)`,
+          transition: dragging ? 'none' : 'left 0.25s ease'
         }}>
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={fait ? '#fff' : couleur} strokeWidth="2.6"><polyline points="9 18 15 12 9 6"/></svg>
       </div>
     </div>
   )
