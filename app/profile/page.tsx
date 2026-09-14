@@ -9,6 +9,8 @@ export default function Profile() {
   const [projets, setProjets] = useState<any[]>([])
   const [nbFollowers, setNbFollowers] = useState(0)
   const [nbAbonnements, setNbAbonnements] = useState(0)
+  const [stripeActif, setStripeActif] = useState(false)
+  const [chargementStripe, setChargementStripe] = useState(false)
   const [listeOuverte, setListeOuverte] = useState<"followers" | "abonnements" | null>(null)
   const [profilsListe, setProfilsListe] = useState<any[]>([])
   const [user, setUser] = useState<any>(null)
@@ -31,6 +33,7 @@ export default function Profile() {
         setNom(p?.nom || "")
         setBio(p?.bio || "")
         setVille(p?.ville || "")
+        setStripeActif(!!p?.stripe_onboarding_complete)
         setCouleur(p?.couleur || "#2B7FFF")
         const { data } = await supabase.from("projets").select("*").eq("user_id", user.id).order("created_at", { ascending: false })
         setProjets(data || [])
@@ -42,6 +45,20 @@ export default function Profile() {
     }
     charger()
   }, [])
+
+  async function demarrerStripe() {
+    if (!user) return
+    setChargementStripe(true)
+    const res = await fetch("/api/stripe/onboarding", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: user.id, email: user.email, retourUrl: window.location.href }),
+    })
+    const data = await res.json()
+    setChargementStripe(false)
+    if (data.url) window.location.href = data.url
+    else alert(data.error || "Erreur lors de la connexion à Stripe")
+  }
 
   async function ouvrirListe(type: "followers" | "abonnements") {
     if (!user) return
@@ -241,6 +258,24 @@ export default function Profile() {
                 Sauvegarder
               </button>
               {message && <p style={{fontSize:'12px',color:'#10B981',textAlign:'center',marginTop:'8px'}}>{message}</p>}
+            </div>
+
+            <div style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'16px',padding:'16px',marginBottom:'12px'}}>
+              <div style={{display:'flex',alignItems:'center',gap:'12px',marginBottom: stripeActif ? '0' : '12px'}}>
+                <div style={{width:'36px',height:'36px',background: stripeActif ? '#E1F5EE' : '#FDF8EC',borderRadius:'10px',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={stripeActif ? '#10B981' : '#D4A843'} strokeWidth="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                </div>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:'14px',fontWeight:'500',color:'#1a1a2e'}}>Paiements Marketplace</div>
+                  <div style={{fontSize:'12px',color: stripeActif ? '#10B981' : '#aaa'}}>{stripeActif ? 'Activé — tu peux recevoir des paiements' : 'Pas encore activé'}</div>
+                </div>
+              </div>
+              {!stripeActif && (
+                <button onClick={demarrerStripe} disabled={chargementStripe}
+                  style={{width:'100%',background:'#1a1a2e',color:'#fff',border:'none',borderRadius:'10px',padding:'10px',fontSize:'13px',fontWeight:'500',cursor: chargementStripe ? 'default' : 'pointer',opacity: chargementStripe ? 0.6 : 1}}>
+                  {chargementStripe ? 'Connexion...' : 'Activer les paiements'}
+                </button>
+              )}
             </div>
 
             <div style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'16px',overflow:'hidden',marginBottom:'12px'}}>

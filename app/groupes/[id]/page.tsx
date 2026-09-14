@@ -110,6 +110,7 @@ export default function GroupePage() {
   const [onglet, setOnglet] = useState("discussion")
   const [listes, setListes] = useState<any[]>([])
   const [estMembre, setEstMembre] = useState(false)
+  const [paiementEnCours, setPaiementEnCours] = useState(false)
   const [lienInvitation, setLienInvitation] = useState("")
   const [copie, setCopie] = useState(false)
   const [menuOuvert, setMenuOuvert] = useState(false)
@@ -193,28 +194,31 @@ export default function GroupePage() {
     return () => { supabase.removeChannel(canalAnnonce) }
   }, [groupe?.annonce_id])
 
-  async function marquerReserve() {
-    if (!annonceLiee) return
-    await supabase.from("marketplace_annonces").update({ statut: "réservé" }).eq("id", annonceLiee.id)
-    setAnnonceLiee((prev: any) => ({ ...prev, statut: "réservé" }))
-    await supabase.from("messages_groupe").insert({ groupe_id: id, user_id: user.id, contenu: `📦 "${annonceLiee.titre}" a été marquée comme réservée.` })
+  async function payerAnnonce() {
+    if (!annonceLiee || !user) return
+    setPaiementEnCours(true)
+    const res = await fetch("/api/stripe/checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ annonceId: annonceLiee.id, acheteurId: user.id, groupeId: id, retourUrl: window.location.href }),
+    })
+    const data = await res.json()
+    setPaiementEnCours(false)
+    if (data.url) window.location.href = data.url
+    else alert(data.error || "Erreur lors du paiement")
   }
 
-  async function marquerRecu() {
+  async function libererPaiement() {
     if (!annonceLiee || !user) return
-    await supabase.from("marketplace_annonces").update({ statut: "vendu" }).eq("id", annonceLiee.id)
-    await supabase.from("revenus").insert({
-      user_id: user.id, titre: "Vente : " + annonceLiee.titre, montant: parseFloat(annonceLiee.prix),
-      categorie: "Autre", date: new Date().toISOString().slice(0, 10), recurrent: false
+    const res = await fetch("/api/stripe/liberer", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ annonceId: annonceLiee.id, acheteurId: user.id }),
     })
-    if (autreProfilDM?.id) {
-      await supabase.from("depenses").insert({
-        user_id: autreProfilDM.id, titre: "Achat : " + annonceLiee.titre, montant: parseFloat(annonceLiee.prix),
-        categorie: "Autre", date: new Date().toISOString().slice(0, 10), recurrent: false
-      })
-    }
+    const data = await res.json()
+    if (!data.success) { alert(data.error || "Erreur lors de la libération du paiement"); return }
     setAnnonceLiee((prev: any) => ({ ...prev, statut: "vendu" }))
-    await supabase.from("messages_groupe").insert({ groupe_id: id, user_id: user.id, contenu: `✅ Vente confirmée pour "${annonceLiee.titre}" — un reçu a été ajouté dans les Finances de chacun.` })
+    await supabase.from("messages_groupe").insert({ groupe_id: id, user_id: user.id, contenu: `✅ Réception confirmée pour "${annonceLiee.titre}" — paiement transféré au vendeur, reçus ajoutés dans les Finances de chacun.` })
   }
 
   async function genererInvitation() {
@@ -364,14 +368,21 @@ export default function GroupePage() {
             </span>
           </div>
 
+          {user && annonceLiee.user_id !== user.id && annonceLiee.statut === 'disponible' && (
+            <button onClick={payerAnnonce} disabled={paiementEnCours}
+              style={{width:'100%',display:'flex',alignItems:'center',justifyContent:'center',gap:'8px',background:'#1a1a2e',color:'#fff',border:'none',borderRadius:'14px',padding:'14px',fontSize:'14px',fontWeight:'700',cursor: paiementEnCours ? 'default' : 'pointer',opacity: paiementEnCours ? 0.6 : 1}}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+              {paiementEnCours ? 'Redirection...' : `Payer ${parseFloat(annonceLiee.prix).toFixed(0)} CHF en sécurité`}
+            </button>
+          )}
           {user && annonceLiee.user_id === user.id && annonceLiee.statut === 'disponible' && (
-            <GlisserConfirmer label="Glisser quand vous êtes d'accord sur le prix" couleur="#2B7FFF" onConfirm={marquerReserve} />
+            <div style={{fontSize:'12px', color:'#aaa', textAlign:'center'}}>En attente que l'acheteur paie</div>
           )}
-          {user && annonceLiee.user_id === user.id && annonceLiee.statut === 'réservé' && (
-            <GlisserConfirmer label="Glisser une fois l'argent ou l'objet reçu" couleur="#10B981" onConfirm={marquerRecu} />
+          {user && annonceLiee.statut === 'réservé' && annonceLiee.acheteur_id === user.id && (
+            <GlisserConfirmer label="Glisser une fois l'objet bien reçu" couleur="#10B981" onConfirm={libererPaiement} />
           )}
-          {user && annonceLiee.user_id !== user.id && annonceLiee.statut !== 'vendu' && (
-            <div style={{fontSize:'12px', color:'#aaa', textAlign:'center'}}>En attente du vendeur pour confirmer l'étape suivante</div>
+          {user && annonceLiee.statut === 'réservé' && annonceLiee.user_id === user.id && (
+            <div style={{fontSize:'12px', color:'#D4A843', textAlign:'center'}}>💳 Paiement reçu et retenu en sécurité — en attente que l'acheteur confirme la réception</div>
           )}
         </div>
       )}
