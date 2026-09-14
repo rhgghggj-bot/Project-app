@@ -285,7 +285,7 @@ export default function GroupePage() {
   }
 
   return (
-    <main className="min-h-screen bg-white flex flex-col">
+    <main className="h-screen bg-white flex flex-col overflow-hidden">
       <div className="bg-white border-b border-blue-50 px-5 py-4 flex items-center justify-between">
         <a href="/groupes" className="text-gray-400 text-sm">← Retour</a>
         <div className="text-center">
@@ -423,25 +423,31 @@ export default function GroupePage() {
       )}
 
       {onglet === "discussion" && (
-        <div className="flex flex-col flex-1">
-          <div className="flex-1 px-5 py-4 overflow-y-auto" style={{maxHeight:'60vh'}}>
+        <div className="flex flex-col flex-1 min-h-0">
+          <div className="flex-1 px-5 py-4 overflow-y-auto min-h-0">
             {messagesAffiches.length === 0 && (
               <div className="text-center py-12 text-gray-400">
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="1.5" style={{marginBottom:"8px"}}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                 <p className="text-sm">Sois le premier à écrire dans ce groupe !</p>
               </div>
             )}
-            {messagesAffiches.map((m: any) => {
+            {messagesAffiches.map((m: any, i: number) => {
               const estMoi = m.user_id === user?.id
               const enEdition = editionId === m.id
+              const suivant = messagesAffiches[i + 1]
+              const memeGroupeApres = suivant && suivant.user_id === m.user_id
               return (
-                <div key={m.id} className={`flex gap-2 mb-3 ${estMoi ? "flex-row-reverse" : ""}`} style={{position:'relative'}}>
-                  <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-medium flex-shrink-0">
-                    {(profils[m.user_id]?.nom || "?")[0].toUpperCase()}
+                <div key={m.id} className={`flex gap-2 ${estMoi ? "flex-row-reverse" : ""}`} style={{position:'relative', marginBottom: memeGroupeApres ? '2px' : '12px'}}>
+                  <div style={{width:'28px', flexShrink:0}}>
+                    {!estMoi && !memeGroupeApres && (
+                      <div className="w-7 h-7 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-medium">
+                        {(profils[m.user_id]?.nom || "?")[0].toUpperCase()}
+                      </div>
+                    )}
                   </div>
                   <div style={{maxWidth:'75%'}}>
                     {enEdition ? (
-                      <div style={{background:'#fff',border:'1px solid #2B7FFF',borderRadius:'16px',padding:'8px 12px'}}>
+                      <div style={{background:'#fff',border:'1px solid #2B7FFF',borderRadius:'18px',padding:'8px 12px'}}>
                         <input value={editionTexte} onChange={e => setEditionTexte(e.target.value)}
                           onKeyDown={e => e.key === 'Enter' && sauverEdition()}
                           style={{width:'100%',border:'none',outline:'none',fontSize:'14px',color:'#1a1a2e'}} autoFocus/>
@@ -453,12 +459,14 @@ export default function GroupePage() {
                     ) : (
                       <div onTouchStart={() => estMoi && setMessageActif(messageActif === m.id ? null : m.id)}
                         onClick={() => estMoi && setMessageActif(messageActif === m.id ? null : m.id)}
-                        className={`px-4 py-2 rounded-2xl text-sm ${estMoi ? "bg-blue-500 text-white" : "bg-gray-100 text-gray-900"}`}
-                        style={{cursor: estMoi ? 'pointer' : 'default'}}>
+                        className={`px-4 py-2 text-sm ${estMoi ? "bg-blue-500 text-white" : "bg-gray-100 text-gray-900"}`}
+                        style={{cursor: estMoi ? 'pointer' : 'default', borderRadius:'18px'}}>
                         {m.contenu} {m.modifie && <span style={{fontSize:'10px',opacity:0.6}}>(modifié)</span>}
-                        <div className={`text-xs mt-1 ${estMoi ? "text-blue-100" : "text-gray-400"}`}>
-                          {(() => { const d = new Date(m.created_at); d.setHours(d.getHours() + 2); return d.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'}) })()}
-                        </div>
+                      </div>
+                    )}
+                    {!enEdition && !memeGroupeApres && (
+                      <div className={`text-xs mt-1 ${estMoi ? "text-right text-gray-400" : "text-gray-400"}`} style={{padding:'0 4px'}}>
+                        {(() => { const d = new Date(m.created_at); d.setHours(d.getHours() + 2); return d.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'}) })()}
                       </div>
                     )}
                     {messageActif === m.id && !enEdition && (

@@ -299,10 +299,15 @@ export default function Marketplace() {
                 <div onClick={() => onTapImage(a)}
                   style={{width:"100%",minHeight:"220px",maxHeight:"420px",background:"linear-gradient(135deg,#EEF5FF,#DCE9FF)",position:"relative",overflow:"hidden",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
                   {a.image_url ? (
-                    <img src={a.image_url} alt={a.titre} style={{width:"100%",height:"100%",maxHeight:"420px",objectFit:"contain"}}/>
+                    <img src={a.image_url} alt={a.titre} style={{width:"100%",height:"100%",maxHeight:"420px",objectFit:"contain",filter: a.statut === "réservé" ? "grayscale(1) brightness(0.82)" : "none"}}/>
                   ) : (
                     <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center"}}>
                       <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#2B7FFF" strokeWidth="1.2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                    </div>
+                  )}
+                  {a.statut === "réservé" && (
+                    <div style={{position:"absolute",inset:0,background:"rgba(20,20,30,0.12)",display:"flex",alignItems:"center",justifyContent:"center",pointerEvents:"none"}}>
+                      <span style={{background:"rgba(20,20,30,0.85)",color:"#fff",fontSize:"13px",fontWeight:"700",padding:"9px 24px",borderRadius:"99px",letterSpacing:"0.02em"}}>Réservé</span>
                     </div>
                   )}
                   {animCoeurs[a.id] && (
