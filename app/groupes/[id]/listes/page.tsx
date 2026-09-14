@@ -77,7 +77,7 @@ export default function ListesPage() {
             <div style={{fontSize:'12px',color:'#666',marginBottom:'6px'}}>Categorie budget (depuis tes depenses recurrentes)</div>
             <select value={categorieBudget} onChange={e => setCategorieBudget(e.target.value)}
               style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 12px',fontSize:'16px',color:'#1a1a2e',background:'#fff',marginBottom:'10px'}}>
-              {["Logement","Assurance maladie","Assurance voiture","Transport","Alimentation","Sante","Telephone","Energie","Loisirs","Autres"].map(c => (
+              {["Logement","Assurance maladie","Assurance voiture","Transport","Alimentation","Santé","Téléphone","Énergie","Loisirs","Autres"].map(c => (
                 <option key={c} value={c}>{c}</option>
               ))}
             </select>

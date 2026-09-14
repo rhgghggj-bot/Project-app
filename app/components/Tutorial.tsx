@@ -25,7 +25,7 @@ const STEPS: Record<string, Step[]> = {
   ],
   fiscalite: [
     { titre: "Choisis ton canton", texte: "Va dans l'onglet Situation et selectionne ton canton. Les taux sont bases sur les baremes officiels 2025.", position: 'center' },
-    { titre: "Optimise tes deductions", texte: "Dans Deductions, entre ton 3e pilier (7 258 CHF max), frais de transport et primes maladie pour reduire ton impot.", position: 'bottom-left' },
+    { titre: "Optimise tes déductions", texte: "Dans Déductions, entre ton 3e pilier (7 258 CHF max), frais de transport et primes maladie pour réduire ton impôt.", position: 'bottom-left' },
   ],
 }
 
