@@ -5,10 +5,21 @@ import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { ouvrirConversationPrivee } from "@/lib/dm"
 
+function formaterHeure(dateStr: string) {
+  const d = new Date(dateStr)
+  d.setHours(d.getHours() + 2)
+  const maintenant = new Date()
+  const memeJour = d.toDateString() === maintenant.toDateString()
+  if (memeJour) return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+  const hier = new Date(maintenant); hier.setDate(hier.getDate() - 1)
+  if (d.toDateString() === hier.toDateString()) return "Hier"
+  const joursDiff = Math.floor((maintenant.getTime() - d.getTime()) / 86400000)
+  if (joursDiff < 7) return d.toLocaleDateString('fr-FR', { weekday: 'short' })
+  return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
+}
+
 export default function Groupes() {
-  const [groupes, setGroupes] = useState<any[]>([])
-  const [conversations, setConversations] = useState<any[]>([])
-  const [profilsDM, setProfilsDM] = useState<any>({})
+  const [items, setItems] = useState<any[]>([])
   const [user, setUser] = useState<any>(null)
   const [message, setMessage] = useState("")
 
@@ -23,42 +34,49 @@ export default function Groupes() {
     async function charger() {
       const { data: { user } } = await supabase.auth.getUser()
       setUser(user)
-      if (!user) {
-        setGroupes([])
-        setConversations([])
-        return
-      }
+      if (!user) { setItems([]); return }
+
       const { data: membres } = await supabase.from("membres_groupe").select("groupe_id").eq("user_id", user.id)
       const idsGroupes = membres?.map((m: any) => m.groupe_id) || []
-      if (idsGroupes.length > 0) {
-        const { data } = await supabase.from("groupes").select("*").in("id", idsGroupes).order("created_at", { ascending: false })
-        const tousGroupes = data || []
-        const vraisGroupes = tousGroupes.filter((g: any) => !g.est_dm)
-        const dms = tousGroupes.filter((g: any) => g.est_dm)
-        setGroupes(vraisGroupes)
+      if (idsGroupes.length === 0) { setItems([]); return }
 
-        if (dms.length > 0) {
-          const dmsAvecAutre: any[] = []
-          const idsAutres: string[] = []
-          for (const dm of dms) {
-            const { data: mb } = await supabase.from("membres_groupe").select("user_id").eq("groupe_id", dm.id)
-            const autre = (mb || []).find((m: any) => m.user_id !== user.id)
-            if (autre) { dmsAvecAutre.push({ ...dm, autreId: autre.user_id }); idsAutres.push(autre.user_id) }
-          }
-          setConversations(dmsAvecAutre)
-          if (idsAutres.length > 0) {
-            const { data: profs } = await supabase.from("profiles").select("id,nom,avatar_url").in("id", idsAutres)
-            const map: any = {}
-            profs?.forEach((p: any) => { map[p.id] = p })
-            setProfilsDM(map)
-          }
+      const { data } = await supabase.from("groupes").select("*").in("id", idsGroupes).order("created_at", { ascending: false })
+      const tousGroupes = data || []
+
+      const { data: tousMessages } = await supabase.from("messages_groupe").select("groupe_id,contenu,created_at,user_id").in("groupe_id", idsGroupes).order("created_at", { ascending: false })
+      const dernierMessageParGroupe: Record<string, any> = {}
+      tousMessages?.forEach((m: any) => { if (!dernierMessageParGroupe[m.groupe_id]) dernierMessageParGroupe[m.groupe_id] = m })
+
+      const idsAutresDM: string[] = []
+      const itemsBruts: any[] = []
+      for (const g of tousGroupes) {
+        if (g.est_dm) {
+          const { data: mb } = await supabase.from("membres_groupe").select("user_id").eq("groupe_id", g.id)
+          const autre = (mb || []).find((m: any) => m.user_id !== user.id)
+          if (autre) idsAutresDM.push(autre.user_id)
+          itemsBruts.push({ ...g, type: 'dm', autreId: autre?.user_id })
         } else {
-          setConversations([])
+          itemsBruts.push({ ...g, type: 'groupe' })
         }
-      } else {
-        setGroupes([])
-        setConversations([])
       }
+
+      let profilsMap: any = {}
+      if (idsAutresDM.length > 0) {
+        const { data: profs } = await supabase.from("profiles").select("id,nom,avatar_url").in("id", idsAutresDM)
+        profs?.forEach((p: any) => { profilsMap[p.id] = p })
+      }
+
+      const itemsFinal = itemsBruts.map(it => {
+        const dernier = dernierMessageParGroupe[it.id]
+        return {
+          ...it,
+          profil: it.type === 'dm' ? profilsMap[it.autreId] : null,
+          dernierMessage: dernier?.contenu || null,
+          dernierTemps: dernier?.created_at || it.created_at
+        }
+      }).sort((a, b) => new Date(b.dernierTemps).getTime() - new Date(a.dernierTemps).getTime())
+
+      setItems(itemsFinal)
     }
     charger()
   }, [])
@@ -128,64 +146,44 @@ export default function Groupes() {
         </div>
       </div>
 
-      {conversations.length > 0 && (
-        <div>
-          <div style={{padding:'14px 18px 4px',fontSize:'11px',color:'#aaa',fontWeight:'600'}}>Messages</div>
-          {conversations.map(c => {
-            const profil = profilsDM[c.autreId]
-            const nomAutre = profil?.nom || "Membre"
-            return (
-              <a key={c.id} href={'/groupes/'+c.id} style={{textDecoration:'none',display:'block'}}>
-                <div style={{display:'flex',alignItems:'center',gap:'14px',padding:'12px 18px',borderBottom:'0.5px solid #f5f5f5',cursor:'pointer'}}>
-                  {profil?.avatar_url ? (
-                    <img src={profil.avatar_url} alt={nomAutre} style={{width:'48px',height:'48px',borderRadius:'50%',objectFit:'cover',flexShrink:0}}/>
+      <div>
+        {items.map((it, i) => {
+          const couleurGroupe = ['#2B7FFF','#10B981','#D4A843','#8B5CF6','#F43F5E'][i % 5]
+          const nom = it.type === 'dm' ? (it.profil?.nom || 'Membre') : it.nom
+          const avatarUrl = it.type === 'dm' ? it.profil?.avatar_url : null
+          const apercu = it.dernierMessage ? it.dernierMessage : (it.type === 'dm' ? 'Dites bonjour 👋' : (it.description || 'Nouveau groupe'))
+          return (
+            <a key={it.id} href={'/groupes/'+it.id} style={{textDecoration:'none',display:'block'}}>
+              <div className="active:bg-gray-50" style={{display:'flex',alignItems:'center',gap:'14px',padding:'12px 18px',cursor:'pointer',transition:'background 0.1s'}}>
+                <div style={{position:'relative',flexShrink:0}}>
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt={nom} style={{width:'56px',height:'56px',borderRadius:'50%',objectFit:'cover'}}/>
+                  ) : it.type === 'dm' ? (
+                    <div style={{width:'56px',height:'56px',borderRadius:'50%',background:'linear-gradient(135deg,#2B7FFF,#8B5CF6)',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:'19px',fontWeight:'600'}}>
+                      {nom[0]?.toUpperCase()}
+                    </div>
                   ) : (
-                    <div style={{width:'48px',height:'48px',borderRadius:'50%',background:'linear-gradient(135deg,#2B7FFF,#8B5CF6)',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:'16px',fontWeight:'600',flexShrink:0}}>
-                      {nomAutre[0]?.toUpperCase()}
+                    <div style={{width:'56px',height:'56px',borderRadius:'50%',background:couleurGroupe+'1A',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={couleurGroupe} strokeWidth="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                     </div>
                   )}
-                  <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontSize:'15px',fontWeight:'500',color:'#1a1a2e'}}>{nomAutre}</div>
-                    <div style={{fontSize:'12px',color:'#aaa'}}>Message privé</div>
-                  </div>
-                </div>
-              </a>
-            )
-          })}
-        </div>
-      )}
-
-      <div>
-        {groupes.length > 0 && (
-          <div style={{padding:'14px 18px 4px',fontSize:'11px',color:'#aaa',fontWeight:'600'}}>Groupes</div>
-        )}
-        {groupes.map((g, i) => {
-          const couleur = [
-            {bg:'#EEF5FF',stroke:'#2B7FFF'},
-            {bg:'#E1F5EE',stroke:'#10B981'},
-            {bg:'#FDF8EC',stroke:'#D4A843'},
-            {bg:'#F3E8FF',stroke:'#8B5CF6'},
-            {bg:'#FFE4E6',stroke:'#F43F5E'},
-          ][i % 5]
-          return (
-            <a key={g.id} href={'/groupes/'+g.id} style={{textDecoration:'none',display:'block'}}>
-              <div style={{display:'flex',alignItems:'center',gap:'14px',padding:'14px 18px',borderBottom:'0.5px solid #f5f5f5',cursor:'pointer'}}>
-                <div style={{width:'52px',height:'52px',borderRadius:'50%',background:couleur.bg,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={couleur.stroke} strokeWidth="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                  {it.type === 'groupe' && (
+                    <div style={{position:'absolute',bottom:'-2px',right:'-2px',width:'20px',height:'20px',borderRadius:'50%',background:couleurGroupe,border:'2px solid #fff',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                    </div>
+                  )}
                 </div>
                 <div style={{flex:1,minWidth:0}}>
-                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'3px'}}>
-                    <div style={{fontSize:'15px',fontWeight:'500',color:'#1a1a2e'}}>{g.nom}</div>
-                    <div style={{fontSize:'12px',color:'#aaa'}}>{new Date(g.created_at).toLocaleDateString('fr-FR',{day:'numeric',month:'short'})}</div>
-                  </div>
-                  <div style={{fontSize:'13px',color:'#aaa',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{g.description || 'Aucune description'}</div>
+                  <div style={{fontSize:'15px',fontWeight:'600',color:'#1a1a2e',marginBottom:'2px'}}>{nom}</div>
+                  <div style={{fontSize:'13px',color:'#999',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{apercu}</div>
                 </div>
+                <div style={{fontSize:'12px',color:'#bbb',flexShrink:0}}>{formaterHeure(it.dernierTemps)}</div>
               </div>
             </a>
           )
         })}
 
-        {groupes.length === 0 && conversations.length === 0 && (
+        {items.length === 0 && (
           <div style={{textAlign:'center',padding:'60px 20px'}}>
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ddd" strokeWidth="1.5" style={{margin:'0 auto 12px',display:'block'}}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
             <div style={{fontSize:'14px',color:'#aaa'}}>Aucune discussion pour l'instant</div>
