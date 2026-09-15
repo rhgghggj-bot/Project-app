@@ -34,7 +34,10 @@ export default function Onboarding() {
 
   const Logo = ({ size = 72 }: any) => (
     <div style={{width:size+'px',height:size+'px',borderRadius:'20px',background:'rgba(255,255,255,0.12)',border:'1.5px solid rgba(255,255,255,0.25)',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 16px'}}>
-      <span style={{fontSize:size/3+'px',fontWeight:'700',color:'#fff',letterSpacing:'-1px'}}>Pro<span style={{color:'#D4A843'}}>j</span></span>
+      <svg width={size*0.5} height={size*0.5} viewBox="0 0 60 60">
+        <path d="M30 5 L35 25 L55 30 L35 35 L30 55 L25 35 L5 30 L25 25 Z" fill="url(#obLogoGrad)"/>
+        <defs><linearGradient id="obLogoGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#fff"/><stop offset="100%" stopColor="#D4A843"/></linearGradient></defs>
+      </svg>
     </div>
   )
 

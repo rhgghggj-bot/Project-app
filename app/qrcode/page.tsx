@@ -23,7 +23,13 @@ export default function QRCodePage() {
     <main style={{minHeight:'100vh',background:'linear-gradient(160deg,#0A1628,#1a3a6e,#2B7FFF)',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'32px 24px'}}>
       <div style={{border:'1px solid rgba(255,255,255,0.2)',borderRadius:'24px',padding:'32px 24px',textAlign:'center',maxWidth:'320px',width:'100%',position:'relative',overflow:'hidden',boxShadow:'0 20px 60px rgba(0,0,0,0.4)'}}>
         <div style={{position:'absolute',top:'-40px',right:'-40px',width:'160px',height:'160px',borderRadius:'50%',background:'rgba(255,255,255,0.06)'}}></div>
-        <div style={{fontSize:'24px',fontWeight:'700',color:'#fff',marginBottom:'4px'}}>Pro<span style={{color:'#D4A843'}}>ject</span></div>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'8px',marginBottom:'4px'}}>
+          <svg width="24" height="24" viewBox="0 0 60 60">
+            <path d="M30 5 L35 25 L55 30 L35 35 L30 55 L25 35 L5 30 L25 25 Z" fill="url(#qGrad)"/>
+            <defs><linearGradient id="qGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#2B7FFF"/><stop offset="100%" stopColor="#D4A843"/></linearGradient></defs>
+          </svg>
+          <span style={{fontSize:'22px',fontWeight:'700',color:'#fff',letterSpacing:'2px'}}>NEXIA</span>
+        </div>
         <div style={{fontSize:'13px',color:'rgba(255,255,255,0.6)',marginBottom:'24px'}}>Scanne pour rejoindre</div>
         <div style={{background:'#fff',borderRadius:'16px',padding:'16px',display:'inline-block',marginBottom:'24px'}}>
           <div id="qr"></div>
@@ -32,7 +38,7 @@ export default function QRCodePage() {
           <div style={{fontSize:'11px',color:'rgba(255,255,255,0.5)',marginBottom:'3px'}}>Lien direct</div>
           <div style={{fontSize:'12px',color:'#a8d8f0',fontWeight:'500'}}>project-app-rust-delta.vercel.app</div>
         </div>
-        <div style={{fontSize:'12px',color:'rgba(255,255,255,0.5)',marginBottom:'24px'}}>Gratuit · Sans publicite · Donnees privees</div>
+        <div style={{fontSize:'12px',color:'rgba(255,255,255,0.5)',marginBottom:'24px'}}>Gratuit · Sans publicité · Données privées</div>
         <button onClick={() => window.print()}
           style={{width:'100%',background:'#fff',color:'#1a3a6e',border:'none',borderRadius:'12px',padding:'14px',fontSize:'14px',fontWeight:'500',cursor:'pointer',marginBottom:'10px',display:'flex',alignItems:'center',justifyContent:'center',gap:'8px'}}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1a3a6e" strokeWidth="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
