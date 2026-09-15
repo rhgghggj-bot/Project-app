@@ -93,14 +93,81 @@ function FiscaliteViz() {
 
 const FEATURES = [
   { title: "Finances", sub: "Revenus, dépenses, budgets et épargne suivis au CHF près", color: "#86efac", visual: <FinanceViz />,
+    detail: "Suis chaque franc : revenus, dépenses récurrentes, budgets par catégorie et objectifs d'épargne. Le graphique d'évolution du solde te montre en un coup d'œil où tu en es ce mois — et le calculateur fiscal romand est directement relié pour estimer tes impôts 2025 à partir de tes vraies données.",
     icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> },
   { title: "Groupes", sub: "Discussions, appels vidéo et projets partagés entre proches", color: "#a8d8f0", visual: <GroupesViz />,
+    detail: "Discussions en temps réel, appels vidéo de groupe et projets partagés avec tes proches, colocataires ou amis. Crée un groupe, invite qui tu veux, et organisez-vous ensemble — courses, sorties, dépenses communes, listes partagées.",
     icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg> },
   { title: "Calendrier", sub: "Semaine, événements récurrents et vue constellation 3D", color: "#fcd34d", visual: <CalendrierViz />,
+    detail: "Ta semaine en un seul endroit : événements, rappels et récurrences. Et pour prendre du recul, une vue constellation en 3D qui transforme ton mois en ciel étoilé — chaque événement devient une étoile reliée aux autres.",
     icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> },
   { title: "Fiscalité", sub: "Calculateur d'impôts romand 2025 — GE, VD, VS, FR, NE, JU", color: "#EC4899", visual: <FiscaliteViz />,
+    detail: "Le calculateur fiscal romand le plus complet : Genève, Vaud, Valais, Fribourg, Neuchâtel, Jura — barèmes officiels 2025. Renseigne ton salaire et tes déductions (3e pilier, frais professionnels...) pour estimer ton impôt exact, canton par canton.",
     icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> },
 ]
+
+function FeatureDetail({ feature, rect, onClose }: { feature: typeof FEATURES[number]; rect: DOMRect; onClose: () => void }) {
+  const [expanded, setExpanded] = useState(false)
+  const [showContent, setShowContent] = useState(false)
+
+  useEffect(() => {
+    const prevOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    const raf = requestAnimationFrame(() => setExpanded(true))
+    const t = setTimeout(() => setShowContent(true), 480)
+    return () => { cancelAnimationFrame(raf); clearTimeout(t); document.body.style.overflow = prevOverflow }
+  }, [])
+
+  function handleClose() {
+    setShowContent(false)
+    setExpanded(false)
+  }
+
+  const boxStyle: React.CSSProperties = expanded
+    ? { top: 0, left: 0, width: '100vw', height: '100vh', borderRadius: 0 }
+    : { top: rect.top, left: rect.left, width: rect.width, height: rect.height, borderRadius: 20 }
+
+  return (
+    <div
+      onTransitionEnd={(e) => { if (e.propertyName === 'left' && !expanded) onClose() }}
+      style={{
+        position: 'fixed', ...boxStyle,
+        background: 'linear-gradient(160deg,#0A1628,#1a3a6e)',
+        zIndex: 300, overflow: 'hidden',
+        transition: 'top 0.55s cubic-bezier(.2,.8,.2,1), left 0.55s cubic-bezier(.2,.8,.2,1), width 0.55s cubic-bezier(.2,.8,.2,1), height 0.55s cubic-bezier(.2,.8,.2,1), border-radius 0.5s ease'
+      }}
+    >
+      <div style={{
+        position: 'absolute', inset: 0,
+        opacity: expanded ? 0.55 : 1,
+        transform: expanded ? 'scale(3.2)' : 'scale(1)',
+        transition: 'transform 0.9s ease, opacity 0.6s ease'
+      }}>
+        {feature.visual}
+      </div>
+
+      {showContent && (
+        <div className="nexia-in" style={{
+          position: 'relative', zIndex: 1, height: '100%', display: 'flex', flexDirection: 'column',
+          alignItems: 'center', justifyContent: 'center', padding: '40px 24px', textAlign: 'center'
+        }}>
+          <button onClick={handleClose} aria-label="Fermer" style={{
+            position: 'absolute', top: '24px', right: '24px', width: '40px', height: '40px', borderRadius: '99px',
+            background: 'rgba(255,255,255,0.1)', border: '0.5px solid rgba(255,255,255,0.2)', color: '#fff',
+            fontSize: '18px', cursor: 'pointer'
+          }}>×</button>
+          <div style={{ color: feature.color, marginBottom: '22px', transform: 'scale(2.2)' }}>{feature.icon}</div>
+          <div style={{ fontFamily: 'var(--font-geist-sans)', fontWeight: 700, fontSize: 'clamp(30px,5vw,48px)', color: '#fff', marginBottom: '18px' }}>
+            {feature.title}
+          </div>
+          <div style={{ fontSize: '15px', color: 'rgba(255,255,255,0.7)', maxWidth: '480px', lineHeight: 1.7 }}>
+            {feature.detail}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
 
 const STAGES = [
   { range: [0, 0.30], title: "Ton hub de vie.", sub: "Une seule app pour tout gérer, tous les jours.", size: "clamp(30px,6vw,52px)" },
@@ -183,6 +250,7 @@ function StarProductSection() {
 
 export default function Presentation() {
   const [mounted, setMounted] = useState(false)
+  const [detail, setDetail] = useState<{ feature: typeof FEATURES[number]; rect: DOMRect } | null>(null)
 
   useEffect(() => {
     const t = setTimeout(() => setMounted(true), 60)
@@ -282,10 +350,14 @@ export default function Presentation() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '18px' }}>
           {FEATURES.map((f, i) => (
             <Reveal key={f.title} delay={i * 90}>
-              <div style={{
-                background: 'linear-gradient(160deg,#0A1628,#1a3a6e)', borderRadius: '20px', padding: '26px',
-                height: '100%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: '16px'
-              }}>
+              <div
+                data-testid={`feature-card-${f.title}`}
+                onClick={(e) => setDetail({ feature: f, rect: e.currentTarget.getBoundingClientRect() })}
+                style={{
+                  background: 'linear-gradient(160deg,#0A1628,#1a3a6e)', borderRadius: '20px', padding: '26px',
+                  height: '100%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: '16px',
+                  cursor: 'pointer'
+                }}>
                 <div>
                   <div style={{ color: f.color, marginBottom: '14px' }}>{f.icon}</div>
                   <div style={{ fontSize: '16px', fontWeight: 600, color: '#fff', marginBottom: '6px' }}>{f.title}</div>
@@ -423,6 +495,10 @@ export default function Presentation() {
       <footer style={{ padding: '24px', textAlign: 'center', fontSize: '11.5px', color: '#aaa' }}>
         Nexia — Ton hub de vie. Fait avec 🇨🇭 depuis la Suisse romande.
       </footer>
+
+      {detail && (
+        <FeatureDetail feature={detail.feature} rect={detail.rect} onClose={() => setDetail(null)} />
+      )}
     </main>
   )
 }
