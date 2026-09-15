@@ -34,28 +34,41 @@ function Reveal({ children, delay = 0 }: { children: React.ReactNode; delay?: nu
 function FinanceViz() {
   return (
     <svg viewBox="0 0 200 80" width="100%" height="100%" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="finArea" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#86efac" stopOpacity="0.45" />
+          <stop offset="100%" stopColor="#86efac" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <polygon className="viz-fin-area" points="0,80 0,60 28,50 52,56 78,34 106,40 134,18 162,24 200,6 200,80"
+        fill="url(#finArea)" />
       <polyline className="viz-fin-line" points="0,60 28,50 52,56 78,34 106,40 134,18 162,24 200,6"
         fill="none" stroke="#86efac" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
       <circle className="viz-fin-dot" style={{ animationDelay: '0.4s' }} cx="78" cy="34" r="2.8" fill="#86efac" />
       <circle className="viz-fin-dot" style={{ animationDelay: '1.1s' }} cx="134" cy="18" r="2.8" fill="#86efac" />
       <circle className="viz-fin-dot" style={{ animationDelay: '1.8s' }} cx="200" cy="6" r="2.8" fill="#86efac" />
-      <text className="viz-fin-coin" style={{ animationDelay: '0s' }} x="34" y="60" fontSize="11" fill="#86efac">+</text>
-      <text className="viz-fin-coin" style={{ animationDelay: '1.2s' }} x="110" y="55" fontSize="11" fill="#86efac">+</text>
-      <text className="viz-fin-coin" style={{ animationDelay: '2.1s' }} x="170" y="45" fontSize="11" fill="#86efac">+</text>
+      <text className="viz-fin-coin" style={{ animationDelay: '0s' }} x="30" y="66" fontSize="11" fontWeight="700" fill="#86efac">+CHF</text>
+      <text className="viz-fin-coin" style={{ animationDelay: '1s' }} x="96" y="52" fontSize="11" fontWeight="700" fill="#86efac">+CHF</text>
+      <text className="viz-fin-coin" style={{ animationDelay: '2s' }} x="150" y="36" fontSize="11" fontWeight="700" fill="#86efac">+CHF</text>
+      <text className="viz-fin-coin" style={{ animationDelay: '3s' }} x="176" y="16" fontSize="11" fontWeight="700" fill="#86efac">+CHF</text>
     </svg>
   )
 }
 
 function GroupesViz() {
-  const nodes = [{ x: 34, y: 42 }, { x: 100, y: 20 }, { x: 166, y: 46 }]
+  const nodes = [
+    { x: 24, y: 44 }, { x: 76, y: 16 }, { x: 100, y: 62 }, { x: 138, y: 24 }, { x: 176, y: 50 },
+  ]
+  const links: [number, number][] = [[0, 1], [1, 2], [1, 3], [3, 4], [2, 3], [0, 2]]
   return (
     <svg viewBox="0 0 200 80" width="100%" height="100%">
-      <line x1={nodes[0].x} y1={nodes[0].y} x2={nodes[1].x} y2={nodes[1].y} stroke="#a8d8f0" strokeWidth="1.4" opacity="0.4" />
-      <line x1={nodes[1].x} y1={nodes[1].y} x2={nodes[2].x} y2={nodes[2].y} stroke="#a8d8f0" strokeWidth="1.4" opacity="0.4" />
-      <line x1={nodes[0].x} y1={nodes[0].y} x2={nodes[2].x} y2={nodes[2].y} stroke="#a8d8f0" strokeWidth="1.4" opacity="0.25" />
+      {links.map(([a, b], i) => (
+        <line key={i} x1={nodes[a].x} y1={nodes[a].y} x2={nodes[b].x} y2={nodes[b].y}
+          stroke="#a8d8f0" strokeWidth="1.3" opacity="0.3" />
+      ))}
       {nodes.map((n, i) => (
-        <circle key={i} className="viz-grp-node" style={{ animationDelay: `${i * 0.5}s`, transformOrigin: `${n.x}px ${n.y}px` }}
-          cx={n.x} cy={n.y} r="8" fill="#a8d8f0" />
+        <circle key={i} className="viz-grp-node" style={{ animationDelay: `${i * 0.35}s`, transformOrigin: `${n.x}px ${n.y}px` }}
+          cx={n.x} cy={n.y} r={i === 1 ? 9 : 6.5} fill="#a8d8f0" />
       ))}
     </svg>
   )
@@ -64,15 +77,18 @@ function GroupesViz() {
 function CalendrierViz() {
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-      <div style={{ position: 'absolute', top: '50%', left: '50%', width: '6px', height: '6px', marginLeft: '-3px', marginTop: '-3px', borderRadius: '50%', background: '#fcd34d' }} />
-      <div className="viz-orbit" style={{ width: '36px', height: '36px' }}>
-        <div className="viz-orbit-spin" style={{ animationDuration: '6s' }}><span style={{ background: '#fcd34d', color: '#fcd34d' }} /></div>
+      <div style={{ position: 'absolute', top: '50%', left: '50%', width: '7px', height: '7px', marginLeft: '-3.5px', marginTop: '-3.5px', borderRadius: '50%', background: '#fcd34d', boxShadow: '0 0 10px #fcd34d' }} />
+      <div className="viz-orbit" style={{ width: '32px', height: '32px' }}>
+        <div className="viz-orbit-spin" style={{ animationDuration: '5s' }}><span style={{ background: '#86efac', color: '#86efac' }} /></div>
       </div>
-      <div className="viz-orbit" style={{ width: '54px', height: '54px' }}>
-        <div className="viz-orbit-spin" style={{ animationDuration: '9s', animationDirection: 'reverse' }}><span style={{ background: '#a8d8f0', color: '#a8d8f0' }} /></div>
+      <div className="viz-orbit" style={{ width: '48px', height: '48px' }}>
+        <div className="viz-orbit-spin" style={{ animationDuration: '7s', animationDirection: 'reverse' }}><span style={{ background: '#fcd34d', color: '#fcd34d' }} /></div>
       </div>
-      <div className="viz-orbit" style={{ width: '72px', height: '72px' }}>
-        <div className="viz-orbit-spin" style={{ animationDuration: '13s' }}><span style={{ background: '#EC4899', color: '#EC4899' }} /></div>
+      <div className="viz-orbit" style={{ width: '64px', height: '64px' }}>
+        <div className="viz-orbit-spin" style={{ animationDuration: '9.5s' }}><span style={{ background: '#a8d8f0', color: '#a8d8f0' }} /></div>
+      </div>
+      <div className="viz-orbit" style={{ width: '80px', height: '80px' }}>
+        <div className="viz-orbit-spin" style={{ animationDuration: '12s', animationDirection: 'reverse' }}><span style={{ background: '#EC4899', color: '#EC4899' }} /></div>
       </div>
     </div>
   )
@@ -81,90 +97,175 @@ function CalendrierViz() {
 function FiscaliteViz() {
   return (
     <svg viewBox="0 0 200 80" width="100%" height="100%">
-      <rect x="70" y="8" width="60" height="64" rx="6" fill="none" stroke="#EC4899" strokeWidth="1.6" opacity="0.6" />
-      <line className="viz-fisc-line" style={{ animationDelay: '0.2s' }} x1="78" y1="24" x2="122" y2="24" stroke="#EC4899" strokeWidth="2.5" strokeLinecap="round" />
-      <line className="viz-fisc-line" style={{ animationDelay: '0.9s' }} x1="78" y1="36" x2="114" y2="36" stroke="#EC4899" strokeWidth="2.5" strokeLinecap="round" />
-      <line className="viz-fisc-line" style={{ animationDelay: '1.6s' }} x1="78" y1="48" x2="118" y2="48" stroke="#EC4899" strokeWidth="2.5" strokeLinecap="round" />
-      <circle className="viz-fisc-check" cx="100" cy="62" r="9" fill="none" stroke="#86efac" strokeWidth="2" />
-      <polyline className="viz-fisc-check" points="95,62 99,66 106,58" fill="none" stroke="#86efac" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <rect x="68" y="6" width="64" height="68" rx="6" fill="none" stroke="#EC4899" strokeWidth="1.6" opacity="0.6" />
+      <line className="viz-fisc-line" style={{ animationDelay: '0.2s' }} x1="76" y1="20" x2="124" y2="20" stroke="#EC4899" strokeWidth="2.4" strokeLinecap="round" />
+      <line className="viz-fisc-line" style={{ animationDelay: '0.8s' }} x1="76" y1="31" x2="114" y2="31" stroke="#EC4899" strokeWidth="2.4" strokeLinecap="round" />
+      <line className="viz-fisc-line" style={{ animationDelay: '1.4s' }} x1="76" y1="42" x2="118" y2="42" stroke="#EC4899" strokeWidth="2.4" strokeLinecap="round" />
+      <line className="viz-fisc-line" style={{ animationDelay: '2.0s' }} x1="76" y1="53" x2="108" y2="53" stroke="#EC4899" strokeWidth="2.4" strokeLinecap="round" />
+      <circle className="viz-fisc-check" cx="100" cy="65" r="9" fill="none" stroke="#86efac" strokeWidth="2" />
+      <polyline className="viz-fisc-check" points="95,65 99,69 106,61" fill="none" stroke="#86efac" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <text className="viz-fisc-pct" x="40" y="45" fontSize="15" fontWeight="700" fill="#EC4899" textAnchor="middle">%</text>
     </svg>
   )
 }
 
 const FEATURES = [
-  { title: "Finances", sub: "Revenus, dépenses, budgets et épargne suivis au CHF près", color: "#86efac", visual: <FinanceViz />,
-    detail: "Suis chaque franc : revenus, dépenses récurrentes, budgets par catégorie et objectifs d'épargne. Le graphique d'évolution du solde te montre en un coup d'œil où tu en es ce mois — et le calculateur fiscal romand est directement relié pour estimer tes impôts 2025 à partir de tes vraies données.",
+  { title: "Finances", tagline: "Chaque franc, sous contrôle.", color: "#86efac", visual: <FinanceViz />,
+    bullets: [
+      "Revenus, dépenses et budgets par catégorie, mis à jour en temps réel",
+      "Le graphique d'évolution du solde montre où tu en es, d'un coup d'œil",
+      "Relié au calculateur fiscal romand pour estimer tes impôts 2025",
+    ],
     icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> },
-  { title: "Groupes", sub: "Discussions, appels vidéo et projets partagés entre proches", color: "#a8d8f0", visual: <GroupesViz />,
-    detail: "Discussions en temps réel, appels vidéo de groupe et projets partagés avec tes proches, colocataires ou amis. Crée un groupe, invite qui tu veux, et organisez-vous ensemble — courses, sorties, dépenses communes, listes partagées.",
+  { title: "Groupes", tagline: "Organisez-vous, ensemble.", color: "#a8d8f0", visual: <GroupesViz />,
+    bullets: [
+      "Discussions en temps réel et appels vidéo de groupe",
+      "Projets et listes partagées avec proches ou colocataires",
+      "Un groupe créé en 10 secondes, un lien à envoyer",
+    ],
     icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg> },
-  { title: "Calendrier", sub: "Semaine, événements récurrents et vue constellation 3D", color: "#fcd34d", visual: <CalendrierViz />,
-    detail: "Ta semaine en un seul endroit : événements, rappels et récurrences. Et pour prendre du recul, une vue constellation en 3D qui transforme ton mois en ciel étoilé — chaque événement devient une étoile reliée aux autres.",
+  { title: "Calendrier", tagline: "Ta semaine, en un ciel étoilé.", color: "#fcd34d", visual: <CalendrierViz />,
+    bullets: [
+      "Événements, rappels et récurrences en un seul endroit",
+      "Synchronisé avec les activités de tes groupes",
+      "Vue constellation 3D : chaque événement devient une étoile",
+    ],
     icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> },
-  { title: "Fiscalité", sub: "Calculateur d'impôts romand 2025 — GE, VD, VS, FR, NE, JU", color: "#EC4899", visual: <FiscaliteViz />,
-    detail: "Le calculateur fiscal romand le plus complet : Genève, Vaud, Valais, Fribourg, Neuchâtel, Jura — barèmes officiels 2025. Renseigne ton salaire et tes déductions (3e pilier, frais professionnels...) pour estimer ton impôt exact, canton par canton.",
+  { title: "Fiscalité", tagline: "Tes impôts, sans surprise.", color: "#EC4899", visual: <FiscaliteViz />,
+    bullets: [
+      "Genève, Vaud, Valais, Fribourg, Neuchâtel, Jura — barèmes 2025 officiels",
+      "Déductions réelles : 3e pilier, frais professionnels, primes maladie",
+      "Un taux effectif estimé en quelques champs remplis",
+    ],
     icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> },
 ]
 
-function FeatureDetail({ feature, rect, onClose }: { feature: typeof FEATURES[number]; rect: DOMRect; onClose: () => void }) {
-  const [expanded, setExpanded] = useState(false)
-  const [showContent, setShowContent] = useState(false)
+const QUADRANTS = [
+  { top: 9, left: 6, width: 41, height: 37 },
+  { top: 9, left: 53, width: 41, height: 37 },
+  { top: 54, left: 6, width: 41, height: 37 },
+  { top: 54, left: 53, width: 41, height: 37 },
+]
+
+function easeInOutCubic(t: number) {
+  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
+}
+function lerp(a: number, b: number, t: number) { return a + (b - a) * t }
+
+function FeaturesJourney() {
+  const wrapRef = useRef<HTMLDivElement>(null)
+  const [progress, setProgress] = useState(0)
+  const scrollDistance = 4600
 
   useEffect(() => {
-    const prevOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    const raf = requestAnimationFrame(() => setExpanded(true))
-    const t = setTimeout(() => setShowContent(true), 480)
-    return () => { cancelAnimationFrame(raf); clearTimeout(t); document.body.style.overflow = prevOverflow }
+    gsap.registerPlugin(ScrollTrigger)
+    const st = ScrollTrigger.create({
+      trigger: wrapRef.current,
+      start: 'top top',
+      end: '+=' + scrollDistance,
+      scrub: 0.45,
+      onUpdate: (self) => setProgress(self.progress),
+    })
+    return () => st.kill()
   }, [])
 
-  function handleClose() {
-    setShowContent(false)
-    setExpanded(false)
-  }
-
-  const boxStyle: React.CSSProperties = expanded
-    ? { top: 0, left: 0, width: '100vw', height: '100vh', borderRadius: 0 }
-    : { top: rect.top, left: rect.left, width: rect.width, height: rect.height, borderRadius: 20 }
+  const segLen = 1 / FEATURES.length
 
   return (
-    <div
-      onTransitionEnd={(e) => { if (e.propertyName === 'left' && !expanded) onClose() }}
-      style={{
-        position: 'fixed', ...boxStyle,
-        background: 'linear-gradient(160deg,#0A1628,#1a3a6e)',
-        zIndex: 300, overflow: 'hidden',
-        transition: 'top 0.55s cubic-bezier(.2,.8,.2,1), left 0.55s cubic-bezier(.2,.8,.2,1), width 0.55s cubic-bezier(.2,.8,.2,1), height 0.55s cubic-bezier(.2,.8,.2,1), border-radius 0.5s ease'
-      }}
-    >
-      <div style={{
-        position: 'absolute', inset: 0,
-        opacity: expanded ? 0.55 : 1,
-        transform: expanded ? 'scale(3.2)' : 'scale(1)',
-        transition: 'transform 0.9s ease, opacity 0.6s ease'
-      }}>
-        {feature.visual}
-      </div>
+    <div ref={wrapRef} style={{ height: `calc(100vh + ${scrollDistance}px)`, position: 'relative', background: '#050810' }}>
+      <div style={{ position: 'sticky', top: 0, height: '100vh', overflow: 'hidden' }}>
 
-      {showContent && (
-        <div className="nexia-in" style={{
-          position: 'relative', zIndex: 1, height: '100%', display: 'flex', flexDirection: 'column',
-          alignItems: 'center', justifyContent: 'center', padding: '40px 24px', textAlign: 'center'
+        <div style={{
+          position: 'absolute', top: '4%', left: 0, right: 0, textAlign: 'center', zIndex: 5,
+          opacity: 1 - Math.min(1, progress / 0.05), pointerEvents: 'none'
         }}>
-          <button onClick={handleClose} aria-label="Fermer" style={{
-            position: 'absolute', top: '24px', right: '24px', width: '40px', height: '40px', borderRadius: '99px',
-            background: 'rgba(255,255,255,0.1)', border: '0.5px solid rgba(255,255,255,0.2)', color: '#fff',
-            fontSize: '18px', cursor: 'pointer'
-          }}>×</button>
-          <div style={{ color: feature.color, marginBottom: '22px', transform: 'scale(2.2)' }}>{feature.icon}</div>
-          <div style={{ fontFamily: 'var(--font-geist-sans)', fontWeight: 700, fontSize: 'clamp(30px,5vw,48px)', color: '#fff', marginBottom: '18px' }}>
-            {feature.title}
+          <div style={{ fontFamily: 'var(--font-geist-sans)', fontWeight: 700, fontSize: 'clamp(22px,3.4vw,32px)', color: '#fff' }}>
+            Tout ce dont tu as besoin.
           </div>
-          <div style={{ fontSize: '15px', color: 'rgba(255,255,255,0.7)', maxWidth: '480px', lineHeight: 1.7 }}>
-            {feature.detail}
+          <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.5)', marginTop: '6px' }}>
+            Continue à scroller pour visiter chaque outil.
           </div>
         </div>
-      )}
+
+        {FEATURES.map((f, i) => {
+          const segStart = i * segLen
+          const t = Math.min(1, Math.max(0, (progress - segStart) / segLen))
+
+          let zoomT: number
+          if (t < 0.32) zoomT = easeInOutCubic(t / 0.32)
+          else if (t < 0.68) zoomT = 1
+          else zoomT = 1 - easeInOutCubic((t - 0.68) / 0.32)
+
+          const q = QUADRANTS[i]
+          const top = lerp(q.top, 0, zoomT)
+          const left = lerp(q.left, 0, zoomT)
+          const width = lerp(q.width, 100, zoomT)
+          const height = lerp(q.height, 100, zoomT)
+          const radius = lerp(20, 0, zoomT)
+
+          const isTouched = t > 0.01 && t < 0.99
+          const contentFade = Math.min(
+            Math.max(0, (t - 0.38) / 0.06),
+            Math.max(0, (0.68 - t) / 0.06)
+          )
+          const showThumb = zoomT < 0.55
+
+          return (
+            <div key={f.title} style={{
+              position: 'absolute',
+              top: `${top}%`, left: `${left}%`, width: `${width}%`, height: `${height}%`,
+              borderRadius: `${radius}px`,
+              background: 'linear-gradient(160deg,#0A1628,#1a3a6e)',
+              overflow: 'hidden',
+              opacity: isTouched ? 1 : 0.14,
+              filter: isTouched ? 'none' : 'blur(1px)',
+              zIndex: isTouched ? 2 : 1,
+              boxShadow: zoomT > 0.05 ? '0 40px 90px -20px rgba(0,0,0,0.55)' : 'none',
+            }}>
+              <div style={{
+                position: 'absolute', inset: 0,
+                opacity: lerp(0.85, 0.4, zoomT),
+                transform: `scale(${lerp(1, 2.8, zoomT)})`,
+              }}>
+                {f.visual}
+              </div>
+
+              {showThumb && (
+                <div style={{ position: 'absolute', left: '18px', bottom: '16px', opacity: 1 - zoomT * 1.8 }}>
+                  <div style={{ color: f.color, marginBottom: '8px' }}>{f.icon}</div>
+                  <div style={{ fontSize: '15px', fontWeight: 600, color: '#fff' }}>{f.title}</div>
+                </div>
+              )}
+
+              {contentFade > 0.01 && (
+                <div style={{
+                  position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
+                  alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '32px',
+                  opacity: contentFade
+                }}>
+                  <div style={{ color: f.color, marginBottom: '18px', transform: 'scale(2)' }}>{f.icon}</div>
+                  <div style={{ fontFamily: 'var(--font-geist-sans)', fontWeight: 700, fontSize: 'clamp(26px,4.6vw,44px)', color: '#fff', marginBottom: '8px' }}>
+                    {f.title}
+                  </div>
+                  <div style={{ fontSize: '13.5px', color: 'rgba(255,255,255,0.5)', marginBottom: '22px' }}>
+                    {f.tagline}
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '11px', maxWidth: '460px' }}>
+                    {f.bullets.map((b, bi) => (
+                      <div key={bi} style={{ display: 'flex', alignItems: 'flex-start', gap: '9px', textAlign: 'left' }}>
+                        <span style={{ color: f.color, marginTop: '2px', flexShrink: 0 }}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg>
+                        </span>
+                        <span style={{ fontSize: '13.5px', color: 'rgba(255,255,255,0.75)', lineHeight: 1.5 }}>{b}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }
@@ -250,7 +351,6 @@ function StarProductSection() {
 
 export default function Presentation() {
   const [mounted, setMounted] = useState(false)
-  const [detail, setDetail] = useState<{ feature: typeof FEATURES[number]; rect: DOMRect } | null>(null)
 
   useEffect(() => {
     const t = setTimeout(() => setMounted(true), 60)
@@ -335,51 +435,23 @@ export default function Presentation() {
         ))}
       </section>
 
-      {/* ---------- FEATURES ---------- */}
-      <section style={{ padding: '80px 24px', maxWidth: '1040px', margin: '0 auto' }}>
-        <Reveal>
-          <div style={{ textAlign: 'center', marginBottom: '48px' }}>
-            <div style={{ fontFamily: 'var(--font-geist-sans)', fontWeight: 700, fontSize: 'clamp(28px,4vw,40px)', color: '#0A1628' }}>
-              Tout ce dont tu as besoin.
-            </div>
-            <div style={{ fontSize: '15px', color: '#94a3b8', marginTop: '10px' }}>
-              Des outils pensés pour ta vie en Suisse romande.
-            </div>
-          </div>
-        </Reveal>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '18px' }}>
-          {FEATURES.map((f, i) => (
-            <Reveal key={f.title} delay={i * 90}>
-              <div
-                data-testid={`feature-card-${f.title}`}
-                onClick={(e) => setDetail({ feature: f, rect: e.currentTarget.getBoundingClientRect() })}
-                style={{
-                  background: 'linear-gradient(160deg,#0A1628,#1a3a6e)', borderRadius: '20px', padding: '26px',
-                  height: '100%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: '16px',
-                  cursor: 'pointer'
-                }}>
-                <div>
-                  <div style={{ color: f.color, marginBottom: '14px' }}>{f.icon}</div>
-                  <div style={{ fontSize: '16px', fontWeight: 600, color: '#fff', marginBottom: '6px' }}>{f.title}</div>
-                  <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.55)', lineHeight: 1.5 }}>{f.sub}</div>
-                </div>
-                <div style={{
-                  height: '80px', borderRadius: '12px', background: 'rgba(255,255,255,0.04)',
-                  border: '0.5px solid rgba(255,255,255,0.08)', overflow: 'hidden', position: 'relative'
-                }}>
-                  {f.visual}
-                </div>
-              </div>
-            </Reveal>
-          ))}
-        </div>
-      </section>
+      {/* ---------- FEATURES (scroll-zoom journey) ---------- */}
+      <FeaturesJourney />
 
       <style jsx global>{`
         .viz-fin-line {
           stroke-dasharray: 320;
           stroke-dashoffset: 320;
           animation: vizFinDraw 3.4s ease-in-out infinite;
+        }
+        .viz-fin-area {
+          opacity: 0;
+          animation: vizFinAreaFade 3.4s ease-in-out infinite;
+        }
+        @keyframes vizFinAreaFade {
+          0%, 12% { opacity: 0; }
+          60%, 82% { opacity: 1; }
+          100% { opacity: 0; }
         }
         .viz-fin-dot {
           opacity: 0;
@@ -464,8 +536,17 @@ export default function Presentation() {
           72%, 88% { opacity: 1; transform: scale(1); }
           100% { opacity: 0; }
         }
+        .viz-fisc-pct {
+          opacity: 0;
+          animation: vizFiscPct 3.6s ease-in-out infinite;
+        }
+        @keyframes vizFiscPct {
+          0%, 15% { opacity: 0; transform: scale(0.6); }
+          30%, 90% { opacity: 0.85; transform: scale(1); }
+          100% { opacity: 0; }
+        }
         @media (prefers-reduced-motion: reduce) {
-          .viz-fin-line, .viz-fin-dot, .viz-fin-coin, .viz-grp-node, .viz-orbit-spin, .viz-fisc-line, .viz-fisc-check {
+          .viz-fin-line, .viz-fin-area, .viz-fin-dot, .viz-fin-coin, .viz-grp-node, .viz-orbit-spin, .viz-fisc-line, .viz-fisc-check, .viz-fisc-pct {
             animation: none !important;
           }
         }
@@ -495,10 +576,6 @@ export default function Presentation() {
       <footer style={{ padding: '24px', textAlign: 'center', fontSize: '11.5px', color: '#aaa' }}>
         Nexia — Ton hub de vie. Fait avec 🇨🇭 depuis la Suisse romande.
       </footer>
-
-      {detail && (
-        <FeatureDetail feature={detail.feature} rect={detail.rect} onClose={() => setDetail(null)} />
-      )}
     </main>
   )
 }
