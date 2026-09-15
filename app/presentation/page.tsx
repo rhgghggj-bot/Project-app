@@ -109,33 +109,43 @@ function FiscaliteViz() {
   )
 }
 
+function renderBold(text: string, color: string) {
+  return text.split(/(\*\*.*?\*\*)/g).map((chunk, i) =>
+    chunk.startsWith("**") ? (
+      <strong key={i} style={{ color, fontWeight: 800 }}>{chunk.slice(2, -2)}</strong>
+    ) : (
+      <span key={i}>{chunk}</span>
+    )
+  )
+}
+
 const FEATURES = [
   { title: "Finances", tagline: "Chaque franc, sous contrôle.", color: "#86efac", visual: <FinanceViz />,
     bullets: [
-      "Revenus, dépenses et budgets par catégorie, mis à jour en temps réel",
-      "Le graphique d'évolution du solde montre où tu en es, d'un coup d'œil",
-      "Relié au calculateur fiscal romand pour estimer tes impôts 2025",
+      "Revenus, dépenses et budgets par catégorie, mis à jour en **temps réel**",
+      "Le graphique d'évolution du solde montre où tu en es, **d'un coup d'œil**",
+      "Relié au calculateur fiscal romand pour estimer **tes impôts 2025**",
     ],
     icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> },
   { title: "Groupes", tagline: "Organisez-vous, ensemble.", color: "#a8d8f0", visual: <GroupesViz />,
     bullets: [
-      "Discussions en temps réel et appels vidéo de groupe",
-      "Projets et listes partagées avec proches ou colocataires",
-      "Un groupe créé en 10 secondes, un lien à envoyer",
+      "Discussions en temps réel et **appels vidéo** de groupe",
+      "Projets et listes partagées avec **proches ou colocataires**",
+      "Un groupe créé en **10 secondes**, un lien à envoyer",
     ],
     icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg> },
   { title: "Calendrier", tagline: "Ta semaine, en un ciel étoilé.", color: "#fcd34d", visual: <CalendrierViz />,
     bullets: [
-      "Événements, rappels et récurrences en un seul endroit",
-      "Synchronisé avec les activités de tes groupes",
-      "Vue constellation 3D : chaque événement devient une étoile",
+      "Événements, rappels et récurrences **en un seul endroit**",
+      "Synchronisé avec **les activités de tes groupes**",
+      "Vue constellation 3D : chaque événement devient **une étoile**",
     ],
     icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> },
   { title: "Fiscalité", tagline: "Tes impôts, sans surprise.", color: "#EC4899", visual: <FiscaliteViz />,
     bullets: [
-      "Genève, Vaud, Valais, Fribourg, Neuchâtel, Jura — barèmes 2025 officiels",
-      "Déductions réelles : 3e pilier, frais professionnels, primes maladie",
-      "Un taux effectif estimé en quelques champs remplis",
+      "Genève, Vaud, Valais, Fribourg, Neuchâtel, Jura — **barèmes 2025 officiels**",
+      "Déductions réelles : **3e pilier**, frais professionnels, primes maladie",
+      "Un taux effectif estimé **en quelques champs remplis**",
     ],
     icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> },
 ]
@@ -155,6 +165,8 @@ function lerp(a: number, b: number, t: number) { return a + (b - a) * t }
 function FeaturesJourney() {
   const wrapRef = useRef<HTMLDivElement>(null)
   const [progress, setProgress] = useState(0)
+  const [mouse, setMouse] = useState({ x: 0, y: 0 })
+  const [reducedMotion, setReducedMotion] = useState(false)
   const scrollDistance = 4600
 
   useEffect(() => {
@@ -166,14 +178,25 @@ function FeaturesJourney() {
       scrub: 0.45,
       onUpdate: (self) => setProgress(self.progress),
     })
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
+    setReducedMotion(mq.matches)
     return () => st.kill()
   }, [])
+
+  function handleMouseMove(e: React.MouseEvent<HTMLDivElement>) {
+    if (reducedMotion) return
+    const rect = e.currentTarget.getBoundingClientRect()
+    setMouse({
+      x: ((e.clientX - rect.left) / rect.width) * 2 - 1,
+      y: ((e.clientY - rect.top) / rect.height) * 2 - 1,
+    })
+  }
 
   const segLen = 1 / FEATURES.length
 
   return (
     <div ref={wrapRef} style={{ height: `calc(100vh + ${scrollDistance}px)`, position: 'relative', background: '#050810' }}>
-      <div style={{ position: 'sticky', top: 0, height: '100vh', overflow: 'hidden' }}>
+      <div onMouseMove={handleMouseMove} style={{ position: 'sticky', top: 0, height: '100vh', overflow: 'hidden' }}>
 
         <div style={{
           position: 'absolute', top: '4%', left: 0, right: 0, textAlign: 'center', zIndex: 5,
@@ -205,10 +228,14 @@ function FeaturesJourney() {
 
           const isTouched = t > 0.01 && t < 0.99
           const contentFade = Math.min(
-            Math.max(0, (t - 0.38) / 0.06),
-            Math.max(0, (0.68 - t) / 0.06)
+            Math.max(0, (t - 0.34) / 0.12),
+            Math.max(0, (0.74 - t) / 0.12)
           )
           const showThumb = zoomT < 0.55
+          const words = f.tagline.split(' ')
+          const tiltX = reducedMotion ? 0 : mouse.x * 10
+          const tiltY = reducedMotion ? 0 : mouse.y * 7
+          const tiltR = reducedMotion ? 0 : mouse.x * 0.7
 
           return (
             <div key={f.title} style={{
@@ -241,24 +268,50 @@ function FeaturesJourney() {
                 <div style={{
                   position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
                   alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '32px',
-                  opacity: contentFade
+                  opacity: contentFade,
+                  transform: `translate3d(${tiltX}px, ${tiltY}px, 0) rotate(${tiltR}deg)`,
+                  transition: 'transform 0.3s ease-out',
                 }}>
-                  <div style={{ color: f.color, marginBottom: '18px', transform: 'scale(2)' }}>{f.icon}</div>
-                  <div style={{ fontFamily: 'var(--font-geist-sans)', fontWeight: 700, fontSize: 'clamp(26px,4.6vw,44px)', color: '#fff', marginBottom: '8px' }}>
+                  <div style={{ color: f.color, marginBottom: '16px', transform: 'scale(2)' }}>{f.icon}</div>
+                  <div style={{
+                    fontFamily: "'Fraunces', Georgia, serif", fontWeight: 900, fontStyle: 'italic',
+                    fontSize: 'clamp(28px,4.8vw,46px)', color: '#fff', marginBottom: '10px', letterSpacing: '-0.01em'
+                  }}>
                     {f.title}
                   </div>
-                  <div style={{ fontSize: '13.5px', color: 'rgba(255,255,255,0.5)', marginBottom: '22px' }}>
-                    {f.tagline}
+                  <div style={{
+                    display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '0.35em',
+                    fontFamily: "'Fraunces', Georgia, serif", fontStyle: 'italic', fontWeight: 600,
+                    fontSize: 'clamp(15px,1.8vw,19px)', color: f.color, marginBottom: '26px', maxWidth: '520px'
+                  }}>
+                    {words.map((w, wi) => {
+                      const wp = Math.min(1, Math.max(0, (contentFade - wi * 0.12) / (1 - wi * 0.12)))
+                      return (
+                        <span key={wi} style={{
+                          display: 'inline-block',
+                          opacity: wp,
+                          transform: `translateY(${lerp(14, 0, wp)}px) rotate(${lerp(-4, 0, wp)}deg)`,
+                        }}>{w}</span>
+                      )
+                    })}
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '11px', maxWidth: '460px' }}>
-                    {f.bullets.map((b, bi) => (
-                      <div key={bi} style={{ display: 'flex', alignItems: 'flex-start', gap: '9px', textAlign: 'left' }}>
-                        <span style={{ color: f.color, marginTop: '2px', flexShrink: 0 }}>
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg>
-                        </span>
-                        <span style={{ fontSize: '13.5px', color: 'rgba(255,255,255,0.75)', lineHeight: 1.5 }}>{b}</span>
-                      </div>
-                    ))}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '13px', maxWidth: '480px' }}>
+                    {f.bullets.map((b, bi) => {
+                      const bp = Math.min(1, Math.max(0, (contentFade - bi * 0.22) / (1 - bi * 0.22)))
+                      return (
+                        <div key={bi} style={{
+                          display: 'flex', alignItems: 'flex-start', gap: '9px', textAlign: 'left',
+                          opacity: bp, transform: `translateX(${lerp(-26, 0, bp)}px)`,
+                        }}>
+                          <span style={{ color: f.color, marginTop: '2px', flexShrink: 0 }}>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg>
+                          </span>
+                          <span style={{ fontFamily: 'var(--font-geist-sans)', fontSize: '14px', color: 'rgba(255,255,255,0.78)', lineHeight: 1.55 }}>
+                            {renderBold(b, f.color)}
+                          </span>
+                        </div>
+                      )
+                    })}
                   </div>
                 </div>
               )}
@@ -359,6 +412,9 @@ export default function Presentation() {
 
   return (
     <main style={{ background: '#fff', fontFamily: '-apple-system,BlinkMacSystemFont,sans-serif' }}>
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,600;0,900;1,600;1,900&display=swap" />
 
       {/* ---------- HERO ---------- */}
       <section style={{
