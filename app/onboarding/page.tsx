@@ -43,7 +43,7 @@ export default function Onboarding() {
   const btnSec = {width:'100%',background:'transparent',color:'rgba(255,255,255,0.7)',border:'0.5px solid rgba(255,255,255,0.25)',borderRadius:'14px',padding:'14px',fontSize:'14px',cursor:'pointer'} as any
 
   return (
-    <main style={bg}>
+    <main style={bg} key={slide} className="nexia-in">
       <div style={{position:'absolute',top:'-40px',right:'-40px',width:'200px',height:'200px',borderRadius:'50%',background:'rgba(255,255,255,0.06)'}}></div>
 
       {slide === 1 && (

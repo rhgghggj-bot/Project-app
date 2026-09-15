@@ -19,3 +19,54 @@ input, textarea, select {
   font-size: 16px !important;
 }
 
+/* --- Finition globale : transitions, retour tactile, focus --- */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+button, a, [role="button"], [style*="cursor: pointer"], [style*="cursor:pointer"] {
+  transition: transform 0.15s ease, opacity 0.15s ease, background-color 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+button:active, a:active, [role="button"]:active, [style*="cursor: pointer"]:active, [style*="cursor:pointer"]:active {
+  transform: scale(0.97);
+  opacity: 0.9;
+}
+
+:focus-visible {
+  outline: 2px solid #2B7FFF;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+::selection {
+  background: rgba(43, 127, 255, 0.2);
+  color: #0A1628;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  button, a, [role="button"], [style*="cursor: pointer"], [style*="cursor:pointer"],
+  button:active, a:active, [role="button"]:active, [style*="cursor: pointer"]:active, [style*="cursor:pointer"]:active {
+    transition: none;
+    transform: none;
+  }
+}
+
+@keyframes nexiaFadeInUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+
+.nexia-in {
+  animation: nexiaFadeInUp 0.4s ease both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nexia-in { animation: none; }
+}
+
