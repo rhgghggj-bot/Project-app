@@ -1,7 +1,10 @@
 "use client"
 import { useEffect, useRef, useState } from "react"
+import dynamic from "next/dynamic"
 import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
+
+const StarScene3D = dynamic(() => import("../components/StarScene3D"), { ssr: false })
 
 function Reveal({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
   const ref = useRef<HTMLDivElement>(null)
@@ -39,93 +42,80 @@ const FEATURES = [
     icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> },
 ]
 
-function PhoneMockup() {
-  return (
-    <div style={{
-      width: '260px', borderRadius: '34px', padding: '10px',
-      background: 'linear-gradient(160deg,#1c1c1e,#0a0a0b)',
-      boxShadow: '0 40px 80px -20px rgba(0,0,0,0.6)'
-    }}>
-      <div style={{ borderRadius: '25px', overflow: 'hidden', background: '#fff' }}>
-        <div style={{ background: 'linear-gradient(160deg,#0A1628,#1a3a6e,#2B7FFF)', padding: '18px 16px 16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
-            <svg width="14" height="14" viewBox="0 0 60 60"><path d="M30 5 L35 25 L55 30 L35 35 L30 55 L25 35 L5 30 L25 25 Z" fill="url(#phoneStar)" /><defs><linearGradient id="phoneStar" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#2B7FFF" /><stop offset="100%" stopColor="#D4A843" /></linearGradient></defs></svg>
-            <span style={{ fontSize: '11px', fontWeight: 700, color: '#fff', letterSpacing: '1.5px' }}>NEXIA</span>
-          </div>
-          <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.5)' }}>mardi 15 septembre</div>
-          <div style={{ fontSize: '15px', fontWeight: 600, color: '#fff', margin: '2px 0 8px' }}>Bonjour, Léa</div>
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <div style={{ fontSize: '9px', color: '#86efac', fontWeight: 600 }}>+1&apos;780 CHF</div>
-          </div>
-        </div>
-        <div style={{ background: '#f0f4ff', padding: '10px' }}>
-          <div style={{ background: 'rgba(15,45,92,0.9)', borderRadius: '10px', padding: '9px', display: 'flex', gap: '4px', marginBottom: '7px' }}>
-            {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((d, i) => (
-              <div key={i} style={{ flex: 1, textAlign: 'center' }}>
-                <div style={{ fontSize: '6px', color: 'rgba(255,255,255,0.5)' }}>{d}</div>
-                <div style={{ fontSize: '8px', fontWeight: 700, color: i === 1 ? '#1e56a0' : '#fff', background: i === 1 ? '#fff' : 'transparent', borderRadius: '4px', marginTop: '2px' }}>{12 + i}</div>
-              </div>
-            ))}
-          </div>
-          <div className="zoom-target" style={{ background: 'rgba(15,45,92,0.9)', borderRadius: '10px', padding: '9px' }}>
-            <div style={{ fontSize: '7px', color: '#a8d8f0', fontWeight: 600, marginBottom: '3px' }}>FINANCES</div>
-            <div style={{ fontSize: '13px', fontWeight: 700, color: '#86efac' }}>+1&apos;780 CHF</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
+const STAGES = [
+  { range: [0, 0.30], title: "Ton hub de vie.", sub: "Une seule app pour tout gérer, tous les jours.", size: "clamp(30px,6vw,52px)" },
+  { range: [0.36, 0.64], title: "Pensé pour la Suisse.", sub: "Impôts romands, CHF, épargne — sans approximation.", size: "clamp(30px,6vw,52px)" },
+  { range: [0.70, 0.94], title: "100% gratuit.", sub: "SCROLL TO CONTINUE", size: "clamp(46px,10vw,88px)" },
+] as const
+
+function stageOpacity(progress: number, [start, end]: readonly [number, number]) {
+  const fade = 0.05
+  if (progress < start - fade || progress > end + fade) return 0
+  if (progress < start) return (progress - (start - fade)) / fade
+  if (progress > end) return 1 - (progress - end) / fade
+  return 1
 }
 
-function ZoomReveal() {
+function StarProductSection() {
   const wrapRef = useRef<HTMLDivElement>(null)
-  const sketchRef = useRef<SVGSVGElement>(null)
-  const coloredRef = useRef<HTMLDivElement>(null)
+  const progressRef = useRef(0)
+  const [progress, setProgress] = useState(0)
 
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger)
-    const ctx = gsap.context(() => {
-      const lines = sketchRef.current!.querySelectorAll<SVGGeometryElement>('.sketch-line')
-      lines.forEach((line) => {
-        const len = line.getTotalLength()
-        line.style.strokeDasharray = String(len)
-        line.style.strokeDashoffset = String(len)
-      })
-
-      const tl = gsap.timeline({
-        scrollTrigger: {
-          trigger: wrapRef.current,
-          start: 'top top',
-          end: '+=2200',
-          scrub: 0.6,
-          pin: true,
-        }
-      })
-
-      tl.to(lines, { strokeDashoffset: 0, duration: 1, stagger: 0.12, ease: 'power1.inOut' })
-        .to({}, { duration: 0.3 })
-        .to(sketchRef.current, { opacity: 0, duration: 0.5 }, 'reveal')
-        .fromTo(coloredRef.current, { opacity: 0, scale: 0.94 }, { opacity: 1, scale: 1, duration: 0.5 }, 'reveal')
-        .to({}, { duration: 0.25 })
-        .to(coloredRef.current, { scale: 15, transformOrigin: '50% 78%', duration: 1.4, ease: 'power2.in' }, 'zoom')
-        .to(wrapRef.current, { backgroundColor: '#0A1628', duration: 1.4, ease: 'power2.in' }, 'zoom')
-    }, wrapRef)
-    return () => ctx.revert()
+    const st = ScrollTrigger.create({
+      trigger: wrapRef.current,
+      start: 'top top',
+      end: '+=3000',
+      scrub: 0.4,
+      onUpdate: (self) => { progressRef.current = self.progress; setProgress(self.progress) },
+    })
+    return () => st.kill()
   }, [])
 
+  const borderGlow = Math.min(1, Math.max(0, (progress - 0.30) / 0.1)) - Math.min(1, Math.max(0, (progress - 0.95) / 0.05))
+
   return (
-    <div ref={wrapRef} style={{
-      height: '100vh', position: 'relative', overflow: 'hidden',
-      background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center'
-    }}>
-      <svg ref={sketchRef} width="220" height="460" viewBox="0 0 220 460" style={{ position: 'absolute' }}>
-        <rect className="sketch-line" x="10" y="10" width="200" height="440" rx="34" fill="none" stroke="#0A1628" strokeWidth="2.5" />
-        <rect className="sketch-line" x="26" y="46" width="168" height="368" rx="14" fill="none" stroke="#2B7FFF" strokeWidth="2" />
-        <rect className="sketch-line" x="40" y="70" width="140" height="60" rx="8" fill="none" stroke="#D4A843" strokeWidth="1.6" />
-        <rect className="sketch-line" x="40" y="300" width="140" height="90" rx="8" fill="none" stroke="#86efac" strokeWidth="1.6" />
-      </svg>
-      <div ref={coloredRef} style={{ position: 'relative', opacity: 0 }}>
-        <PhoneMockup />
+    <div ref={wrapRef} style={{ height: 'calc(100vh + 3000px)', position: 'relative', background: '#050810' }}>
+      <div style={{ position: 'sticky', top: 0, height: '100vh', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+
+        {/* rainbow glow frame */}
+        <div style={{
+          position: 'absolute', inset: 0, pointerEvents: 'none', opacity: borderGlow,
+          padding: '5px', boxSizing: 'border-box',
+          background: 'conic-gradient(from 0deg, #2B7FFF, #D4A843, #86efac, #EC4899, #2B7FFF)',
+          WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+          WebkitMaskComposite: 'xor',
+          maskComposite: 'exclude' as any,
+          filter: 'saturate(1.3)'
+        }} />
+        <div style={{
+          position: 'absolute', inset: 0, pointerEvents: 'none', opacity: borderGlow * 0.6,
+          boxShadow: 'inset 0 0 80px 10px rgba(43,127,255,0.25), inset 0 0 80px 10px rgba(212,168,67,0.15)',
+        }} />
+
+        <div style={{ position: 'absolute', inset: 0 }}>
+          <StarScene3D progressRef={progressRef} />
+        </div>
+
+        {STAGES.map((s, i) => {
+          const op = stageOpacity(progress, s.range)
+          if (op <= 0.01) return null
+          return (
+            <div key={i} style={{
+              position: 'absolute', left: 0, right: 0, textAlign: 'center', padding: '0 24px',
+              top: i === 2 ? '50%' : '12%', transform: i === 2 ? 'translateY(-50%)' : 'none',
+              opacity: op, pointerEvents: 'none'
+            }}>
+              <div style={{ fontFamily: 'var(--font-geist-sans)', fontWeight: 700, fontSize: s.size, color: '#fff', letterSpacing: '-0.02em', textShadow: '0 2px 30px rgba(0,0,0,0.4)' }}>
+                {s.title}
+              </div>
+              <div style={{ fontSize: i === 2 ? '11px' : '14px', letterSpacing: i === 2 ? '0.14em' : 'normal', color: 'rgba(255,255,255,0.55)', marginTop: '12px' }}>
+                {s.sub}
+              </div>
+            </div>
+          )
+        })}
       </div>
     </div>
   )
@@ -140,7 +130,7 @@ export default function Presentation() {
   }, [])
 
   return (
-    <main style={{ background: '#fff', fontFamily: '-apple-system,BlinkMacSystemFont,sans-serif', overflowX: 'hidden' }}>
+    <main style={{ background: '#fff', fontFamily: '-apple-system,BlinkMacSystemFont,sans-serif' }}>
 
       {/* ---------- HERO ---------- */}
       <section style={{
@@ -208,7 +198,7 @@ export default function Presentation() {
         </div>
       </section>
 
-      <ZoomReveal />
+      <StarProductSection />
 
       {/* ---------- TRUST STRIP ---------- */}
       <section style={{ background: '#0A1628', padding: '18px 24px', display: 'flex', gap: '28px', justifyContent: 'center', flexWrap: 'wrap' }}>
