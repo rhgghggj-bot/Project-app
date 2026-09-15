@@ -31,14 +31,74 @@ function Reveal({ children, delay = 0 }: { children: React.ReactNode; delay?: nu
   )
 }
 
+function FinanceViz() {
+  return (
+    <svg viewBox="0 0 200 80" width="100%" height="100%" preserveAspectRatio="none">
+      <polyline className="viz-fin-line" points="0,60 28,50 52,56 78,34 106,40 134,18 162,24 200,6"
+        fill="none" stroke="#86efac" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+      <circle className="viz-fin-dot" style={{ animationDelay: '0.4s' }} cx="78" cy="34" r="2.8" fill="#86efac" />
+      <circle className="viz-fin-dot" style={{ animationDelay: '1.1s' }} cx="134" cy="18" r="2.8" fill="#86efac" />
+      <circle className="viz-fin-dot" style={{ animationDelay: '1.8s' }} cx="200" cy="6" r="2.8" fill="#86efac" />
+      <text className="viz-fin-coin" style={{ animationDelay: '0s' }} x="34" y="60" fontSize="11" fill="#86efac">+</text>
+      <text className="viz-fin-coin" style={{ animationDelay: '1.2s' }} x="110" y="55" fontSize="11" fill="#86efac">+</text>
+      <text className="viz-fin-coin" style={{ animationDelay: '2.1s' }} x="170" y="45" fontSize="11" fill="#86efac">+</text>
+    </svg>
+  )
+}
+
+function GroupesViz() {
+  const nodes = [{ x: 34, y: 42 }, { x: 100, y: 20 }, { x: 166, y: 46 }]
+  return (
+    <svg viewBox="0 0 200 80" width="100%" height="100%">
+      <line x1={nodes[0].x} y1={nodes[0].y} x2={nodes[1].x} y2={nodes[1].y} stroke="#a8d8f0" strokeWidth="1.4" opacity="0.4" />
+      <line x1={nodes[1].x} y1={nodes[1].y} x2={nodes[2].x} y2={nodes[2].y} stroke="#a8d8f0" strokeWidth="1.4" opacity="0.4" />
+      <line x1={nodes[0].x} y1={nodes[0].y} x2={nodes[2].x} y2={nodes[2].y} stroke="#a8d8f0" strokeWidth="1.4" opacity="0.25" />
+      {nodes.map((n, i) => (
+        <circle key={i} className="viz-grp-node" style={{ animationDelay: `${i * 0.5}s`, transformOrigin: `${n.x}px ${n.y}px` }}
+          cx={n.x} cy={n.y} r="8" fill="#a8d8f0" />
+      ))}
+    </svg>
+  )
+}
+
+function CalendrierViz() {
+  return (
+    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+      <div style={{ position: 'absolute', top: '50%', left: '50%', width: '6px', height: '6px', marginLeft: '-3px', marginTop: '-3px', borderRadius: '50%', background: '#fcd34d' }} />
+      <div className="viz-orbit" style={{ width: '36px', height: '36px' }}>
+        <div className="viz-orbit-spin" style={{ animationDuration: '6s' }}><span style={{ background: '#fcd34d', color: '#fcd34d' }} /></div>
+      </div>
+      <div className="viz-orbit" style={{ width: '54px', height: '54px' }}>
+        <div className="viz-orbit-spin" style={{ animationDuration: '9s', animationDirection: 'reverse' }}><span style={{ background: '#a8d8f0', color: '#a8d8f0' }} /></div>
+      </div>
+      <div className="viz-orbit" style={{ width: '72px', height: '72px' }}>
+        <div className="viz-orbit-spin" style={{ animationDuration: '13s' }}><span style={{ background: '#EC4899', color: '#EC4899' }} /></div>
+      </div>
+    </div>
+  )
+}
+
+function FiscaliteViz() {
+  return (
+    <svg viewBox="0 0 200 80" width="100%" height="100%">
+      <rect x="70" y="8" width="60" height="64" rx="6" fill="none" stroke="#EC4899" strokeWidth="1.6" opacity="0.6" />
+      <line className="viz-fisc-line" style={{ animationDelay: '0.2s' }} x1="78" y1="24" x2="122" y2="24" stroke="#EC4899" strokeWidth="2.5" strokeLinecap="round" />
+      <line className="viz-fisc-line" style={{ animationDelay: '0.9s' }} x1="78" y1="36" x2="114" y2="36" stroke="#EC4899" strokeWidth="2.5" strokeLinecap="round" />
+      <line className="viz-fisc-line" style={{ animationDelay: '1.6s' }} x1="78" y1="48" x2="118" y2="48" stroke="#EC4899" strokeWidth="2.5" strokeLinecap="round" />
+      <circle className="viz-fisc-check" cx="100" cy="62" r="9" fill="none" stroke="#86efac" strokeWidth="2" />
+      <polyline className="viz-fisc-check" points="95,62 99,66 106,58" fill="none" stroke="#86efac" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
 const FEATURES = [
-  { title: "Finances", sub: "Revenus, dépenses, budgets et épargne suivis au CHF près", color: "#86efac",
+  { title: "Finances", sub: "Revenus, dépenses, budgets et épargne suivis au CHF près", color: "#86efac", visual: <FinanceViz />,
     icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> },
-  { title: "Groupes", sub: "Discussions, appels vidéo et projets partagés entre proches", color: "#a8d8f0",
+  { title: "Groupes", sub: "Discussions, appels vidéo et projets partagés entre proches", color: "#a8d8f0", visual: <GroupesViz />,
     icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg> },
-  { title: "Calendrier", sub: "Semaine, événements récurrents et vue constellation 3D", color: "#fcd34d",
+  { title: "Calendrier", sub: "Semaine, événements récurrents et vue constellation 3D", color: "#fcd34d", visual: <CalendrierViz />,
     icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> },
-  { title: "Fiscalité", sub: "Calculateur d'impôts romand 2025 — GE, VD, VS, FR, NE, JU", color: "#EC4899",
+  { title: "Fiscalité", sub: "Calculateur d'impôts romand 2025 — GE, VD, VS, FR, NE, JU", color: "#EC4899", visual: <FiscaliteViz />,
     icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> },
 ]
 
@@ -224,16 +284,120 @@ export default function Presentation() {
             <Reveal key={f.title} delay={i * 90}>
               <div style={{
                 background: 'linear-gradient(160deg,#0A1628,#1a3a6e)', borderRadius: '20px', padding: '26px',
-                height: '100%', boxSizing: 'border-box'
+                height: '100%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: '16px'
               }}>
-                <div style={{ color: f.color, marginBottom: '14px' }}>{f.icon}</div>
-                <div style={{ fontSize: '16px', fontWeight: 600, color: '#fff', marginBottom: '6px' }}>{f.title}</div>
-                <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.55)', lineHeight: 1.5 }}>{f.sub}</div>
+                <div>
+                  <div style={{ color: f.color, marginBottom: '14px' }}>{f.icon}</div>
+                  <div style={{ fontSize: '16px', fontWeight: 600, color: '#fff', marginBottom: '6px' }}>{f.title}</div>
+                  <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.55)', lineHeight: 1.5 }}>{f.sub}</div>
+                </div>
+                <div style={{
+                  height: '80px', borderRadius: '12px', background: 'rgba(255,255,255,0.04)',
+                  border: '0.5px solid rgba(255,255,255,0.08)', overflow: 'hidden', position: 'relative'
+                }}>
+                  {f.visual}
+                </div>
               </div>
             </Reveal>
           ))}
         </div>
       </section>
+
+      <style jsx global>{`
+        .viz-fin-line {
+          stroke-dasharray: 320;
+          stroke-dashoffset: 320;
+          animation: vizFinDraw 3.4s ease-in-out infinite;
+        }
+        .viz-fin-dot {
+          opacity: 0;
+          animation: vizFinDot 3.4s ease-in-out infinite;
+        }
+        .viz-fin-coin {
+          opacity: 0;
+          font-weight: 700;
+          animation: vizFinCoin 2.8s ease-out infinite;
+        }
+        @keyframes vizFinDraw {
+          0% { stroke-dashoffset: 320; opacity: 0; }
+          12% { opacity: 1; }
+          60% { stroke-dashoffset: 0; opacity: 1; }
+          82% { opacity: 1; }
+          100% { stroke-dashoffset: 0; opacity: 0; }
+        }
+        @keyframes vizFinDot {
+          0%, 30% { opacity: 0; transform: scale(0.6); }
+          45% { opacity: 1; transform: scale(1.3); }
+          60% { opacity: 1; transform: scale(1); }
+          85% { opacity: 0; }
+        }
+        @keyframes vizFinCoin {
+          0% { opacity: 0; transform: translateY(0); }
+          20% { opacity: 1; }
+          80% { opacity: 0; transform: translateY(-26px); }
+          100% { opacity: 0; transform: translateY(-26px); }
+        }
+        .viz-grp-node {
+          animation: vizGrpPulse 2.2s ease-in-out infinite;
+        }
+        @keyframes vizGrpPulse {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.35); }
+        }
+        .viz-orbit {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          border: 1px dashed rgba(255,255,255,0.12);
+          border-radius: 50%;
+        }
+        .viz-orbit-spin {
+          position: absolute;
+          inset: 0;
+          animation-name: vizOrbitSpin;
+          animation-timing-function: linear;
+          animation-iteration-count: infinite;
+        }
+        .viz-orbit-spin span {
+          position: absolute;
+          top: -3px;
+          left: 50%;
+          margin-left: -3px;
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          box-shadow: 0 0 6px currentColor;
+        }
+        @keyframes vizOrbitSpin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        .viz-fisc-line {
+          stroke-dasharray: 60;
+          stroke-dashoffset: 60;
+          animation: vizFiscLine 3.6s ease-in-out infinite;
+        }
+        @keyframes vizFiscLine {
+          0%, 8% { stroke-dashoffset: 60; opacity: 0.3; }
+          35%, 80% { stroke-dashoffset: 0; opacity: 1; }
+          95% { opacity: 0.3; }
+        }
+        .viz-fisc-check {
+          opacity: 0;
+          animation: vizFiscCheck 3.6s ease-in-out infinite;
+        }
+        @keyframes vizFiscCheck {
+          0%, 60% { opacity: 0; transform: scale(0.7); }
+          72%, 88% { opacity: 1; transform: scale(1); }
+          100% { opacity: 0; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .viz-fin-line, .viz-fin-dot, .viz-fin-coin, .viz-grp-node, .viz-orbit-spin, .viz-fisc-line, .viz-fisc-check {
+            animation: none !important;
+          }
+        }
+      `}</style>
 
       {/* ---------- FINAL CTA ---------- */}
       <section style={{
