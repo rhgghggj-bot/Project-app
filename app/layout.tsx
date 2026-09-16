@@ -4,6 +4,7 @@ import "./globals.css";
 import Navigation from "./components/Navigation"
 import PushNotifSetup from "./components/PushNotifSetup";
 import SplashWrapper from "./components/SplashWrapper";
+import PageFrame from "./components/PageFrame";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -46,7 +47,7 @@ export default function RootLayout({
         <SplashWrapper>
           <Navigation />
           <PushNotifSetup />
-          <div style={{paddingBottom:"90px",paddingTop:"calc(44px + env(safe-area-inset-top))"}} className="md:pt-0">{children}</div>
+          <PageFrame>{children}</PageFrame>
         </SplashWrapper>
       </body>
     </html>

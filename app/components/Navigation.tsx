@@ -18,6 +18,8 @@ export default function Navigation() {
   const [user, setUser] = useState<any>(null)
   const [estLocal, setEstLocal] = useState(false)
 
+  if (pathname === "/presentation") return null
+
   useEffect(() => {
     setEstLocal(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
   }, [])
