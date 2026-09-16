@@ -337,6 +337,8 @@ function stageOpacity(progress: number, [start, end]: readonly [number, number])
   return 1
 }
 
+const CANTONS = ["GE", "VD", "VS", "FR", "NE", "JU"]
+
 function StarProductSection() {
   const wrapRef = useRef<HTMLDivElement>(null)
   const progressRef = useRef(0)
@@ -355,6 +357,10 @@ function StarProductSection() {
   }, [])
 
   const borderGlow = Math.min(1, Math.max(0, (progress - 0.30) / 0.1)) - Math.min(1, Math.max(0, (progress - 0.95) / 0.05))
+
+  const scanStage = STAGES[1]
+  const scanOpacity = stageOpacity(progress, scanStage.range)
+  const scanLocalT = Math.min(1, Math.max(0, (progress - scanStage.range[0]) / (scanStage.range[1] - scanStage.range[0])))
 
   return (
     <div ref={wrapRef} style={{ height: 'calc(100vh + 3000px)', position: 'relative', background: '#050810' }}>
@@ -378,6 +384,54 @@ function StarProductSection() {
         <div style={{ position: 'absolute', inset: 0 }}>
           <StarScene3D progressRef={progressRef} />
         </div>
+
+        {scanOpacity > 0.01 && (
+          <div style={{
+            position: 'absolute', top: '50%', left: '50%',
+            width: 'min(66vw, 380px)', height: 'min(66vw, 380px)',
+            transform: 'translate(-50%,-50%)',
+            opacity: scanOpacity, pointerEvents: 'none',
+          }}>
+            <div style={{ position: 'absolute', inset: 0, border: '1px dashed rgba(255,255,255,0.28)', borderRadius: '4px' }} />
+            {([['top', 'left'], ['top', 'right'], ['bottom', 'left'], ['bottom', 'right']] as const).map(([v, h], i) => (
+              <div key={i} style={{
+                position: 'absolute', [v]: '-1px', [h]: '-1px',
+                width: '16px', height: '16px',
+                borderTop: v === 'top' ? '2px solid #D4A843' : 'none',
+                borderBottom: v === 'bottom' ? '2px solid #D4A843' : 'none',
+                borderLeft: h === 'left' ? '2px solid #D4A843' : 'none',
+                borderRight: h === 'right' ? '2px solid #D4A843' : 'none',
+              } as React.CSSProperties} />
+            ))}
+            <div className="scanline" style={{
+              position: 'absolute', left: 0, right: 0, height: '2px', top: '2%',
+              background: 'linear-gradient(90deg, transparent, #D4A843, transparent)',
+              boxShadow: '0 0 12px 1px rgba(212,168,67,0.6)',
+            }} />
+            <div style={{
+              position: 'absolute', top: '10px', left: '50%', transform: 'translateX(-50%)',
+              fontSize: '9px', letterSpacing: '0.14em', whiteSpace: 'nowrap',
+              color: 'rgba(255,255,255,0.55)', fontFamily: 'var(--font-geist-mono)',
+              background: 'rgba(5,8,16,0.55)', border: '1px solid rgba(212,168,67,0.3)',
+              borderRadius: '3px', padding: '3px 8px',
+            }}>
+              ANALYSE FISCALE · 2025
+            </div>
+            <div style={{ position: 'absolute', bottom: '-34px', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '6px' }}>
+              {CANTONS.map((c, i) => {
+                const cp = Math.min(1, Math.max(0, (scanLocalT - i * 0.1) / (1 - i * 0.1)))
+                return (
+                  <span key={c} style={{
+                    fontSize: '10.5px', fontWeight: 600, color: '#D4A843',
+                    background: 'rgba(212,168,67,0.12)', border: '1px solid rgba(212,168,67,0.35)',
+                    borderRadius: '99px', padding: '3px 8px', whiteSpace: 'nowrap',
+                    opacity: cp, transform: `translateY(${lerp(6, 0, cp)}px)`,
+                  }}>{c}</span>
+                )
+              })}
+            </div>
+          </div>
+        )}
 
         {STAGES.map((s, i) => {
           const op = stageOpacity(progress, s.range)
@@ -415,6 +469,33 @@ export default function Presentation() {
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,600;0,900;1,600;1,900&display=swap" />
+
+      {/* ---------- MINI NAV (fixe pendant tout le scroll) ---------- */}
+      <div style={{
+        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
+        height: '56px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '0 20px', background: 'rgba(5,8,16,0.5)',
+        backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
+        borderBottom: '1px solid rgba(255,255,255,0.08)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <svg width="18" height="18" viewBox="0 0 60 60">
+            <path d="M30 5 L35 25 L55 30 L35 35 L30 55 L25 35 L5 30 L25 25 Z" fill="url(#navStar)" />
+            <defs><linearGradient id="navStar" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#fff" /><stop offset="100%" stopColor="#D4A843" /></linearGradient></defs>
+          </svg>
+          <span style={{ fontSize: '14px', fontWeight: 700, color: '#fff', letterSpacing: '0.02em' }}>NEXIA</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+          <a href="/connexion" style={{ fontSize: '12.5px', color: 'rgba(255,255,255,0.7)', textDecoration: 'none' }}>
+            Connexion
+          </a>
+          <a href="/inscription" style={{ textDecoration: 'none' }}>
+            <button style={{ background: '#fff', color: '#1a3a6e', border: 'none', borderRadius: '99px', padding: '8px 16px', fontSize: '12.5px', fontWeight: 600, cursor: 'pointer' }}>
+              Créer mon compte
+            </button>
+          </a>
+        </div>
+      </div>
 
       {/* ---------- HERO ---------- */}
       <section style={{
@@ -601,8 +682,17 @@ export default function Presentation() {
           30%, 90% { opacity: 0.85; transform: scale(1); }
           100% { opacity: 0; }
         }
+        .scanline {
+          animation: vizScanMove 3s ease-in-out infinite;
+        }
+        @keyframes vizScanMove {
+          0%, 100% { top: 2%; opacity: 0; }
+          15% { opacity: 1; }
+          50% { top: 94%; opacity: 1; }
+          85% { opacity: 1; }
+        }
         @media (prefers-reduced-motion: reduce) {
-          .viz-fin-line, .viz-fin-area, .viz-fin-dot, .viz-fin-coin, .viz-grp-node, .viz-orbit-spin, .viz-fisc-line, .viz-fisc-check, .viz-fisc-pct {
+          .viz-fin-line, .viz-fin-area, .viz-fin-dot, .viz-fin-coin, .viz-grp-node, .viz-orbit-spin, .viz-fisc-line, .viz-fisc-check, .viz-fisc-pct, .scanline {
             animation: none !important;
           }
         }
