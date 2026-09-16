@@ -71,6 +71,9 @@ export default function Onboarding() {
               icon={<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#EC4899" strokeWidth="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>}
               title="Fiscalité" sub="Calculateur CH 2025" />
           </div>
+          <a href="/presentation" style={{display:'block',textAlign:'center',fontSize:'12px',color:'rgba(255,255,255,0.55)',textDecoration:'underline',marginBottom:'14px'}}>
+            Découvrir chaque fonctionnalité en détail →
+          </a>
           <button onClick={() => setSlide(2)} style={btn}>Suivant →</button>
         </>
       )}
