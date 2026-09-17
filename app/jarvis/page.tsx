@@ -167,7 +167,7 @@ export default function Jarvis() {
     }
     verifier()
     const sauvegardee = localStorage.getItem("jarvis_claude_key")
-    if (sauvegardee) setClaudeKey(sauvegardee)
+    if (sauvegardee) setClaudeKey(sauvegardee.trim())
   }, [])
 
   useEffect(() => {
@@ -781,7 +781,12 @@ export default function Jarvis() {
             style={{ flex: 1, background: "rgba(255,255,255,0.08)", border: "0.5px solid rgba(43,127,255,0.3)", borderRadius: "8px", padding: "8px 10px", color: "#fff", fontSize: "12px", outline: "none" }}
           />
           <button
-            onClick={() => { localStorage.setItem("jarvis_claude_key", claudeKey); setMontrerConfigCloud(false) }}
+            onClick={() => {
+              const cle = claudeKey.trim()
+              setClaudeKey(cle)
+              localStorage.setItem("jarvis_claude_key", cle)
+              setMontrerConfigCloud(false)
+            }}
             style={{ background: "#2B7FFF", color: "#fff", border: "none", borderRadius: "8px", padding: "8px 14px", fontSize: "12px", fontWeight: 500, cursor: "pointer" }}>
             Enregistrer
           </button>
