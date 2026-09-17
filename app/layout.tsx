@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Navigation from "./components/Navigation"
+import JarvisButton from "./components/JarvisButton";
 import PushNotifSetup from "./components/PushNotifSetup";
 import SplashWrapper from "./components/SplashWrapper";
 import PageFrame from "./components/PageFrame";
@@ -46,6 +47,7 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <SplashWrapper>
           <Navigation />
+          <JarvisButton />
           <PushNotifSetup />
           <PageFrame>{children}</PageFrame>
         </SplashWrapper>
