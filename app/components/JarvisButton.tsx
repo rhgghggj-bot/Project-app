@@ -1,15 +1,6 @@
 "use client"
-import { useEffect, useState } from "react"
 
 export default function JarvisButton() {
-  const [estLocal, setEstLocal] = useState(false)
-
-  useEffect(() => {
-    setEstLocal(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
-  }, [])
-
-  if (!estLocal) return null
-
   return (
     <a href="/jarvis" aria-label="Ouvrir Jarvis" style={{
       position:'fixed', bottom:'90px', right:'18px', zIndex:1001,
