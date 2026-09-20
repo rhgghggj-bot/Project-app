@@ -1,6 +1,7 @@
 "use client"
 import { useEffect, useRef, useState } from "react"
 import { supabase } from "@/lib/supabase"
+import { isJarvisOwner } from "@/lib/jarvisOwner"
 
 const OLLAMA_URL = "http://localhost:11434/api/chat"
 const WHISPER_URL = "http://localhost:5005/transcrire"
@@ -114,6 +115,16 @@ const OUTILS_CLAUDE = [
 type Msg = { role: "system" | "user" | "assistant"; content: string }
 
 export default function Jarvis() {
+  const [accesVerifie, setAccesVerifie] = useState(false)
+  const [accesAutorise, setAccesAutorise] = useState(false)
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setAccesAutorise(isJarvisOwner(user?.email))
+      setAccesVerifie(true)
+    })
+  }, [])
+
   const [historique, setHistorique] = useState<Msg[]>([{ role: "system", content: SYSTEM_PROMPT }])
   const [messages, setMessages] = useState<{ role: "user" | "assistant"; texte: string; erreur?: boolean; image?: string }[]>([
     { role: "assistant", texte: "Bonjour Pierre. Jarvis est en ligne, en local, sur ton Mac. Comment puis-je t'aider ?" }
@@ -731,6 +742,18 @@ export default function Jarvis() {
       })
     }
     setReflechit(false)
+  }
+
+  if (!accesVerifie) return null
+
+  if (!accesAutorise) {
+    return (
+      <main style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "radial-gradient(ellipse at top, #0A1628 0%, #050810 100%)", color: "#E8F1FF", padding: "24px", textAlign: "center" }}>
+        <div style={{ fontSize: "18px", fontWeight: 500, marginBottom: "8px" }}>Jarvis n'est pas disponible ici</div>
+        <div style={{ fontSize: "13px", color: "rgba(232,241,255,0.6)", marginBottom: "20px" }}>Cet assistant est réservé à l'administrateur de Nexia.</div>
+        <a href="/" style={{ fontSize: "13px", color: "#2B7FFF", textDecoration: "none" }}>← Retour à l'accueil</a>
+      </main>
+    )
   }
 
   return (
