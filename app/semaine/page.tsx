@@ -1,9 +1,14 @@
 "use client"
 import Tutorial from "../components/Tutorial"
-import Constellation from "../components/Constellation"
+import dynamic from "next/dynamic"
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { syncActivitesGroupeVersCalendrier } from "@/lib/syncActivites"
+
+// Vue 3D optionnelle et peu utilisée : on ne la charge que quand l'utilisateur
+// l'ouvre, au lieu de l'inclure dans le bundle initial de /semaine (page très
+// visitée puisqu'elle est dans la barre de navigation principale).
+const Constellation = dynamic(() => import("../components/Constellation"), { ssr: false })
 
 const JOURS = ["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"]
 const COULEURS_EVT = ["#2B7FFF","#10B981","#F43F5E","#D4A843","#8B5CF6","#F59E0B","#EC4899"]
