@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { authHeaders } from '@/lib/authFetch'
 import {
   LiveKitRoom,
   useLocalParticipant,
@@ -166,7 +167,9 @@ export default function AppelGroupe() {
           })
         }
       }
-      const res = await fetch('/api/livekit?room=groupe-' + params.id + '&username=' + username)
+      const res = await fetch('/api/livekit?room=groupe-' + params.id + '&username=' + username, {
+        headers: await authHeaders(),
+      })
       const data = await res.json()
       setToken(data.token)
       setLoading(false)

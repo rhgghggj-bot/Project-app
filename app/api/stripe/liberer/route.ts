@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getStripe } from '@/lib/stripe'
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin'
+import { getAuthUser } from '@/lib/apiAuth'
 
 export async function POST(request: NextRequest) {
-  const { annonceId, acheteurId } = await request.json()
-  if (!annonceId || !acheteurId) return NextResponse.json({ error: 'Paramètres manquants' }, { status: 400 })
+  const authUser = await getAuthUser(request)
+  if (!authUser) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
+
+  const { annonceId } = await request.json()
+  const acheteurId = authUser.id
+  if (!annonceId) return NextResponse.json({ error: 'Paramètres manquants' }, { status: 400 })
 
   const { data: annonce } = await getSupabaseAdmin().from('marketplace_annonces').select('*').eq('id', annonceId).single()
   if (!annonce) return NextResponse.json({ error: 'Annonce introuvable' }, { status: 404 })

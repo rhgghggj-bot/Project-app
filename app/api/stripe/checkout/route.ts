@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getStripe } from '@/lib/stripe'
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin'
+import { getAuthUser } from '@/lib/apiAuth'
 
 export async function POST(request: NextRequest) {
-  const { annonceId, acheteurId, groupeId, retourUrl } = await request.json()
-  if (!annonceId || !acheteurId || !groupeId) {
+  const authUser = await getAuthUser(request)
+  if (!authUser) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
+
+  const { annonceId, groupeId, retourUrl } = await request.json()
+  const acheteurId = authUser.id
+  if (!annonceId || !groupeId) {
     return NextResponse.json({ error: 'Paramètres manquants' }, { status: 400 })
   }
 

@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getStripe } from '@/lib/stripe'
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin'
+import { getAuthUser } from '@/lib/apiAuth'
 
 export async function POST(request: NextRequest) {
   try {
-    const { userId, email, retourUrl } = await request.json()
-    if (!userId) return NextResponse.json({ error: 'userId requis' }, { status: 400 })
+    const authUser = await getAuthUser(request)
+    if (!authUser) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
+
+    const { retourUrl } = await request.json()
+    const userId = authUser.id
+    const email = authUser.email
 
     const { data: profil } = await getSupabaseAdmin().from('profiles').select('stripe_account_id').eq('id', userId).single()
 

@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from "next/server"
+import { getAuthUser } from "@/lib/apiAuth"
 
 export async function POST(req: NextRequest) {
+  const authUser = await getAuthUser(req)
+  if (!authUser) return NextResponse.json({ error: "Non authentifié" }, { status: 401 })
+
   const { base64, mediaType } = await req.json()
-  
+  if (!base64) return NextResponse.json({ error: "Image manquante" }, { status: 400 })
+
   const response = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
@@ -38,8 +43,15 @@ export async function POST(req: NextRequest) {
     })
   })
   
+  if (!response.ok) {
+    return NextResponse.json({ error: "Erreur lors de l'analyse du document" }, { status: 502 })
+  }
+
   const data = await response.json()
-  const text = data.content[0].text
+  const text = data.content?.[0]?.text
+  if (!text) {
+    return NextResponse.json({ error: "Réponse inattendue de l'analyse" }, { status: 502 })
+  }
   const clean = text.replace(/```json|```/g, "").trim()
   
   try {

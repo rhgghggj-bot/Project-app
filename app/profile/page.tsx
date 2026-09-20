@@ -1,6 +1,7 @@
 "use client"
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
+import { authHeaders } from "@/lib/authFetch"
 import QRCodeComponent from "../components/QRCode"
 
 const COULEURS = ["#2B7FFF","#F43F5E","#10B981","#D4A843","#8B5CF6","#F59E0B","#EC4899","#1a1a2e"]
@@ -52,8 +53,8 @@ export default function Profile() {
     try {
       const res = await fetch("/api/stripe/onboarding", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user.id, email: user.email, retourUrl: window.location.href }),
+        headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+        body: JSON.stringify({ retourUrl: window.location.href }),
       })
       const texte = await res.text()
       let data: any = {}

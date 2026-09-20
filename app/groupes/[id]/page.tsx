@@ -2,6 +2,7 @@
 import { useEffect, useState, useRef } from "react"
 import { useParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
+import { authHeaders } from "@/lib/authFetch"
 
 function hexVersRgb(hex: string) {
   const h = hex.replace('#', '')
@@ -199,8 +200,8 @@ export default function GroupePage() {
     setPaiementEnCours(true)
     const res = await fetch("/api/stripe/checkout", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ annonceId: annonceLiee.id, acheteurId: user.id, groupeId: id, retourUrl: window.location.href }),
+      headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+      body: JSON.stringify({ annonceId: annonceLiee.id, groupeId: id, retourUrl: window.location.href }),
     })
     const data = await res.json()
     setPaiementEnCours(false)
@@ -212,8 +213,8 @@ export default function GroupePage() {
     if (!annonceLiee || !user) return
     const res = await fetch("/api/stripe/liberer", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ annonceId: annonceLiee.id, acheteurId: user.id }),
+      headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+      body: JSON.stringify({ annonceId: annonceLiee.id }),
     })
     const data = await res.json()
     if (!data.success) { alert(data.error || "Erreur lors de la libération du paiement"); return }
