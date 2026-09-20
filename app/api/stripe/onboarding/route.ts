@@ -2,11 +2,17 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getStripe } from '@/lib/stripe'
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin'
 import { getAuthUser } from '@/lib/apiAuth'
+import { rateLimit } from '@/lib/rateLimit'
 
 export async function POST(request: NextRequest) {
   try {
     const authUser = await getAuthUser(request)
     if (!authUser) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
+
+    const limite = rateLimit(`stripe-onboarding:${authUser.id}`, 5, 10 * 60 * 1000)
+    if (!limite.allowed) {
+      return NextResponse.json({ error: 'Trop de tentatives, réessaie dans un instant' }, { status: 429, headers: { 'Retry-After': String(limite.retryAfterSec) } })
+    }
 
     const { retourUrl } = await request.json()
     const userId = authUser.id
@@ -37,7 +43,8 @@ export async function POST(request: NextRequest) {
     })
 
     return NextResponse.json({ url: lien.url })
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message || 'Erreur serveur inconnue' }, { status: 500 })
+  } catch (e) {
+    const message = e instanceof Error ? e.message : 'Erreur serveur inconnue'
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }

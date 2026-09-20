@@ -2,10 +2,16 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getStripe } from '@/lib/stripe'
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin'
 import { getAuthUser } from '@/lib/apiAuth'
+import { rateLimit } from '@/lib/rateLimit'
 
 export async function POST(request: NextRequest) {
   const authUser = await getAuthUser(request)
   if (!authUser) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
+
+  const limite = rateLimit(`stripe-checkout:${authUser.id}`, 10, 5 * 60 * 1000)
+  if (!limite.allowed) {
+    return NextResponse.json({ error: 'Trop de tentatives, réessaie dans un instant' }, { status: 429, headers: { 'Retry-After': String(limite.retryAfterSec) } })
+  }
 
   const { annonceId, groupeId, retourUrl } = await request.json()
   const acheteurId = authUser.id

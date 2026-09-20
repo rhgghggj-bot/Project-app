@@ -2,10 +2,16 @@ import { AccessToken } from 'livekit-server-sdk'
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthUser } from '@/lib/apiAuth'
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin'
+import { rateLimit } from '@/lib/rateLimit'
 
 export async function GET(request: NextRequest) {
   const authUser = await getAuthUser(request)
   if (!authUser) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
+
+  const limite = rateLimit(`livekit:${authUser.id}`, 20, 5 * 60 * 1000)
+  if (!limite.allowed) {
+    return NextResponse.json({ error: 'Trop de tentatives, réessaie dans un instant' }, { status: 429, headers: { 'Retry-After': String(limite.retryAfterSec) } })
+  }
 
   const { searchParams } = new URL(request.url)
   const room = searchParams.get('room')

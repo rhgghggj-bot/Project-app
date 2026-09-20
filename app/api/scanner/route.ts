@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getAuthUser } from "@/lib/apiAuth"
+import { rateLimit } from "@/lib/rateLimit"
 
 export async function POST(req: NextRequest) {
   const authUser = await getAuthUser(req)
   if (!authUser) return NextResponse.json({ error: "Non authentifié" }, { status: 401 })
+
+  const limite = rateLimit(`scanner:${authUser.id}`, 10, 5 * 60 * 1000)
+  if (!limite.allowed) {
+    return NextResponse.json({ error: "Trop de tentatives, réessaie dans un instant" }, { status: 429, headers: { "Retry-After": String(limite.retryAfterSec) } })
+  }
 
   const { base64, mediaType } = await req.json()
   if (!base64) return NextResponse.json({ error: "Image manquante" }, { status: 400 })

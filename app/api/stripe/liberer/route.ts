@@ -2,10 +2,16 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getStripe } from '@/lib/stripe'
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin'
 import { getAuthUser } from '@/lib/apiAuth'
+import { rateLimit } from '@/lib/rateLimit'
 
 export async function POST(request: NextRequest) {
   const authUser = await getAuthUser(request)
   if (!authUser) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
+
+  const limite = rateLimit(`stripe-liberer:${authUser.id}`, 5, 5 * 60 * 1000)
+  if (!limite.allowed) {
+    return NextResponse.json({ error: 'Trop de tentatives, réessaie dans un instant' }, { status: 429, headers: { 'Retry-After': String(limite.retryAfterSec) } })
+  }
 
   const { annonceId } = await request.json()
   const acheteurId = authUser.id
@@ -19,15 +25,18 @@ export async function POST(request: NextRequest) {
   const { data: vendeur } = await getSupabaseAdmin().from('profiles').select('stripe_account_id').eq('id', annonce.user_id).single()
   if (!vendeur?.stripe_account_id) return NextResponse.json({ error: 'Compte vendeur introuvable' }, { status: 400 })
 
-  const paymentIntent: any = await getStripe().paymentIntents.retrieve(annonce.stripe_payment_intent_id)
+  const paymentIntent = await getStripe().paymentIntents.retrieve(annonce.stripe_payment_intent_id)
   const montantRecu = paymentIntent.amount_received
+  const latestCharge = typeof paymentIntent.latest_charge === 'string'
+    ? paymentIntent.latest_charge
+    : paymentIntent.latest_charge?.id
 
   const transfer = await getStripe().transfers.create({
     amount: montantRecu,
     currency: 'chf',
     destination: vendeur.stripe_account_id,
     transfer_group: 'annonce_' + annonceId,
-    source_transaction: paymentIntent.latest_charge,
+    source_transaction: latestCharge,
   })
 
   await getSupabaseAdmin().from('marketplace_annonces').update({
