@@ -438,7 +438,14 @@ export default function Marketplace() {
           )}
 
           {articles.length === 0 && (
-            <div style={{textAlign:"center",padding:"48px 0",color:"#aaa",fontSize:"13px"}}>Ton portefeuille est vide</div>
+            <div style={{textAlign:"center",padding:"48px 20px"}}>
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="1.5" style={{margin:"0 auto 12px"}}><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+              <p style={{fontSize:"14px",fontWeight:"500",color:"#1a1a2e",marginBottom:"4px"}}>Ton portefeuille est vide</p>
+              <p style={{fontSize:"12px",color:"#aaa",marginBottom:"16px"}}>Ajoute un objet à vendre ou à échanger pour commencer</p>
+              <button onClick={() => setShowForm(true)} style={{background:"#2B7FFF",color:"#fff",fontSize:"13px",fontWeight:"500",padding:"10px 24px",borderRadius:"99px",border:"none",cursor:"pointer"}}>
+                + Ajouter un article
+              </button>
+            </div>
           )}
         </div>
       )}
