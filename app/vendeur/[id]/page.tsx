@@ -3,6 +3,8 @@ import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import { ouvrirConversationPrivee } from "@/lib/dm"
+import Card from "@/app/components/ui/Card"
+import { colors } from "@/app/components/ui/tokens"
 
 export default function FicheVendeur() {
   const { id } = useParams()
@@ -15,6 +17,8 @@ export default function FicheVendeur() {
   const [chargement, setChargement] = useState(true)
   const [listeOuverte, setListeOuverte] = useState<"followers" | "abonnements" | null>(null)
   const [profilsListe, setProfilsListe] = useState<any[]>([])
+  const [avis, setAvis] = useState<any[]>([])
+  const [profilsAvis, setProfilsAvis] = useState<Record<string, any>>({})
 
   useEffect(() => {
     async function charger() {
@@ -28,6 +32,14 @@ export default function FicheVendeur() {
       setFollowers(f || [])
       const { data: ab } = await supabase.from("marketplace_followers").select("*").eq("suiveur_id", vendeurId)
       setAbonnements(ab || [])
+      const { data: av } = await supabase.from("marketplace_avis").select("*").eq("cible_id", vendeurId).order("created_at", { ascending: false })
+      setAvis(av || [])
+      if (av && av.length > 0) {
+        const { data: profs } = await supabase.from("profiles").select("id,nom").in("id", av.map((a: any) => a.auteur_id))
+        const map: Record<string, any> = {}
+        profs?.forEach((pr: any) => { map[pr.id] = pr })
+        setProfilsAvis(map)
+      }
       setChargement(false)
     }
     if (vendeurId) charger()
@@ -95,6 +107,13 @@ export default function FicheVendeur() {
           </div>
         </div>
         <div style={{fontSize:'17px',fontWeight:'600',color:'#fff',marginTop:'14px'}}>{nomVendeur}</div>
+        {avis.length > 0 && (
+          <div style={{display:'flex',alignItems:'center',gap:'4px',marginTop:'4px'}}>
+            <span style={{color:'#D4A843',fontSize:'13px'}}>★</span>
+            <span style={{fontSize:'13px',fontWeight:'600',color:'#fff'}}>{(avis.reduce((s,a)=>s+a.note,0)/avis.length).toFixed(1)}</span>
+            <span style={{fontSize:'12px',color:'rgba(255,255,255,0.5)'}}>({avis.length} avis)</span>
+          </div>
+        )}
         {!estMoi && (
           <div style={{display:'flex',gap:'8px',marginTop:'16px'}}>
             <button onClick={toggleSuivre}
@@ -133,6 +152,21 @@ export default function FicheVendeur() {
             </a>
           ))}
         </div>
+
+        {avis.length > 0 && (
+          <div style={{marginTop:'20px'}}>
+            <div style={{fontSize:'13px',fontWeight:'600',color:colors.text,marginBottom:'12px'}}>Avis ({avis.length})</div>
+            {avis.map(a => (
+              <Card key={a.id} style={{marginBottom:'8px'}}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'4px'}}>
+                  <span style={{fontSize:'13px',fontWeight:500,color:colors.text}}>{profilsAvis[a.auteur_id]?.nom || 'Acheteur'}</span>
+                  <span style={{color:colors.gold,fontSize:'13px'}}>{'★'.repeat(a.note)}{'☆'.repeat(5-a.note)}</span>
+                </div>
+                {a.commentaire && <div style={{fontSize:'12px',color:colors.textMuted,lineHeight:1.5}}>{a.commentaire}</div>}
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
 
       {listeOuverte && (

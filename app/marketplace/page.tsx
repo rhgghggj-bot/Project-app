@@ -2,6 +2,8 @@
 import { useEffect, useState, useRef } from "react"
 import { supabase } from "@/lib/supabase"
 import { ouvrirConversationPrivee } from "@/lib/dm"
+import EmptyState from "@/app/components/ui/EmptyState"
+import { useDeviseConversion } from "@/app/hooks/useDevise"
 
 const CATEGORIES = ["Tout","Mode","Électronique","Maison","Sport","Autre"]
 
@@ -24,6 +26,9 @@ export default function Marketplace() {
   const [annonces, setAnnonces] = useState<any[]>([])
   const [modeShopping, setModeShopping] = useState(false)
   const [filtre, setFiltre] = useState("Tout")
+  const { format } = useDeviseConversion()
+  const [recherche, setRecherche] = useState("")
+  const [prixMax, setPrixMax] = useState("")
   const [showForm, setShowForm] = useState(false)
   const [showFormAnnonce, setShowFormAnnonce] = useState(false)
   const [nom, setNom] = useState("")
@@ -245,7 +250,10 @@ export default function Marketplace() {
   }
 
   const total = articles.reduce((sum, a) => sum + (parseFloat(a.prix || 0) * a.quantite), 0)
-  const annoncesFiltrees = annonces.filter(a => filtre === "Tout" || a.categorie === filtre)
+  const annoncesFiltrees = annonces
+    .filter(a => filtre === "Tout" || a.categorie === filtre)
+    .filter(a => !recherche.trim() || a.titre?.toLowerCase().includes(recherche.trim().toLowerCase()) || a.description?.toLowerCase().includes(recherche.trim().toLowerCase()))
+    .filter(a => !prixMax || parseFloat(a.prix) <= parseFloat(prixMax))
   const inp: any = { width:"100%", border:"1px solid #E8F1FF", borderRadius:"10px", padding:"10px 12px", fontSize:"16px", color:"#1a1a2e", background:"#fff", marginBottom:"8px", boxSizing:"border-box" }
 
   function renderPost(a: any) {
@@ -330,7 +338,7 @@ export default function Marketplace() {
                   <button onClick={() => setAnnonceOuverte(a)} style={{background:"none",border:"none",padding:0,cursor:"pointer",display:"flex"}}>
                     <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#1a1a2e" strokeWidth="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                   </button>
-                  <div style={{marginLeft:"auto",fontSize:"16px",fontWeight:"700",color:"#2B7FFF"}}>{parseFloat(a.prix).toFixed(0)} CHF</div>
+                  <div style={{marginLeft:"auto",fontSize:"16px",fontWeight:"700",color:"#2B7FFF"}}>{format(parseFloat(a.prix))}</div>
                 </div>
 
                 {nbLikes > 0 && (
@@ -438,7 +446,13 @@ export default function Marketplace() {
           )}
 
           {articles.length === 0 && (
-            <div style={{textAlign:"center",padding:"48px 0",color:"#aaa",fontSize:"13px"}}>Ton portefeuille est vide</div>
+            <EmptyState
+              icon={<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>}
+              title="Ton portefeuille est vide"
+              subtitle="Ajoute un objet à vendre ou à échanger pour commencer"
+              actionLabel="+ Ajouter un article"
+              onAction={() => setShowForm(true)}
+            />
           )}
         </div>
       )}
@@ -484,6 +498,16 @@ export default function Marketplace() {
               </div>
             </div>
           )}
+
+          <div style={{display:"flex",gap:"8px",marginBottom:"10px"}}>
+            <div style={{flex:1,position:"relative"}}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2" style={{position:"absolute",left:"12px",top:"50%",transform:"translateY(-50%)"}}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input value={recherche} onChange={e => setRecherche(e.target.value)} placeholder="Rechercher..."
+                style={{width:"100%",border:"1px solid #E8F1FF",borderRadius:"10px",padding:"9px 12px 9px 34px",fontSize:"14px",color:"#1a1a2e",background:"#fff",boxSizing:"border-box"}}/>
+            </div>
+            <input value={prixMax} onChange={e => setPrixMax(e.target.value)} type="number" min="0" placeholder="Prix max"
+              style={{width:"100px",border:"1px solid #E8F1FF",borderRadius:"10px",padding:"9px 10px",fontSize:"14px",color:"#1a1a2e",background:"#fff",boxSizing:"border-box"}}/>
+          </div>
 
           <div style={{display:"flex",gap:"6px",marginBottom:"14px",overflowX:"auto"}}>
             {CATEGORIES.map(c => (
@@ -537,7 +561,7 @@ export default function Marketplace() {
                 <div style={{padding:"18px"}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:"6px"}}>
                     <div style={{fontSize:"18px",fontWeight:"600",color:"#1a1a2e",flex:1}}>{annonceOuverte.titre}</div>
-                    <div style={{fontSize:"20px",fontWeight:"700",color:"#2B7FFF",whiteSpace:"nowrap",marginLeft:"10px"}}>{parseFloat(annonceOuverte.prix).toFixed(0)} CHF</div>
+                    <div style={{fontSize:"20px",fontWeight:"700",color:"#2B7FFF",whiteSpace:"nowrap",marginLeft:"10px"}}>{format(parseFloat(annonceOuverte.prix))}</div>
                   </div>
                   <div style={{fontSize:"11px",color:"#aaa",marginBottom:"14px"}}>{annonceOuverte.categorie}</div>
 

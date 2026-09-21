@@ -1,7 +1,9 @@
 "use client"
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
+import { authHeaders } from "@/lib/authFetch"
 import QRCodeComponent from "../components/QRCode"
+import BadgesSection from "../components/BadgesSection"
 
 const COULEURS = ["#2B7FFF","#F43F5E","#10B981","#D4A843","#8B5CF6","#F59E0B","#EC4899","#1a1a2e"]
 
@@ -52,8 +54,8 @@ export default function Profile() {
     try {
       const res = await fetch("/api/stripe/onboarding", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user.id, email: user.email, retourUrl: window.location.href }),
+        headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+        body: JSON.stringify({ retourUrl: window.location.href }),
       })
       const texte = await res.text()
       let data: any = {}
@@ -165,7 +167,7 @@ export default function Profile() {
         </div>
 
         <div style={{display:'flex',borderBottom:'0.5px solid #E8F1FF',marginBottom:'16px'}}>
-          {["projets","settings"].map(o => (
+          {["projets","badges","settings"].map(o => (
             <button key={o} onClick={() => setOnglet(o)}
               style={{flex:1,padding:'10px 0',fontSize:'13px',fontWeight:'500',border:'none',background:'none',cursor:'pointer',
                 color: onglet === o ? couleurProfil : '#aaa',
@@ -174,6 +176,11 @@ export default function Profile() {
               <span style={{display:"flex",alignItems:"center",gap:"6px",justifyContent:"center"}}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
                 Mes projets
+              </span>
+            ) : o === "badges" ? (
+              <span style={{display:"flex",alignItems:"center",gap:"6px",justifyContent:"center"}}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="8" r="6"/><path d="M15.5 13.5L17 22l-5-3-5 3 1.5-8.5"/></svg>
+                Badges
               </span>
             ) : (
               <span style={{display:"flex",alignItems:"center",gap:"6px",justifyContent:"center"}}>
@@ -184,6 +191,22 @@ export default function Profile() {
             </button>
           ))}
         </div>
+
+        {onglet === "badges" && (
+          <div>
+            <a href="/bilan-annuel" style={{textDecoration:'none',display:'block',marginBottom:'14px'}}>
+              <div style={{background:'linear-gradient(135deg,#1a3a6e,#2B7FFF)',borderRadius:'14px',padding:'14px',display:'flex',alignItems:'center',gap:'12px'}}>
+                <div style={{fontSize:'24px'}}>✨</div>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:'13px',fontWeight:'500',color:'#fff'}}>Voir mon bilan {new Date().getFullYear()}</div>
+                  <div style={{fontSize:'11px',color:'rgba(255,255,255,0.6)'}}>Ton année sur Nexia, en un coup d'œil</div>
+                </div>
+                <span style={{color:'rgba(255,255,255,0.5)'}}>›</span>
+              </div>
+            </a>
+            <BadgesSection />
+          </div>
+        )}
 
         {onglet === "projets" && (
           <div>

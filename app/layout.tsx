@@ -17,15 +17,32 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const description = "Nexia — Ton hub de vie. Finances, calendrier, groupes et fiscalité suisse."
+
 export const metadata: Metadata = {
+  metadataBase: new URL("https://project-app-rust-delta.vercel.app"),
   title: "Nexia - Ton hub de vie",
-    icons: { icon: "/favicon.svg" },
-  description: "Nexia — Ton hub de vie. Finances, calendrier, groupes et fiscalité suisse.",
+  icons: { icon: "/favicon.svg" },
+  description,
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
     title: "Nexia",
+  },
+  openGraph: {
+    title: "Nexia - Ton hub de vie",
+    description,
+    siteName: "Nexia",
+    locale: "fr_CH",
+    type: "website",
+    images: [{ url: "/icon-512.png", width: 512, height: 512 }],
+  },
+  twitter: {
+    card: "summary",
+    title: "Nexia - Ton hub de vie",
+    description,
+    images: ["/icon-512.png"],
   },
 };
 

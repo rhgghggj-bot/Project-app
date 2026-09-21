@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { syncActivitesGroupeVersCalendrier } from "@/lib/syncActivites"
+import { useDeviseConversion } from "./hooks/useDevise"
 
 const JOURS = ["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"]
 
@@ -9,6 +10,8 @@ export default function Home() {
   const [projets, setProjets] = useState<any[]>([])
   const [categorie, setCategorie] = useState("Tous")
   const [user, setUser] = useState<any>(null)
+  const [authChecked, setAuthChecked] = useState(false)
+  const { format } = useDeviseConversion()
   const [evenements, setEvenements] = useState<any[]>([])
   const [depenses, setDepenses] = useState<any[]>([])
   const [revenus, setRevenus] = useState<any[]>([])
@@ -20,6 +23,7 @@ export default function Home() {
     async function charger() {
       const { data: { user } } = await supabase.auth.getUser()
       setUser(user)
+      setAuthChecked(true)
       if (!user) {
         const vu = sessionStorage.getItem('onboardingVu')
         if (!vu) { sessionStorage.setItem('onboardingVu','1'); window.location.href='/onboarding'; return }
@@ -117,7 +121,11 @@ export default function Home() {
       <div style={{background:'linear-gradient(160deg,#0A1628,#1a3a6e,#2B7FFF)',padding:'20px 18px 20px',position:'relative',overflow:'hidden'}}>
         <div style={{position:'absolute',top:'-40px',right:'-40px',width:'200px',height:'200px',borderRadius:'50%',background:'rgba(43,127,255,0.15)'}}></div>
 
-        {!user && (
+        {!authChecked && (
+          <div style={{minHeight:'160px'}}></div>
+        )}
+
+        {authChecked && !user && (
           <div style={{textAlign:'center',paddingBottom:'20px'}}>
             <div style={{fontSize:'22px',fontWeight:'500',color:'#fff',marginBottom:'8px'}}>Bienvenue sur Nexia</div>
             <p style={{fontSize:'14px',color:'rgba(255,255,255,0.6)',marginBottom:'24px'}}>Connecte-toi pour accéder à toutes les fonctionnalités</p>
@@ -151,9 +159,9 @@ export default function Home() {
             </div>
             <div style={{fontSize:'22px',fontWeight:'500',color:'#fff',marginBottom:'12px'}}>Bonjour</div>
             <div style={{display:'flex',gap:'12px'}}>
-              <div style={{fontSize:'13px',color:'#86efac',fontWeight:'500'}}><span style={{color:'rgba(255,255,255,0.5)'}}>Rev. </span>{totalRev.toFixed(0)} CHF</div>
-              <div style={{fontSize:'13px',color:'#fca5a5',fontWeight:'500'}}><span style={{color:'rgba(255,255,255,0.5)'}}>Dép. </span>{totalDep.toFixed(0)} CHF</div>
-              <div style={{fontSize:'13px',color: solde >= 0 ? '#86efac' : '#fca5a5',fontWeight:'500'}}>Solde : {solde >= 0 ? '+' : ''}{solde.toFixed(0)} CHF</div>
+              <div style={{fontSize:'13px',color:'#86efac',fontWeight:'500'}}><span style={{color:'rgba(255,255,255,0.5)'}}>Rev. </span>{format(totalRev)}</div>
+              <div style={{fontSize:'13px',color:'#fca5a5',fontWeight:'500'}}><span style={{color:'rgba(255,255,255,0.5)'}}>Dép. </span>{format(totalDep)}</div>
+              <div style={{fontSize:'13px',color: solde >= 0 ? '#86efac' : '#fca5a5',fontWeight:'500'}}>Solde : {solde >= 0 ? '+' : ''}{format(solde)}</div>
             </div>
           </div>
         )}
@@ -223,7 +231,7 @@ export default function Home() {
             <a href="/finances" style={{flex:1,textDecoration:'none'}}>
               <div style={{background:'rgba(15,45,92,0.85)',borderRadius:'14px',padding:'12px',border:'1px solid rgba(255,255,255,0.15)'}}>
                 <div style={{fontSize:'11px',color:'#a8d8f0',fontWeight:'500',marginBottom:'4px'}}>Finances</div>
-                <div style={{fontSize:'18px',fontWeight:'500',color: solde >= 0 ? '#86efac' : '#fca5a5'}}>{solde >= 0 ? '+' : ''}{solde.toFixed(0)} CHF</div>
+                <div style={{fontSize:'18px',fontWeight:'500',color: solde >= 0 ? '#86efac' : '#fca5a5'}}>{solde >= 0 ? '+' : ''}{format(solde)}</div>
                 <div style={{fontSize:'11px',color:'rgba(255,255,255,0.5)',marginTop:'2px'}}>Solde ce mois</div>
               </div>
             </a>
@@ -336,7 +344,10 @@ export default function Home() {
               const jaimeMoi = likesProjets.some(l => l.projet_id === projet.id && l.user_id === user?.id)
               const nbCommentaires = commentairesCount[projet.id] || 0
               return (
-            <div key={projet.id} onClick={() => window.location.href = '/projet/'+projet.id} style={{cursor:'pointer',display:'block',marginBottom:'10px'}}>
+            <div key={projet.id} role="link" tabIndex={0}
+              onClick={() => window.location.href = '/projet/'+projet.id}
+              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); window.location.href = '/projet/'+projet.id } }}
+              style={{cursor:'pointer',display:'block',marginBottom:'10px'}}>
               <div style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'16px',padding:'14px'}}>
                 <div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'10px'}}>
                   <div style={{width:'40px',height:'40px',borderRadius:'12px',background:'linear-gradient(135deg,#EEF5FF,#DCE9FF)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>

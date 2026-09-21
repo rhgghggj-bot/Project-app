@@ -2,6 +2,10 @@
 import { useEffect, useState, useRef } from "react"
 import { useParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
+import { authHeaders } from "@/lib/authFetch"
+import Card from "@/app/components/ui/Card"
+import Button from "@/app/components/ui/Button"
+import { colors } from "@/app/components/ui/tokens"
 
 function hexVersRgb(hex: string) {
   const h = hex.replace('#', '')
@@ -101,6 +105,9 @@ export default function GroupePage() {
   const [groupe, setGroupe] = useState<any>(null)
   const [autreProfilDM, setAutreProfilDM] = useState<any>(null)
   const [annonceLiee, setAnnonceLiee] = useState<any>(null)
+  const [montrerAvis, setMontrerAvis] = useState(false)
+  const [noteAvis, setNoteAvis] = useState(0)
+  const [commentaireAvis, setCommentaireAvis] = useState("")
   const [messages, setMessages] = useState<any[]>([])
   const [projets, setProjets] = useState<any[]>([])
   const [membres, setMembres] = useState<any[]>([])
@@ -199,8 +206,8 @@ export default function GroupePage() {
     setPaiementEnCours(true)
     const res = await fetch("/api/stripe/checkout", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ annonceId: annonceLiee.id, acheteurId: user.id, groupeId: id, retourUrl: window.location.href }),
+      headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+      body: JSON.stringify({ annonceId: annonceLiee.id, groupeId: id, retourUrl: window.location.href }),
     })
     const data = await res.json()
     setPaiementEnCours(false)
@@ -212,13 +219,23 @@ export default function GroupePage() {
     if (!annonceLiee || !user) return
     const res = await fetch("/api/stripe/liberer", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ annonceId: annonceLiee.id, acheteurId: user.id }),
+      headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+      body: JSON.stringify({ annonceId: annonceLiee.id }),
     })
     const data = await res.json()
     if (!data.success) { alert(data.error || "Erreur lors de la libération du paiement"); return }
     setAnnonceLiee((prev: any) => ({ ...prev, statut: "vendu" }))
     await supabase.from("messages_groupe").insert({ groupe_id: id, user_id: user.id, contenu: `✅ Réception confirmée pour "${annonceLiee.titre}" — paiement transféré au vendeur, reçus ajoutés dans les Finances de chacun.` })
+    setMontrerAvis(true)
+  }
+
+  async function envoyerAvis() {
+    if (!annonceLiee || !user || noteAvis === 0) return
+    await supabase.from("marketplace_avis").insert({
+      annonce_id: annonceLiee.id, auteur_id: user.id, cible_id: annonceLiee.user_id,
+      note: noteAvis, commentaire: commentaireAvis.trim() || null,
+    })
+    setMontrerAvis(false); setNoteAvis(0); setCommentaireAvis("")
   }
 
   async function genererInvitation() {
@@ -333,7 +350,7 @@ export default function GroupePage() {
               <div onClick={() => setMenuOuvert(false)} style={{position:'fixed',inset:0,zIndex:10}}></div>
               <div style={{position:'absolute',top:'44px',right:0,background:'#fff',borderRadius:'16px',boxShadow:'0 8px 30px rgba(0,0,0,0.12)',border:'0.5px solid #E8F1FF',overflow:'hidden',zIndex:20,minWidth:'200px'}}>
 
-                <a href={'/groupes/' + id + '/listes'} style={{textDecoration:'none'}}><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 16px',borderBottom:'0.5px solid #F0F4FA'}}><div style={{display:'flex',alignItems:'center',gap:'12px'}}><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='#10B981' strokeWidth='2'><line x1='8' y1='6' x2='21' y2='6'/><line x1='8' y1='12' x2='21' y2='12'/><line x1='8' y1='18' x2='21' y2='18'/><line x1='3' y1='6' x2='3.01' y2='6'/><line x1='3' y1='12' x2='3.01' y2='12'/><line x1='3' y1='18' x2='3.01' y2='18'/></svg><span style={{fontSize:'14px',color:'#1a1a2e'}}>Listes partagees</span></div><svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='#aaa' strokeWidth='2'><polyline points='9 18 15 12 9 6'/></svg></div></a><a href={'/groupes/' + id + '/activites'} style={{textDecoration:'none'}}><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 16px',borderBottom:'0.5px solid #F0F4FA'}}><div style={{display:'flex',alignItems:'center',gap:'12px'}}><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='#8B5CF6' strokeWidth='2'><rect x='3' y='4' width='18' height='18' rx='2' ry='2'/><line x1='16' y1='2' x2='16' y2='6'/><line x1='8' y1='2' x2='8' y2='6'/><line x1='3' y1='10' x2='21' y2='10'/></svg><span style={{fontSize:'14px',color:'#1a1a2e'}}>Activites</span></div><svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='#aaa' strokeWidth='2'><polyline points='9 18 15 12 9 6'/></svg></div></a><div onClick={genererInvitation} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 16px',cursor:'pointer'}}>
+                <a href={'/groupes/' + id + '/listes'} style={{textDecoration:'none'}}><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 16px',borderBottom:'0.5px solid #F0F4FA'}}><div style={{display:'flex',alignItems:'center',gap:'12px'}}><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='#10B981' strokeWidth='2'><line x1='8' y1='6' x2='21' y2='6'/><line x1='8' y1='12' x2='21' y2='12'/><line x1='8' y1='18' x2='21' y2='18'/><line x1='3' y1='6' x2='3.01' y2='6'/><line x1='3' y1='12' x2='3.01' y2='12'/><line x1='3' y1='18' x2='3.01' y2='18'/></svg><span style={{fontSize:'14px',color:'#1a1a2e'}}>Listes partagees</span></div><svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='#aaa' strokeWidth='2'><polyline points='9 18 15 12 9 6'/></svg></div></a><a href={'/groupes/' + id + '/depenses'} style={{textDecoration:'none'}}><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 16px',borderBottom:'0.5px solid #F0F4FA'}}><div style={{display:'flex',alignItems:'center',gap:'12px'}}><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='#2B7FFF' strokeWidth='2'><line x1='12' y1='1' x2='12' y2='23'/><path d='M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6'/></svg><span style={{fontSize:'14px',color:'#1a1a2e'}}>Dépenses partagées</span></div><svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='#aaa' strokeWidth='2'><polyline points='9 18 15 12 9 6'/></svg></div></a><a href={'/groupes/' + id + '/objectifs'} style={{textDecoration:'none'}}><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 16px',borderBottom:'0.5px solid #F0F4FA'}}><div style={{display:'flex',alignItems:'center',gap:'12px'}}><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='#D4A843' strokeWidth='2'><circle cx='12' cy='12' r='10'/><circle cx='12' cy='12' r='6'/><circle cx='12' cy='12' r='2'/></svg><span style={{fontSize:'14px',color:'#1a1a2e'}}>Objectifs de groupe</span></div><svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='#aaa' strokeWidth='2'><polyline points='9 18 15 12 9 6'/></svg></div></a><a href={'/groupes/' + id + '/sondages'} style={{textDecoration:'none'}}><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 16px',borderBottom:'0.5px solid #F0F4FA'}}><div style={{display:'flex',alignItems:'center',gap:'12px'}}><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='#F97316' strokeWidth='2'><path d='M18 20V10'/><path d='M12 20V4'/><path d='M6 20v-6'/></svg><span style={{fontSize:'14px',color:'#1a1a2e'}}>Sondages</span></div><svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='#aaa' strokeWidth='2'><polyline points='9 18 15 12 9 6'/></svg></div></a><a href={'/groupes/' + id + '/activites'} style={{textDecoration:'none'}}><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 16px',borderBottom:'0.5px solid #F0F4FA'}}><div style={{display:'flex',alignItems:'center',gap:'12px'}}><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='#8B5CF6' strokeWidth='2'><rect x='3' y='4' width='18' height='18' rx='2' ry='2'/><line x1='16' y1='2' x2='16' y2='6'/><line x1='8' y1='2' x2='8' y2='6'/><line x1='3' y1='10' x2='21' y2='10'/></svg><span style={{fontSize:'14px',color:'#1a1a2e'}}>Activites</span></div><svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='#aaa' strokeWidth='2'><polyline points='9 18 15 12 9 6'/></svg></div></a><a href={'/groupes/' + id + '/journal'} style={{textDecoration:'none'}}><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 16px',borderBottom:'0.5px solid #F0F4FA'}}><div style={{display:'flex',alignItems:'center',gap:'12px'}}><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='#0A1628' strokeWidth='2'><path d='M4 19.5A2.5 2.5 0 0 1 6.5 17H20'/><path d='M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z'/></svg><span style={{fontSize:'14px',color:'#1a1a2e'}}>Journal du groupe</span></div><svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='#aaa' strokeWidth='2'><polyline points='9 18 15 12 9 6'/></svg></div></a><a href={'/groupes/' + id + '/colocation'} style={{textDecoration:'none'}}><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 16px',borderBottom:'0.5px solid #F0F4FA'}}><div style={{display:'flex',alignItems:'center',gap:'12px'}}><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='#2B7FFF' strokeWidth='2'><path d='M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z'/></svg><span style={{fontSize:'14px',color:'#1a1a2e'}}>Mode colocation</span></div><svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='#aaa' strokeWidth='2'><polyline points='9 18 15 12 9 6'/></svg></div></a><a href={'/groupes/' + id + '/disponibilites'} style={{textDecoration:'none'}}><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 16px',borderBottom:'0.5px solid #F0F4FA'}}><div style={{display:'flex',alignItems:'center',gap:'12px'}}><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='#10B981' strokeWidth='2'><rect x='3' y='4' width='18' height='18' rx='2' ry='2'/><line x1='16' y1='2' x2='16' y2='6'/><line x1='8' y1='2' x2='8' y2='6'/><line x1='3' y1='10' x2='21' y2='10'/><path d='M9 16l2 2 4-4'/></svg><span style={{fontSize:'14px',color:'#1a1a2e'}}>Disponibilités</span></div><svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='#aaa' strokeWidth='2'><polyline points='9 18 15 12 9 6'/></svg></div></a><div onClick={genererInvitation} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 16px',cursor:'pointer'}}>
                   <div style={{display:'flex',alignItems:'center',gap:'12px'}}>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
                     <span style={{fontSize:'14px',color:'#1a1a2e'}}>Inviter un membre</span>
@@ -384,6 +401,26 @@ export default function GroupePage() {
           {user && annonceLiee.statut === 'réservé' && annonceLiee.user_id === user.id && (
             <div style={{fontSize:'12px', color:'#D4A843', textAlign:'center'}}>💳 Paiement reçu et retenu en sécurité — en attente que l'acheteur confirme la réception</div>
           )}
+        </div>
+      )}
+
+      {montrerAvis && annonceLiee && (
+        <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',zIndex:2000,display:'flex',alignItems:'center',justifyContent:'center',padding:'20px'}}>
+          <Card style={{maxWidth:'340px',width:'100%'}}>
+            <div style={{fontSize:'15px',fontWeight:600,color:colors.text,marginBottom:'4px',textAlign:'center'}}>Comment s'est passé l'achat ?</div>
+            <div style={{fontSize:'12px',color:colors.textFaint,marginBottom:'14px',textAlign:'center'}}>Note ton expérience avec le vendeur</div>
+            <div style={{display:'flex',justifyContent:'center',gap:'6px',marginBottom:'14px'}}>
+              {[1,2,3,4,5].map(n => (
+                <button key={n} onClick={() => setNoteAvis(n)} style={{background:'none',border:'none',cursor:'pointer',fontSize:'28px',padding:0,color: n <= noteAvis ? colors.gold : '#E8F1FF'}}>★</button>
+              ))}
+            </div>
+            <textarea value={commentaireAvis} onChange={e => setCommentaireAvis(e.target.value)} placeholder="Un commentaire (optionnel)"
+              style={{width:'100%',border:`1px solid ${colors.border}`,borderRadius:'10px',padding:'10px 12px',fontSize:'14px',color:colors.text,marginBottom:'12px',boxSizing:'border-box',resize:'none',height:'60px'}}/>
+            <div style={{display:'flex',gap:'8px'}}>
+              <Button full disabled={noteAvis === 0} onClick={envoyerAvis}>Envoyer</Button>
+              <Button variant="ghost" full onClick={() => setMontrerAvis(false)}>Plus tard</Button>
+            </div>
+          </Card>
         </div>
       )}
 

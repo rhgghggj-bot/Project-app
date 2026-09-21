@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/rappels-charges",
+      "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/cron/colocation",
+      "schedule": "0 7 * * *"
+    }
+  ]
+}

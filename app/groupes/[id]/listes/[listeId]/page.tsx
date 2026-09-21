@@ -50,19 +50,46 @@ export default function ListeDetailPage() {
     setProfils(p)
   }
 
+  async function notifierBudgetSiDepasse(totalAvant: number, totalApres: number, userActuel: string | undefined) {
+    const budget = liste?.budget || 0
+    if (budget <= 0) return
+    const pctAvant = (totalAvant / budget) * 100
+    const pctApres = (totalApres / budget) * 100
+    const seuil = pctAvant < 100 && pctApres >= 100 ? 100 : (pctAvant < 80 && pctApres >= 80 ? 80 : null)
+    if (!seuil) return
+
+    const message = seuil === 100
+      ? `⚠️ Budget dépassé pour "${liste?.titre}" : ${totalApres.toFixed(2)} CHF sur ${budget.toFixed(2)} CHF`
+      : `🔔 80% du budget atteint pour "${liste?.titre}" : ${totalApres.toFixed(2)} CHF sur ${budget.toFixed(2)} CHF`
+
+    const { data: members } = await supabase.from("membres_groupe").select("user_id").eq("groupe_id", id)
+    const destinataires = (members || []).filter((m: any) => m.user_id !== userActuel)
+    if (destinataires.length > 0) {
+      await supabase.from("notifications").insert(destinataires.map((m: any) => ({
+        user_id: m.user_id, type: "budget", titre: liste?.titre || "Liste", contenu: message,
+        lien: `/groupes/${id}/listes/${listeId}`,
+      })))
+    }
+  }
+
   async function ajouterArticle() {
     if (!nom.trim()) return
     const { data: { user } } = await supabase.auth.getUser()
     const statut = modeShopping ? "a_acheter" : "possede"
-    await supabase.from("liste_articles").insert({ liste_id: listeId, nom, quantite, unite, categorie, prix: parseFloat(String(prix).replace(",",".")) || 0, modifie_par: user?.id, statut })
+    const prixNum = parseFloat(String(prix).replace(",",".")) || 0
+    const totalAvant = totalDepense
+    await supabase.from("liste_articles").insert({ liste_id: listeId, nom, quantite, unite, categorie, prix: prixNum, modifie_par: user?.id, statut })
     setNom(""); setQuantite(1); setPrix(""); setShowForm(false); charger()
+    await notifierBudgetSiDepasse(totalAvant, totalAvant + prixNum * quantite, user?.id)
   }
 
   async function changerQuantite(art: any, delta: number) {
     const newQ = Math.max(0, art.quantite + delta)
     const { data: { user } } = await supabase.auth.getUser()
+    const totalAvant = totalDepense
     await supabase.from("liste_articles").update({ quantite: newQ, modifie_par: user?.id, updated_at: new Date().toISOString() }).eq("id", art.id)
     setArticles(articles.map(a => a.id === art.id ? { ...a, quantite: newQ } : a))
+    await notifierBudgetSiDepasse(totalAvant, totalAvant + (newQ - art.quantite) * parseFloat(art.prix || 0), user?.id)
   }
 
   function exporterPDF() {

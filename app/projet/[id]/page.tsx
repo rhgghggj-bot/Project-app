@@ -3,6 +3,7 @@ import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import QRCodeComponent from "../../components/QRCode"
+import { authHeaders } from "@/lib/authFetch"
 
 export default function Projet() {
   const { id } = useParams()
@@ -11,6 +12,10 @@ export default function Projet() {
   const [contenu, setContenu] = useState("")
   const [user, setUser] = useState<any>(null)
   const [likes, setLikes] = useState<any[]>([])
+  const [createur, setCreateur] = useState<any>(null)
+  const [soutiens, setSoutiens] = useState<any[]>([])
+  const [montantSoutien, setMontantSoutien] = useState("")
+  const [enCoursSoutien, setEnCoursSoutien] = useState(false)
 
   useEffect(() => {
     async function charger() {
@@ -22,9 +27,30 @@ export default function Projet() {
       setCommentaires(c || [])
       const { data: l } = await supabase.from("projets_likes").select("*").eq("projet_id", id)
       setLikes(l || [])
+      if (p?.user_id) {
+        const { data: cr } = await supabase.from("profiles").select("id,nom,stripe_account_id,stripe_onboarding_complete").eq("id", p.user_id).single()
+        setCreateur(cr)
+      }
+      const { data: s } = await supabase.from("projets_soutiens").select("*").eq("projet_id", id)
+      setSoutiens(s || [])
     }
     charger()
   }, [id])
+
+  async function soutenirProjet() {
+    const montant = parseFloat(montantSoutien)
+    if (!montant || montant <= 0 || !user) { if (!user) window.location.href = "/connexion"; return }
+    setEnCoursSoutien(true)
+    const res = await fetch("/api/stripe/soutenir-projet", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+      body: JSON.stringify({ projetId: id, montant, retourUrl: window.location.href }),
+    })
+    const data = await res.json()
+    setEnCoursSoutien(false)
+    if (data.url) window.location.href = data.url
+    else alert(data.error || "Erreur lors du paiement")
+  }
 
   async function commenter() {
     if (!contenu || !user) return
@@ -80,6 +106,23 @@ export default function Projet() {
               <svg width="15" height="15" viewBox="0 0 24 24" fill={jaimeMoi ? '#F43F5E' : 'none'} stroke={jaimeMoi ? '#F43F5E' : '#aaa'} strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
               <span style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e'}}>{likes.length}</span>
             </button>
+
+            {createur?.stripe_account_id && createur?.stripe_onboarding_complete && user?.id !== projet.user_id && (
+              <div style={{background:'#EEF5FF',border:'0.5px solid #DCE9FF',borderRadius:'14px',padding:'14px',marginBottom: projet.image_url ? '10px' : 0}}>
+                <p style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',margin:'0 0 2px'}}>Soutenir ce projet</p>
+                {soutiens.length > 0 && (
+                  <p style={{fontSize:'11px',color:'#aaa',margin:'0 0 10px'}}>{soutiens.reduce((s,x)=>s+parseFloat(x.montant),0).toFixed(0)} CHF récoltés · {soutiens.length} soutien{soutiens.length>1?'s':''}</p>
+                )}
+                <div style={{display:'flex',gap:'8px'}}>
+                  <input value={montantSoutien} onChange={e => setMontantSoutien(e.target.value)} type="number" min="1" step="5" placeholder="Montant CHF"
+                    style={{flex:1,border:'1px solid #DCE9FF',borderRadius:'10px',padding:'8px 12px',fontSize:'16px',color:'#1a1a2e',background:'#fff',boxSizing:'border-box'}}/>
+                  <button onClick={soutenirProjet} disabled={enCoursSoutien}
+                    style={{background:'#2B7FFF',color:'#fff',border:'none',borderRadius:'10px',padding:'8px 18px',fontSize:'13px',fontWeight:'500',cursor:'pointer'}}>
+                    {enCoursSoutien ? '...' : 'Soutenir'}
+                  </button>
+                </div>
+              </div>
+            )}
 
             {projet.image_url && (
               <div style={{background:'#F8FBFF',borderRadius:'14px',padding:'12px',display:'flex',alignItems:'center',gap:'12px'}}>

@@ -1,6 +1,19 @@
 "use client"
+import { useEffect, useState } from "react"
+import { supabase } from "@/lib/supabase"
+import { isJarvisOwner } from "@/lib/jarvisOwner"
 
 export default function JarvisButton() {
+  const [visible, setVisible] = useState(false)
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setVisible(isJarvisOwner(user?.email))
+    })
+  }, [])
+
+  if (!visible) return null
+
   return (
     <a href="/jarvis" aria-label="Ouvrir Jarvis" style={{
       position:'fixed', bottom:'90px', right:'18px', zIndex:1001,
