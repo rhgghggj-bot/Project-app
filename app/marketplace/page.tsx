@@ -25,6 +25,8 @@ export default function Marketplace() {
   const [annonces, setAnnonces] = useState<any[]>([])
   const [modeShopping, setModeShopping] = useState(false)
   const [filtre, setFiltre] = useState("Tout")
+  const [recherche, setRecherche] = useState("")
+  const [prixMax, setPrixMax] = useState("")
   const [showForm, setShowForm] = useState(false)
   const [showFormAnnonce, setShowFormAnnonce] = useState(false)
   const [nom, setNom] = useState("")
@@ -246,7 +248,10 @@ export default function Marketplace() {
   }
 
   const total = articles.reduce((sum, a) => sum + (parseFloat(a.prix || 0) * a.quantite), 0)
-  const annoncesFiltrees = annonces.filter(a => filtre === "Tout" || a.categorie === filtre)
+  const annoncesFiltrees = annonces
+    .filter(a => filtre === "Tout" || a.categorie === filtre)
+    .filter(a => !recherche.trim() || a.titre?.toLowerCase().includes(recherche.trim().toLowerCase()) || a.description?.toLowerCase().includes(recherche.trim().toLowerCase()))
+    .filter(a => !prixMax || parseFloat(a.prix) <= parseFloat(prixMax))
   const inp: any = { width:"100%", border:"1px solid #E8F1FF", borderRadius:"10px", padding:"10px 12px", fontSize:"16px", color:"#1a1a2e", background:"#fff", marginBottom:"8px", boxSizing:"border-box" }
 
   function renderPost(a: any) {
@@ -491,6 +496,16 @@ export default function Marketplace() {
               </div>
             </div>
           )}
+
+          <div style={{display:"flex",gap:"8px",marginBottom:"10px"}}>
+            <div style={{flex:1,position:"relative"}}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2" style={{position:"absolute",left:"12px",top:"50%",transform:"translateY(-50%)"}}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input value={recherche} onChange={e => setRecherche(e.target.value)} placeholder="Rechercher..."
+                style={{width:"100%",border:"1px solid #E8F1FF",borderRadius:"10px",padding:"9px 12px 9px 34px",fontSize:"14px",color:"#1a1a2e",background:"#fff",boxSizing:"border-box"}}/>
+            </div>
+            <input value={prixMax} onChange={e => setPrixMax(e.target.value)} type="number" min="0" placeholder="Prix max"
+              style={{width:"100px",border:"1px solid #E8F1FF",borderRadius:"10px",padding:"9px 10px",fontSize:"14px",color:"#1a1a2e",background:"#fff",boxSizing:"border-box"}}/>
+          </div>
 
           <div style={{display:"flex",gap:"6px",marginBottom:"14px",overflowX:"auto"}}>
             {CATEGORIES.map(c => (
