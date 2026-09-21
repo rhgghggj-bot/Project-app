@@ -3,6 +3,13 @@ import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import { authHeaders } from "@/lib/authFetch"
+import SectionHeader from "@/app/components/ui/SectionHeader"
+import Card from "@/app/components/ui/Card"
+import Button from "@/app/components/ui/Button"
+import EmptyState from "@/app/components/ui/EmptyState"
+import { colors } from "@/app/components/ui/tokens"
+
+const IconExpense = () => <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
 
 export default function DepensesPartageesPage() {
   const params = useParams()
@@ -100,65 +107,57 @@ export default function DepensesPartageesPage() {
 
   return (
     <main className="min-h-screen bg-white">
-      <div style={{background:'linear-gradient(160deg,#0A1628,#1a3a6e)',padding:'20px 18px 28px'}}>
-        <a href={`/groupes/${id}`} style={{fontSize:'12px',color:'rgba(255,255,255,0.5)',display:'block',marginBottom:'8px'}}>← Retour au groupe</a>
-        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-          <div style={{fontSize:'20px',fontWeight:'500',color:'#fff'}}>Dépenses partagées</div>
-          <button onClick={() => setShowForm(!showForm)}
-            style={{background:'rgba(255,255,255,0.15)',border:'0.5px solid rgba(255,255,255,0.25)',borderRadius:'10px',padding:'8px 14px',color:'#fff',fontSize:'13px',cursor:'pointer'}}>
-            + Nouvelle
-          </button>
-        </div>
-      </div>
+      <SectionHeader
+        backHref={`/groupes/${id}`}
+        backLabel="← Retour au groupe"
+        title="Dépenses partagées"
+        action={<Button variant="secondary" onClick={() => setShowForm(!showForm)}>+ Nouvelle</Button>}
+      />
 
-      <div style={{padding:'16px 14px'}}>
+      <div style={{ padding: "16px 14px" }}>
         {(totalJeDoit > 0 || totalOnMeDoit > 0) && (
-          <div style={{display:'flex',gap:'8px',marginBottom:'14px'}}>
+          <div style={{ display: "flex", gap: "8px", marginBottom: "14px" }}>
             {totalJeDoit > 0 && (
-              <div style={{flex:1,background:'#FFE4E6',border:'0.5px solid #FECDD3',borderRadius:'14px',padding:'12px'}}>
-                <div style={{fontSize:'11px',color:'#F43F5E',fontWeight:'500',marginBottom:'4px'}}>Tu dois</div>
-                <div style={{fontSize:'18px',fontWeight:'600',color:'#F43F5E'}}>{totalJeDoit.toFixed(2)} CHF</div>
-              </div>
+              <Card style={{ flex: 1, background: colors.redLight, border: `0.5px solid ${colors.redBorder}` }}>
+                <div style={{ fontSize: "11px", color: colors.red, fontWeight: 500, marginBottom: "4px" }}>Tu dois</div>
+                <div style={{ fontSize: "18px", fontWeight: 600, color: colors.red }}>{totalJeDoit.toFixed(2)} CHF</div>
+              </Card>
             )}
             {totalOnMeDoit > 0 && (
-              <div style={{flex:1,background:'#E1F5EE',border:'0.5px solid #A7F3D0',borderRadius:'14px',padding:'12px'}}>
-                <div style={{fontSize:'11px',color:'#10B981',fontWeight:'500',marginBottom:'4px'}}>On te doit</div>
-                <div style={{fontSize:'18px',fontWeight:'600',color:'#10B981'}}>{totalOnMeDoit.toFixed(2)} CHF</div>
-              </div>
+              <Card style={{ flex: 1, background: colors.greenLight, border: `0.5px solid ${colors.greenBorder}` }}>
+                <div style={{ fontSize: "11px", color: colors.green, fontWeight: 500, marginBottom: "4px" }}>On te doit</div>
+                <div style={{ fontSize: "18px", fontWeight: 600, color: colors.green }}>{totalOnMeDoit.toFixed(2)} CHF</div>
+              </Card>
             )}
           </div>
         )}
 
         {showForm && (
-          <div style={{background:'#EEF5FF',borderRadius:'14px',padding:'14px',marginBottom:'14px',border:'0.5px solid #DCE9FF'}}>
-            <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',marginBottom:'10px'}}>Nouvelle dépense partagée</div>
+          <Card style={{ background: colors.blueLight, border: `0.5px solid ${colors.blueBorder}`, marginBottom: "14px" }}>
+            <div style={{ fontSize: "13px", fontWeight: 500, color: colors.text, marginBottom: "10px" }}>Nouvelle dépense partagée</div>
             <input value={titre} onChange={e => setTitre(e.target.value)} placeholder="Ex: Courses, Resto, Essence..."
-              style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 12px',fontSize:'16px',color:'#1a1a2e',background:'#fff',marginBottom:'10px',boxSizing:'border-box'}}/>
+              style={{ width: "100%", border: `1px solid ${colors.border}`, borderRadius: "10px", padding: "10px 12px", fontSize: "16px", color: colors.text, background: "#fff", marginBottom: "10px", boxSizing: "border-box" }} />
             <input value={montant} onChange={e => setMontant(e.target.value)} type="number" min="0" step="0.05" placeholder="Montant total (CHF)"
-              style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 12px',fontSize:'16px',color:'#1a1a2e',background:'#fff',marginBottom:'10px',boxSizing:'border-box'}}/>
-            <div style={{fontSize:'12px',color:'#666',marginBottom:'6px'}}>Partagée entre (montant divisé également)</div>
-            <div style={{display:'flex',flexDirection:'column',gap:'6px',marginBottom:'12px'}}>
+              style={{ width: "100%", border: `1px solid ${colors.border}`, borderRadius: "10px", padding: "10px 12px", fontSize: "16px", color: colors.text, background: "#fff", marginBottom: "10px", boxSizing: "border-box" }} />
+            <div style={{ fontSize: "12px", color: colors.textMuted, marginBottom: "6px" }}>Partagée entre (montant divisé également)</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginBottom: "12px" }}>
               {membres.map((m: any) => (
-                <label key={m.user_id} style={{display:'flex',alignItems:'center',gap:'8px',fontSize:'13px',color:'#1a1a2e'}}>
+                <label key={m.user_id} style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", color: colors.text }}>
                   <input type="checkbox" checked={!!participants[m.user_id]}
-                    onChange={e => setParticipants(prev => ({ ...prev, [m.user_id]: e.target.checked }))}/>
+                    onChange={e => setParticipants(prev => ({ ...prev, [m.user_id]: e.target.checked }))} />
                   {profils[m.user_id]?.nom || 'Membre'}{m.user_id === user?.id ? ' (toi)' : ''}
                 </label>
               ))}
             </div>
-            <div style={{display:'flex',gap:'8px'}}>
-              <button onClick={creerDepense} style={{flex:1,background:'#2B7FFF',color:'#fff',border:'none',borderRadius:'10px',padding:'10px',fontSize:'13px',fontWeight:'500',cursor:'pointer'}}>Créer</button>
-              <button onClick={() => setShowForm(false)} style={{flex:1,background:'#fff',color:'#666',border:'0.5px solid #E8F1FF',borderRadius:'10px',padding:'10px',fontSize:'13px',cursor:'pointer'}}>Annuler</button>
+            <div style={{ display: "flex", gap: "8px" }}>
+              <Button full onClick={creerDepense}>Créer</Button>
+              <Button variant="ghost" full onClick={() => setShowForm(false)}>Annuler</Button>
             </div>
-          </div>
+          </Card>
         )}
 
         {depenses.length === 0 && (
-          <div style={{textAlign:'center',padding:'48px 0'}}>
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ddd" strokeWidth="1.5" style={{margin:'0 auto 12px',display:'block'}}><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-            <div style={{fontSize:'14px',color:'#aaa'}}>Aucune dépense partagée pour l'instant</div>
-            <div style={{fontSize:'12px',color:'#ccc',marginTop:'4px'}}>Ajoute une note à partager avec le groupe</div>
-          </div>
+          <EmptyState icon={<IconExpense />} title="Aucune dépense partagée pour l'instant" subtitle="Ajoute une note à partager avec le groupe" />
         )}
 
         {depenses.map(d => {
@@ -166,36 +165,33 @@ export default function DepensesPartageesPage() {
           const jeSuisPayeur = d.payeur_id === user?.id
           const maPart = partsDepense.find(p => p.user_id === user?.id)
           return (
-            <div key={d.id} style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'14px',padding:'14px',marginBottom:'10px'}}>
-              <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'8px'}}>
+            <Card key={d.id} style={{ marginBottom: "10px" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
                 <div>
-                  <div style={{fontSize:'14px',fontWeight:'500',color:'#1a1a2e'}}>{d.titre}</div>
-                  <div style={{fontSize:'11px',color:'#aaa'}}>Payé par {profils[d.payeur_id]?.nom || 'Membre'} · {new Date(d.created_at).toLocaleDateString('fr-FR',{day:'numeric',month:'short'})}</div>
+                  <div style={{ fontSize: "14px", fontWeight: 500, color: colors.text }}>{d.titre}</div>
+                  <div style={{ fontSize: "11px", color: colors.textFaint }}>Payé par {profils[d.payeur_id]?.nom || 'Membre'} · {new Date(d.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}</div>
                 </div>
-                <div style={{fontSize:'16px',fontWeight:'600',color:'#1a1a2e'}}>{parseFloat(d.montant_total).toFixed(2)} CHF</div>
+                <div style={{ fontSize: "16px", fontWeight: 600, color: colors.text }}>{parseFloat(d.montant_total).toFixed(2)} CHF</div>
               </div>
 
               {jeSuisPayeur && partsDepense.map(p => (
-                <div key={p.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'6px 0',fontSize:'12px',color:'#666'}}>
+                <div key={p.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", fontSize: "12px", color: colors.textMuted }}>
                   <span>{profils[p.user_id]?.nom || 'Membre'} doit {parseFloat(p.montant).toFixed(2)} CHF</span>
-                  <span style={{color: p.statut === 'regle' ? '#10B981' : '#aaa',fontWeight:'500'}}>{p.statut === 'regle' ? '✓ Réglé' : 'En attente'}</span>
+                  <span style={{ color: p.statut === 'regle' ? colors.green : colors.textFaint, fontWeight: 500 }}>{p.statut === 'regle' ? '✓ Réglé' : 'En attente'}</span>
                 </div>
               ))}
 
               {!jeSuisPayeur && maPart && (
-                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:'6px'}}>
-                  <span style={{fontSize:'12px',color:'#666'}}>Ta part : {parseFloat(maPart.montant).toFixed(2)} CHF</span>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "6px" }}>
+                  <span style={{ fontSize: "12px", color: colors.textMuted }}>Ta part : {parseFloat(maPart.montant).toFixed(2)} CHF</span>
                   {maPart.statut === 'regle' ? (
-                    <span style={{fontSize:'12px',color:'#10B981',fontWeight:'500'}}>✓ Réglé</span>
+                    <span style={{ fontSize: "12px", color: colors.green, fontWeight: 500 }}>✓ Réglé</span>
                   ) : (
-                    <button disabled={enCours} onClick={() => regler(maPart.id)}
-                      style={{background:'#2B7FFF',color:'#fff',border:'none',borderRadius:'99px',padding:'6px 16px',fontSize:'12px',fontWeight:'500',cursor:'pointer'}}>
-                      Rembourser
-                    </button>
+                    <Button pill disabled={enCours} onClick={() => regler(maPart.id)}>Rembourser</Button>
                   )}
                 </div>
               )}
-            </div>
+            </Card>
           )
         })}
       </div>
