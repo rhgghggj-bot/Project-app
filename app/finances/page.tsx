@@ -3,6 +3,7 @@ import DeviseSelector from "../components/DeviseSelector"
 import Tutorial from "../components/Tutorial"
 import PlacementsSection from "../components/PlacementsSection"
 import FiscaliteSection from "../components/FiscaliteSection"
+import ObjectifsEpargneSection from "../components/ObjectifsEpargneSection"
 import { useEffect, useState, useRef, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
@@ -635,6 +636,8 @@ function FinancesContent() {
 
       {onglet === "epargne" && (
         <div style={{padding:'16px 18px'}}>
+
+          <ObjectifsEpargneSection />
 
           {/* Plan épargne */}
           <div style={{background:'linear-gradient(135deg,#1a3a6e,#2B7FFF)',borderRadius:'18px',padding:'16px',marginBottom:'14px'}}>
