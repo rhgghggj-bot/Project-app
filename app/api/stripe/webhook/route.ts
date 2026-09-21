@@ -43,6 +43,14 @@ export async function POST(request: NextRequest) {
           contenu: `💸 Remboursement de ${part.montant} CHF réglé pour "${part.depense.titre}".`,
         })
       }
+    } else if (session.metadata?.type === 'soutien_projet') {
+      const montant = (session.amount_total || 0) / 100
+      await getSupabaseAdmin().from('projets_soutiens').insert({
+        projet_id: session.metadata.projet_id,
+        soutien_id: session.metadata.soutien_id,
+        montant,
+        stripe_payment_intent_id: session.payment_intent,
+      })
     } else {
       const { annonce_id, acheteur_id, groupe_id } = session.metadata
 
