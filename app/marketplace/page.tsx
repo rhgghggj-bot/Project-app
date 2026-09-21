@@ -3,6 +3,7 @@ import { useEffect, useState, useRef } from "react"
 import { supabase } from "@/lib/supabase"
 import { ouvrirConversationPrivee } from "@/lib/dm"
 import EmptyState from "@/app/components/ui/EmptyState"
+import { useDeviseConversion } from "@/app/hooks/useDevise"
 
 const CATEGORIES = ["Tout","Mode","Électronique","Maison","Sport","Autre"]
 
@@ -25,6 +26,7 @@ export default function Marketplace() {
   const [annonces, setAnnonces] = useState<any[]>([])
   const [modeShopping, setModeShopping] = useState(false)
   const [filtre, setFiltre] = useState("Tout")
+  const { format } = useDeviseConversion()
   const [recherche, setRecherche] = useState("")
   const [prixMax, setPrixMax] = useState("")
   const [showForm, setShowForm] = useState(false)
@@ -336,7 +338,7 @@ export default function Marketplace() {
                   <button onClick={() => setAnnonceOuverte(a)} style={{background:"none",border:"none",padding:0,cursor:"pointer",display:"flex"}}>
                     <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#1a1a2e" strokeWidth="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                   </button>
-                  <div style={{marginLeft:"auto",fontSize:"16px",fontWeight:"700",color:"#2B7FFF"}}>{parseFloat(a.prix).toFixed(0)} CHF</div>
+                  <div style={{marginLeft:"auto",fontSize:"16px",fontWeight:"700",color:"#2B7FFF"}}>{format(parseFloat(a.prix))}</div>
                 </div>
 
                 {nbLikes > 0 && (
@@ -559,7 +561,7 @@ export default function Marketplace() {
                 <div style={{padding:"18px"}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:"6px"}}>
                     <div style={{fontSize:"18px",fontWeight:"600",color:"#1a1a2e",flex:1}}>{annonceOuverte.titre}</div>
-                    <div style={{fontSize:"20px",fontWeight:"700",color:"#2B7FFF",whiteSpace:"nowrap",marginLeft:"10px"}}>{parseFloat(annonceOuverte.prix).toFixed(0)} CHF</div>
+                    <div style={{fontSize:"20px",fontWeight:"700",color:"#2B7FFF",whiteSpace:"nowrap",marginLeft:"10px"}}>{format(parseFloat(annonceOuverte.prix))}</div>
                   </div>
                   <div style={{fontSize:"11px",color:"#aaa",marginBottom:"14px"}}>{annonceOuverte.categorie}</div>
 

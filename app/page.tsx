@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { syncActivitesGroupeVersCalendrier } from "@/lib/syncActivites"
+import { useDeviseConversion } from "./hooks/useDevise"
 
 const JOURS = ["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"]
 
@@ -10,6 +11,7 @@ export default function Home() {
   const [categorie, setCategorie] = useState("Tous")
   const [user, setUser] = useState<any>(null)
   const [authChecked, setAuthChecked] = useState(false)
+  const { format } = useDeviseConversion()
   const [evenements, setEvenements] = useState<any[]>([])
   const [depenses, setDepenses] = useState<any[]>([])
   const [revenus, setRevenus] = useState<any[]>([])
@@ -157,9 +159,9 @@ export default function Home() {
             </div>
             <div style={{fontSize:'22px',fontWeight:'500',color:'#fff',marginBottom:'12px'}}>Bonjour</div>
             <div style={{display:'flex',gap:'12px'}}>
-              <div style={{fontSize:'13px',color:'#86efac',fontWeight:'500'}}><span style={{color:'rgba(255,255,255,0.5)'}}>Rev. </span>{totalRev.toFixed(0)} CHF</div>
-              <div style={{fontSize:'13px',color:'#fca5a5',fontWeight:'500'}}><span style={{color:'rgba(255,255,255,0.5)'}}>Dép. </span>{totalDep.toFixed(0)} CHF</div>
-              <div style={{fontSize:'13px',color: solde >= 0 ? '#86efac' : '#fca5a5',fontWeight:'500'}}>Solde : {solde >= 0 ? '+' : ''}{solde.toFixed(0)} CHF</div>
+              <div style={{fontSize:'13px',color:'#86efac',fontWeight:'500'}}><span style={{color:'rgba(255,255,255,0.5)'}}>Rev. </span>{format(totalRev)}</div>
+              <div style={{fontSize:'13px',color:'#fca5a5',fontWeight:'500'}}><span style={{color:'rgba(255,255,255,0.5)'}}>Dép. </span>{format(totalDep)}</div>
+              <div style={{fontSize:'13px',color: solde >= 0 ? '#86efac' : '#fca5a5',fontWeight:'500'}}>Solde : {solde >= 0 ? '+' : ''}{format(solde)}</div>
             </div>
           </div>
         )}
@@ -229,7 +231,7 @@ export default function Home() {
             <a href="/finances" style={{flex:1,textDecoration:'none'}}>
               <div style={{background:'rgba(15,45,92,0.85)',borderRadius:'14px',padding:'12px',border:'1px solid rgba(255,255,255,0.15)'}}>
                 <div style={{fontSize:'11px',color:'#a8d8f0',fontWeight:'500',marginBottom:'4px'}}>Finances</div>
-                <div style={{fontSize:'18px',fontWeight:'500',color: solde >= 0 ? '#86efac' : '#fca5a5'}}>{solde >= 0 ? '+' : ''}{solde.toFixed(0)} CHF</div>
+                <div style={{fontSize:'18px',fontWeight:'500',color: solde >= 0 ? '#86efac' : '#fca5a5'}}>{solde >= 0 ? '+' : ''}{format(solde)}</div>
                 <div style={{fontSize:'11px',color:'rgba(255,255,255,0.5)',marginTop:'2px'}}>Solde ce mois</div>
               </div>
             </a>
