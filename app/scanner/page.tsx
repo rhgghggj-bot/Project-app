@@ -1,6 +1,7 @@
 "use client"
 import Tutorial from "../components/Tutorial"
 import { useState, useRef, useEffect } from "react"
+import { supabase } from "@/lib/supabase"
 
 export default function Scanner() {
   const [image, setImage] = useState<string | null>(null)
@@ -49,6 +50,15 @@ export default function Scanner() {
         /^[A-Z][a-z]/.test(clean)
       )
     }) || mots[0] || 'Document scanne'
+
+    // Une correction manuelle déjà faite pour ce nom d'entreprise prime sur
+    // la détection par mots-clés.
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      const { data: correction } = await supabase.from("scanner_corrections")
+        .select("type").eq("user_id", user.id).eq("cle", nomEntreprise.toLowerCase()).maybeSingle()
+      if (correction) type = correction.type
+    }
 
     const maxMontant = montants.length > 0 ? Math.max(...montants) : null
     const transactions = montants.slice(0, 5).map((m, i) => ({
@@ -99,6 +109,17 @@ export default function Scanner() {
 
   function reset() {
     setImage(null); setTexte(""); setAnalyse(null); setEtape("upload")
+  }
+
+  async function corrigerType(nouveauType: string) {
+    if (!analyse) return
+    setAnalyse((prev: any) => ({ ...prev, type: nouveauType }))
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    await supabase.from("scanner_corrections").upsert(
+      { user_id: user.id, cle: (analyse.titre || '').toLowerCase(), type: nouveauType },
+      { onConflict: "user_id,cle" }
+    )
   }
 
   const typeIcon: any = {}
@@ -167,7 +188,20 @@ export default function Scanner() {
                   <span style={{fontSize:'18px',fontWeight:'500',color:'#F43F5E'}}>{analyse.montant} CHF</span>
                 </div>
               )}
-              {analyse.date && <div style={{fontSize:'12px',color:'#aaa'}}>{analyse.date}</div>}
+              {analyse.date && <div style={{fontSize:'12px',color:'#aaa',marginBottom:'8px'}}>{analyse.date}</div>}
+
+              <div style={{fontSize:'11px',color:'#666',marginBottom:'6px'}}>Pas le bon type ?</div>
+              <div style={{display:'flex',gap:'6px',flexWrap:'wrap'}}>
+                {Object.entries(typeLabel).map(([key, label]) => (
+                  <button key={key} onClick={() => corrigerType(key)}
+                    style={{fontSize:'11px',fontWeight:'500',padding:'5px 10px',borderRadius:'99px',cursor:'pointer',
+                      border: analyse.type === key ? 'none' : '0.5px solid #DCE9FF',
+                      background: analyse.type === key ? '#2B7FFF' : '#fff',
+                      color: analyse.type === key ? '#fff' : '#666'}}>
+                    {label as string}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {analyse.infos_cles?.length > 0 && (
