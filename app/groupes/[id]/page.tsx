@@ -3,6 +3,9 @@ import { useEffect, useState, useRef } from "react"
 import { useParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import { authHeaders } from "@/lib/authFetch"
+import Card from "@/app/components/ui/Card"
+import Button from "@/app/components/ui/Button"
+import { colors } from "@/app/components/ui/tokens"
 
 function hexVersRgb(hex: string) {
   const h = hex.replace('#', '')
@@ -102,6 +105,9 @@ export default function GroupePage() {
   const [groupe, setGroupe] = useState<any>(null)
   const [autreProfilDM, setAutreProfilDM] = useState<any>(null)
   const [annonceLiee, setAnnonceLiee] = useState<any>(null)
+  const [montrerAvis, setMontrerAvis] = useState(false)
+  const [noteAvis, setNoteAvis] = useState(0)
+  const [commentaireAvis, setCommentaireAvis] = useState("")
   const [messages, setMessages] = useState<any[]>([])
   const [projets, setProjets] = useState<any[]>([])
   const [membres, setMembres] = useState<any[]>([])
@@ -220,6 +226,16 @@ export default function GroupePage() {
     if (!data.success) { alert(data.error || "Erreur lors de la libération du paiement"); return }
     setAnnonceLiee((prev: any) => ({ ...prev, statut: "vendu" }))
     await supabase.from("messages_groupe").insert({ groupe_id: id, user_id: user.id, contenu: `✅ Réception confirmée pour "${annonceLiee.titre}" — paiement transféré au vendeur, reçus ajoutés dans les Finances de chacun.` })
+    setMontrerAvis(true)
+  }
+
+  async function envoyerAvis() {
+    if (!annonceLiee || !user || noteAvis === 0) return
+    await supabase.from("marketplace_avis").insert({
+      annonce_id: annonceLiee.id, auteur_id: user.id, cible_id: annonceLiee.user_id,
+      note: noteAvis, commentaire: commentaireAvis.trim() || null,
+    })
+    setMontrerAvis(false); setNoteAvis(0); setCommentaireAvis("")
   }
 
   async function genererInvitation() {
@@ -385,6 +401,26 @@ export default function GroupePage() {
           {user && annonceLiee.statut === 'réservé' && annonceLiee.user_id === user.id && (
             <div style={{fontSize:'12px', color:'#D4A843', textAlign:'center'}}>💳 Paiement reçu et retenu en sécurité — en attente que l'acheteur confirme la réception</div>
           )}
+        </div>
+      )}
+
+      {montrerAvis && annonceLiee && (
+        <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',zIndex:2000,display:'flex',alignItems:'center',justifyContent:'center',padding:'20px'}}>
+          <Card style={{maxWidth:'340px',width:'100%'}}>
+            <div style={{fontSize:'15px',fontWeight:600,color:colors.text,marginBottom:'4px',textAlign:'center'}}>Comment s'est passé l'achat ?</div>
+            <div style={{fontSize:'12px',color:colors.textFaint,marginBottom:'14px',textAlign:'center'}}>Note ton expérience avec le vendeur</div>
+            <div style={{display:'flex',justifyContent:'center',gap:'6px',marginBottom:'14px'}}>
+              {[1,2,3,4,5].map(n => (
+                <button key={n} onClick={() => setNoteAvis(n)} style={{background:'none',border:'none',cursor:'pointer',fontSize:'28px',padding:0,color: n <= noteAvis ? colors.gold : '#E8F1FF'}}>★</button>
+              ))}
+            </div>
+            <textarea value={commentaireAvis} onChange={e => setCommentaireAvis(e.target.value)} placeholder="Un commentaire (optionnel)"
+              style={{width:'100%',border:`1px solid ${colors.border}`,borderRadius:'10px',padding:'10px 12px',fontSize:'14px',color:colors.text,marginBottom:'12px',boxSizing:'border-box',resize:'none',height:'60px'}}/>
+            <div style={{display:'flex',gap:'8px'}}>
+              <Button full disabled={noteAvis === 0} onClick={envoyerAvis}>Envoyer</Button>
+              <Button variant="ghost" full onClick={() => setMontrerAvis(false)}>Plus tard</Button>
+            </div>
+          </Card>
         </div>
       )}
 
