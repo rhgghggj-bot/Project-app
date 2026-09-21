@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { syncMeilleurScoreJeu } from '@/lib/scoresJeux'
 
 const GAME_W = 300
 const BASE_W = 165
@@ -77,7 +78,7 @@ export default function StackTower() {
     if (largeur <= 4) {
       setGameOver(true)
       vibrer([50,30,50,30,80])
-      if (score > meilleur) { setMeilleur(score); localStorage.setItem('stacktower_meilleur', String(score)) }
+      if (score > meilleur) { setMeilleur(score); localStorage.setItem('stacktower_meilleur', String(score)); syncMeilleurScoreJeu('stacktower', score) }
       if (streak > meilleurStreak) { setMeilleurStreak(streak); localStorage.setItem('stacktower_streak', String(streak)) }
       return
     }
@@ -111,7 +112,7 @@ export default function StackTower() {
 
     const s = score + gainPoints
     setScore(s)
-    if (s > meilleur) { setMeilleur(s); localStorage.setItem('stacktower_meilleur', String(s)) }
+    if (s > meilleur) { setMeilleur(s); localStorage.setItem('stacktower_meilleur', String(s)); syncMeilleurScoreJeu('stacktower', s) }
   }
 
   function recommencer() {

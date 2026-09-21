@@ -15,6 +15,7 @@ export default function SondagesGroupePage() {
   const id = Array.isArray(params.id) ? params.id[0] : params.id
 
   const [user, setUser] = useState<any>(null)
+  const [membres, setMembres] = useState<any[]>([])
   const [profils, setProfils] = useState<Record<string, any>>({})
   const [sondages, setSondages] = useState<any[]>([])
   const [options, setOptions] = useState<any[]>([])
@@ -30,6 +31,7 @@ export default function SondagesGroupePage() {
     setUser(user)
 
     const { data: mb } = await supabase.from("membres_groupe").select("user_id").eq("groupe_id", id)
+    setMembres(mb || [])
     if (mb && mb.length > 0) {
       const { data: profs } = await supabase.from("profiles").select("id,nom").in("id", mb.map((m: any) => m.user_id))
       const map: Record<string, any> = {}
@@ -71,6 +73,14 @@ export default function SondagesGroupePage() {
       groupe_id: id, user_id: user.id,
       contenu: `📊 ${profils[user.id]?.nom || "Quelqu'un"} a lancé un sondage : "${question.trim()}"`,
     })
+
+    for (const m of membres.filter((m: any) => m.user_id !== user.id)) {
+      await supabase.from("notifications").insert({
+        user_id: m.user_id, type: "sondage", titre: "Nouveau sondage",
+        contenu: `${profils[user.id]?.nom || "Quelqu'un"} demande : "${question.trim()}"`,
+        lien: `/groupes/${id}/sondages`,
+      })
+    }
 
     setQuestion(""); setChoix(["", ""]); setShowForm(false)
     charger()

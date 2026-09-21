@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { syncMeilleurScoreJeu } from '@/lib/scoresJeux'
 
 const TAILLE = 8
 const COULEURS = ['#2B7FFF', '#F43F5E', '#10B981', '#D4A843', '#8B5CF6', '#EC4899', '#F97316']
@@ -162,7 +163,7 @@ export default function BlockBlast() {
         const nouveauScore = score + nbCellules + bonus
         setScore(nouveauScore)
         ajouterPopup('+'+bonus, 45, 40, '#D4A843')
-        if (nouveauScore > meilleur) { setMeilleur(nouveauScore); localStorage.setItem('blockblast_meilleur', String(nouveauScore)) }
+        if (nouveauScore > meilleur) { setMeilleur(nouveauScore); localStorage.setItem('blockblast_meilleur', String(nouveauScore)); syncMeilleurScoreJeu('blockblast', nouveauScore) }
         setPieces(piecesFinales)
         setSelection(null)
         setSurvole(null)
@@ -172,7 +173,7 @@ export default function BlockBlast() {
     } else {
       const nouveauScore = score + nbCellules
       setScore(nouveauScore)
-      if (nouveauScore > meilleur) { setMeilleur(nouveauScore); localStorage.setItem('blockblast_meilleur', String(nouveauScore)) }
+      if (nouveauScore > meilleur) { setMeilleur(nouveauScore); localStorage.setItem('blockblast_meilleur', String(nouveauScore)); syncMeilleurScoreJeu('blockblast', nouveauScore) }
       setPieces(piecesFinales)
       setSelection(null)
       setSurvole(null)

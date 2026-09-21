@@ -48,6 +48,8 @@ export default function Marketplace() {
   const [menuOuvertId, setMenuOuvertId] = useState<string | null>(null)
   const [confirmSupprId, setConfirmSupprId] = useState<string | null>(null)
   const [favoris, setFavoris] = useState<any[]>([])
+  const [alertes, setAlertes] = useState<any[]>([])
+  const [showAlertes, setShowAlertes] = useState(false)
   const [signales, setSignales] = useState<string[]>([])
   const [likes, setLikes] = useState<any[]>([])
   const [commentaires, setCommentaires] = useState<any[]>([])
@@ -60,13 +62,31 @@ export default function Marketplace() {
       chargerAnnonces()
       chargerLikes()
       chargerCommentaires()
-      if (user) { chargerArticles(); chargerFavoris(user.id) }
+      if (user) { chargerArticles(); chargerFavoris(user.id); chargerAlertes(user.id) }
     })
   }, [])
 
   async function chargerFavoris(userId: string) {
     const { data } = await supabase.from("marketplace_favoris").select("*").eq("user_id", userId)
     setFavoris(data || [])
+  }
+
+  async function chargerAlertes(userId: string) {
+    const { data } = await supabase.from("alertes_recherche").select("*").eq("user_id", userId).order("created_at", { ascending: false })
+    setAlertes(data || [])
+  }
+
+  async function creerAlerte() {
+    if (!user || !recherche.trim()) return
+    const { data, error } = await supabase.from("alertes_recherche").insert({
+      user_id: user.id, mot_cle: recherche.trim(), prix_max: prixMax ? parseFloat(prixMax) : null
+    }).select().single()
+    if (!error && data) setAlertes(prev => [data, ...prev])
+  }
+
+  async function supprimerAlerte(id: string) {
+    await supabase.from("alertes_recherche").delete().eq("id", id)
+    setAlertes(prev => prev.filter(a => a.id !== id))
   }
 
   async function toggleFavori(annonceId: string) {
@@ -508,6 +528,27 @@ export default function Marketplace() {
             <input value={prixMax} onChange={e => setPrixMax(e.target.value)} type="number" min="0" placeholder="Prix max"
               style={{width:"100px",border:"1px solid #E8F1FF",borderRadius:"10px",padding:"9px 10px",fontSize:"14px",color:"#1a1a2e",background:"#fff",boxSizing:"border-box"}}/>
           </div>
+
+          {user && recherche.trim() && !alertes.some(a => a.mot_cle === recherche.trim()) && (
+            <button onClick={creerAlerte} style={{display:"flex",alignItems:"center",gap:"6px",background:"#EEF5FF",color:"#2B7FFF",border:"none",borderRadius:"10px",padding:"8px 12px",fontSize:"12px",fontWeight:"500",cursor:"pointer",marginBottom:"10px"}}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              Créer une alerte pour "{recherche.trim()}"{prixMax ? ` (max ${prixMax} CHF)` : ""}
+            </button>
+          )}
+
+          {user && (
+            <div style={{marginBottom:"14px"}}>
+              <button onClick={() => setShowAlertes(!showAlertes)} style={{fontSize:"12px",color:"#aaa",background:"none",border:"none",cursor:"pointer",padding:0}}>
+                {alertes.length > 0 ? `${alertes.length} alerte${alertes.length > 1 ? "s" : ""} de recherche ${showAlertes ? "▲" : "▼"}` : ""}
+              </button>
+              {showAlertes && alertes.map(a => (
+                <div key={a.id} style={{display:"flex",alignItems:"center",gap:"8px",background:"#F8FBFF",border:"0.5px solid #E8F1FF",borderRadius:"8px",padding:"6px 10px",marginTop:"6px",fontSize:"12px",color:"#1a1a2e"}}>
+                  <span style={{flex:1}}>"{a.mot_cle}"{a.prix_max ? ` · max ${a.prix_max} CHF` : ""}</span>
+                  <button onClick={() => supprimerAlerte(a.id)} style={{background:"none",border:"none",color:"#F43F5E",cursor:"pointer",fontSize:"12px"}}>✕</button>
+                </div>
+              ))}
+            </div>
+          )}
 
           <div style={{display:"flex",gap:"6px",marginBottom:"14px",overflowX:"auto"}}>
             {CATEGORIES.map(c => (

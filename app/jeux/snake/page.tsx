@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { syncMeilleurScoreJeu } from '@/lib/scoresJeux'
 
 const TAILLE = 15
 const VITESSE_MS = 140
@@ -74,7 +75,7 @@ export default function Snake() {
         setNourriture(nf)
         setScore(sc => {
           const ns = sc + 10
-          if (ns > meilleur) { setMeilleur(ns); localStorage.setItem('snake_meilleur', String(ns)) }
+          if (ns > meilleur) { setMeilleur(ns); localStorage.setItem('snake_meilleur', String(ns)); syncMeilleurScoreJeu('snake', ns) }
           return ns
         })
       }

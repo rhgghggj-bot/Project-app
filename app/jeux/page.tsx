@@ -50,7 +50,10 @@ export default function JeuxHub() {
   return (
     <main className="min-h-screen bg-white">
       <div style={{background:'linear-gradient(160deg,#0A1628,#1a3a6e,#2B7FFF)',padding:'20px 18px 28px'}}>
-        <a href="/" style={{fontSize:'12px',color:'rgba(255,255,255,0.5)',display:'block',marginBottom:'8px'}}>← Accueil</a>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+          <a href="/" style={{fontSize:'12px',color:'rgba(255,255,255,0.5)',display:'block',marginBottom:'8px'}}>← Accueil</a>
+          <a href="/jeux/classement" style={{fontSize:'12px',color:'#fff',background:'rgba(255,255,255,0.15)',padding:'6px 12px',borderRadius:'99px',textDecoration:'none'}}>🏆 Classement</a>
+        </div>
         <div style={{fontSize:'22px',fontWeight:'600',color:'#fff'}}>Jeux</div>
         <div style={{fontSize:'13px',color:'rgba(255,255,255,0.5)',marginTop:'2px'}}>Détends-toi, seul ou en famille</div>
       </div>

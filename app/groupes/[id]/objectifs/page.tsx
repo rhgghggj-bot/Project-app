@@ -17,6 +17,7 @@ export default function ObjectifsGroupePage() {
   const id = Array.isArray(params.id) ? params.id[0] : params.id
 
   const [user, setUser] = useState<any>(null)
+  const [membres, setMembres] = useState<any[]>([])
   const [profils, setProfils] = useState<Record<string, any>>({})
   const [objectifs, setObjectifs] = useState<any[]>([])
   const [contributions, setContributions] = useState<any[]>([])
@@ -34,6 +35,7 @@ export default function ObjectifsGroupePage() {
     setUser(user)
 
     const { data: mb } = await supabase.from("membres_groupe").select("user_id").eq("groupe_id", id)
+    setMembres(mb || [])
     if (mb && mb.length > 0) {
       const { data: profs } = await supabase.from("profiles").select("id,nom").in("id", mb.map((m: any) => m.user_id))
       const map: Record<string, any> = {}
@@ -82,6 +84,20 @@ export default function ObjectifsGroupePage() {
       groupe_id: id, user_id: user.id,
       contenu: `💰 ${profils[user.id]?.nom || "Quelqu'un"} a mis ${montant.toFixed(0)} CHF dans l'objectif "${objectif?.titre}"`,
     })
+
+    if (objectif) {
+      const totalAvant = contributions.filter(c => c.objectif_id === objectifId).reduce((s, c) => s + parseFloat(c.montant), 0)
+      const cible = parseFloat(objectif.montant_cible)
+      if (totalAvant < cible && totalAvant + montant >= cible) {
+        for (const m of membres) {
+          await supabase.from("notifications").insert({
+            user_id: m.user_id, type: "objectif", titre: "Objectif atteint 🎉",
+            contenu: `L'objectif "${objectif.titre}" a atteint ${cible.toFixed(0)} CHF !`,
+            lien: `/groupes/${id}/objectifs`,
+          })
+        }
+      }
+    }
 
     setMontantContrib(""); setContribuerA(null)
     charger()

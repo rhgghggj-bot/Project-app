@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { syncMeilleurScoreJeu } from '@/lib/scoresJeux'
 
 function vibrer(pattern: number | number[]) {
   if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(pattern)
@@ -92,6 +93,7 @@ export default function TestReflexes() {
         if (total > meilleur) {
           setMeilleur(total)
           localStorage.setItem('reflexes_meilleur_score', String(total))
+          syncMeilleurScoreJeu('reflexes', total)
         }
         vibrer([15,20,15,20,30])
       } else {

@@ -82,6 +82,14 @@ export default function DepensesPartageesPage() {
       contenu: `💰 ${profils[user.id]?.nom || "Quelqu'un"} a ajouté une dépense partagée : "${titre.trim()}" — ${total.toFixed(2)} CHF (${partMontant.toFixed(2)} CHF/personne)`,
     })
 
+    for (const uid of autresParticipants) {
+      await supabase.from("notifications").insert({
+        user_id: uid, type: "depense", titre: "Dépense partagée",
+        contenu: `${profils[user.id]?.nom || "Quelqu'un"} a ajouté "${titre.trim()}" — tu dois ${partMontant.toFixed(2)} CHF`,
+        lien: `/groupes/${id}/depenses`,
+      })
+    }
+
     setTitre(""); setMontant(""); setShowForm(false)
     charger()
   }

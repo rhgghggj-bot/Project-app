@@ -16,6 +16,9 @@ export default function Projet() {
   const [soutiens, setSoutiens] = useState<any[]>([])
   const [montantSoutien, setMontantSoutien] = useState("")
   const [enCoursSoutien, setEnCoursSoutien] = useState(false)
+  const [updates, setUpdates] = useState<any[]>([])
+  const [nouvelleUpdate, setNouvelleUpdate] = useState("")
+  const [showUpdateForm, setShowUpdateForm] = useState(false)
 
   useEffect(() => {
     async function charger() {
@@ -33,9 +36,31 @@ export default function Projet() {
       }
       const { data: s } = await supabase.from("projets_soutiens").select("*").eq("projet_id", id)
       setSoutiens(s || [])
+      const { data: u } = await supabase.from("projets_updates").select("*").eq("projet_id", id).order("created_at", { ascending: false })
+      setUpdates(u || [])
     }
     charger()
   }, [id])
+
+  async function posterUpdate() {
+    if (!nouvelleUpdate.trim() || !user || !projet) return
+    const { data, error } = await supabase.from("projets_updates").insert({
+      projet_id: id, auteur_id: user.id, texte: nouvelleUpdate.trim(),
+    }).select().single()
+    if (error || !data) return
+    setUpdates(prev => [data, ...prev])
+
+    const destinataires = Array.from(new Set([...soutiens.map(s => s.soutien_id), ...likes.map(l => l.user_id)])).filter(uid => uid !== user.id)
+    for (const uid of destinataires) {
+      await supabase.from("notifications").insert({
+        user_id: uid, type: "projet", titre: "Mise à jour du projet",
+        contenu: `${projet.titre} : ${nouvelleUpdate.trim().slice(0, 80)}`,
+        lien: `/projet/${id}`,
+      })
+    }
+
+    setNouvelleUpdate(""); setShowUpdateForm(false)
+  }
 
   async function soutenirProjet() {
     const montant = parseFloat(montantSoutien)
@@ -134,6 +159,35 @@ export default function Projet() {
               </div>
             )}
           </div>
+        </div>
+
+        <div style={{marginBottom:'18px'}}>
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'10px'}}>
+            <p style={{fontSize:'12px',color:'#aaa',fontWeight:'500',margin:0}}>Mises à jour</p>
+            {user?.id === projet.user_id && (
+              <button onClick={() => setShowUpdateForm(!showUpdateForm)} style={{fontSize:'12px',color:'#2B7FFF',background:'none',border:'none',cursor:'pointer',fontWeight:'500'}}>
+                + Publier
+              </button>
+            )}
+          </div>
+          {showUpdateForm && (
+            <div style={{background:'#EEF5FF',border:'0.5px solid #DCE9FF',borderRadius:'14px',padding:'12px',marginBottom:'10px'}}>
+              <textarea value={nouvelleUpdate} onChange={e => setNouvelleUpdate(e.target.value)} placeholder="Où en est le projet ?"
+                style={{width:'100%',border:'1px solid #DCE9FF',borderRadius:'10px',padding:'10px 12px',fontSize:'14px',color:'#1a1a2e',background:'#fff',marginBottom:'8px',boxSizing:'border-box',minHeight:'70px',resize:'vertical'}}/>
+              <div style={{display:'flex',gap:'8px'}}>
+                <button onClick={posterUpdate} style={{flex:1,background:'#2B7FFF',color:'#fff',border:'none',borderRadius:'10px',padding:'9px',fontSize:'13px',fontWeight:'500',cursor:'pointer'}}>Publier</button>
+                <button onClick={() => setShowUpdateForm(false)} style={{flex:1,background:'#fff',color:'#666',border:'0.5px solid #DCE9FF',borderRadius:'10px',padding:'9px',fontSize:'13px',cursor:'pointer'}}>Annuler</button>
+              </div>
+            </div>
+          )}
+          {updates.length === 0 ? (
+            <p style={{fontSize:'12px',color:'#ccc',textAlign:'center',padding:'8px 0'}}>Aucune mise à jour pour l'instant</p>
+          ) : updates.map((u: any) => (
+            <div key={u.id} style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'14px',padding:'12px 14px',marginBottom:'8px'}}>
+              <p style={{fontSize:'13px',color:'#333',margin:'0 0 4px',lineHeight:'1.5'}}>{u.texte}</p>
+              <p style={{fontSize:'11px',color:'#aaa',margin:0}}>{new Date(u.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</p>
+            </div>
+          ))}
         </div>
 
         <p style={{fontSize:'12px',color:'#aaa',fontWeight:'500',marginBottom:'12px'}}>Conseils & commentaires</p>

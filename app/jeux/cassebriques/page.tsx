@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { syncMeilleurScoreJeu } from '@/lib/scoresJeux'
 
 const LARGEUR = 340
 const HAUTEUR = 480
@@ -179,7 +180,7 @@ export default function CasseBriques() {
           setVies(e.vies)
           if (e.vies <= 0) {
             setGameOver(true)
-            if (e.score > meilleur) { setMeilleur(e.score); localStorage.setItem('cassebriques_meilleur', String(e.score)) }
+            if (e.score > meilleur) { setMeilleur(e.score); localStorage.setItem('cassebriques_meilleur', String(e.score)); syncMeilleurScoreJeu('cassebriques', e.score) }
             vibrer([50,30,50,30,80])
           } else {
             e.balleX = LARGEUR / 2

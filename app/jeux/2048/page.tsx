@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { syncMeilleurScoreJeu } from '@/lib/scoresJeux'
 
 const TAILLE = 4
 
@@ -131,7 +132,7 @@ export default function Jeu2048() {
     vibrer(gain > 0 ? [10,20,10] : 8)
     const nouveauScore = score + gain
     setScore(nouveauScore)
-    if (nouveauScore > meilleur) { setMeilleur(nouveauScore); localStorage.setItem('jeu2048_meilleur', String(nouveauScore)) }
+    if (nouveauScore > meilleur) { setMeilleur(nouveauScore); localStorage.setItem('jeu2048_meilleur', String(nouveauScore)); syncMeilleurScoreJeu('2048', nouveauScore) }
     if (!gagne && avecNouvelle.some(row => row.some(v => v === 2048))) { setGagne(true); vibrer([20,40,20,40,60]) }
     if (!peutBouger(avecNouvelle)) { setGameOver(true); vibrer([50,30,50,30,80]) }
   }

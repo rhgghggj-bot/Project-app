@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { syncMeilleurScoreJeu } from '@/lib/scoresJeux'
 
 const N = 14
 const RADIUS_CENTRALE = 5
@@ -187,6 +188,7 @@ export default function SimCityLite() {
     if (pop > meilleurePop) {
       setMeilleurePop(pop)
       localStorage.setItem('simcity_meilleure_population', String(pop))
+      syncMeilleurScoreJeu('maville', pop)
     }
     sauvegarder()
   }

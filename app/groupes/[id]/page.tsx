@@ -124,7 +124,7 @@ export default function GroupePage() {
   const [messageActif, setMessageActif] = useState<any>(null)
   const [editionId, setEditionId] = useState<string|null>(null)
   const [editionTexte, setEditionTexte] = useState("")
-  const [reactions, setReactions] = useState<Record<string,Record<string,number>>>({})
+  const [reactions, setReactions] = useState<any[]>([])
   const [pickerMsg, setPickerMsg] = useState<string|null>(null)
   const messagesEndRef = useRef<any>(null)
   const channelRef = useRef<any>(null)
@@ -149,6 +149,10 @@ export default function GroupePage() {
       }
       const { data: m } = await supabase.from("messages_groupe").select("*").eq("groupe_id", id).order("created_at", { ascending: true })
       setMessages(m || [])
+      if (m && m.length > 0) {
+        const { data: r } = await supabase.from("messages_groupe_reactions").select("*").in("message_id", m.map((x: any) => x.id))
+        setReactions(r || [])
+      }
       const { data: mb } = await supabase.from("membres_groupe").select("*").eq("groupe_id", id)
       setMembres(mb || [])
       if (mb && mb.length > 0) {
@@ -180,6 +184,10 @@ export default function GroupePage() {
         (payload) => setMessages(prev => prev.map(m => m.id === payload.new.id ? payload.new : m)))
       .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'messages_groupe', filter: 'groupe_id=eq.' + id },
         (payload) => setMessages(prev => prev.filter(m => m.id !== payload.old.id)))
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages_groupe_reactions' },
+        (payload) => setReactions(prev => prev.some((r: any) => r.id === payload.new.id) ? prev : [...prev, payload.new]))
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'messages_groupe_reactions' },
+        (payload) => setReactions(prev => prev.filter((r: any) => r.id !== payload.old.id)))
       .subscribe()
 
     return () => { if (channelRef.current) supabase.removeChannel(channelRef.current) }
@@ -280,6 +288,35 @@ export default function GroupePage() {
     setMessageActif(null)
   }
 
+  const EMOJIS_REACTIONS = ["👍", "❤️", "😂", "😮", "😢", "🙏"]
+
+  function reactionsDuMessage(messageId: string) {
+    const counts: Record<string, number> = {}
+    reactions.filter((r: any) => r.message_id === messageId).forEach((r: any) => { counts[r.emoji] = (counts[r.emoji] || 0) + 1 })
+    return counts
+  }
+
+  function maReaction(messageId: string) {
+    return reactions.find((r: any) => r.message_id === messageId && r.user_id === user?.id)
+  }
+
+  async function toggleReaction(messageId: string, emoji: string) {
+    if (!user) return
+    const existante = reactions.find((r: any) => r.message_id === messageId && r.user_id === user.id)
+    setPickerMsg(null)
+    if (existante && existante.emoji === emoji) {
+      await supabase.from("messages_groupe_reactions").delete().eq("id", existante.id)
+      setReactions(prev => prev.filter((r: any) => r.id !== existante.id))
+      return
+    }
+    if (existante) {
+      await supabase.from("messages_groupe_reactions").delete().eq("id", existante.id)
+      setReactions(prev => prev.filter((r: any) => r.id !== existante.id))
+    }
+    const { data } = await supabase.from("messages_groupe_reactions").insert({ message_id: messageId, user_id: user.id, emoji }).select().single()
+    if (data) setReactions(prev => [...prev, data])
+  }
+
   async function sauverEdition() {
     if (!editionTexte.trim() || !editionId) return
     await supabase.from("messages_groupe").update({ contenu: editionTexte }).eq("id", editionId)
@@ -314,15 +351,6 @@ export default function GroupePage() {
     )
   }
 
-  function toggleReaction(msgId: string, emoji: string) {
-    setReactions(prev => {
-      const msgR = prev[msgId] || {}
-      const count = msgR[emoji] || 0
-      return { ...prev, [msgId]: { ...msgR, [emoji]: count + 1 } }
-    })
-    setPickerMsg(null)
-  }
-
   return (
     <main className="h-screen bg-white flex flex-col overflow-hidden">
       <div className="bg-white border-b border-blue-50 px-5 py-4 flex items-center justify-between">
@@ -350,7 +378,7 @@ export default function GroupePage() {
               <div onClick={() => setMenuOuvert(false)} style={{position:'fixed',inset:0,zIndex:10}}></div>
               <div style={{position:'absolute',top:'44px',right:0,background:'#fff',borderRadius:'16px',boxShadow:'0 8px 30px rgba(0,0,0,0.12)',border:'0.5px solid #E8F1FF',overflow:'hidden',zIndex:20,minWidth:'200px'}}>
 
-                <a href={'/groupes/' + id + '/listes'} style={{textDecoration:'none'}}><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 16px',borderBottom:'0.5px solid #F0F4FA'}}><div style={{display:'flex',alignItems:'center',gap:'12px'}}><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='#10B981' strokeWidth='2'><line x1='8' y1='6' x2='21' y2='6'/><line x1='8' y1='12' x2='21' y2='12'/><line x1='8' y1='18' x2='21' y2='18'/><line x1='3' y1='6' x2='3.01' y2='6'/><line x1='3' y1='12' x2='3.01' y2='12'/><line x1='3' y1='18' x2='3.01' y2='18'/></svg><span style={{fontSize:'14px',color:'#1a1a2e'}}>Listes partagees</span></div><svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='#aaa' strokeWidth='2'><polyline points='9 18 15 12 9 6'/></svg></div></a><a href={'/groupes/' + id + '/depenses'} style={{textDecoration:'none'}}><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 16px',borderBottom:'0.5px solid #F0F4FA'}}><div style={{display:'flex',alignItems:'center',gap:'12px'}}><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='#2B7FFF' strokeWidth='2'><line x1='12' y1='1' x2='12' y2='23'/><path d='M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6'/></svg><span style={{fontSize:'14px',color:'#1a1a2e'}}>Dépenses partagées</span></div><svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='#aaa' strokeWidth='2'><polyline points='9 18 15 12 9 6'/></svg></div></a><a href={'/groupes/' + id + '/objectifs'} style={{textDecoration:'none'}}><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 16px',borderBottom:'0.5px solid #F0F4FA'}}><div style={{display:'flex',alignItems:'center',gap:'12px'}}><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='#D4A843' strokeWidth='2'><circle cx='12' cy='12' r='10'/><circle cx='12' cy='12' r='6'/><circle cx='12' cy='12' r='2'/></svg><span style={{fontSize:'14px',color:'#1a1a2e'}}>Objectifs de groupe</span></div><svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='#aaa' strokeWidth='2'><polyline points='9 18 15 12 9 6'/></svg></div></a><a href={'/groupes/' + id + '/sondages'} style={{textDecoration:'none'}}><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 16px',borderBottom:'0.5px solid #F0F4FA'}}><div style={{display:'flex',alignItems:'center',gap:'12px'}}><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='#F97316' strokeWidth='2'><path d='M18 20V10'/><path d='M12 20V4'/><path d='M6 20v-6'/></svg><span style={{fontSize:'14px',color:'#1a1a2e'}}>Sondages</span></div><svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='#aaa' strokeWidth='2'><polyline points='9 18 15 12 9 6'/></svg></div></a><a href={'/groupes/' + id + '/activites'} style={{textDecoration:'none'}}><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 16px',borderBottom:'0.5px solid #F0F4FA'}}><div style={{display:'flex',alignItems:'center',gap:'12px'}}><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='#8B5CF6' strokeWidth='2'><rect x='3' y='4' width='18' height='18' rx='2' ry='2'/><line x1='16' y1='2' x2='16' y2='6'/><line x1='8' y1='2' x2='8' y2='6'/><line x1='3' y1='10' x2='21' y2='10'/></svg><span style={{fontSize:'14px',color:'#1a1a2e'}}>Activites</span></div><svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='#aaa' strokeWidth='2'><polyline points='9 18 15 12 9 6'/></svg></div></a><a href={'/groupes/' + id + '/journal'} style={{textDecoration:'none'}}><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 16px',borderBottom:'0.5px solid #F0F4FA'}}><div style={{display:'flex',alignItems:'center',gap:'12px'}}><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='#0A1628' strokeWidth='2'><path d='M4 19.5A2.5 2.5 0 0 1 6.5 17H20'/><path d='M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z'/></svg><span style={{fontSize:'14px',color:'#1a1a2e'}}>Journal du groupe</span></div><svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='#aaa' strokeWidth='2'><polyline points='9 18 15 12 9 6'/></svg></div></a><a href={'/groupes/' + id + '/colocation'} style={{textDecoration:'none'}}><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 16px',borderBottom:'0.5px solid #F0F4FA'}}><div style={{display:'flex',alignItems:'center',gap:'12px'}}><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='#2B7FFF' strokeWidth='2'><path d='M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z'/></svg><span style={{fontSize:'14px',color:'#1a1a2e'}}>Mode colocation</span></div><svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='#aaa' strokeWidth='2'><polyline points='9 18 15 12 9 6'/></svg></div></a><a href={'/groupes/' + id + '/disponibilites'} style={{textDecoration:'none'}}><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 16px',borderBottom:'0.5px solid #F0F4FA'}}><div style={{display:'flex',alignItems:'center',gap:'12px'}}><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='#10B981' strokeWidth='2'><rect x='3' y='4' width='18' height='18' rx='2' ry='2'/><line x1='16' y1='2' x2='16' y2='6'/><line x1='8' y1='2' x2='8' y2='6'/><line x1='3' y1='10' x2='21' y2='10'/><path d='M9 16l2 2 4-4'/></svg><span style={{fontSize:'14px',color:'#1a1a2e'}}>Disponibilités</span></div><svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='#aaa' strokeWidth='2'><polyline points='9 18 15 12 9 6'/></svg></div></a><div onClick={genererInvitation} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 16px',cursor:'pointer'}}>
+                <a href={'/groupes/' + id + '/listes'} style={{textDecoration:'none'}}><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 16px',borderBottom:'0.5px solid #F0F4FA'}}><div style={{display:'flex',alignItems:'center',gap:'12px'}}><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='#10B981' strokeWidth='2'><line x1='8' y1='6' x2='21' y2='6'/><line x1='8' y1='12' x2='21' y2='12'/><line x1='8' y1='18' x2='21' y2='18'/><line x1='3' y1='6' x2='3.01' y2='6'/><line x1='3' y1='12' x2='3.01' y2='12'/><line x1='3' y1='18' x2='3.01' y2='18'/></svg><span style={{fontSize:'14px',color:'#1a1a2e'}}>Listes partagees</span></div><svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='#aaa' strokeWidth='2'><polyline points='9 18 15 12 9 6'/></svg></div></a><a href={'/groupes/' + id + '/depenses'} style={{textDecoration:'none'}}><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 16px',borderBottom:'0.5px solid #F0F4FA'}}><div style={{display:'flex',alignItems:'center',gap:'12px'}}><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='#2B7FFF' strokeWidth='2'><line x1='12' y1='1' x2='12' y2='23'/><path d='M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6'/></svg><span style={{fontSize:'14px',color:'#1a1a2e'}}>Dépenses partagées</span></div><svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='#aaa' strokeWidth='2'><polyline points='9 18 15 12 9 6'/></svg></div></a><a href={'/groupes/' + id + '/objectifs'} style={{textDecoration:'none'}}><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 16px',borderBottom:'0.5px solid #F0F4FA'}}><div style={{display:'flex',alignItems:'center',gap:'12px'}}><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='#D4A843' strokeWidth='2'><circle cx='12' cy='12' r='10'/><circle cx='12' cy='12' r='6'/><circle cx='12' cy='12' r='2'/></svg><span style={{fontSize:'14px',color:'#1a1a2e'}}>Objectifs de groupe</span></div><svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='#aaa' strokeWidth='2'><polyline points='9 18 15 12 9 6'/></svg></div></a><a href={'/groupes/' + id + '/sondages'} style={{textDecoration:'none'}}><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 16px',borderBottom:'0.5px solid #F0F4FA'}}><div style={{display:'flex',alignItems:'center',gap:'12px'}}><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='#F97316' strokeWidth='2'><path d='M18 20V10'/><path d='M12 20V4'/><path d='M6 20v-6'/></svg><span style={{fontSize:'14px',color:'#1a1a2e'}}>Sondages</span></div><svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='#aaa' strokeWidth='2'><polyline points='9 18 15 12 9 6'/></svg></div></a><a href={'/groupes/' + id + '/activites'} style={{textDecoration:'none'}}><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 16px',borderBottom:'0.5px solid #F0F4FA'}}><div style={{display:'flex',alignItems:'center',gap:'12px'}}><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='#8B5CF6' strokeWidth='2'><rect x='3' y='4' width='18' height='18' rx='2' ry='2'/><line x1='16' y1='2' x2='16' y2='6'/><line x1='8' y1='2' x2='8' y2='6'/><line x1='3' y1='10' x2='21' y2='10'/></svg><span style={{fontSize:'14px',color:'#1a1a2e'}}>Activites</span></div><svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='#aaa' strokeWidth='2'><polyline points='9 18 15 12 9 6'/></svg></div></a><a href={'/groupes/' + id + '/journal'} style={{textDecoration:'none'}}><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 16px',borderBottom:'0.5px solid #F0F4FA'}}><div style={{display:'flex',alignItems:'center',gap:'12px'}}><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='#0A1628' strokeWidth='2'><path d='M4 19.5A2.5 2.5 0 0 1 6.5 17H20'/><path d='M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z'/></svg><span style={{fontSize:'14px',color:'#1a1a2e'}}>Journal du groupe</span></div><svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='#aaa' strokeWidth='2'><polyline points='9 18 15 12 9 6'/></svg></div></a><a href={'/groupes/' + id + '/colocation'} style={{textDecoration:'none'}}><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 16px',borderBottom:'0.5px solid #F0F4FA'}}><div style={{display:'flex',alignItems:'center',gap:'12px'}}><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='#2B7FFF' strokeWidth='2'><path d='M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z'/></svg><span style={{fontSize:'14px',color:'#1a1a2e'}}>Mode colocation</span></div><svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='#aaa' strokeWidth='2'><polyline points='9 18 15 12 9 6'/></svg></div></a><a href={'/groupes/' + id + '/taches'} style={{textDecoration:'none'}}><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 16px',borderBottom:'0.5px solid #F0F4FA'}}><div style={{display:'flex',alignItems:'center',gap:'12px'}}><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='#8B5CF6' strokeWidth='2'><line x1='3' y1='6' x2='21' y2='6'/><line x1='3' y1='12' x2='21' y2='12'/><line x1='3' y1='18' x2='21' y2='18'/></svg><span style={{fontSize:'14px',color:'#1a1a2e'}}>Tâches ménagères</span></div><svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='#aaa' strokeWidth='2'><polyline points='9 18 15 12 9 6'/></svg></div></a><a href={'/groupes/' + id + '/disponibilites'} style={{textDecoration:'none'}}><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 16px',borderBottom:'0.5px solid #F0F4FA'}}><div style={{display:'flex',alignItems:'center',gap:'12px'}}><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='#10B981' strokeWidth='2'><rect x='3' y='4' width='18' height='18' rx='2' ry='2'/><line x1='16' y1='2' x2='16' y2='6'/><line x1='8' y1='2' x2='8' y2='6'/><line x1='3' y1='10' x2='21' y2='10'/><path d='M9 16l2 2 4-4'/></svg><span style={{fontSize:'14px',color:'#1a1a2e'}}>Disponibilités</span></div><svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='#aaa' strokeWidth='2'><polyline points='9 18 15 12 9 6'/></svg></div></a><div onClick={genererInvitation} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 16px',cursor:'pointer'}}>
                   <div style={{display:'flex',alignItems:'center',gap:'12px'}}>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
                     <span style={{fontSize:'14px',color:'#1a1a2e'}}>Inviter un membre</span>
@@ -523,11 +551,21 @@ export default function GroupePage() {
                         </div>
                       </div>
                     ) : (
-                      <div onTouchStart={() => estMoi && setMessageActif(messageActif === m.id ? null : m.id)}
-                        onClick={() => estMoi && setMessageActif(messageActif === m.id ? null : m.id)}
+                      <div onTouchStart={() => setMessageActif(messageActif === m.id ? null : m.id)}
+                        onClick={() => setMessageActif(messageActif === m.id ? null : m.id)}
                         className={`px-4 py-2 text-sm ${estMoi ? "bg-blue-500 text-white" : "bg-gray-100 text-gray-900"}`}
-                        style={{cursor: estMoi ? 'pointer' : 'default', borderRadius:'18px'}}>
+                        style={{cursor: 'pointer', borderRadius:'18px'}}>
                         {m.contenu} {m.modifie && <span style={{fontSize:'10px',opacity:0.6}}>(modifié)</span>}
+                      </div>
+                    )}
+                    {Object.keys(reactionsDuMessage(m.id)).length > 0 && (
+                      <div style={{display:'flex',gap:'4px',marginTop:'4px',flexWrap:'wrap',justifyContent: estMoi ? 'flex-end' : 'flex-start'}}>
+                        {Object.entries(reactionsDuMessage(m.id)).map(([emoji, count]) => (
+                          <button key={emoji} onClick={() => toggleReaction(m.id, emoji)}
+                            style={{display:'flex',alignItems:'center',gap:'3px',fontSize:'11px',background: maReaction(m.id)?.emoji === emoji ? '#EEF5FF' : '#F5F7FA',border: maReaction(m.id)?.emoji === emoji ? '1px solid #2B7FFF' : '1px solid transparent',borderRadius:'99px',padding:'2px 7px',cursor:'pointer'}}>
+                            {emoji} {count}
+                          </button>
+                        ))}
                       </div>
                     )}
                     {!enEdition && !memeGroupeApres && (
@@ -535,16 +573,31 @@ export default function GroupePage() {
                         {(() => { const d = new Date(m.created_at); d.setHours(d.getHours() + 2); return d.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'}) })()}
                       </div>
                     )}
+                    {pickerMsg === m.id && (
+                      <div style={{display:'flex',gap:'6px',marginTop:'6px',background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'99px',padding:'6px 10px',boxShadow:'0 4px 16px rgba(0,0,0,0.1)',justifyContent: estMoi ? 'flex-end' : 'flex-start'}}>
+                        {EMOJIS_REACTIONS.map(e => (
+                          <button key={e} onClick={() => toggleReaction(m.id, e)} style={{background:'none',border:'none',fontSize:'18px',cursor:'pointer',lineHeight:1}}>{e}</button>
+                        ))}
+                      </div>
+                    )}
                     {messageActif === m.id && !enEdition && (
                       <div style={{display:'flex',gap:'8px',marginTop:'6px',justifyContent: estMoi ? 'flex-end' : 'flex-start'}}>
+                        <button onClick={() => setPickerMsg(pickerMsg === m.id ? null : m.id)}
+                          style={{fontSize:'11px',background:'#F8FBFF',color:'#2B7FFF',border:'1px solid #E8F1FF',borderRadius:'99px',padding:'4px 10px',cursor:'pointer'}}>
+                          😀 Réagir
+                        </button>
+                        {estMoi && (
                         <button onClick={() => { setEditionId(m.id); setEditionTexte(m.contenu); setMessageActif(null) }}
                           style={{fontSize:'11px',background:'#F8FBFF',color:'#2B7FFF',border:'1px solid #E8F1FF',borderRadius:'99px',padding:'4px 10px',cursor:'pointer'}}>
                           <span style={{display:"flex",alignItems:"center",gap:"4px"}}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Modifier</span>
                         </button>
+                        )}
+                        {estMoi && (
                         <button onClick={() => supprimerMessage(m.id)}
                           style={{fontSize:'11px',background:'#FFF5F5',color:'#F43F5E',border:'1px solid #FECDD3',borderRadius:'99px',padding:'4px 10px',cursor:'pointer'}}>
                           <span style={{display:"flex",alignItems:"center",gap:"4px"}}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>Supprimer</span>
                         </button>
+                        )}
                       </div>
                     )}
                   </div>

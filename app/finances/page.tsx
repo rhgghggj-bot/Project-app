@@ -4,6 +4,7 @@ import Tutorial from "../components/Tutorial"
 import PlacementsSection from "../components/PlacementsSection"
 import FiscaliteSection from "../components/FiscaliteSection"
 import ObjectifsEpargneSection from "../components/ObjectifsEpargneSection"
+import BudgetsCategoriesSection from "../components/BudgetsCategoriesSection"
 import { useEffect, useState, useRef, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
@@ -600,6 +601,7 @@ function FinancesContent() {
 
       {onglet === "charges" && (
         <div style={{padding:'16px 18px'}}>
+          <BudgetsCategoriesSection />
           <div style={{fontSize:'11px',color:'#aaa',fontWeight:'500',marginBottom:'10px'}}>Charges fixes mensuelles</div>
           {depenses.filter(d => d.recurrent).length === 0 && revenus.filter(r => r.recurrent).length === 0 && (
             <div style={{textAlign:'center',padding:'32px 0',color:'#aaa'}}>
