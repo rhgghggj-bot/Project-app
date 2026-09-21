@@ -48,6 +48,7 @@ function FinancesContent() {
   const [categorie, setCategorie] = useState("")
   const [date, setDate] = useState(new Date().toISOString().split("T")[0])
   const [recurrent, setRecurrent] = useState(false)
+  const [jourDuMois, setJourDuMois] = useState("")
   const [moisSelectionne, setMoisSelectionne] = useState<any>(null)
   const chartRef = useRef<HTMLDivElement>(null)
   const [chartW, setChartW] = useState(300)
@@ -127,11 +128,12 @@ function FinancesContent() {
   async function ajouter() {
     if (!titre || !montant) { haptic("error"); return }
     const table = typeForm === "depense" ? "depenses" : "revenus"
+    const champJour = typeForm === "depense" && recurrent && jourDuMois ? { jour_du_mois: parseInt(jourDuMois, 10) } : {}
     const { error } = await supabase.from(table).insert({
-      user_id: user.id, titre, montant: parseFloat(montant), categorie, date, recurrent
+      user_id: user.id, titre, montant: parseFloat(montant), categorie, date, recurrent, ...champJour
     })
     if (!error) { haptic("success");
-      setTitre(""); setMontant(""); setCategorie(""); setRecurrent(false); setShowForm(false)
+      setTitre(""); setMontant(""); setCategorie(""); setRecurrent(false); setJourDuMois(""); setShowForm(false)
       const { data: d } = await supabase.from("depenses").select("*").eq("user_id", user.id).order("date", { ascending: false })
       setDepenses(d || [])
       const { data: r } = await supabase.from("revenus").select("*").eq("user_id", user.id).order("date", { ascending: false })
@@ -787,10 +789,17 @@ function FinancesContent() {
                 ))}
               </div>
             </div>
-            <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'14px'}}>
+            <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom: recurrent && typeForm === 'depense' ? '10px' : '14px'}}>
               <input type="checkbox" checked={recurrent} onChange={e => setRecurrent(e.target.checked)} id="rec"/>
               <label htmlFor="rec" style={{fontSize:'13px',color:'#666'}}>Récurrent (mensuel)</label>
             </div>
+            {recurrent && typeForm === 'depense' && (
+              <div style={{marginBottom:'14px'}}>
+                <div style={{fontSize:'11px',color:'#aaa',marginBottom:'4px'}}>Jour du mois (pour te le rappeler 3 jours avant)</div>
+                <input type="number" min="1" max="31" value={jourDuMois} onChange={e => setJourDuMois(e.target.value)} placeholder="Ex: 1 pour le 1er du mois"
+                  style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'8px 12px',fontSize:'16px',color:'#1a1a2e',background:'#F8FBFF',boxSizing:'border-box'}}/>
+              </div>
+            )}
             <button onClick={ajouter}
               style={{width:'100%',background: typeForm === "depense" ? '#F43F5E' : '#10B981',color:'#fff',fontSize:'14px',fontWeight:'600',padding:'13px',borderRadius:'12px',border:'none',cursor:'pointer'}}>
               Enregistrer
