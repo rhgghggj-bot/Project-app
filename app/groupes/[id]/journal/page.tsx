@@ -20,6 +20,14 @@ export default function JournalGroupePage() {
   useEffect(() => { charger() }, [])
 
   async function charger() {
+    try {
+      await chargerJournal()
+    } finally {
+      setChargement(false)
+    }
+  }
+
+  async function chargerJournal() {
     const { data: mb } = await supabase.from("membres_groupe").select("user_id").eq("groupe_id", id)
     const { data: profs } = await supabase.from("profiles").select("id,nom").in("id", (mb || []).map((m: any) => m.user_id))
     const profils: Record<string, string> = {}
@@ -69,7 +77,6 @@ export default function JournalGroupePage() {
     ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 
     setEvenements(tous)
-    setChargement(false)
   }
 
   return (
