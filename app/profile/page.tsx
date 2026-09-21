@@ -193,7 +193,19 @@ export default function Profile() {
         </div>
 
         {onglet === "badges" && (
-          <BadgesSection />
+          <div>
+            <a href="/bilan-annuel" style={{textDecoration:'none',display:'block',marginBottom:'14px'}}>
+              <div style={{background:'linear-gradient(135deg,#1a3a6e,#2B7FFF)',borderRadius:'14px',padding:'14px',display:'flex',alignItems:'center',gap:'12px'}}>
+                <div style={{fontSize:'24px'}}>✨</div>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:'13px',fontWeight:'500',color:'#fff'}}>Voir mon bilan {new Date().getFullYear()}</div>
+                  <div style={{fontSize:'11px',color:'rgba(255,255,255,0.6)'}}>Ton année sur Nexia, en un coup d'œil</div>
+                </div>
+                <span style={{color:'rgba(255,255,255,0.5)'}}>›</span>
+              </div>
+            </a>
+            <BadgesSection />
+          </div>
         )}
 
         {onglet === "projets" && (
