@@ -1,4 +1,5 @@
 "use client"
+import { Annonce, ArticlePortfolio, CommentaireAnnonce, LienAnnonce, Profil, User } from "@/lib/types"
 import Image from "next/image"
 import Link from "next/link"
 import { toast } from "@/lib/toast"
@@ -25,9 +26,9 @@ function IconeCat({ cat, size = 14 }: { cat: string; size?: number }) {
 
 export default function Marketplace() {
   const [onglet, setOnglet] = useState("portfolio")
-  const [user, setUser] = useState<any>(null)
-  const [articles, setArticles] = useState<any[]>([])
-  const [annonces, setAnnonces] = useState<any[]>([])
+  const [user, setUser] = useState<User | null>(null)
+  const [articles, setArticles] = useState<ArticlePortfolio[]>([])
+  const [annonces, setAnnonces] = useState<Annonce[]>([])
   const [modeShopping, setModeShopping] = useState(false)
   const [filtre, setFiltre] = useState("Tout")
   const { format } = useDeviseConversion()
@@ -46,18 +47,18 @@ export default function Marketplace() {
   const [descAnnonce, setDescAnnonce] = useState("")
   const [prixAnnonce, setPrixAnnonce] = useState("")
   const [catAnnonce, setCatAnnonce] = useState("Autre")
-  const [annonceOuverte, setAnnonceOuverte] = useState<any>(null)
+  const [annonceOuverte, setAnnonceOuverte] = useState<Annonce | null>(null)
   useEscape(!!annonceOuverte, () => setAnnonceOuverte(null))
-  const [profilsVendeurs, setProfilsVendeurs] = useState<any>({})
+  const [profilsVendeurs, setProfilsVendeurs] = useState<Record<string, string>>({})
   const [animCoeurs, setAnimCoeurs] = useState<Record<string, { id: number; x: number; delay: number; size: number; rot: number; couleur: string }[]>>({})
   const [menuOuvertId, setMenuOuvertId] = useState<string | null>(null)
   const [confirmSupprId, setConfirmSupprId] = useState<string | null>(null)
   useEscape(!!confirmSupprId, () => setConfirmSupprId(null))
-  const [favoris, setFavoris] = useState<any[]>([])
+  const [favoris, setFavoris] = useState<LienAnnonce[]>([])
   const [signales, setSignales] = useState<string[]>([])
-  const [likes, setLikes] = useState<any[]>([])
-  const [commentaires, setCommentaires] = useState<any[]>([])
-  const [profilsCommentaires, setProfilsCommentaires] = useState<any>({})
+  const [likes, setLikes] = useState<LienAnnonce[]>([])
+  const [commentaires, setCommentaires] = useState<CommentaireAnnonce[]>([])
+  const [profilsCommentaires, setProfilsCommentaires] = useState<Record<string, string>>({})
   const [nouveauCommentaire, setNouveauCommentaire] = useState("")
 
   useEffect(() => {
@@ -88,7 +89,7 @@ export default function Marketplace() {
     setMenuOuvertId(null)
   }
 
-  async function contacterVendeur(annonce: any) {
+  async function contacterVendeur(annonce: Annonce) {
     if (!user) { window.location.assign("/connexion"); return }
     if (annonce.user_id === user.id) return
     const idConv = await ouvrirConversationPrivee(supabase, user.id, annonce.user_id)
@@ -114,10 +115,10 @@ export default function Marketplace() {
     const { data } = await supabase.from("marketplace_commentaires").select("*").order("created_at", { ascending: true })
     setCommentaires(data || [])
     if (data && data.length > 0) {
-      const ids = Array.from(new Set(data.map((c: any) => c.user_id)))
+      const ids = Array.from(new Set((data as CommentaireAnnonce[]).map(c => c.user_id)))
       const { data: profs } = await supabase.from("profiles").select("id,nom").in("id", ids)
-      const map: any = {}
-      profs?.forEach((p: any) => { map[p.id] = p.nom || "Membre" })
+      const map: Record<string, string> = {}
+      ;(profs as Pick<Profil, "id" | "nom">[] | null)?.forEach(p => { map[p.id] = p.nom || "Membre" })
       setProfilsCommentaires(map)
     }
   }
@@ -141,7 +142,7 @@ export default function Marketplace() {
     }).select().single()
     if (!error && data) {
       setCommentaires(prev => [...prev, data])
-      setProfilsCommentaires((prev: any) => ({ ...prev, [user.id]: prev[user.id] || "Toi" }))
+      setProfilsCommentaires(prev => ({ ...prev, [user.id]: prev[user.id] || "Toi" }))
       setNouveauCommentaire("")
     }
   }
@@ -160,19 +161,19 @@ export default function Marketplace() {
     const { data } = await supabase.from("marketplace_annonces").select("*").neq("statut", "vendu").order("created_at", { ascending: false })
     setAnnonces(data || [])
     if (data && data.length > 0) {
-      const ids = Array.from(new Set(data.map((a: any) => a.user_id)))
+      const ids = Array.from(new Set((data as Annonce[]).map(a => a.user_id)))
       const { data: profs } = await supabase.from("profiles").select("id,nom").in("id", ids)
-      const map: any = {}
-      profs?.forEach((p: any) => { map[p.id] = p.nom || "Membre" })
+      const map: Record<string, string> = {}
+      ;(profs as Pick<Profil, "id" | "nom">[] | null)?.forEach(p => { map[p.id] = p.nom || "Membre" })
       setProfilsVendeurs(map)
     }
   }
 
   const ROUGES = ['#F43F5E', '#FF6B81', '#FB7185', '#E11D48', '#DC2626', '#FF8FA3', '#BE123C']
   const dernierTapRef = useRef<{ id: string; heure: number }>({ id: "", heure: 0 })
-  const tapTimeoutRef = useRef<any>(null)
+  const tapTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  function onTapImage(a: any) {
+  function onTapImage(a: Annonce) {
     const maintenant = Date.now()
     if (dernierTapRef.current.id === a.id && maintenant - dernierTapRef.current.heure < 300) {
       if (tapTimeoutRef.current) { clearTimeout(tapTimeoutRef.current); tapTimeoutRef.current = null }
@@ -208,13 +209,13 @@ export default function Marketplace() {
     setNom(""); setPrix(""); setQuantite(1); setShowForm(false); chargerArticles()
   }
 
-  async function changerQte(art: any, delta: number) {
+  async function changerQte(art: ArticlePortfolio, delta: number) {
     const newQ = Math.max(0, art.quantite + delta)
     await supabase.from("portfolio_articles").update({ quantite: newQ }).eq("id", art.id)
     setArticles(articles.map(a => a.id === art.id ? { ...a, quantite: newQ } : a))
   }
 
-  async function cocherShopping(art: any) {
+  async function cocherShopping(art: ArticlePortfolio) {
     const newC = !art.coche_shopping
     await supabase.from("portfolio_articles").update({ coche_shopping: newC }).eq("id", art.id)
     setArticles(articles.map(a => a.id === art.id ? { ...a, coche_shopping: newC } : a))
@@ -255,14 +256,14 @@ export default function Marketplace() {
     chargerAnnonces()
   }
 
-  const total = articles.reduce((sum, a) => sum + (parseFloat(a.prix || 0) * a.quantite), 0)
+  const total = articles.reduce((sum, a) => sum + (Number(a.prix || 0) * a.quantite), 0)
   const annoncesFiltrees = annonces
     .filter(a => filtre === "Tout" || a.categorie === filtre)
     .filter(a => !recherche.trim() || a.titre?.toLowerCase().includes(recherche.trim().toLowerCase()) || a.description?.toLowerCase().includes(recherche.trim().toLowerCase()))
-    .filter(a => !prixMax || parseFloat(a.prix) <= parseFloat(prixMax))
-  const inp: any = { width:"100%", border:"1px solid #E8F1FF", borderRadius:"10px", padding:"10px 12px", fontSize:"16px", color:"#1a1a2e", background:"#fff", marginBottom:"8px", boxSizing:"border-box" }
+    .filter(a => !prixMax || Number(a.prix) <= parseFloat(prixMax))
+  const inp: React.CSSProperties = { width:"100%", border:"1px solid #E8F1FF", borderRadius:"10px", padding:"10px 12px", fontSize:"16px", color:"#1a1a2e", background:"#fff", marginBottom:"8px", boxSizing:"border-box" }
 
-  function renderPost(a: any) {
+  function renderPost(a: Annonce) {
               const nbLikes = likes.filter(l => l.annonce_id === a.id).length
               const jaime = likes.some(l => l.annonce_id === a.id && l.user_id === user?.id)
               const vendeur = profilsVendeurs[a.user_id] || "Membre"
@@ -344,7 +345,7 @@ export default function Marketplace() {
                   <button onClick={() => setAnnonceOuverte(a)} style={{background:"none",border:"none",padding:0,cursor:"pointer",display:"flex"}}>
                     <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#1a1a2e" strokeWidth="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                   </button>
-                  <div style={{marginLeft:"auto",fontSize:"16px",fontWeight:"700",color:"#2B7FFF"}}>{format(parseFloat(a.prix))}</div>
+                  <div style={{marginLeft:"auto",fontSize:"16px",fontWeight:"700",color:"#2B7FFF"}}>{format(Number(a.prix))}</div>
                 </div>
 
                 {nbLikes > 0 && (
@@ -428,7 +429,7 @@ export default function Marketplace() {
                     <span style={{fontSize:"13px",fontWeight:"500",color:"#1a1a2e",textDecoration:modeShopping&&art.coche_shopping?"line-through":"none",opacity:modeShopping&&art.coche_shopping?0.6:1}}>{art.nom}</span>
                     <span style={{fontSize:"10px",padding:"2px 6px 2px 4px",borderRadius:"99px",background:"#EEF5FF",color:"#2B7FFF",fontWeight:"500",display:"inline-flex",alignItems:"center",gap:"3px"}}><IconeCat cat={art.categorie} size={9}/>{art.categorie}</span>
                   </div>
-                  {art.prix > 0 && <div style={{fontSize:"11px",color:"#2B7FFF",fontWeight:"500"}}>{parseFloat(art.prix).toFixed(2)} CHF × {art.quantite} = {(parseFloat(art.prix)*art.quantite).toFixed(2)} CHF</div>}
+                  {art.prix > 0 && <div style={{fontSize:"11px",color:"#2B7FFF",fontWeight:"500"}}>{Number(art.prix).toFixed(2)} CHF × {art.quantite} = {(Number(art.prix)*art.quantite).toFixed(2)} CHF</div>}
                 </div>
                 {!modeShopping && (
                   <div style={{display:"flex",alignItems:"center",gap:"6px"}}>
@@ -474,7 +475,7 @@ export default function Marketplace() {
           {showFormAnnonce && (
             <div style={{background:"#EEF5FF",borderRadius:"14px",padding:"14px",marginBottom:"14px",border:"0.5px solid #DCE9FF"}}>
               <input aria-label="Titre de l'annonce" value={titreAnnonce} onChange={e => setTitreAnnonce(e.target.value)} placeholder="Titre de l'annonce" style={inp}/>
-              <textarea aria-label="Description" value={descAnnonce} onChange={e => setDescAnnonce(e.target.value)} placeholder="Description…" style={{...inp,height:"60px",resize:"none"} as any}/>
+              <textarea aria-label="Description" value={descAnnonce} onChange={e => setDescAnnonce(e.target.value)} placeholder="Description…" style={{...inp,height:"60px",resize:"none"}}/>
               <div style={{marginBottom:"8px"}}>
                 <label style={{fontSize:"12px",color:"#666",display:"block",marginBottom:"6px"}}>Photo</label>
                 <label style={{display:"block",background:"#fff",border:"1px dashed #2B7FFF",borderRadius:"10px",padding:"16px",textAlign:"center",cursor:"pointer",color:"#2B7FFF",fontSize:"13px",fontWeight:"500"}}>
@@ -486,7 +487,7 @@ export default function Marketplace() {
                 </label>
                 {imagePreview && <Image unoptimized width={800} height={600} src={imagePreview} alt="preview" style={{width:"100%",height:"140px",objectFit:"cover",borderRadius:"10px",marginTop:"8px"}} />}
               </div>
-              <select aria-label="État" value={etatAnnonce} onChange={e => setEtatAnnonce(e.target.value)} style={{...inp} as any}>
+              <select aria-label="État" value={etatAnnonce} onChange={e => setEtatAnnonce(e.target.value)} style={{...inp}}>
                 <option>Neuf</option>
                 <option>Bon état</option>
                 <option>État correct</option>
@@ -567,7 +568,7 @@ export default function Marketplace() {
                 <div style={{padding:"18px"}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:"6px"}}>
                     <div style={{fontSize:"18px",fontWeight:"600",color:"#1a1a2e",flex:1}}>{annonceOuverte.titre}</div>
-                    <div style={{fontSize:"20px",fontWeight:"700",color:"#2B7FFF",whiteSpace:"nowrap",marginLeft:"10px"}}>{format(parseFloat(annonceOuverte.prix))}</div>
+                    <div style={{fontSize:"20px",fontWeight:"700",color:"#2B7FFF",whiteSpace:"nowrap",marginLeft:"10px"}}>{format(Number(annonceOuverte.prix))}</div>
                   </div>
                   <div style={{fontSize:"11px",color:"#aaa",marginBottom:"14px"}}>{annonceOuverte.categorie}</div>
 

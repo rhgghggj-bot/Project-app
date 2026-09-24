@@ -1,4 +1,6 @@
 "use client"
+import type { RealtimeChannel } from "@supabase/supabase-js"
+import { Annonce, Groupe, Liste, MembreGroupe, MessageGroupe, Profil, Projet, User } from "@/lib/types"
 import Image from "next/image"
 import { useMaintenant } from "@/lib/useMaintenant"
 import { SkeletonChat } from "@/app/components/ui/Skeleton"
@@ -42,8 +44,8 @@ function GlisserConfirmer({ label, couleur, onConfirm }: { label: string; couleu
       posRef.current = pct
       setPos(pct)
     }
-    function onMove(e: any) {
-      const clientX = e.touches ? e.touches[0].clientX : e.clientX
+    function onMove(e: MouseEvent | TouchEvent) {
+      const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
       calc(clientX)
     }
     function onUp() {
@@ -109,20 +111,20 @@ function GlisserConfirmer({ label, couleur, onConfirm }: { label: string; couleu
 
 export default function GroupePage() {
   const { id } = useParams()
-  const [groupe, setGroupe] = useState<any>(null)
-  const [autreProfilDM, setAutreProfilDM] = useState<any>(null)
-  const [annonceLiee, setAnnonceLiee] = useState<any>(null)
+  const [groupe, setGroupe] = useState<Groupe | null>(null)
+  const [autreProfilDM, setAutreProfilDM] = useState<Profil | null>(null)
+  const [annonceLiee, setAnnonceLiee] = useState<Annonce | null>(null)
   const [montrerAvis, setMontrerAvis] = useState(false)
   const [noteAvis, setNoteAvis] = useState(0)
   const [commentaireAvis, setCommentaireAvis] = useState("")
-  const [messages, setMessages] = useState<any[]>([])
-  const [projets, setProjets] = useState<any[]>([])
-  const [membres, setMembres] = useState<any[]>([])
-  const [profils, setProfils] = useState<any>({})
-  const [user, setUser] = useState<any>(null)
+  const [messages, setMessages] = useState<MessageGroupe[]>([])
+  const [projets, setProjets] = useState<Projet[]>([])
+  const [membres, setMembres] = useState<MembreGroupe[]>([])
+  const [profils, setProfils] = useState<Record<string, Profil>>({})
+  const [user, setUser] = useState<User | null>(null)
   const [contenu, setContenu] = useState("")
   const [onglet, setOnglet] = useState("discussion")
-  const [listes, setListes] = useState<any[]>([])
+  const [listes, setListes] = useState<Liste[]>([])
   const [estMembre, setEstMembre] = useState(false)
   const [paiementEnCours, setPaiementEnCours] = useState(false)
   const [lienInvitation, setLienInvitation] = useState("")
@@ -130,11 +132,11 @@ export default function GroupePage() {
   const [menuOuvert, setMenuOuvert] = useState(false)
   const maintenant = useMaintenant()
   useEscape(!!menuOuvert, () => setMenuOuvert(false))
-  const [messageActif, setMessageActif] = useState<any>(null)
+  const [messageActif, setMessageActif] = useState<string | null>(null)
   const [editionId, setEditionId] = useState<string|null>(null)
   const [editionTexte, setEditionTexte] = useState("")
-  const messagesEndRef = useRef<any>(null)
-  const channelRef = useRef<any>(null)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const channelRef = useRef<RealtimeChannel | null>(null)
 
   useEffect(() => {
     async function charger() {
@@ -159,19 +161,19 @@ export default function GroupePage() {
       setMembres(mb || [])
       setProjets(p || [])
       setListes(lst || [])
-      if (user) setEstMembre(!!mb?.find((x: any) => x.user_id === user.id))
+      if (user) setEstMembre(!!(mb as MembreGroupe[] | null)?.find(x => x.user_id === user.id))
 
-      const ids = (mb || []).map((x: any) => x.user_id)
+      const ids = ((mb || []) as MembreGroupe[]).map(x => x.user_id)
       const [{ data: profs }, { data: ann }] = await Promise.all([
-        ids.length > 0 ? supabase.from("profiles").select("id,nom,avatar_url").in("id", ids) : Promise.resolve({ data: [] as any[] }),
+        ids.length > 0 ? supabase.from("profiles").select("id,nom,avatar_url").in("id", ids) : Promise.resolve({ data: [] as Profil[] }),
         g?.annonce_id ? supabase.from("marketplace_annonces").select("*").eq("id", g.annonce_id).single() : Promise.resolve({ data: null }),
       ])
-      const profilsMap: any = {}
-      profs?.forEach((pr: any) => { profilsMap[pr.id] = pr })
+      const profilsMap: Record<string, Profil> = {}
+      ;(profs as Profil[] | null)?.forEach(pr => { profilsMap[pr.id] = pr })
       setProfils(profilsMap)
       if (ann) setAnnonceLiee(ann)
       if (g?.est_dm && user) {
-        const autre = (mb || []).find((x: any) => x.user_id !== user.id)
+        const autre = ((mb || []) as MembreGroupe[]).find(x => x.user_id !== user.id)
         if (autre) setAutreProfilDM(profilsMap[autre.user_id] || null)
       }
       setGroupe(g)
@@ -179,15 +181,15 @@ export default function GroupePage() {
     charger()
 
     const nomCanal = 'messages-' + id
-    supabase.getChannels().filter((ch: any) => ch.topic?.includes(nomCanal)).forEach((ch: any) => supabase.removeChannel(ch))
+    supabase.getChannels().filter(ch => ch.topic?.includes(nomCanal)).forEach(ch => supabase.removeChannel(ch))
 
     channelRef.current = supabase
       .channel(nomCanal)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages_groupe', filter: 'groupe_id=eq.' + id },
+      .on<MessageGroupe>('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages_groupe', filter: 'groupe_id=eq.' + id },
         (payload) => setMessages(prev => prev.some(m => m.id === payload.new.id) ? prev : [...prev, payload.new]))
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages_groupe', filter: 'groupe_id=eq.' + id },
+      .on<MessageGroupe>('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages_groupe', filter: 'groupe_id=eq.' + id },
         (payload) => setMessages(prev => prev.map(m => m.id === payload.new.id ? payload.new : m)))
-      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'messages_groupe', filter: 'groupe_id=eq.' + id },
+      .on<MessageGroupe>('postgres_changes', { event: 'DELETE', schema: 'public', table: 'messages_groupe', filter: 'groupe_id=eq.' + id },
         (payload) => setMessages(prev => prev.filter(m => m.id !== payload.old.id)))
       .subscribe()
 
@@ -201,11 +203,11 @@ export default function GroupePage() {
   useEffect(() => {
     if (!groupe?.annonce_id) return
     const nomCanalAnnonce = 'annonce-liee-' + groupe.annonce_id
-    supabase.getChannels().filter((ch: any) => ch.topic?.includes(nomCanalAnnonce)).forEach((ch: any) => supabase.removeChannel(ch))
+    supabase.getChannels().filter(ch => ch.topic?.includes(nomCanalAnnonce)).forEach(ch => supabase.removeChannel(ch))
     const canalAnnonce = supabase
       .channel(nomCanalAnnonce)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'marketplace_annonces', filter: 'id=eq.' + groupe.annonce_id },
-        (payload: any) => setAnnonceLiee(payload.new))
+        (payload: { new: Annonce }) => setAnnonceLiee(payload.new))
       .subscribe()
     return () => { supabase.removeChannel(canalAnnonce) }
   }, [groupe?.annonce_id])
@@ -233,7 +235,7 @@ export default function GroupePage() {
     })
     const data = await res.json()
     if (!data.success) { toast(data.error || "Le paiement n'a pas pu être libéré. Réessaie dans un instant.", "error"); return }
-    setAnnonceLiee((prev: any) => ({ ...prev, statut: "vendu" }))
+    setAnnonceLiee(prev => prev && ({ ...prev, statut: "vendu" }))
     await supabase.from("messages_groupe").insert({ groupe_id: id, user_id: user.id, contenu: `✅ Réception confirmée pour "${annonceLiee.titre}" — paiement transféré au vendeur, reçus ajoutés dans les Finances de chacun.` })
     setMontrerAvis(true)
   }
@@ -270,7 +272,7 @@ export default function GroupePage() {
     if (!error && data) {
       setMessages(prev => prev.some(m => m.id === data.id) ? prev : [...prev, data])
       // Notifier les autres membres
-      const autresMembers = membres.filter((m: any) => m.user_id !== user.id)
+      const autresMembers = membres.filter(m => m.user_id !== user.id)
       const nomExp = profils[user.id]?.nom || user.email?.split('@')[0] || 'Quelquun'
       for (const membre of autresMembers) {
         await supabase.from("notifications").insert({
@@ -374,7 +376,7 @@ export default function GroupePage() {
             </div>
             <div style={{flex:1, minWidth:0}}>
               <div style={{fontSize:'13px', fontWeight:'600', color:'#1a1a2e', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{annonceLiee.titre}</div>
-              <div style={{fontSize:'13px', fontWeight:'700', color:'#2B7FFF'}}>{parseFloat(annonceLiee.prix).toFixed(0)} CHF</div>
+              <div style={{fontSize:'13px', fontWeight:'700', color:'#2B7FFF'}}>{Number(annonceLiee.prix).toFixed(0)} CHF</div>
             </div>
             <span style={{fontSize:'10px', fontWeight:'600', padding:'4px 10px', borderRadius:'99px', flexShrink:0,
               background: annonceLiee.statut === 'vendu' ? '#E1F5EE' : annonceLiee.statut === 'réservé' ? '#FDF8EC' : '#EEF5FF',
@@ -387,7 +389,7 @@ export default function GroupePage() {
             <button onClick={payerAnnonce} disabled={paiementEnCours}
               style={{width:'100%',display:'flex',alignItems:'center',justifyContent:'center',gap:'8px',background:'#1a1a2e',color:'#fff',border:'none',borderRadius:'14px',padding:'14px',fontSize:'14px',fontWeight:'700',cursor: paiementEnCours ? 'default' : 'pointer',opacity: paiementEnCours ? 0.6 : 1}}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-              {paiementEnCours ? 'Redirection…' : `Payer ${parseFloat(annonceLiee.prix).toFixed(0)} CHF en sécurité`}
+              {paiementEnCours ? 'Redirection…' : `Payer ${Number(annonceLiee.prix).toFixed(0)} CHF en sécurité`}
             </button>
           )}
           {user && annonceLiee.user_id === user.id && annonceLiee.statut === 'disponible' && (
@@ -463,7 +465,7 @@ export default function GroupePage() {
           {listes.length === 0 && (
             <div style={{textAlign:'center',padding:'32px 0',color:'#aaa',fontSize:'13px'}}>Aucune liste pour l instant</div>
           )}
-          {listes.map((l: any, i: number) => {
+          {listes.map((l, i) => {
             const couleurs = [{bg:'#EEF5FF',stroke:'#2B7FFF'},{bg:'#FDF8EC',stroke:'#D4A843'},{bg:'#E1F5EE',stroke:'#10B981'}]
             const col = couleurs[i % 3]
             return (
@@ -474,7 +476,7 @@ export default function GroupePage() {
                   </div>
                   <div style={{flex:1}}>
                     <div style={{fontSize:'14px',fontWeight:'500',color:'#1a1a2e',marginBottom:'2px'}}>{l.titre}</div>
-                    <div style={{fontSize:'11px',color:'#aaa'}}>{l.budget > 0 ? 'Budget: '+parseFloat(l.budget).toFixed(0)+' CHF' : 'Pas de budget'}</div>
+                    <div style={{fontSize:'11px',color:'#aaa'}}>{l.budget > 0 ? 'Budget: '+Number(l.budget).toFixed(0)+' CHF' : 'Pas de budget'}</div>
                   </div>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
                 </div>
@@ -493,7 +495,7 @@ export default function GroupePage() {
                 <p className="text-sm">Sois le premier à écrire dans ce groupe !</p>
               </div>
             )}
-            {messagesAffiches.map((m: any, i: number) => {
+            {messagesAffiches.map((m, i) => {
               const estMoi = m.user_id === user?.id
               const enEdition = editionId === m.id
               const suivant = messagesAffiches[i + 1]
@@ -570,7 +572,7 @@ export default function GroupePage() {
               <p className="text-sm">Aucun projet partagé dans ce groupe</p>
             </div>
           )}
-          {projets.map((p: any) => (
+          {projets.map(p => (
             <Link key={p.id} href={`/projet/${p.id}`}>
               <div className="bg-white border border-blue-100 rounded-2xl p-4 mb-3 cursor-pointer hover:border-blue-300">
                 <span className="text-xs bg-blue-50 text-blue-500 px-2 py-1 rounded-full font-medium">{p.categorie}</span>
@@ -584,7 +586,7 @@ export default function GroupePage() {
 
       {onglet === "membres" && (
         <div className="px-5 py-4">
-          {membres.map((m: any) => (
+          {membres.map(m => (
             <div key={m.id} className="flex items-center gap-3 bg-white border border-blue-100 rounded-xl p-3 mb-2">
               <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium">
                 {(profils[m.user_id]?.nom || "?")[0].toUpperCase()}
