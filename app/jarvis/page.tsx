@@ -115,7 +115,14 @@ const OUTILS_CLAUDE = [
   }
 ]
 
-type Msg = { role: "system" | "user" | "assistant"; content: string }
+type Msg = { role: "system" | "user" | "assistant" | "tool"; content: string }
+
+// Messages de l'API Claude (mode cloud) : texte, appel d'outil et résultat d'outil
+type BlocClaude =
+  | { type: "text"; text: string }
+  | { type: "tool_use"; id: string; name: string; input?: { prompt?: string; periode?: string } }
+  | { type: "tool_result"; tool_use_id: string; content: string }
+type MessageClaude = { role: "user" | "assistant"; content: string | BlocClaude[] }
 
 export default function Jarvis() {
   const [accesVerifie, setAccesVerifie] = useState(false)
@@ -149,7 +156,7 @@ export default function Jarvis() {
   const [cleSaisie, setClaudeKey] = useState<string | null>(null)
   const claudeKey = cleSaisie ?? (cleStockee?.trim() || "")
   const [montrerConfigCloud, setMontrerConfigCloud] = useState(false)
-  const [historiqueCloud, setHistoriqueCloud] = useState<any[]>([])
+  const [historiqueCloud, setHistoriqueCloud] = useState<MessageClaude[]>([])
   const [statut, setStatut] = useState<{ texte: string; ok: boolean | null }>({ texte: "Connexion à Ollama…", ok: null })
   const chatRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -505,7 +512,7 @@ export default function Jarvis() {
     return () => { annule = true }
   }, [modeVocal])
 
-  async function executerOutil(nom: string, args: any) {
+  async function executerOutil(nom: string, args: { prompt?: string; periode?: string }) {
     if (nom === "generer_image") {
       try {
         const res = await fetch(IMAGEGEN_URL, {
@@ -553,7 +560,7 @@ export default function Jarvis() {
 
     if (nom === "obtenir_groupes") {
       const { data: membres } = await supabase.from("membres_groupe").select("groupe_id").eq("user_id", user.id)
-      const ids = (membres || []).map((m: any) => m.groupe_id)
+      const ids = ((membres || []) as { groupe_id: string }[]).map(m => m.groupe_id)
       if (ids.length === 0) return { groupes: [] }
       const { data } = await supabase.from("groupes").select("nom,description").in("id", ids)
       return { groupes: data || [] }
@@ -567,7 +574,7 @@ export default function Jarvis() {
     const texteEnvoye = documentJoint
       ? `[Document joint : "${documentJoint.nom}"]\n\n${documentJoint.contenu}\n\n---\n\nQuestion de Pierre : ${texte}`
       : texte
-    let messagesActuels: any[] = [...historiqueCloud, { role: "user", content: texteEnvoye }]
+    let messagesActuels: MessageClaude[] = [...historiqueCloud, { role: "user", content: texteEnvoye }]
     setHistoriqueCloud(messagesActuels)
     setMessages(prev => [...prev, { role: "user", texte }, { role: "assistant", texte: "Jarvis (cloud) réfléchit…" }])
 
@@ -597,9 +604,9 @@ export default function Jarvis() {
           throw new Error(texteErreur)
         }
         const data = await res.json()
-        const contenu = data.content || []
-        const toolUses = contenu.filter((b: any) => b.type === "tool_use")
-        const texteBlocs = contenu.filter((b: any) => b.type === "text").map((b: any) => b.text).join("")
+        const contenu: BlocClaude[] = data.content || []
+        const toolUses = contenu.filter((b): b is Extract<BlocClaude, { type: "tool_use" }> => b.type === "tool_use")
+        const texteBlocs = contenu.filter((b): b is Extract<BlocClaude, { type: "text" }> => b.type === "text").map(b => b.text).join("")
 
         if (toolUses.length > 0) {
           messagesActuels = [...messagesActuels, { role: "assistant", content: contenu }]
@@ -608,7 +615,7 @@ export default function Jarvis() {
             copie[copie.length - 1] = { role: "assistant", texte: "Jarvis consulte tes données…" }
             return copie
           })
-          const resultats = []
+          const resultats: BlocClaude[] = []
           for (const tu of toolUses) {
             const resultat = await executerOutil(tu.name, tu.input || {})
             resultats.push({ type: "tool_result", tool_use_id: tu.id, content: JSON.stringify(resultat) })
@@ -630,7 +637,7 @@ export default function Jarvis() {
       parler(reponseFinaleTexte)
     } catch (e) {
       console.error("Erreur Jarvis Cloud:", e)
-      let detail = e?.message || "raison inconnue"
+      let detail = e instanceof Error ? e.message : "raison inconnue"
       try {
         const parsed = JSON.parse(detail)
         detail = parsed?.error?.message || detail
@@ -664,7 +671,7 @@ export default function Jarvis() {
     const texteEnvoye = documentJoint
       ? `[Document joint : "${documentJoint.nom}"]\n\n${documentJoint.contenu}\n\n---\n\nQuestion de Pierre : ${texte}`
       : texte
-    const nouvelHistorique: any[] = [...historique, { role: "user" as const, content: texteEnvoye }]
+    const nouvelHistorique: Msg[] = [...historique, { role: "user" as const, content: texteEnvoye }]
     setHistorique(nouvelHistorique)
     setMessages(prev => [...prev, { role: "user", texte }, { role: "assistant", texte: "Jarvis réfléchit…" }])
 

@@ -146,7 +146,8 @@ export type ArticleListe = {
   quantite: number | null
   unite: string | null
   prix: number | null
-  coche?: boolean | null
+  categorie: string | null
+  statut?: string | null
   modifie_par?: Uuid | null
   updated_at?: DateISO
   created_at?: DateISO

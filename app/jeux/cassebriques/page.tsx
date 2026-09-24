@@ -19,8 +19,10 @@ function vibrer(pattern: number | number[]) {
   if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(pattern)
 }
 
+type Brique = { x: number; y: number; w: number; h: number; couleur: string; vie: number; vieMax: number; vivante: boolean }
+
 function genererNiveau(niveau: number) {
-  const briques: any[] = []
+  const briques: Brique[] = []
   const lignes = Math.min(4 + Math.floor(niveau / 2), 8)
   const largeurBrique = (LARGEUR - MARGE * (COLONNES + 1)) / COLONNES
   const seed = niveau * 7 + 3

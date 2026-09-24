@@ -26,7 +26,7 @@ export default function TestReflexes() {
   // Record enregistré sur l’appareil (source unique, mis à jour par ecrireStockage)
   const meilleur = parseInt(useStockageLocal('reflexes_meilleur_score') || '0') || 0
   const debutRef = useRef(0)
-  const timeoutsRef = useRef<any[]>([])
+  const timeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([])
 
   useEffect(() => {
     const timeouts = timeoutsRef.current
@@ -103,7 +103,7 @@ export default function TestReflexes() {
 
   const totalActuel = scores.reduce((a,b) => a+b, 0)
 
-  const fonds: any = {
+  const fonds: Record<string, string> = {
     accueil: 'linear-gradient(160deg,#0A1628,#1a3a6e)',
     sequence: 'linear-gradient(160deg,#4c1414,#7a1f1f)',
     pret: 'linear-gradient(160deg,#0d5c3a,#10B981)',

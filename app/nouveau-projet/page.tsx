@@ -25,7 +25,8 @@ export default function NouveauProjet() {
           .from("membres_groupe")
           .select("groupe_id, groupes(id, nom)")
           .eq("user_id", user.id)
-        setGroupes(((membres || []) as unknown as { groupes: Pick<Groupe, 'id' | 'nom'> }[]).map(m => m.groupes))
+        // Ignore les adhésions dont le groupe n'existe plus (relation vide)
+        setGroupes(((membres || []) as unknown as { groupes: Pick<Groupe, 'id' | 'nom'> | null }[]).map(m => m.groupes).filter(g => g != null))
       }
     }
     charger()

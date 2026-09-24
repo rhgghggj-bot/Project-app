@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 
 const TAILLE = 4
 
-const COULEURS: any = {
+const COULEURS: Record<number, { bg: string; txt: string }> = {
   2: { bg:'#EEF5FF', txt:'#1a1a2e' },
   4: { bg:'#DCE9FF', txt:'#1a1a2e' },
   8: { bg:'#F97316', txt:'#fff' },
@@ -236,4 +236,4 @@ export default function Jeu2048() {
   )
 }
 
-const btnStyle: any = { background:'rgba(255,255,255,0.1)', border:'0.5px solid rgba(255,255,255,0.2)', borderRadius:'12px', color:'#fff', fontSize:'20px', cursor:'pointer' }
+const btnStyle: React.CSSProperties = { background:'rgba(255,255,255,0.1)', border:'0.5px solid rgba(255,255,255,0.2)', borderRadius:'12px', color:'#fff', fontSize:'20px', cursor:'pointer' }

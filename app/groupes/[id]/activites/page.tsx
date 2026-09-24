@@ -49,7 +49,8 @@ export default function ActivitesGroupe() {
 
     const { data: membres } = await supabase.from("membres_groupe").select("user_id, profiles(prenom, nom)").eq("groupe_id", id)
     const p: Record<string, string> = {}
-    ;(membres as { user_id: string; profiles?: { prenom?: string } }[] | null)?.forEach(m => { p[m.user_id] = m.profiles?.prenom || "Membre" })
+    // profiles est une relation un-à-un : Supabase la renvoie comme un objet
+    for (const m of (membres || []) as unknown as { user_id: string; profiles: { prenom: string | null; nom: string | null } | null }[]) p[m.user_id] = m.profiles?.prenom || m.profiles?.nom || "Membre"
     setProfils(p)
   }
 

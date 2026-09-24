@@ -1,4 +1,5 @@
 "use client"
+import { ArticleListe, Liste, MembreGroupe } from "@/lib/types"
 import { useChargement } from "@/lib/useChargement"
 import Link from "next/link"
 import { useState } from "react"
@@ -6,7 +7,7 @@ import { useParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 
 const CATEGORIES = ["Alimentation", "Hygiene", "Menage", "Boissons", "Autre"]
-const CAT_COLORS: any = {
+const CAT_COLORS: Record<string, { bg: string; color: string }> = {
   Alimentation: { bg:'#E1F5EE', color:'#10B981' },
   Hygiene: { bg:'#FDF8EC', color:'#D4A843' },
   Menage: { bg:'#EEF5FF', color:'#2B7FFF' },
@@ -18,9 +19,9 @@ export default function ListeDetailPage() {
   const params = useParams()
   const id = Array.isArray(params.id) ? params.id[0] : params.id
   const listeId = Array.isArray(params.listeId) ? params.listeId[0] : params.listeId
-  const [liste, setListe] = useState<any>(null)
-  const [articles, setArticles] = useState<any[]>([])
-  const [profils, setProfils] = useState<any>({})
+  const [liste, setListe] = useState<Liste | null>(null)
+  const [articles, setArticles] = useState<ArticleListe[]>([])
+  const [profils, setProfils] = useState<Record<string, string>>({})
   const [showForm, setShowForm] = useState(false)
   const [nom, setNom] = useState("")
   const [quantite, setQuantite] = useState(1)
@@ -39,8 +40,9 @@ export default function ListeDetailPage() {
     setArticles(a || [])
 
     const { data: members } = await supabase.from("membres_groupe").select("user_id, profiles(prenom, nom)").eq("groupe_id", id)
-    const p: any = {}
-    members?.forEach((m: any) => { p[m.user_id] = m.profiles?.prenom || 'Membre' })
+    const p: Record<string, string> = {}
+    // profiles est une relation un-à-un : Supabase la renvoie comme un objet
+    for (const m of (members || []) as unknown as { user_id: string; profiles: { prenom: string | null; nom: string | null } | null }[]) p[m.user_id] = m.profiles?.prenom || m.profiles?.nom || 'Membre'
     setProfils(p)
   }
 
@@ -57,9 +59,9 @@ export default function ListeDetailPage() {
       : `🔔 80% du budget atteint pour "${liste?.titre}" : ${totalApres.toFixed(2)} CHF sur ${budget.toFixed(2)} CHF`
 
     const { data: members } = await supabase.from("membres_groupe").select("user_id").eq("groupe_id", id)
-    const destinataires = (members || []).filter((m: any) => m.user_id !== userActuel)
+    const destinataires = ((members || []) as Pick<MembreGroupe, 'user_id'>[]).filter(m => m.user_id !== userActuel)
     if (destinataires.length > 0) {
-      await supabase.from("notifications").insert(destinataires.map((m: any) => ({
+      await supabase.from("notifications").insert(destinataires.map(m => ({
         user_id: m.user_id, type: "budget", titre: liste?.titre || "Liste", contenu: message,
         lien: `/groupes/${id}/listes/${listeId}`,
       })))
@@ -77,19 +79,19 @@ export default function ListeDetailPage() {
     await notifierBudgetSiDepasse(totalAvant, totalAvant + prixNum * quantite, user?.id)
   }
 
-  async function changerQuantite(art: any, delta: number) {
+  async function changerQuantite(art: ArticleListe, delta: number) {
     const newQ = Math.max(0, art.quantite + delta)
     const { data: { user } } = await supabase.auth.getUser()
     const totalAvant = totalDepense
     await supabase.from("liste_articles").update({ quantite: newQ, modifie_par: user?.id, updated_at: new Date().toISOString() }).eq("id", art.id)
     setArticles(articles.map(a => a.id === art.id ? { ...a, quantite: newQ } : a))
-    await notifierBudgetSiDepasse(totalAvant, totalAvant + (newQ - art.quantite) * parseFloat(art.prix || 0), user?.id)
+    await notifierBudgetSiDepasse(totalAvant, totalAvant + (newQ - art.quantite) * Number(art.prix || 0), user?.id)
   }
 
   function exporterPDF() {
     const titre = liste?.titre || 'Liste'
     const date = new Date().toLocaleDateString('fr-FR', {day:'numeric',month:'long',year:'numeric'})
-    const totalDep = articles.reduce((sum, a) => sum + (parseFloat(a.prix || 0) * a.quantite), 0)
+    const totalDep = articles.reduce((sum, a) => sum + (Number(a.prix || 0) * a.quantite), 0)
     const budget = liste?.budget || 0
 
     const lignes = articles.map(a => `
@@ -97,8 +99,8 @@ export default function ListeDetailPage() {
         <td style="padding:10px 12px;font-size:13px;color:#1a1a2e">${a.nom}</td>
         <td style="padding:10px 12px;font-size:13px;color:#666;text-align:center">${a.categorie}</td>
         <td style="padding:10px 12px;font-size:13px;color:#1a1a2e;text-align:center">${a.quantite} ${a.unite}</td>
-        <td style="padding:10px 12px;font-size:13px;color:#2B7FFF;text-align:right">${a.prix > 0 ? parseFloat(a.prix).toFixed(2)+' CHF' : '—'}</td>
-        <td style="padding:10px 12px;font-size:13px;font-weight:500;color:#1a1a2e;text-align:right">${a.prix > 0 ? (parseFloat(a.prix)*a.quantite).toFixed(2)+' CHF' : '—'}</td>
+        <td style="padding:10px 12px;font-size:13px;color:#2B7FFF;text-align:right">${a.prix > 0 ? Number(a.prix).toFixed(2)+' CHF' : '—'}</td>
+        <td style="padding:10px 12px;font-size:13px;font-weight:500;color:#1a1a2e;text-align:right">${a.prix > 0 ? (Number(a.prix)*a.quantite).toFixed(2)+' CHF' : '—'}</td>
       </tr>
     `).join('')
 
@@ -151,7 +153,7 @@ export default function ListeDetailPage() {
     if (w) { w.document.write(html); w.document.close(); setTimeout(() => w.print(), 500) }
   }
 
-  async function marquerAchete(art: any) {
+  async function marquerAchete(art: ArticleListe) {
     // Passage definitif de "a acheter" vers "possede" : ne revient plus tout seul dans la liste shopping
     const { data: { user: u } } = await supabase.auth.getUser()
     await supabase.from('liste_articles').update({
@@ -167,13 +169,13 @@ export default function ListeDetailPage() {
     setArticles(articles.filter(a => a.id !== artId))
   }
 
-  const totalDepense = articles.reduce((sum, a) => sum + (parseFloat(a.prix || 0) * a.quantite), 0)
+  const totalDepense = articles.reduce((sum, a) => sum + (Number(a.prix || 0) * a.quantite), 0)
   const budgetListe = liste?.budget || 0
   const restebudget = budgetListe - totalDepense
   const articlesFiltres = articles.filter(a => filtre === 'Tous' || a.categorie === filtre)
   const nonAchetes = modeShopping ? articles.filter(a => a.statut === 'a_acheter').length : articles.filter(a => (a.statut || 'possede') === 'possede').length
 
-  const inp = {width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 12px',fontSize:'16px',color:'#1a1a2e',background:'#fff',marginBottom:'8px',boxSizing:'border-box' as any}
+  const inp = {width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 12px',fontSize:'16px',color:'#1a1a2e',background:'#fff',marginBottom:'8px',boxSizing:'border-box'} satisfies React.CSSProperties
 
   return (
     <main className="min-h-screen bg-white">
@@ -296,7 +298,7 @@ export default function ListeDetailPage() {
                 </div>
                 <div style={{fontSize:'11px',color:'#aaa',display:'flex',gap:'8px',alignItems:'center'}}>
                   {profils[art.modifie_par] ? `Modifie par ${profils[art.modifie_par]}` : 'Ajoute'} · {art.unite}
-                  {art.prix > 0 && <span style={{color:'#2B7FFF',fontWeight:'500'}}>{parseFloat(art.prix).toFixed(2)} CHF = {(parseFloat(art.prix)*art.quantite).toFixed(2)} CHF</span>}
+                  {art.prix > 0 && <span style={{color:'#2B7FFF',fontWeight:'500'}}>{Number(art.prix).toFixed(2)} CHF = {(Number(art.prix)*art.quantite).toFixed(2)} CHF</span>}
                 </div>
               </div>
               <div style={{display:'flex',alignItems:'center',gap:'8px'}}>

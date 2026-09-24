@@ -26,7 +26,7 @@ const OUTILS: {id:TypeTuile|'demolir', nom:string, cout:number, couleur:string, 
   { id:'demolir', nom:'Démolir', cout:0, couleur:'#F43F5E', icone:'🧨' },
 ]
 
-const MAINTENANCE: any = { route:1, police:15, ecole:20, centrale:25, parc:2 }
+const MAINTENANCE: Record<string, number> = { route:1, police:15, ecole:20, centrale:25, parc:2 }
 const SAVE_KEY = 'simcity_save_v1'
 
 function grilleVide(): Tuile[][] {

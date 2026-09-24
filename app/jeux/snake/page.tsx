@@ -81,7 +81,7 @@ export default function Snake() {
   }, [enPause, gameOver, meilleur])
 
   function changerDirection(d: Direction) {
-    const opposes: any = { haut:'bas', bas:'haut', gauche:'droite', droite:'gauche' }
+    const opposes: Record<Direction, Direction> = { haut:'bas', bas:'haut', gauche:'droite', droite:'gauche' }
     if (opposes[d] === directionRef.current) return
     prochaineDirectionRef.current = d
     if (enPause) setEnPause(false)
@@ -126,7 +126,7 @@ export default function Snake() {
 
   // Yeux de la tete selon la direction
   function yeux() {
-    const pos: any = {
+    const pos: Record<Direction, React.CSSProperties[]> = {
       droite: [{left:'58%',top:'25%'},{left:'58%',top:'58%'}],
       gauche: [{left:'18%',top:'25%'},{left:'18%',top:'58%'}],
       haut:   [{left:'25%',top:'18%'},{left:'58%',top:'18%'}],
@@ -197,7 +197,7 @@ export default function Snake() {
               zIndex: estTete ? 2 : 1,
               transition:'left 0.1s linear, top 0.1s linear'
             }}>
-              {estTete && yeux().map((p: any, idx: number) => (
+              {estTete && yeux().map((p, idx) => (
                 <div key={idx} style={{position:'absolute',left:p.left,top:p.top,width:'18%',height:'18%',borderRadius:'50%',background:'#0A1628'}}></div>
               ))}
             </div>
@@ -232,4 +232,4 @@ export default function Snake() {
   )
 }
 
-const btnStyle: any = { background:'rgba(255,255,255,0.1)', border:'0.5px solid rgba(255,255,255,0.2)', borderRadius:'12px', color:'#fff', fontSize:'20px', cursor:'pointer' }
+const btnStyle: React.CSSProperties = { background:'rgba(255,255,255,0.1)', border:'0.5px solid rgba(255,255,255,0.2)', borderRadius:'12px', color:'#fff', fontSize:'20px', cursor:'pointer' }

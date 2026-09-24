@@ -6,10 +6,22 @@ import Tutorial from "../components/Tutorial"
 import { useState, useRef } from "react"
 import { supabase } from "@/lib/supabase"
 
+// Résultat de la lecture d'un document (OCR + règles simples)
+type AnalyseDocument = {
+  type: string
+  titre: string
+  montant?: number | null
+  date?: string | null
+  description?: string
+  infos_cles: string[]
+  transactions: { nom: string; montant: number }[]
+  texte_complet?: string
+}
+
 export default function Scanner() {
   const [image, setImage] = useState<string | null>(null)
   const [texte, setTexte] = useState<string>("")
-  const [analyse, setAnalyse] = useState<any>(null)
+  const [analyse, setAnalyse] = useState<AnalyseDocument | null>(null)
   const [etape, setEtape] = useState<"upload"|"analyse"|"resultat">("upload")
   const fileRef = useRef<HTMLInputElement>(null)
 
@@ -115,7 +127,7 @@ export default function Scanner() {
 
   async function corrigerType(nouveauType: string) {
     if (!analyse) return
-    setAnalyse((prev: any) => ({ ...prev, type: nouveauType }))
+    setAnalyse(prev => prev && ({ ...prev, type: nouveauType }))
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
     await supabase.from("scanner_corrections").upsert(
@@ -124,7 +136,7 @@ export default function Scanner() {
     )
   }
 
-  const typeLabel: any = { facture:"Facture / Reçu", releve_bancaire:"Relevé bancaire", contrat:"Contrat", assurance:"Assurance", autre:"Document" }
+  const typeLabel: Record<string, string> = { facture:"Facture / Reçu", releve_bancaire:"Relevé bancaire", contrat:"Contrat", assurance:"Assurance", autre:"Document" }
 
   return (
     <main className="min-h-screen bg-white"><Tutorial page="scanner" />
@@ -221,7 +233,7 @@ export default function Scanner() {
             {analyse.transactions?.length > 0 && (
               <div style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'16px',padding:'14px',marginBottom:'14px'}}>
                 <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',marginBottom:'10px'}}>Montants détectés</div>
-                {analyse.transactions.map((t: any, i: number) => (
+                {analyse.transactions.map((t, i) => (
                   <div key={i} style={{display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom: i < analyse.transactions.length-1 ? '0.5px solid #E8F1FF' : 'none'}}>
                     <span style={{fontSize:'13px',color:'#666'}}>{t.nom}</span>
                     <span style={{fontSize:'13px',fontWeight:'500',color:'#F43F5E'}}>{t.montant} CHF</span>

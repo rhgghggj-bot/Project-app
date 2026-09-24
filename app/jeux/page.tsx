@@ -17,7 +17,7 @@ const JEUX = [
 ]
 
 function Icone({ type, couleur }: { type: string, couleur: string }) {
-  const props = { width: 26, height: 26, viewBox: '0 0 24 24', fill: 'none', stroke: couleur, strokeWidth: 2 } as any
+  const props: React.SVGProps<SVGSVGElement> = { width: 26, height: 26, viewBox: '0 0 24 24', fill: 'none', stroke: couleur, strokeWidth: 2 }
   if (type === 'blocks') return <svg {...props}><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
   if (type === 'grid') return <svg {...props}><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg>
   if (type === 'snake') return <svg {...props}><path d="M4 6c0-1.5 1.5-2 3-2s3 .5 3 2-1.5 2-3 2H5c-1.5 0-3 .5-3 2s1.5 2 3 2h9c1.5 0 3 .5 3 2s-1.5 2-3 2h-2"/><circle cx="19" cy="16" r="1"/></svg>

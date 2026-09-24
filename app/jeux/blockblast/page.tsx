@@ -72,7 +72,7 @@ function vibrer(pattern: number | number[]) {
 export default function BlockBlast() {
   const router = useRouter()
   const [board, setBoard] = useState<(string|null)[][]>(() => Array(TAILLE).fill(null).map(() => Array(TAILLE).fill(null)))
-  const [pieces, setPieces] = useState<any[]>(() => nouvellesPieces())
+  const [pieces, setPieces] = useState<(ReturnType<typeof formeAleatoire> | null)[]>(() => nouvellesPieces())
   const [selection, setSelection] = useState<number|null>(null)
   const [score, setScore] = useState(0)
   // Record enregistré sur l’appareil (source unique, mis à jour par ecrireStockage)
@@ -93,7 +93,7 @@ export default function BlockBlast() {
     setTimeout(() => setPopups(p => p.filter(pp => pp.id !== id)), 800)
   }
 
-  function verifierGameOver(piecesActuelles: any[], b: (string|null)[][]) {
+  function verifierGameOver(piecesActuelles: (ReturnType<typeof formeAleatoire> | null)[], b: (string|null)[][]) {
     const restantes = piecesActuelles.filter(p => p !== null)
     if (restantes.length === 0) return false
     return !restantes.some(p => pieceJouable(p.forme, b))
