@@ -1,4 +1,5 @@
 'use client'
+import { Groupe, MembreGroupe, User } from "@/lib/types"
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
@@ -6,14 +7,17 @@ import { supabase } from '@/lib/supabase'
 const COULEURS = ['#F97316','#2B7FFF','#10B981','#D4A843']
 const FORMES = ['▲','◆','●','■']
 
+type QuestionQuiz = { question: string; options: string[]; reponse: number }
+type Quiz = { id: string; titre: string; groupe_id: string; createur_id: string; questions: QuestionQuiz[]; created_at: string }
+
 export default function QuizPage() {
   const router = useRouter()
-  const [user, setUser] = useState<any>(null)
-  const [groupes, setGroupes] = useState<any[]>([])
+  const [user, setUser] = useState<User | null>(null)
+  const [groupes, setGroupes] = useState<Groupe[]>([])
   const [groupeId, setGroupeId] = useState<string|null>(null)
-  const [quizList, setQuizList] = useState<any[]>([])
+  const [quizList, setQuizList] = useState<Quiz[]>([])
   const [mode, setMode] = useState<'liste'|'creer'|'jouer'|'resultats'>('liste')
-  const [quizActif, setQuizActif] = useState<any>(null)
+  const [quizActif, setQuizActif] = useState<Quiz | null>(null)
   const [questionIndex, setQuestionIndex] = useState(0)
   const [reponses, setReponses] = useState<number[]>([])
   const [score, setScore] = useState<number|null>(null)
@@ -30,7 +34,7 @@ export default function QuizPage() {
       setUser(user)
       if (user) {
         const { data: mb } = await supabase.from('membres_groupe').select('groupe_id').eq('user_id', user.id)
-        const ids = mb?.map((m: any) => m.groupe_id) || []
+        const ids = (mb as MembreGroupe[] | null)?.map(m => m.groupe_id) || []
         if (ids.length > 0) {
           const { data: g } = await supabase.from('groupes').select('*').in('id', ids)
           setGroupes(g || [])
@@ -60,7 +64,7 @@ export default function QuizPage() {
     setLoading(false)
   }
 
-  function commencerQuiz(quiz: any) {
+  function commencerQuiz(quiz: Quiz) {
     setQuizActif(quiz); setQuestionIndex(0); setReponses([]); setScore(null); setMode('jouer')
   }
 
@@ -77,7 +81,7 @@ export default function QuizPage() {
     }
   }
 
-  const s = { main: { minHeight:'100vh', background: bg, padding:'20px 18px' } as any }
+  const s: { main: React.CSSProperties } = { main: { minHeight:'100vh', background: bg, padding:'20px 18px' } }
 
   if (!groupeId) return (
     <main style={s.main}>
@@ -140,7 +144,7 @@ export default function QuizPage() {
         <div style={{color:'#fff',fontSize:'28px',fontWeight:'500',marginBottom:'4px'}}>{score}/{total}</div>
         <div style={{color:'#87CEEB',fontSize:'15px',marginBottom:'32px'}}>{pct}% de bonnes reponses</div>
         <div style={{width:'100%',background:'rgba(255,255,255,0.08)',border,borderRadius:'20px',padding:'20px',marginBottom:'24px'}}>
-          {quizActif.questions.map((q: any, i: number) => (
+          {quizActif.questions.map((q, i) => (
             <div key={i} style={{display:'flex',gap:'10px',marginBottom:'12px',alignItems:'flex-start'}}>
               <span style={{flexShrink:0,color:reponses[i]===q.reponse?'#4ade80':'#F43F5E',fontWeight:'500'}}>{reponses[i]===q.reponse?'✓':'✗'}</span>
               <div>
@@ -164,13 +168,13 @@ export default function QuizPage() {
           <button onClick={() => setMode('liste')} style={{color:'rgba(255,255,255,0.6)',background:'none',border:'none',fontSize:'20px',cursor:'pointer'}}>←</button>
           <span style={{color:'#fff',fontWeight:'500',fontSize:'16px'}}>Créer un quiz</span>
         </div>
-        <input value={titre} onChange={e=>setTitre(e.target.value)} placeholder="Titre du quiz"
+        <input aria-label="Titre du quiz" value={titre} onChange={e=>setTitre(e.target.value)} placeholder="Titre du quiz"
           style={{width:'100%',background:'rgba(255,255,255,0.1)',border,borderRadius:'12px',padding:'12px 14px',fontSize:'14px',color:'#fff',marginBottom:'14px'}}/>
         {questions.map((q,qi) => (
           <div key={qi} style={{background:'rgba(255,255,255,0.06)',border,borderRadius:'16px',padding:'14px',marginBottom:'12px'}}>
             <div style={{color:'#87CEEB',fontSize:'12px',fontWeight:'500',marginBottom:'8px'}}>Question {qi+1}</div>
-            <input value={q.question} onChange={e=>{const nq=[...questions];nq[qi].question=e.target.value;setQuestions(nq)}}
-              placeholder="Question..."
+            <input aria-label="Question" value={q.question} onChange={e=>{const nq=[...questions];nq[qi].question=e.target.value;setQuestions(nq)}}
+              placeholder="Question…"
               style={{width:'100%',background:'rgba(255,255,255,0.1)',border,borderRadius:'10px',padding:'8px 12px',fontSize:'13px',color:'#fff',marginBottom:'8px'}}/>
             {q.options.map((opt,oi) => (
               <div key={oi} style={{display:'flex',gap:'6px',marginBottom:'6px',alignItems:'center'}}>
@@ -178,7 +182,7 @@ export default function QuizPage() {
                   style={{width:'32px',height:'32px',borderRadius:'8px',border:'none',background:q.reponse===oi?COULEURS[oi]:'rgba(255,255,255,0.15)',color:'#fff',cursor:'pointer',flexShrink:0,fontSize:'14px'}}>
                   {FORMES[oi]}
                 </button>
-                <input value={opt} onChange={e=>{const nq=[...questions];nq[qi].options[oi]=e.target.value;setQuestions(nq)}}
+                <input aria-label="Option" value={opt} onChange={e=>{const nq=[...questions];nq[qi].options[oi]=e.target.value;setQuestions(nq)}}
                   placeholder={'Option '+['A','B','C','D'][oi]}
                   style={{flex:1,background:'rgba(255,255,255,0.1)',border,borderRadius:'8px',padding:'6px 10px',fontSize:'13px',color:'#fff'}}/>
               </div>
@@ -191,7 +195,7 @@ export default function QuizPage() {
         </button>
         <button onClick={sauvegarderQuiz} disabled={loading}
           style={{width:'100%',background:'#10B981',color:'#fff',border:'none',borderRadius:'14px',padding:'14px',fontSize:'14px',fontWeight:'500',cursor:'pointer',marginBottom:'24px'}}>
-          {loading?'Sauvegarde...':'Publier le quiz'}
+          {loading?'Sauvegarde…':'Publier le quiz'}
         </button>
       </main>
     )
@@ -211,13 +215,13 @@ export default function QuizPage() {
       {quizList.length===0 && (
         <div style={{textAlign:'center',padding:'48px 0',color:'rgba(255,255,255,0.5)'}}>
           <svg width='48' height='48' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.4)' strokeWidth='1.5' style={{marginBottom:'12px'}}><circle cx='12' cy='12' r='10'/><path d='M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3'/><line x1='12' y1='17' x2='12.01' y2='17'/></svg>
-          <div style={{fontSize:'14px',marginBottom:'8px'}}>Aucun quiz pour l'instant</div>
+          <div style={{fontSize:'14px',marginBottom:'8px'}}>Aucun quiz pour l’instant</div>
           <button onClick={()=>setMode('creer')} style={{color:'#87CEEB',fontSize:'13px',fontWeight:'500',background:'none',border:'none',cursor:'pointer'}}>
             Crée le premier quiz →
           </button>
         </div>
       )}
-      {quizList.map((quiz:any,idx:number) => (
+      {quizList.map((quiz, idx) => (
         <div key={quiz.id} style={{background:'rgba(255,255,255,0.06)',border,borderRadius:'20px',overflow:'hidden',marginBottom:'12px'}}>
           <div style={{padding:'18px'}}>
             <div style={{display:'flex',alignItems:'center',gap:'12px',marginBottom:'14px'}}>

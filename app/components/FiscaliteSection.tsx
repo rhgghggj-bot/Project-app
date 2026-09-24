@@ -2,7 +2,8 @@
 import { useState } from "react"
 import Tutorial from "./Tutorial"
 
-const CANTONS: any = {
+// Barème cantonal simplifié : t = tranches (m = plafond, r = taux), ef/em = déductions
+const CANTONS: Record<string, { nom: string; t: { m: number; r: number }[]; ef: number; em: number }> = {
   GE:{nom:'Genève',t:[{m:20000,r:.053},{m:40000,r:.072},{m:60000,r:.091},{m:80000,r:.107},{m:100000,r:.114},{m:150000,r:.120},{m:1e9,r:.130}],ef:13000,em:8000},
   VD:{nom:'Vaud',t:[{m:20000,r:.048},{m:40000,r:.068},{m:60000,r:.088},{m:80000,r:.105},{m:100000,r:.118},{m:150000,r:.128},{m:1e9,r:.138}],ef:9000,em:6700},
   VS:{nom:'Valais',t:[{m:20000,r:.038},{m:40000,r:.055},{m:60000,r:.072},{m:80000,r:.085},{m:100000,r:.095},{m:150000,r:.105},{m:1e9,r:.115}],ef:8500,em:6000},
@@ -27,8 +28,8 @@ function calcCant(rev: number, code: string) {
   return Math.round(rev * tr[tr.length-1].r)
 }
 
-const inp: any = {width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'8px 12px',fontSize:'16px',color:'#1a1a2e',background:'#F8FBFF',boxSizing:'border-box'}
-const sel: any = {width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'8px 12px',fontSize:'16px',color:'#1a1a2e',background:'#F8FBFF'}
+const inp: React.CSSProperties = {width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'8px 12px',fontSize:'16px',color:'#1a1a2e',background:'#F8FBFF',boxSizing:'border-box'}
+const sel: React.CSSProperties = {width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'8px 12px',fontSize:'16px',color:'#1a1a2e',background:'#F8FBFF'}
 
 export default function FiscaliteSection() {
   const [pays, setPays] = useState('ch')
@@ -113,11 +114,11 @@ export default function FiscaliteSection() {
         <div style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'16px',padding:'14px',marginBottom:'12px'}}>
           <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',marginBottom:'12px'}}>Mes revenus</div>
           <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Salaire brut annuel (CHF)</label>
-          <input type="number" value={salaire} onChange={e=>setSalaire(Number(e.target.value))} style={{...inp,marginBottom:'10px'}}/>
+          <input aria-label="Salaire brut annuel (CHF)" type="number" value={salaire} onChange={e=>setSalaire(Number(e.target.value))} style={{...inp,marginBottom:'10px'}}/>
           <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Revenus accessoires (CHF)</label>
-          <input type="number" value={accessoires} onChange={e=>setAccessoires(Number(e.target.value))} style={{...inp,marginBottom:'10px'}}/>
+          <input aria-label="Revenus accessoires (CHF)" type="number" value={accessoires} onChange={e=>setAccessoires(Number(e.target.value))} style={{...inp,marginBottom:'10px'}}/>
           <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Rendements de fortune (CHF)</label>
-          <input type="number" value={fortune} onChange={e=>setFortune(Number(e.target.value))} style={inp}/>
+          <input aria-label="Rendements de fortune (CHF)" type="number" value={fortune} onChange={e=>setFortune(Number(e.target.value))} style={inp}/>
         </div>
       )}
 
@@ -126,25 +127,25 @@ export default function FiscaliteSection() {
           <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',marginBottom:'12px'}}>Mes déductions</div>
           <div style={{fontSize:'11px',color:'#2B7FFF',fontWeight:'600',marginBottom:'8px'}}>Prévoyance</div>
           <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>3e pilier 3a (max 7 258 CHF)</label>
-          <input type="number" value={pilier3} onChange={e=>setPilier3(Number(e.target.value))} style={{...inp,marginBottom:'10px'}}/>
+          <input aria-label="3e pilier 3a (max 7 258 CHF)" type="number" value={pilier3} onChange={e=>setPilier3(Number(e.target.value))} style={{...inp,marginBottom:'10px'}}/>
           <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Rachat 2e pilier (CHF)</label>
-          <input type="number" value={pilier2} onChange={e=>setPilier2(Number(e.target.value))} style={{...inp,marginBottom:'10px'}}/>
+          <input aria-label="Rachat 2e pilier (CHF)" type="number" value={pilier2} onChange={e=>setPilier2(Number(e.target.value))} style={{...inp,marginBottom:'10px'}}/>
           <div style={{fontSize:'11px',color:'#2B7FFF',fontWeight:'600',margin:'4px 0 8px'}}>Frais professionnels</div>
           <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Transport (max 3 200 CHF)</label>
-          <input type="number" value={transport} onChange={e=>setTransport(Number(e.target.value))} style={{...inp,marginBottom:'10px'}}/>
+          <input aria-label="Transport (max 3 200 CHF)" type="number" value={transport} onChange={e=>setTransport(Number(e.target.value))} style={{...inp,marginBottom:'10px'}}/>
           <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Frais de repas (max 3 200 CHF)</label>
-          <input type="number" value={repas} onChange={e=>setRepas(Number(e.target.value))} style={{...inp,marginBottom:'10px'}}/>
+          <input aria-label="Frais de repas (max 3 200 CHF)" type="number" value={repas} onChange={e=>setRepas(Number(e.target.value))} style={{...inp,marginBottom:'10px'}}/>
           <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Formation (max 12 700 CHF)</label>
-          <input type="number" value={formation} onChange={e=>setFormation(Number(e.target.value))} style={{...inp,marginBottom:'10px'}}/>
+          <input aria-label="Formation (max 12 700 CHF)" type="number" value={formation} onChange={e=>setFormation(Number(e.target.value))} style={{...inp,marginBottom:'10px'}}/>
           <div style={{fontSize:'11px',color:'#2B7FFF',fontWeight:'600',margin:'4px 0 8px'}}>Autres déductions</div>
           <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Intérêts hypothécaires (CHF)</label>
-          <input type="number" value={hypo} onChange={e=>setHypo(Number(e.target.value))} style={{...inp,marginBottom:'10px'}}/>
+          <input aria-label="Intérêts hypothécaires (CHF)" type="number" value={hypo} onChange={e=>setHypo(Number(e.target.value))} style={{...inp,marginBottom:'10px'}}/>
           <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Primes maladie déductibles (CHF)</label>
-          <input type="number" value={maladie} onChange={e=>setMaladie(Number(e.target.value))} style={{...inp,marginBottom:'10px'}}/>
+          <input aria-label="Primes maladie déductibles (CHF)" type="number" value={maladie} onChange={e=>setMaladie(Number(e.target.value))} style={{...inp,marginBottom:'10px'}}/>
           <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Dons à des associations (max 20%)</label>
-          <input type="number" value={dons} onChange={e=>setDons(Number(e.target.value))} style={{...inp,marginBottom:'10px'}}/>
-          <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Frais de garde d'enfants (CHF)</label>
-          <input type="number" value={garde} onChange={e=>setGarde(Number(e.target.value))} style={inp}/>
+          <input aria-label="Dons à des associations (max 20%)" type="number" value={dons} onChange={e=>setDons(Number(e.target.value))} style={{...inp,marginBottom:'10px'}}/>
+          <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Frais de garde d’enfants (CHF)</label>
+          <input aria-label="Frais de garde d'enfants (CHF)" type="number" value={garde} onChange={e=>setGarde(Number(e.target.value))} style={inp}/>
         </div>
       )}
 
@@ -152,17 +153,17 @@ export default function FiscaliteSection() {
         <div style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'16px',padding:'14px',marginBottom:'12px'}}>
           <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',marginBottom:'12px'}}>Ma situation</div>
           <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Canton de résidence</label>
-          <select value={canton} onChange={e=>setCanton(e.target.value)} style={{...sel,marginBottom:'10px'}}>
-            {Object.entries(CANTONS).map(([k,v]: any)=><option key={k} value={k}>{v.nom}</option>)}
+          <select aria-label="Canton de résidence" value={canton} onChange={e=>setCanton(e.target.value)} style={{...sel,marginBottom:'10px'}}>
+            {Object.entries(CANTONS).map(([k,v])=><option key={k} value={k}>{v.nom}</option>)}
           </select>
           <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Situation familiale</label>
-          <select value={situation} onChange={e=>setSituation(e.target.value)} style={{...sel,marginBottom:'10px'}}>
+          <select aria-label="Situation familiale" value={situation} onChange={e=>setSituation(e.target.value)} style={{...sel,marginBottom:'10px'}}>
             <option value="cel">Célibataire</option>
             <option value="mar">Marié(e)</option>
             <option value="mon">Famille monoparentale</option>
           </select>
-          <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Nombre d'enfants</label>
-          <select value={enfants} onChange={e=>setEnfants(Number(e.target.value))} style={sel}>
+          <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Nombre d’enfants</label>
+          <select aria-label="Nombre d'enfants" value={enfants} onChange={e=>setEnfants(Number(e.target.value))} style={sel}>
             {[0,1,2,3,4].map(n=><option key={n} value={n}>{n===4?'4+':n}</option>)}
           </select>
         </div>
@@ -212,7 +213,7 @@ export default function FiscaliteSection() {
           </div>
           <div style={{background:'#FDF8EC',border:'0.5px solid #F0D88A',borderRadius:'12px',padding:'12px'}}>
             <div style={{fontSize:'12px',fontWeight:'600',color:'#D4A843',marginBottom:'4px'}}>Estimation uniquement</div>
-            <div style={{fontSize:'12px',color:'#666',lineHeight:'1.6'}}>Basé sur les barèmes 2025. L'impôt communal n'est pas inclus. Consulte un fiduciaire pour un calcul exact.</div>
+            <div style={{fontSize:'12px',color:'#666',lineHeight:'1.6'}}>Basé sur les barèmes 2025. L’impôt communal n’est pas inclus. Consulte un fiduciaire pour un calcul exact.</div>
           </div>
         </div>
       )}

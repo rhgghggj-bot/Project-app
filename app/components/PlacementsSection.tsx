@@ -156,7 +156,7 @@ const ETF_INDICES = [
   {
     id: 'smi',
     nom: 'SMI Suisse',
-    description: '20 plus grandes entreprises suisses — Nestlé, Novartis, Roche, UBS, Richemont...',
+    description: '20 plus grandes entreprises suisses — Nestlé, Novartis, Roche, UBS, Richemont…',
     rendement: 7.8,
     duree: '30 ans',
     valeur1000: 28000,
@@ -174,7 +174,7 @@ const ETF_INDICES = [
   {
     id: 'nasdaq',
     nom: 'NASDAQ 100',
-    description: '100 plus grandes entreprises technologiques américaines — Apple, NVIDIA, Meta, Tesla...',
+    description: '100 plus grandes entreprises technologiques américaines — Apple, NVIDIA, Meta, Tesla…',
     rendement: 13.5,
     duree: '40 ans',
     valeur1000: 320000,
@@ -194,7 +194,7 @@ const ETF_INDICES = [
 
 export default function PlacementsSection() {
   const [actif, setActif] = useState('livretA')
-  const [etfActif, setEtfActif] = useState<any>(null)
+  const [etfActif, setEtfActif] = useState<(typeof ETF_INDICES)[number] | null>(null)
   const [ongletEpargne, setOngletEpargne] = useState('placements')
   const [capital, setCapital] = useState(5000)
   const [versementMois, setVersementMois] = useState(200)
@@ -259,7 +259,7 @@ export default function PlacementsSection() {
                 </div>
 
                 <div style={{background:'#F8FBFF',borderRadius:'10px',padding:'10px',marginBottom:'10px'}}>
-                  <div style={{fontSize:'10px',color:'#aaa',marginBottom:'6px'}}>1 000 CHF investi → {etf.valeur1000.toLocaleString('fr-FR')} CHF aujourd'hui</div>
+                  <div style={{fontSize:'10px',color:'#aaa',marginBottom:'6px'}}>1 000 CHF investi → {etf.valeur1000.toLocaleString('fr-FR')} CHF aujourd’hui</div>
                   <svg width="100%" height="60" viewBox={"0 0 " + (etf.courbe.length * 20) + " 60"} preserveAspectRatio="none">
                     <polyline
                       points={etf.courbe.map((v,i) => (i * 20) + "," + (58 - (v/max)*54)).join(' ')}
@@ -307,20 +307,20 @@ export default function PlacementsSection() {
           </div>
 
           <div style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'14px',padding:'14px',marginBottom:'10px'}}>
-            <div style={{fontSize:'11px',color:'#2B7FFF',fontWeight:'600',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:'8px'}}>C'est quoi ?</div>
+            <div style={{fontSize:'11px',color:'#2B7FFF',fontWeight:'600',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:'8px'}}>C’est quoi ?</div>
             <div style={{fontSize:'13px',color:'#444',lineHeight:'1.7',marginBottom:'10px'}}>
-              Un ETF (fonds indiciel coté) qui réplique passivement l'indice {etfActif.nom}. En achetant 1 part tu investis automatiquement dans toutes les entreprises de l'indice.
+              Un ETF (fonds indiciel coté) qui réplique passivement l’indice {etfActif.nom}. En achetant 1 part tu investis automatiquement dans toutes les entreprises de l’indice.
             </div>
             <div style={{background:'#EEF5FF',borderRadius:'10px',padding:'10px'}}>
               <div style={{fontSize:'12px',color:'#2B7FFF',fontWeight:'500',marginBottom:'4px'}}>Exemple concret</div>
               <div style={{fontSize:'12px',color:'#444',lineHeight:'1.6'}}>
-                1 000 CHF investi il y a {etfActif.duree} = <b style={{color:etfActif.couleur}}>{etfActif.valeur1000.toLocaleString('fr-FR')} CHF</b> aujourd'hui.
+                1 000 CHF investi il y a {etfActif.duree} = <b style={{color:etfActif.couleur}}>{etfActif.valeur1000.toLocaleString('fr-FR')} CHF</b> aujourd’hui.
                 <span style={{color:'#aaa'}}> Cet exemple est indicatif — ton montant sera différent.</span>
               </div>
             </div>
           </div>
 
-          {etfActif.etfs.map((e: any, i: number) => (
+          {etfActif.etfs.map((e, i) => (
             <div key={i} style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'14px',padding:'14px',marginBottom:'10px'}}>
               <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'8px'}}>
                 <span style={{fontSize:'18px'}}>{e.pays==='CH'?'🇨🇭':'🇫🇷'}</span>
@@ -416,22 +416,22 @@ export default function PlacementsSection() {
 
           <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'8px'}}>
             <label style={{fontSize:'11px',color:'#666',minWidth:'110px'}}>Capital initial</label>
-            <input type="range" min="0" max="100000" step="500" value={capital} onChange={e => setCapital(Number(e.target.value))} style={{flex:1}}/>
+            <input aria-label="Capital initial" type="range" min="0" max="100000" step="500" value={capital} onChange={e => setCapital(Number(e.target.value))} style={{flex:1}}/>
             <span style={{fontSize:'11px',fontWeight:'500',minWidth:'70px',textAlign:'right',color:p.couleur}}>{capital.toLocaleString('fr-FR')} CHF</span>
           </div>
           <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'8px'}}>
             <label style={{fontSize:'11px',color:'#666',minWidth:'110px'}}>Versement/mois</label>
-            <input type="range" min="0" max="5000" step="50" value={versementMois} onChange={e => setVersementMois(Number(e.target.value))} style={{flex:1}}/>
+            <input aria-label="Versement/mois" type="range" min="0" max="5000" step="50" value={versementMois} onChange={e => setVersementMois(Number(e.target.value))} style={{flex:1}}/>
             <span style={{fontSize:'11px',fontWeight:'500',minWidth:'70px',textAlign:'right',color:p.couleur}}>{versementMois.toLocaleString('fr-FR')} CHF</span>
           </div>
           <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'8px'}}>
             <label style={{fontSize:'11px',color:'#666',minWidth:'110px'}}>Rendement/an</label>
-            <input type="range" min="0.5" max="15" step="0.5" value={rendementCustom} onChange={e => setRendementCustom(Number(e.target.value))} style={{flex:1}}/>
+            <input aria-label="Rendement/an" type="range" min="0.5" max="15" step="0.5" value={rendementCustom} onChange={e => setRendementCustom(Number(e.target.value))} style={{flex:1}}/>
             <span style={{fontSize:'11px',fontWeight:'500',minWidth:'70px',textAlign:'right',color:p.couleur}}>{rendementCustom}%</span>
           </div>
           <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'14px'}}>
             <label style={{fontSize:'11px',color:'#666',minWidth:'110px'}}>Duree</label>
-            <input type="range" min="1" max="30" step="1" value={duree} onChange={e => setDuree(Number(e.target.value))} style={{flex:1}}/>
+            <input aria-label="Duree" type="range" min="1" max="30" step="1" value={duree} onChange={e => setDuree(Number(e.target.value))} style={{flex:1}}/>
             <span style={{fontSize:'11px',fontWeight:'500',minWidth:'70px',textAlign:'right',color:p.couleur}}>{duree} an{duree>1?'s':''}</span>
           </div>
 

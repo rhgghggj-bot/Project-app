@@ -1,14 +1,20 @@
 "use client"
+import type { RealtimeChannel } from "@supabase/supabase-js"
+import { Notification, User } from "@/lib/types"
+import { useMaintenant } from "@/lib/useMaintenant"
+import { onActivate, useEscape } from "@/lib/a11y"
 import { useEffect, useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 
 export default function NotificationBell() {
-  const [notifs, setNotifs] = useState<any[]>([])
+  const [notifs, setNotifs] = useState<Notification[]>([])
   const [ouvert, setOuvert] = useState(false)
-  const [user, setUser] = useState<any>(null)
+  const maintenant = useMaintenant()
+  useEscape(!!ouvert, () => setOuvert(false))
+  const [user, setUser] = useState<User | null>(null)
   const router = useRouter()
-  const channelRef = useRef<any>(null)
+  const channelRef = useRef<RealtimeChannel | null>(null)
 
   useEffect(() => {
     async function init() {
@@ -20,12 +26,12 @@ export default function NotificationBell() {
 
       const nomCanal = 'notifs-' + user.id
       supabase.getChannels()
-        .filter((ch: any) => ch.topic?.includes(nomCanal))
-        .forEach((ch: any) => supabase.removeChannel(ch))
+        .filter(ch => ch.topic?.includes(nomCanal))
+        .forEach(ch => supabase.removeChannel(ch))
 
       channelRef.current = supabase
         .channel(nomCanal)
-        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: 'user_id=eq.' + user.id },
+        .on<Notification>('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: 'user_id=eq.' + user.id },
           (payload) => setNotifs(prev => [payload.new, ...prev]))
         .subscribe()
     }
@@ -62,7 +68,7 @@ export default function NotificationBell() {
   }
 
   const tempsEcoule = (date: string) => {
-    const diff = (Date.now() - new Date(date).getTime()) / 1000
+    const diff = (maintenant - new Date(date).getTime()) / 1000
     if (diff < 60) return 'maintenant'
     if (diff < 3600) return Math.floor(diff/60) + 'min'
     if (diff < 86400) return Math.floor(diff/3600) + 'h'
@@ -88,7 +94,7 @@ export default function NotificationBell() {
 
       {ouvert && (
         <>
-          <div onClick={() => setOuvert(false)} style={{position:'fixed',inset:0,zIndex:40}}></div>
+          <div aria-hidden="true" onClick={() => setOuvert(false)} style={{position:'fixed',inset:0,zIndex:40}}></div>
           <div style={{position:'absolute',top:'46px',right:0,width:'300px',background:'#fff',borderRadius:'16px',boxShadow:'0 8px 30px rgba(0,0,0,0.12)',border:'0.5px solid #E8F1FF',zIndex:50,overflow:'hidden'}}>
             <div style={{padding:'12px 16px',borderBottom:'0.5px solid #E8F1FF',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
               <span style={{fontSize:'14px',fontWeight:'500',color:'#1a1a2e'}}>Notifications</span>
@@ -101,10 +107,10 @@ export default function NotificationBell() {
             <div style={{maxHeight:'360px',overflowY:'auto'}}>
               {notifs.length === 0 ? (
                 <div style={{padding:'32px 16px',textAlign:'center',color:'#aaa',fontSize:'13px'}}>
-                  Aucune notification pour l'instant
+                  Aucune notification pour l’instant
                 </div>
-              ) : notifs.map((n: any) => (
-                <div key={n.id} onClick={() => marquerLu(n.id, n.lien)}
+              ) : notifs.map(n => (
+                <div key={n.id} role="button" tabIndex={0} onClick={() => marquerLu(n.id, n.lien)} onKeyDown={onActivate(() => marquerLu(n.id, n.lien))}
                   style={{padding:'12px 16px',borderBottom:'0.5px solid #F0F4FA',cursor:'pointer',background: n.lu ? '#fff' : '#F8FBFF',display:'flex',gap:'10px',alignItems:'flex-start'}}>
                   <div style={{width:'32px',height:'32px',borderRadius:'10px',background:couleurType(n.type)+'22',color:couleurType(n.type),display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
                     {iconType(n.type)}

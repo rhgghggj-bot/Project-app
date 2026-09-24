@@ -1,5 +1,6 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useStockagesLocaux } from "@/lib/useStockage"
+import Link from "next/link"
 import { useRouter } from 'next/navigation'
 
 const JEUX = [
@@ -16,7 +17,7 @@ const JEUX = [
 ]
 
 function Icone({ type, couleur }: { type: string, couleur: string }) {
-  const props = { width: 26, height: 26, viewBox: '0 0 24 24', fill: 'none', stroke: couleur, strokeWidth: 2 } as any
+  const props: React.SVGProps<SVGSVGElement> = { width: 26, height: 26, viewBox: '0 0 24 24', fill: 'none', stroke: couleur, strokeWidth: 2 }
   if (type === 'blocks') return <svg {...props}><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
   if (type === 'grid') return <svg {...props}><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg>
   if (type === 'snake') return <svg {...props}><path d="M4 6c0-1.5 1.5-2 3-2s3 .5 3 2-1.5 2-3 2H5c-1.5 0-3 .5-3 2s1.5 2 3 2h9c1.5 0 3 .5 3 2s-1.5 2-3 2h-2"/><circle cx="19" cy="16" r="1"/></svg>
@@ -29,28 +30,30 @@ function Icone({ type, couleur }: { type: string, couleur: string }) {
   return <svg {...props}><rect x="2" y="7" width="8" height="12" rx="1.5"/><rect x="14" y="7" width="8" height="12" rx="1.5"/><path d="M6 7V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2"/></svg>
 }
 
+// Où chaque jeu enregistre son record sur l’appareil
+const CLE_PAR_JEU: Record<string, string> = {
+  blockblast: 'blockblast_meilleur',
+  '2048': 'jeu2048_meilleur',
+  snake: 'snake_meilleur',
+  memory: 'memory_meilleur_facile',
+  stacktower: 'stacktower_meilleur',
+  cassebriques: 'cassebriques_meilleur',
+  maville: 'simcity_meilleure_population',
+  reflexes: 'reflexes_meilleur_score',
+}
+const CLES_RECORDS = Object.values(CLE_PAR_JEU)
+
 export default function JeuxHub() {
   const router = useRouter()
-  const [meilleurs, setMeilleurs] = useState<any>({})
-
-  useEffect(() => {
-    const m: any = {}
-    m.blockblast = parseInt(localStorage.getItem('blockblast_meilleur') || '0')
-    m['2048'] = parseInt(localStorage.getItem('jeu2048_meilleur') || '0')
-    m.snake = parseInt(localStorage.getItem('snake_meilleur') || '0')
-    m.memory = parseInt(localStorage.getItem('memory_meilleur_facile') || '0')
-    m.stacktower = parseInt(localStorage.getItem('stacktower_meilleur') || '0')
-    m.cassebriques = parseInt(localStorage.getItem('cassebriques_meilleur') || '0')
-    m.maville = parseInt(localStorage.getItem('simcity_meilleure_population') || '0')
-    const r = localStorage.getItem('reflexes_meilleur_score')
-    m.reflexes = r ? parseInt(r) : 0
-    setMeilleurs(m)
-  }, [])
+  const records = useStockagesLocaux(CLES_RECORDS)
+  const meilleurs: Record<string, number> = Object.fromEntries(
+    Object.entries(CLE_PAR_JEU).map(([jeu, cle]) => [jeu, parseInt(records[cle] || '0') || 0])
+  )
 
   return (
     <main className="min-h-screen bg-white">
       <div style={{background:'linear-gradient(160deg,#0A1628,#1a3a6e,#2B7FFF)',padding:'20px 18px 28px'}}>
-        <a href="/" style={{fontSize:'12px',color:'rgba(255,255,255,0.5)',display:'block',marginBottom:'8px'}}>← Accueil</a>
+        <Link href="/" transitionTypes={['nav-back']} style={{fontSize:'12px',color:'rgba(255,255,255,0.5)',display:'block',marginBottom:'8px'}}>← Accueil</Link>
         <div style={{fontSize:'22px',fontWeight:'600',color:'#fff'}}>Jeux</div>
         <div style={{fontSize:'13px',color:'rgba(255,255,255,0.5)',marginTop:'2px'}}>Détends-toi, seul ou en famille</div>
       </div>

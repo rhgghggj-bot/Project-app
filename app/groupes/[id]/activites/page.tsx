@@ -1,5 +1,10 @@
 "use client"
-import { useEffect, useState } from "react"
+import { ActiviteGroupe, Groupe, MembreGroupe, User } from "@/lib/types"
+import { useChargement } from "@/lib/useChargement"
+import { confirmer } from "@/lib/toast"
+import Button from "@/app/components/ui/Button"
+import SectionHeader from "@/app/components/ui/SectionHeader"
+import { useState } from "react"
 import { useParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import { syncActivitesGroupeVersCalendrier } from "@/lib/syncActivites"
@@ -9,10 +14,10 @@ const COULEURS = ["#8B5CF6", "#2B7FFF", "#10B981", "#F43F5E", "#D4A843", "#EC489
 export default function ActivitesGroupe() {
   const params = useParams()
   const id = Array.isArray(params.id) ? params.id[0] : params.id
-  const [groupe, setGroupe] = useState<any>(null)
-  const [activites, setActivites] = useState<any[]>([])
-  const [profils, setProfils] = useState<any>({})
-  const [user, setUser] = useState<any>(null)
+  const [groupe, setGroupe] = useState<Groupe | null>(null)
+  const [activites, setActivites] = useState<ActiviteGroupe[]>([])
+  const [profils, setProfils] = useState<Record<string, string>>({})
+  const [user, setUser] = useState<User | null>(null)
   const [showForm, setShowForm] = useState(false)
   const [titre, setTitre] = useState("")
   const [description, setDescription] = useState("")
@@ -24,27 +29,28 @@ export default function ActivitesGroupe() {
   const [couleur, setCouleur] = useState(COULEURS[0])
   const [message, setMessage] = useState("")
 
-  useEffect(() => {
-    async function init() {
-      const { data: { user } } = await supabase.auth.getUser()
-      setUser(user)
-      const { data: g } = await supabase.from("groupes").select("*").eq("id", id).single()
-      setGroupe(g)
-      if (user) {
-        await syncActivitesGroupeVersCalendrier(user.id)
-      }
-      await charger()
+  async function init() {
+    const [{ data: { user } }, { data: g }] = await Promise.all([
+      supabase.auth.getUser(),
+      supabase.from("groupes").select("*").eq("id", id).single(),
+    ])
+    setUser(user)
+    setGroupe(g)
+    if (user) {
+      await syncActivitesGroupeVersCalendrier(user.id)
     }
-    init()
-  }, [id])
+    await charger()
+  }
+  useChargement(init, id)
 
   async function charger() {
     const { data: a } = await supabase.from("activites_groupe").select("*").eq("groupe_id", id).order("date", { ascending: true })
     setActivites(a || [])
 
     const { data: membres } = await supabase.from("membres_groupe").select("user_id, profiles(prenom, nom)").eq("groupe_id", id)
-    const p: any = {}
-    membres?.forEach((m: any) => { p[m.user_id] = m.profiles?.prenom || "Membre" })
+    const p: Record<string, string> = {}
+    // profiles est une relation un-à-un : Supabase la renvoie comme un objet
+    for (const m of (membres || []) as unknown as { user_id: string; profiles: { prenom: string | null; nom: string | null } | null }[]) p[m.user_id] = m.profiles?.prenom || m.profiles?.nom || "Membre"
     setProfils(p)
   }
 
@@ -52,7 +58,7 @@ export default function ActivitesGroupe() {
     if (!titre.trim() || !date) { setMessage("Un titre et une date sont nécessaires."); return }
     if (!user) return
 
-    const { data: nouvelleActivite, error } = await supabase.from("activites_groupe").insert({
+    const { error } = await supabase.from("activites_groupe").insert({
       groupe_id: id, titre, description, lieu, date, heure, duree: dureeH * 60 + dureeM, couleur, created_by: user.id
     }).select().single()
 
@@ -64,7 +70,7 @@ export default function ActivitesGroupe() {
     if (membres) {
       const { data: profil } = await supabase.from("profiles").select("nom, prenom").eq("id", user.id).single()
       const nomAffiche = profil?.prenom || profil?.nom || "Un membre"
-      for (const mb of membres.filter((m: any) => m.user_id !== user.id)) {
+      for (const mb of (membres as MembreGroupe[]).filter(m => m.user_id !== user.id)) {
         await supabase.from("notifications").insert({
           user_id: mb.user_id,
           type: "activite",
@@ -81,7 +87,7 @@ export default function ActivitesGroupe() {
   }
 
   async function supprimerActivite(activiteId: string) {
-    if (!confirm("Supprimer cette activité ? Elle sera aussi retirée des calendriers.")) return
+    if (!(await confirmer("Supprimer cette activité ? Elle sera aussi retirée des calendriers.", "Supprimer"))) return
     await supabase.from("activites_groupe").delete().eq("id", activiteId)
     charger()
   }
@@ -94,44 +100,40 @@ export default function ActivitesGroupe() {
 
   return (
     <main className="min-h-screen bg-white">
-      <div style={{background:'linear-gradient(160deg,#0A1628,#1a3a6e)',padding:'20px 18px 28px'}}>
-        <a href={`/groupes/${id}`} style={{fontSize:'12px',color:'rgba(255,255,255,0.5)',display:'block',marginBottom:'8px'}}>← Retour au groupe</a>
-        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-          <div style={{fontSize:'20px',fontWeight:'500',color:'#fff'}}>Activités</div>
-          <button onClick={() => setShowForm(!showForm)}
-            style={{background:'rgba(255,255,255,0.15)',border:'0.5px solid rgba(255,255,255,0.25)',borderRadius:'10px',padding:'8px 14px',color:'#fff',fontSize:'13px',cursor:'pointer'}}>
-            + Planifier
-          </button>
-        </div>
-        <div style={{fontSize:'12px',color:'rgba(255,255,255,0.5)',marginTop:'4px'}}>Se synchronise automatiquement avec le calendrier de chaque membre</div>
-      </div>
+      <SectionHeader
+        backHref={`/groupes/${id}`}
+        backLabel="← Retour au groupe"
+        title="Activités"
+        subtitle="Se synchronise automatiquement avec le calendrier de chaque membre"
+        action={<Button variant="onDark" onClick={() => setShowForm(!showForm)}>+ Planifier</Button>}
+      />
 
       <div style={{padding:'16px 14px'}}>
         {showForm && (
           <div style={{background:'#EEF5FF',borderRadius:'14px',padding:'14px',marginBottom:'14px',border:'0.5px solid #DCE9FF'}}>
             <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',marginBottom:'10px'}}>Nouvelle activité</div>
-            <input value={titre} onChange={e => setTitre(e.target.value)} placeholder="Ex: Raclette chez Sam, Randonnée..." style={inp}/>
-            <input value={lieu} onChange={e => setLieu(e.target.value)} placeholder="Lieu (optionnel)" style={inp}/>
+            <input aria-label="Raclette chez Sam, Randonnée" value={titre} onChange={e => setTitre(e.target.value)} placeholder="Ex: Raclette chez Sam, Randonnée…" style={inp}/>
+            <input aria-label="Lieu (optionnel)" value={lieu} onChange={e => setLieu(e.target.value)} placeholder="Lieu (optionnel)" style={inp}/>
             <div style={{display:'flex',gap:'8px',marginBottom:'4px'}}>
               <div style={{flex:1,fontSize:'11px',color:'#666'}}>Date</div>
               <div style={{flex:1,fontSize:'11px',color:'#666'}}>Heure (optionnel)</div>
             </div>
             <div style={{display:'flex',gap:'8px',marginBottom:'12px'}}>
-              <input type="date" value={date} onChange={e => setDate(e.target.value)} style={{...inp,marginBottom:0,flex:1}}/>
-              <input type="time" value={heure} onChange={e => setHeure(e.target.value)} style={{...inp,marginBottom:0,flex:1}}/>
+              <input aria-label="Date" type="date" value={date} onChange={e => setDate(e.target.value)} style={{...inp,marginBottom:0,flex:1}}/>
+              <input aria-label="Heure" type="time" value={heure} onChange={e => setHeure(e.target.value)} style={{...inp,marginBottom:0,flex:1}}/>
             </div>
             <div style={{fontSize:'11px',color:'#666',marginBottom:'4px'}}>Durée</div>
             <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'12px'}}>
-              <select value={dureeH} onChange={e => setDureeH(Number(e.target.value))}
+              <select aria-label="Durée en heures" value={dureeH} onChange={e => setDureeH(Number(e.target.value))}
                 style={{flex:1,border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 12px',fontSize:'16px',color:'#1a1a2e',background:'#fff'}}>
                 {Array.from({length:13}, (_,i) => i).map(h => <option key={h} value={h}>{h} h</option>)}
               </select>
-              <select value={dureeM} onChange={e => setDureeM(Number(e.target.value))}
+              <select aria-label="Durée en minutes" value={dureeM} onChange={e => setDureeM(Number(e.target.value))}
                 style={{flex:1,border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 12px',fontSize:'16px',color:'#1a1a2e',background:'#fff'}}>
                 {[0,15,30,45].map(m => <option key={m} value={m}>{m} min</option>)}
               </select>
             </div>
-            <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Description (optionnel)" rows={2}
+            <textarea aria-label="Description (optionnel)" value={description} onChange={e => setDescription(e.target.value)} placeholder="Description (optionnel)" rows={2}
               style={{...inp,resize:'none' as const}}/>
             <div style={{fontSize:'11px',color:'#666',marginBottom:'6px'}}>Couleur</div>
             <div style={{display:'flex',gap:'8px',marginBottom:'12px'}}>

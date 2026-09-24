@@ -1,4 +1,6 @@
 "use client"
+import { Groupe } from "@/lib/types"
+import Link from "next/link"
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 
@@ -12,7 +14,7 @@ export default function NouveauProjet() {
   const [echeance, setEcheance] = useState("")
   const [groupeId, setGroupeId] = useState("")
   const [prive, setPrive] = useState(false)
-  const [groupes, setGroupes] = useState<any[]>([])
+  const [groupes, setGroupes] = useState<Pick<Groupe, 'id' | 'nom'>[]>([])
   const [message, setMessage] = useState("")
 
   useEffect(() => {
@@ -23,7 +25,8 @@ export default function NouveauProjet() {
           .from("membres_groupe")
           .select("groupe_id, groupes(id, nom)")
           .eq("user_id", user.id)
-        setGroupes(membres?.map((m: any) => m.groupes) || [])
+        // Ignore les adhésions dont le groupe n'existe plus (relation vide)
+        setGroupes(((membres || []) as unknown as { groupes: Pick<Groupe, 'id' | 'nom'> | null }[]).map(m => m.groupes).filter(g => g != null))
       }
     }
     charger()
@@ -31,13 +34,13 @@ export default function NouveauProjet() {
 
   async function publier() {
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { window.location.href = "/connexion"; return }
+    if (!user) { window.location.assign("/connexion"); return }
     const { error } = await supabase.from("projets").insert({
       user_id: user.id, titre, description, categorie,
       image_url: revolut, groupe_id: groupeId || null, prive
     })
     if (error) { setMessage("Erreur : " + error.message) }
-    else { setMessage("Projet publié !"); setTimeout(() => window.location.href = "/profile", 1500) }
+    else { setMessage("Projet publié !"); setTimeout(() => window.location.assign("/profile"), 1500) }
   }
 
   const cats = ["Tech","Restauration","Commerce","Musique","Art","Sport","Éducation","Autre"]
@@ -46,7 +49,7 @@ export default function NouveauProjet() {
     <main style={{minHeight:'100vh',background:'#f8faff'}}>
       <div style={{background:'linear-gradient(160deg,#0A1628,#1a3a6e,#2B7FFF)',padding:'20px 18px 32px',position:'relative',overflow:'hidden'}}>
         <div style={{position:'absolute',top:'-40px',right:'-40px',width:'160px',height:'160px',borderRadius:'50%',background:'rgba(255,255,255,0.06)'}}></div>
-        <a href="/profile" style={{fontSize:'12px',color:'rgba(255,255,255,0.5)',display:'block',marginBottom:'12px',textDecoration:'none'}}>← Retour</a>
+        <Link href="/profile" transitionTypes={['nav-back']} style={{fontSize:'12px',color:'rgba(255,255,255,0.5)',display:'block',marginBottom:'12px',textDecoration:'none'}}>← Retour</Link>
         <div style={{fontSize:'22px',fontWeight:'600',color:'#fff',marginBottom:'4px'}}>Lance ton projet</div>
         <div style={{fontSize:'13px',color:'rgba(255,255,255,0.6)'}}>Partage ton ambition avec la communauté</div>
       </div>
@@ -55,13 +58,13 @@ export default function NouveauProjet() {
 
         <div style={{background:'#fff',borderRadius:'16px',padding:'16px',marginBottom:'12px',boxShadow:'0 2px 8px rgba(43,127,255,0.06)',border:'0.5px solid #E8F1FF'}}>
           <div style={{fontSize:'11px',color:'#2B7FFF',fontWeight:'600',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:'8px'}}>Nom du projet</div>
-          <input type="text" placeholder="Ex: Restaurant le Coin, App fitness..." value={titre} onChange={e => setTitre(e.target.value)}
+          <input aria-label="Restaurant le Coin, App fitness" type="text" placeholder="Ex: Restaurant le Coin, App fitness…" value={titre} onChange={e => setTitre(e.target.value)}
             style={{width:'100%',border:'none',fontSize:'16px',color:'#1a1a2e',outline:'none',background:'transparent',boxSizing:'border-box'}}/>
         </div>
 
         <div style={{background:'#fff',borderRadius:'16px',padding:'16px',marginBottom:'12px',boxShadow:'0 2px 8px rgba(43,127,255,0.06)',border:'0.5px solid #E8F1FF'}}>
           <div style={{fontSize:'11px',color:'#2B7FFF',fontWeight:'600',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:'8px'}}>Description</div>
-          <textarea placeholder="Décris ton projet, tes objectifs, pourquoi tu as besoin de soutien..." value={description} onChange={e => setDescription(e.target.value)}
+          <textarea aria-label="Décris ton projet, tes objectifs, pourquoi tu as besoin de soutien" placeholder="Décris ton projet, tes objectifs, pourquoi tu as besoin de soutien…" value={description} onChange={e => setDescription(e.target.value)}
             style={{width:'100%',border:'none',fontSize:'14px',color:'#1a1a2e',outline:'none',background:'transparent',resize:'none',height:'80px',boxSizing:'border-box',lineHeight:'1.6'}}/>
         </div>
 
@@ -81,14 +84,14 @@ export default function NouveauProjet() {
           <div style={{flex:1,background:'#fff',borderRadius:'16px',padding:'14px',boxShadow:'0 2px 8px rgba(43,127,255,0.06)',border:'0.5px solid #E8F1FF'}}>
             <div style={{fontSize:'11px',color:'#D4A843',fontWeight:'600',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:'6px'}}>Cagnotte</div>
             <div style={{display:'flex',alignItems:'baseline',gap:'4px'}}>
-              <input placeholder="500" type="number" value={objectif} onChange={e => setObjectif(e.target.value)}
+              <input aria-label="500" placeholder="500" type="number" value={objectif} onChange={e => setObjectif(e.target.value)}
                 style={{width:'100%',border:'none',fontSize:'20px',fontWeight:'600',color:'#1a1a2e',outline:'none',background:'transparent'}}/>
               <span style={{fontSize:'13px',color:'#aaa'}}>CHF</span>
             </div>
           </div>
           <div style={{flex:1,background:'#fff',borderRadius:'16px',padding:'14px',boxShadow:'0 2px 8px rgba(43,127,255,0.06)',border:'0.5px solid #E8F1FF'}}>
             <div style={{fontSize:'11px',color:'#10B981',fontWeight:'600',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:'6px'}}>Date limite</div>
-            <input type="date" value={echeance} onChange={e => setEcheance(e.target.value)}
+            <input aria-label="Échéance" type="date" value={echeance} onChange={e => setEcheance(e.target.value)}
               style={{width:'100%',border:'none',fontSize:'13px',color:'#1a1a2e',outline:'none',background:'transparent'}}/>
           </div>
         </div>
@@ -97,7 +100,7 @@ export default function NouveauProjet() {
           <div style={{fontSize:'11px',color:'#666',fontWeight:'600',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:'6px'}}>Lien Revolut</div>
           <div style={{display:'flex',alignItems:'center',gap:'4px'}}>
             <span style={{fontSize:'13px',color:'#aaa'}}>revolut.me/</span>
-            <input type="text" placeholder="tonpseudo" value={revolut} onChange={e => setRevolut(e.target.value)}
+            <input aria-label="tonpseudo" type="text" placeholder="tonpseudo" value={revolut} onChange={e => setRevolut(e.target.value)}
               style={{flex:1,border:'none',fontSize:'16px',color:'#1a1a2e',outline:'none',background:'transparent'}}/>
           </div>
         </div>
@@ -105,7 +108,7 @@ export default function NouveauProjet() {
           <div style={{fontSize:'11px',color:'#10B981',fontWeight:'600',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:'6px'}}>Lien Wave</div>
           <div style={{display:'flex',alignItems:'center',gap:'4px'}}>
             <span style={{fontSize:'13px',color:'#aaa'}}>wave.com/</span>
-            <input type="text" placeholder="tonpseudo" value={wave} onChange={e => setWave(e.target.value)}
+            <input aria-label="tonpseudo" type="text" placeholder="tonpseudo" value={wave} onChange={e => setWave(e.target.value)}
               style={{flex:1,border:'none',fontSize:'16px',color:'#1a1a2e',outline:'none',background:'transparent'}}/>
           </div>
         </div>
@@ -124,10 +127,10 @@ export default function NouveauProjet() {
         {!prive && groupes.length > 0 && (
           <div style={{background:'#fff',borderRadius:'16px',padding:'14px',marginBottom:'16px',border:'0.5px solid #E8F1FF'}}>
             <div style={{fontSize:'11px',color:'#666',marginBottom:'8px'}}>Partager dans un groupe (optionnel)</div>
-            <select value={groupeId} onChange={e => setGroupeId(e.target.value)}
+            <select aria-label="Groupe" value={groupeId} onChange={e => setGroupeId(e.target.value)}
               style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'8px 12px',fontSize:'14px',color:'#1a1a2e',background:'#F8FBFF'}}>
               <option value="">Visible par tous (public)</option>
-              {groupes.map((g: any) => <option key={g.id} value={g.id}>{g.nom}</option>)}
+              {groupes.map(g => <option key={g.id} value={g.id}>{g.nom}</option>)}
             </select>
           </div>
         )}

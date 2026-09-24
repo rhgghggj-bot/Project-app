@@ -1,4 +1,7 @@
 "use client"
+import { SkeletonPage } from "@/app/components/ui/Skeleton"
+import { onActivate } from "@/lib/a11y"
+import SectionHeader from "@/app/components/ui/SectionHeader"
 import { useState, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
@@ -42,12 +45,12 @@ function Formulaire() {
   async function creer() {
     if (!titre.trim()) { setMessage("Donne un titre à l'événement"); return }
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { window.location.href = "/connexion"; return }
+    if (!user) { window.location.assign("/connexion"); return }
 
     setEnregistrement(true)
     let lat: number | null = null, lng: number | null = null
     if (lieu.trim()) {
-      setMessage("Localisation du lieu...")
+      setMessage("Localisation du lieu…")
       const geo = await geocoder(lieu.trim())
       if (geo) { lat = geo.lat; lng = geo.lng }
     }
@@ -64,40 +67,37 @@ function Formulaire() {
       setEnregistrement(false)
     } else {
       setMessage("Enregistré !")
-      setTimeout(() => { window.location.href = "/semaine" }, 700)
+      setTimeout(() => { window.location.assign("/semaine") }, 700)
     }
   }
 
   return (
     <main className="min-h-screen bg-white">
-      <div style={{background:'linear-gradient(160deg,#0A1628,#1a3a6e)',padding:'20px 18px 28px'}}>
-        <a href="/semaine" style={{fontSize:'12px',color:'rgba(255,255,255,0.5)'}}>← Retour</a>
-        <div style={{fontSize:'20px',fontWeight:'500',color:'#fff',marginTop:'10px'}}>Nouvel événement</div>
-      </div>
+      <SectionHeader backHref="/semaine" title="Nouvel événement" />
 
       <div style={{padding:'20px 18px',display:'flex',flexDirection:'column',gap:'14px'}}>
         <div>
           <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Titre</label>
-          <input value={titre} onChange={e => setTitre(e.target.value)} placeholder="Titre de l'événement"
+          <input aria-label="Titre" value={titre} onChange={e => setTitre(e.target.value)} placeholder="Titre de l'événement"
             style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 14px',fontSize:'14px',color:'#1a1a2e',background:'#F8FBFF',boxSizing:'border-box'}}/>
         </div>
 
         <div style={{display:'flex',gap:'10px'}}>
           <div style={{flex:1}}>
             <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Date</label>
-            <input value={date} onChange={e => setDate(e.target.value)} type="date"
+            <input aria-label="Date" value={date} onChange={e => setDate(e.target.value)} type="date"
               style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 14px',fontSize:'13px',color:'#1a1a2e',background:'#F8FBFF',boxSizing:'border-box'}}/>
           </div>
           <div style={{flex:1}}>
             <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Heure</label>
-            <input value={heure} onChange={e => setHeure(e.target.value)} type="time"
+            <input aria-label="Heure" value={heure} onChange={e => setHeure(e.target.value)} type="time"
               style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 14px',fontSize:'13px',color:'#1a1a2e',background:'#F8FBFF',boxSizing:'border-box'}}/>
           </div>
         </div>
 
         <div>
           <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Durée (minutes)</label>
-          <input value={duree} onChange={e => setDuree(Number(e.target.value) || 0)} type="number" min="0" step="5"
+          <input aria-label="Durée (minutes)" value={duree} onChange={e => setDuree(Number(e.target.value) || 0)} type="number" min="0" step="5"
             style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 14px',fontSize:'13px',color:'#1a1a2e',background:'#F8FBFF',boxSizing:'border-box'}}/>
         </div>
 
@@ -105,7 +105,7 @@ function Formulaire() {
           <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'6px'}}>Couleur</label>
           <div style={{display:'flex',gap:'8px'}}>
             {COULEURS_EVT.map(c => (
-              <div key={c} onClick={() => setCouleur(c)} style={{width:'26px',height:'26px',borderRadius:'50%',background:c,cursor:'pointer',border: couleur === c ? '3px solid #1a1a2e' : '3px solid transparent'}}/>
+              <div key={c} role="button" tabIndex={0} onClick={() => setCouleur(c)} onKeyDown={onActivate(() => setCouleur(c))} style={{width:'26px',height:'26px',borderRadius:'50%',background:c,cursor:'pointer',border: couleur === c ? '3px solid #1a1a2e' : '3px solid transparent'}}/>
             ))}
           </div>
         </div>
@@ -113,7 +113,7 @@ function Formulaire() {
         <div style={{background:'#F8FBFF',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 12px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
           <div>
             <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e'}}>Sur plusieurs jours</div>
-            <div style={{fontSize:'11px',color:'#aaa',marginTop:'2px'}}>Du jour choisi jusqu'à une date de fin</div>
+            <div style={{fontSize:'11px',color:'#aaa',marginTop:'2px'}}>Du jour choisi jusqu’à une date de fin</div>
           </div>
           <button onClick={() => { const v=!multiJours; setMultiJours(v); if (v) { setRecurrence(false); setJoursRecurrence([]) } }}
             style={{width:'40px',height:'22px',borderRadius:'99px',border:'none',cursor:'pointer',position:'relative',background: multiJours ? '#2B7FFF' : '#E2E8F0'}}>
@@ -124,7 +124,7 @@ function Formulaire() {
         {multiJours && (
           <div style={{background:'#F8FBFF',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 12px'}}>
             <label style={{fontSize:'11px',color:'#2B7FFF',fontWeight:'600',textTransform:'uppercase',letterSpacing:'.05em',display:'block',marginBottom:'6px'}}>Date de fin</label>
-            <input type="date" value={dateFin} onChange={e => setDateFin(e.target.value)}
+            <input aria-label="Date de fin" type="date" value={dateFin} onChange={e => setDateFin(e.target.value)}
               style={{width:'100%',border:'none',fontSize:'15px',color:'#1a1a2e',outline:'none',background:'transparent'}}/>
           </div>
         )}
@@ -156,8 +156,8 @@ function Formulaire() {
                 </button>
               ))}
             </div>
-            <label style={{fontSize:'11px',color:'#2B7FFF',fontWeight:'600',textTransform:'uppercase',letterSpacing:'.05em',display:'block',marginBottom:'6px'}}>Jusqu'au (optionnel)</label>
-            <input type="date" value={recurrenceFin} onChange={e => setRecurrenceFin(e.target.value)}
+            <label style={{fontSize:'11px',color:'#2B7FFF',fontWeight:'600',textTransform:'uppercase',letterSpacing:'.05em',display:'block',marginBottom:'6px'}}>Jusqu’au (optionnel)</label>
+            <input aria-label="Jusqu'au (optionnel)" type="date" value={recurrenceFin} onChange={e => setRecurrenceFin(e.target.value)}
               style={{width:'100%',border:'none',fontSize:'15px',color:'#1a1a2e',outline:'none',background:'transparent'}}/>
             {!recurrenceFin && <div style={{fontSize:'11px',color:'#aaa',marginTop:'2px'}}>Se répète indéfiniment si laissé vide</div>}
           </div>
@@ -165,14 +165,14 @@ function Formulaire() {
 
         <div>
           <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Description</label>
-          <textarea value={description} onChange={e => setDescription(e.target.value)} rows={4}
-            placeholder="Ajoute des détails sur cet événement..."
+          <textarea aria-label="Description" value={description} onChange={e => setDescription(e.target.value)} rows={4}
+            placeholder="Ajoute des détails sur cet événement…"
             style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 14px',fontSize:'13px',color:'#1a1a2e',background:'#F8FBFF',boxSizing:'border-box',resize:'vertical',fontFamily:'inherit'}}/>
         </div>
 
         <div>
           <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Lieu / Adresse</label>
-          <input value={lieu} onChange={e => setLieu(e.target.value)}
+          <input aria-label="Lieu / Adresse" value={lieu} onChange={e => setLieu(e.target.value)}
             placeholder="Ex: 12 rue du Rhône, Genève"
             style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 14px',fontSize:'13px',color:'#1a1a2e',background:'#F8FBFF',boxSizing:'border-box'}}/>
 
@@ -202,7 +202,7 @@ function Formulaire() {
         )}
 
         <button onClick={creer} disabled={enregistrement} style={{background:'#2B7FFF',color:'#fff',fontSize:'14px',fontWeight:'500',padding:'12px',borderRadius:'12px',border:'none',cursor: enregistrement ? 'default' : 'pointer',opacity: enregistrement ? 0.6 : 1}}>
-          {enregistrement ? "Enregistrement..." : "Créer l'événement"}
+          {enregistrement ? "Enregistrement…" : "Créer l'événement"}
         </button>
       </div>
     </main>
@@ -211,7 +211,7 @@ function Formulaire() {
 
 export default function NouvelEvenement() {
   return (
-    <Suspense fallback={<main className="min-h-screen bg-white flex items-center justify-center"><p className="text-gray-400 text-sm">Chargement...</p></main>}>
+    <Suspense fallback={<SkeletonPage />}>
       <Formulaire />
     </Suspense>
   )

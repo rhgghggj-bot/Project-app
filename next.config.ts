@@ -7,7 +7,10 @@ const nextConfig: NextConfig = {
       headers: [{ key: 'Cache-Control', value: 'no-store, must-revalidate' }]
     }
   ],
-  /* config options here */
+  experimental: {
+    // Transitions animées entre les pages (<ViewTransition> dans PageFrame)
+    viewTransition: true,
+  },
 };
 
 export default nextConfig;

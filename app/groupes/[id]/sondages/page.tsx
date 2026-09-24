@@ -1,5 +1,7 @@
 "use client"
-import { useEffect, useState } from "react"
+import { MembreGroupe, OptionSondage, Profil, Sondage, User, VoteSondage } from "@/lib/types"
+import { useChargement } from "@/lib/useChargement"
+import { useState } from "react"
 import { useParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import SectionHeader from "@/app/components/ui/SectionHeader"
@@ -14,16 +16,15 @@ export default function SondagesGroupePage() {
   const params = useParams()
   const id = Array.isArray(params.id) ? params.id[0] : params.id
 
-  const [user, setUser] = useState<any>(null)
-  const [profils, setProfils] = useState<Record<string, any>>({})
-  const [sondages, setSondages] = useState<any[]>([])
-  const [options, setOptions] = useState<any[]>([])
-  const [votes, setVotes] = useState<any[]>([])
+  const [user, setUser] = useState<User | null>(null)
+  const [profils, setProfils] = useState<Record<string, Pick<Profil, 'id' | 'nom'>>>({})
+  const [sondages, setSondages] = useState<Sondage[]>([])
+  const [options, setOptions] = useState<OptionSondage[]>([])
+  const [votes, setVotes] = useState<VoteSondage[]>([])
   const [showForm, setShowForm] = useState(false)
   const [question, setQuestion] = useState("")
   const [choix, setChoix] = useState(["", ""])
 
-  useEffect(() => { charger() }, [])
 
   async function charger() {
     const { data: { user } } = await supabase.auth.getUser()
@@ -31,16 +32,16 @@ export default function SondagesGroupePage() {
 
     const { data: mb } = await supabase.from("membres_groupe").select("user_id").eq("groupe_id", id)
     if (mb && mb.length > 0) {
-      const { data: profs } = await supabase.from("profiles").select("id,nom").in("id", mb.map((m: any) => m.user_id))
-      const map: Record<string, any> = {}
-      profs?.forEach((p: any) => { map[p.id] = p })
+      const { data: profs } = await supabase.from("profiles").select("id,nom").in("id", (mb as MembreGroupe[]).map(m => m.user_id))
+      const map: Record<string, Pick<Profil, 'id' | 'nom'>> = {}
+      for (const p of (profs || []) as Pick<Profil, 'id' | 'nom'>[]) map[p.id] = p
       setProfils(map)
     }
 
     const { data: snd } = await supabase.from("sondages_groupe").select("*").eq("groupe_id", id).order("created_at", { ascending: false })
     setSondages(snd || [])
     if (snd && snd.length > 0) {
-      const sondageIds = snd.map((s: any) => s.id)
+      const sondageIds = (snd as Sondage[]).map(s => s.id)
       const { data: opts } = await supabase.from("sondages_groupe_options").select("*").in("sondage_id", sondageIds).order("ordre")
       setOptions(opts || [])
       const { data: vts } = await supabase.from("sondages_groupe_votes").select("*").in("sondage_id", sondageIds)
@@ -49,6 +50,8 @@ export default function SondagesGroupePage() {
       setOptions([]); setVotes([])
     }
   }
+
+  useChargement(charger, id)
 
   function updateChoix(i: number, val: string) {
     setChoix(prev => prev.map((c, idx) => idx === i ? val : c))
@@ -91,17 +94,17 @@ export default function SondagesGroupePage() {
         backHref={`/groupes/${id}`}
         backLabel="← Retour au groupe"
         title="Sondages"
-        action={<Button variant="secondary" onClick={() => setShowForm(!showForm)}>+ Nouveau</Button>}
+        action={<Button variant="onDark" onClick={() => setShowForm(!showForm)}>+ Nouveau</Button>}
       />
 
       <div style={{ padding: "16px 14px" }}>
         {showForm && (
           <Card style={{ background: colors.blueLight, border: `0.5px solid ${colors.blueBorder}`, marginBottom: "14px" }}>
             <div style={{ fontSize: "13px", fontWeight: 500, color: colors.text, marginBottom: "10px" }}>Nouveau sondage</div>
-            <input value={question} onChange={e => setQuestion(e.target.value)} placeholder="Ex: On mange où ce soir ?"
+            <input aria-label="On mange où ce soir ?" value={question} onChange={e => setQuestion(e.target.value)} placeholder="Ex: On mange où ce soir ?"
               style={{ width: "100%", border: `1px solid ${colors.border}`, borderRadius: "10px", padding: "10px 12px", fontSize: "16px", color: colors.text, background: "#fff", marginBottom: "10px", boxSizing: "border-box" }} />
             {choix.map((c, i) => (
-              <input key={i} value={c} onChange={e => updateChoix(i, e.target.value)} placeholder={`Option ${i + 1}`}
+              <input aria-label="Option ${i + 1" key={i} value={c} onChange={e => updateChoix(i, e.target.value)} placeholder={`Option ${i + 1}`}
                 style={{ width: "100%", border: `1px solid ${colors.border}`, borderRadius: "10px", padding: "10px 12px", fontSize: "16px", color: colors.text, background: "#fff", marginBottom: "8px", boxSizing: "border-box" }} />
             ))}
             {choix.length < 5 && (

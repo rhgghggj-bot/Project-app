@@ -1,22 +1,19 @@
 "use client"
-import { useEffect } from "react"
+import Link from "next/link"
+import { useEffect, useRef } from "react"
+import QRCode from "qrcode"
 
 export default function QRCodePage() {
+  // QR code dessiné localement (librairie qrcode déjà installée) plutôt qu'un script chargé depuis un CDN
+  const canvasRef = useRef<HTMLCanvasElement>(null)
   useEffect(() => {
-    const script = document.createElement('script')
-    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js'
-    script.onload = () => {
-      const el = document.getElementById('qr')
-      if (el && el.childElementCount === 0) {
-        new (window as any).QRCode(el, {
-          text: 'https://project-app-rust-delta.vercel.app/onboarding',
-          width: 180, height: 180,
-          colorDark: '#0A1628', colorLight: '#ffffff',
-          correctLevel: 2
-        })
-      }
-    }
-    document.head.appendChild(script)
+    if (!canvasRef.current) return
+    QRCode.toCanvas(canvasRef.current, 'https://project-app-rust-delta.vercel.app/onboarding', {
+      width: 180,
+      margin: 0,
+      errorCorrectionLevel: 'H',
+      color: { dark: '#0A1628', light: '#ffffff' },
+    })
   }, [])
 
   return (
@@ -32,7 +29,7 @@ export default function QRCodePage() {
         </div>
         <div style={{fontSize:'13px',color:'rgba(255,255,255,0.6)',marginBottom:'24px'}}>Scanne pour rejoindre</div>
         <div style={{background:'#fff',borderRadius:'16px',padding:'16px',display:'inline-block',marginBottom:'24px'}}>
-          <div id="qr"></div>
+          <canvas ref={canvasRef} role="img" aria-label="QR code vers l’inscription Nexia" style={{display:"block"}} />
         </div>
         <div style={{background:'rgba(255,255,255,0.1)',border:'0.5px solid rgba(255,255,255,0.2)',borderRadius:'12px',padding:'12px',marginBottom:'16px'}}>
           <div style={{fontSize:'11px',color:'rgba(255,255,255,0.5)',marginBottom:'3px'}}>Lien direct</div>
@@ -44,11 +41,9 @@ export default function QRCodePage() {
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1a3a6e" strokeWidth="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
           Imprimer / PDF
         </button>
-        <a href="/profile" style={{textDecoration:'none',display:'block'}}>
-          <button style={{width:'100%',background:'transparent',color:'rgba(255,255,255,0.6)',border:'0.5px solid rgba(255,255,255,0.2)',borderRadius:'12px',padding:'12px',fontSize:'13px',cursor:'pointer'}}>
+        <Link href="/profile" style={{textDecoration:'none',display:'block',width:'100%',background:'transparent',color:'rgba(255,255,255,0.6)',border:'0.5px solid rgba(255,255,255,0.2)',borderRadius:'12px',padding:'12px',fontSize:'13px',cursor:'pointer',textAlign:'center'}}>
             Retour au profil
-          </button>
-        </a>
+          </Link>
       </div>
     </main>
   )

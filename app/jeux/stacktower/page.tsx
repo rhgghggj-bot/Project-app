@@ -1,4 +1,6 @@
 'use client'
+import { ecrireStockage, useStockageLocal } from "@/lib/useStockage"
+import { onActivate } from "@/lib/a11y"
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
@@ -17,11 +19,13 @@ export default function StackTower() {
   const [blocs, setBlocs] = useState<{x:number,w:number,couleur:string}[]>([{ x: (GAME_W-BASE_W)/2, w: BASE_W, couleur: COULEURS[0] }])
   const [courant, setCourant] = useState({ x: 0, w: BASE_W })
   const [score, setScore] = useState(0)
-  const [meilleur, setMeilleur] = useState(0)
+  // Record enregistré sur l’appareil (source unique, mis à jour par ecrireStockage)
+  const meilleur = parseInt(useStockageLocal('stacktower_meilleur') || '0') || 0
   const [gameOver, setGameOver] = useState(false)
   const [parfait, setParfait] = useState(false)
   const [streak, setStreak] = useState(0)
-  const [meilleurStreak, setMeilleurStreak] = useState(0)
+  // Record enregistré sur l’appareil (source unique, mis à jour par ecrireStockage)
+  const meilleurStreak = parseInt(useStockageLocal('stacktower_streak') || '0') || 0
   const [chutes, setChutes] = useState<{id:string,x:number,w:number,bottom:number,tombe:boolean}[]>([])
   const directionRef = useRef(1)
   const vitesseRef = useRef(1.6)
@@ -29,13 +33,6 @@ export default function StackTower() {
   const rafRef = useRef<number>(0)
   const blocsRef = useRef(blocs)
   const courantRef = useRef(courant)
-
-  useEffect(() => {
-    const m = localStorage.getItem('stacktower_meilleur')
-    if (m) setMeilleur(parseInt(m))
-    const ms = localStorage.getItem('stacktower_streak')
-    if (ms) setMeilleurStreak(parseInt(ms))
-  }, [])
 
   useEffect(() => { blocsRef.current = blocs }, [blocs])
   useEffect(() => { courantRef.current = courant }, [courant])
@@ -77,8 +74,8 @@ export default function StackTower() {
     if (largeur <= 4) {
       setGameOver(true)
       vibrer([50,30,50,30,80])
-      if (score > meilleur) { setMeilleur(score); localStorage.setItem('stacktower_meilleur', String(score)) }
-      if (streak > meilleurStreak) { setMeilleurStreak(streak); localStorage.setItem('stacktower_streak', String(streak)) }
+      if (score > meilleur) { ecrireStockage('local', 'stacktower_meilleur', String(score)) }
+      if (streak > meilleurStreak) { ecrireStockage('local', 'stacktower_streak', String(streak)) }
       return
     }
 
@@ -102,7 +99,7 @@ export default function StackTower() {
     }
 
     setStreak(nouveauStreak)
-    if (nouveauStreak > meilleurStreak) { setMeilleurStreak(nouveauStreak); localStorage.setItem('stacktower_streak', String(nouveauStreak)) }
+    if (nouveauStreak > meilleurStreak) { ecrireStockage('local', 'stacktower_streak', String(nouveauStreak)) }
 
     setBlocs(prev => [...prev, nouveauBloc])
     xRef.current = nouveauBloc.x === 0 ? nouveauBloc.w >= GAME_W - nouveauBloc.w ? 0 : GAME_W - nouveauBloc.w : 0
@@ -111,7 +108,7 @@ export default function StackTower() {
 
     const s = score + gainPoints
     setScore(s)
-    if (s > meilleur) { setMeilleur(s); localStorage.setItem('stacktower_meilleur', String(s)) }
+    if (s > meilleur) { ecrireStockage('local', 'stacktower_meilleur', String(s)) }
   }
 
   function recommencer() {
@@ -152,7 +149,7 @@ export default function StackTower() {
         </div>
       </div>
 
-      <div onClick={poser} style={{position:'relative',width:GAME_W,height:HAUTEUR_VISIBLE,background:'rgba(255,255,255,0.05)',borderRadius:'16px',overflow:'hidden',cursor:'pointer'}}>
+      <div role="button" tabIndex={0} onClick={poser} onKeyDown={onActivate(poser)} style={{position:'relative',width:GAME_W,height:HAUTEUR_VISIBLE,background:'rgba(255,255,255,0.05)',borderRadius:'16px',overflow:'hidden',cursor:'pointer'}}>
         {parfait && (
           <div style={{position:'absolute',top:'30%',left:'50%',transform:'translate(-50%,-50%)',zIndex:10,background:'linear-gradient(135deg,#D4A843,#F97316)',color:'#fff',padding:'8px 20px',borderRadius:'99px',fontSize:'15px',fontWeight:'700',boxShadow:'0 8px 20px rgba(212,168,67,0.5)'}}>
             {streak >= 3 ? 'PARFAIT x'+streak+' !' : 'PARFAIT !'}

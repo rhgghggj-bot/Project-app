@@ -1,4 +1,6 @@
 "use client"
+import Link from "next/link"
+import { onActivate } from "@/lib/a11y"
 import { useEffect, useRef, useState } from "react"
 import { supabase } from "@/lib/supabase"
 
@@ -89,6 +91,8 @@ type Star = { x: number; y: number; z: number }
 
 export default function Constellation({ evenements, periodeLabel = "cette semaine" }: { evenements: Evt[]; periodeLabel?: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  // Écart entre deux doigts au dernier mouvement (zoom au pincement)
+  const pinchRef = useRef<number | null>(null)
   const [selected, setSelected] = useState<Evt | null>(null)
   const [domaineActif, setDomaineActif] = useState<string | null>(null)
   const [modeEdition, setModeEdition] = useState(false)
@@ -102,7 +106,6 @@ export default function Constellation({ evenements, periodeLabel = "cette semain
   const [plein, setPlein] = useState(false)
   const [noms, setNoms] = useState<Record<string, string>>(NOMS_PAR_DEFAUT)
   const stateRef = useRef({ rx: 0.4, ry: 0.6, dragging: false, lastX: 0, lastY: 0, vitesse: 2, cibleVitesse: 2 })
-  const debounceRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({})
   const starsRef = useRef<Star[]>([])
   const rafRef = useRef<number | null>(null)
 
@@ -113,7 +116,7 @@ export default function Constellation({ evenements, periodeLabel = "cette semain
       const { data } = await supabase.from("domaines_couleur").select("*").eq("user_id", user.id)
       if (data && data.length > 0) {
         const surcharge: Record<string, string> = {}
-        data.forEach((d: any) => { surcharge[d.couleur.toUpperCase()] = d.nom })
+        for (const d of data as { couleur: string; nom: string }[]) surcharge[d.couleur.toUpperCase()] = d.nom
         setNoms({ ...NOMS_PAR_DEFAUT, ...surcharge })
       }
     }
@@ -132,7 +135,7 @@ export default function Constellation({ evenements, periodeLabel = "cette semain
       const { data } = await supabase.from("trajets_historique").select("jour,evenement_de,evenement_a,mode,vitesse_kmh").eq("user_id", user.id)
       if (data) {
         const m: Record<string, { nom: string; kmh: number }> = {}
-        data.forEach((d: any) => { m[cleSegment(d.jour, d.evenement_de, d.evenement_a)] = { nom: d.mode, kmh: d.vitesse_kmh } })
+        for (const d of data as { jour: string; evenement_de: string; evenement_a: string; mode: string; vitesse_kmh: number }[]) m[cleSegment(d.jour, d.evenement_de, d.evenement_a)] = { nom: d.mode, kmh: d.vitesse_kmh }
         setModesSegments(m)
       }
     }
@@ -367,12 +370,12 @@ export default function Constellation({ evenements, periodeLabel = "cette semain
         const dx = e.touches[0].clientX - e.touches[1].clientX
         const dy = e.touches[0].clientY - e.touches[1].clientY
         const d = Math.hypot(dx, dy)
-        const prev = (canvas as any)._pinchDist
+        const prev = pinchRef.current
         if (prev != null) st.cibleVitesse = Math.max(1, Math.min(14, st.cibleVitesse + (d - prev) * 0.05))
-        ;(canvas as any)._pinchDist = d
+        pinchRef.current = d
       }
     }
-    const onTouchEnd = () => { pointerUp(); (canvas as any)._pinchDist = null }
+    const onTouchEnd = () => { pointerUp(); pinchRef.current = null }
     const onWheel = (e: WheelEvent) => { e.preventDefault(); st.cibleVitesse = Math.max(1, Math.min(14, st.cibleVitesse - e.deltaY * 0.03)) }
 
     canvas.addEventListener("mousedown", onDown)
@@ -395,7 +398,7 @@ export default function Constellation({ evenements, periodeLabel = "cette semain
       canvas.removeEventListener("click", onClick)
       canvas.removeEventListener("wheel", onWheel)
     }
-  }, [evenements, domaineActif, plein, voirTrajets, segmentActif])
+  }, [evenements, domaineActif, plein, voirTrajets, segmentActif, trajets.segments])
 
   const contenu = (
     <>
@@ -414,11 +417,11 @@ export default function Constellation({ evenements, periodeLabel = "cette semain
 
       <div style={{ minHeight: "16px", margin: "8px 0 10px", textAlign: "center" }}>
         {selected && !domaineActif && (
-          <a href={`/evenement/${selected.id}`} style={{ fontSize: "13px", color: "#fff", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "6px" }}>
+          <Link href={`/evenement/${selected.id}`} style={{ fontSize: "13px", color: "#fff", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "6px" }}>
             <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: selected.couleur || "#2B7FFF", flexShrink: 0 }}></span>
             {selected.titre}{selected.heure ? ` · ${selected.heure}` : ""}
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
-          </a>
+          </Link>
         )}
         {!selected && !domaineActif && !voirTrajets && (
           <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.4)" }}>Fais glisser pour tourner, touche un point ou un domaine</span>
@@ -452,7 +455,7 @@ export default function Constellation({ evenements, periodeLabel = "cette semain
             <div style={{ fontSize: "13px", color: "#fff", marginBottom: "4px" }}>
               <strong style={{ fontWeight: 600 }}>{formatDuree(trajets.totalMin)}</strong> de trajet estimé {periodeLabel}
             </div>
-            <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)" }}>Estimation à vol d'oiseau · selon le mode de transport choisi sur chaque événement</div>
+            <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)" }}>Estimation à vol d’oiseau · selon le mode de transport choisi sur chaque événement</div>
           </div>
         )}
       </div>
@@ -497,7 +500,7 @@ export default function Constellation({ evenements, periodeLabel = "cette semain
           {COULEURS_CONNUES.map(couleur => (
             <div key={couleur} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <span style={{ width: "12px", height: "12px", borderRadius: "50%", background: couleur, flexShrink: 0 }}></span>
-              <input
+              <input aria-label="Nom du domaine"
                 value={noms[couleur] || ""}
                 onChange={e => {
                   const valeur = e.target.value
@@ -536,7 +539,7 @@ export default function Constellation({ evenements, periodeLabel = "cette semain
                     return (
                       <div key={i}
                         style={{ background: estActif ? "rgba(255,163,79,0.22)" : "rgba(255,255,255,0.06)", borderLeft: "3px solid #FFA34F", borderRadius: "8px", padding: "8px 10px", marginBottom: "5px" }}>
-                        <div onClick={() => setSegmentActif(estActif ? null : indexGlobal)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer" }}>
+                        <div role="button" tabIndex={0} onClick={() => setSegmentActif(estActif ? null : indexGlobal)} onKeyDown={onActivate(() => setSegmentActif(estActif ? null : indexGlobal))} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer" }}>
                           <span style={{ fontSize: "12px", color: "#fff" }}>{seg.de.titre} <span style={{ color: "rgba(255,255,255,0.4)" }}>({seg.de.heure})</span> → {seg.a.titre} <span style={{ color: "rgba(255,255,255,0.4)" }}>({seg.a.heure})</span></span>
                           <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0, marginLeft: "8px" }}>{fr(seg.km, 1)} km · {formatDuree(seg.min)}</span>
                         </div>
@@ -558,9 +561,9 @@ export default function Constellation({ evenements, periodeLabel = "cette semain
                               ))}
                             </div>
                             <div style={{ display: "flex", gap: "5px", marginTop: "6px" }}>
-                              <input value={modePersoNom} onChange={e => setModePersoNom(e.target.value)} placeholder="Nom (ex: Train)"
+                              <input aria-label="Nom (ex: Train)" value={modePersoNom} onChange={e => setModePersoNom(e.target.value)} placeholder="Nom (ex: Train)"
                                 style={{ flex: 1, background: "rgba(255,255,255,0.08)", border: "0.5px solid rgba(255,255,255,0.2)", borderRadius: "6px", padding: "4px 7px", fontSize: "10px", color: "#fff", outline: "none" }} />
-                              <input value={modePersoKmh} onChange={e => setModePersoKmh(e.target.value)} placeholder="km/h" type="number"
+                              <input aria-label="km/h" value={modePersoKmh} onChange={e => setModePersoKmh(e.target.value)} placeholder="km/h" type="number"
                                 style={{ width: "45px", background: "rgba(255,255,255,0.08)", border: "0.5px solid rgba(255,255,255,0.2)", borderRadius: "6px", padding: "4px 7px", fontSize: "10px", color: "#fff", outline: "none" }} />
                               <button onClick={() => {
                                 const kmh = parseFloat(modePersoKmh)
@@ -584,12 +587,12 @@ export default function Constellation({ evenements, periodeLabel = "cette semain
       {domaineActif && !modeEdition && !voirTrajets && (
         <div style={{ marginTop: "10px", maxHeight: plein ? "22vh" : "none", overflowY: plein ? "auto" : "visible" }}>
           {parCouleur.get(domaineActif)!.evts.map(e => (
-            <a key={e._occId || e.id} href={`/evenement/${e.id}`} style={{ textDecoration: "none", display: "block" }}>
+            <Link key={e._occId || e.id} href={`/evenement/${e.id}`} style={{ textDecoration: "none", display: "block" }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(255,255,255,0.06)", borderLeft: `3px solid ${e.couleur || "#2B7FFF"}`, borderRadius: "8px", padding: "8px 10px", marginBottom: "5px" }}>
                 <span style={{ fontSize: "12px", color: "#fff" }}>{e.titre}</span>
                 <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.5)" }}>{e.heure}{e.duree ? ` · ${formatDuree(e.duree)}` : ""}</span>
               </div>
-            </a>
+            </Link>
           ))}
         </div>
       )}

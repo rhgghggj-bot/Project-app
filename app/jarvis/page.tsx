@@ -1,5 +1,8 @@
 "use client"
-import { useEffect, useRef, useState } from "react"
+import Image from "next/image"
+import { ecrireStockage, useStockageLocal } from "@/lib/useStockage"
+import Link from "next/link"
+import { useEffect, useRef, useState, useEffectEvent } from "react"
 import { supabase } from "@/lib/supabase"
 import { isJarvisOwner } from "@/lib/jarvisOwner"
 
@@ -112,7 +115,14 @@ const OUTILS_CLAUDE = [
   }
 ]
 
-type Msg = { role: "system" | "user" | "assistant"; content: string }
+type Msg = { role: "system" | "user" | "assistant" | "tool"; content: string }
+
+// Messages de l'API Claude (mode cloud) : texte, appel d'outil et résultat d'outil
+type BlocClaude =
+  | { type: "text"; text: string }
+  | { type: "tool_use"; id: string; name: string; input?: { prompt?: string; periode?: string } }
+  | { type: "tool_result"; tool_use_id: string; content: string }
+type MessageClaude = { role: "user" | "assistant"; content: string | BlocClaude[] }
 
 export default function Jarvis() {
   const [accesVerifie, setAccesVerifie] = useState(false)
@@ -141,10 +151,13 @@ export default function Jarvis() {
   const [documentJoint, setDocumentJoint] = useState<{ nom: string; contenu: string } | null>(null)
   const fichierInputRef = useRef<HTMLInputElement>(null)
   const [modeCloud, setModeCloud] = useState(false)
-  const [claudeKey, setClaudeKey] = useState("")
+  // Clé enregistrée sur l’appareil ; la saisie en cours prend le dessus tant qu’elle n’est pas enregistrée
+  const cleStockee = useStockageLocal("jarvis_claude_key")
+  const [cleSaisie, setClaudeKey] = useState<string | null>(null)
+  const claudeKey = cleSaisie ?? (cleStockee?.trim() || "")
   const [montrerConfigCloud, setMontrerConfigCloud] = useState(false)
-  const [historiqueCloud, setHistoriqueCloud] = useState<any[]>([])
-  const [statut, setStatut] = useState<{ texte: string; ok: boolean | null }>({ texte: "Connexion à Ollama...", ok: null })
+  const [historiqueCloud, setHistoriqueCloud] = useState<MessageClaude[]>([])
+  const [statut, setStatut] = useState<{ texte: string; ok: boolean | null }>({ texte: "Connexion à Ollama…", ok: null })
   const chatRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const fondCanvasRef = useRef<HTMLCanvasElement>(null)
@@ -177,8 +190,6 @@ export default function Jarvis() {
       }
     }
     verifier()
-    const sauvegardee = localStorage.getItem("jarvis_claude_key")
-    if (sauvegardee) setClaudeKey(sauvegardee.trim())
   }, [])
 
   useEffect(() => {
@@ -440,6 +451,8 @@ export default function Jarvis() {
     setEcoute(false)
   }
 
+  // Version à jour de la fonction, appelée depuis la boucle audio sans relancer l’effet
+  const demarrerEnregistrementEvent = useEffectEvent(() => demarrerEnregistrementAuto())
   useEffect(() => {
     if (!modeVocal) {
       if (vadRafRef.current) cancelAnimationFrame(vadRafRef.current)
@@ -480,7 +493,7 @@ export default function Jarvis() {
 
         if (!enPause && volume > SEUIL) {
           if (silenceTimerRef.current) { clearTimeout(silenceTimerRef.current); silenceTimerRef.current = null }
-          if (!enregistrementActifRef.current) demarrerEnregistrementAuto()
+          if (!enregistrementActifRef.current) demarrerEnregistrementEvent()
         } else if (enregistrementActifRef.current && !silenceTimerRef.current) {
           silenceTimerRef.current = setTimeout(() => {
             silenceTimerRef.current = null
@@ -499,7 +512,7 @@ export default function Jarvis() {
     return () => { annule = true }
   }, [modeVocal])
 
-  async function executerOutil(nom: string, args: any) {
+  async function executerOutil(nom: string, args: { prompt?: string; periode?: string }) {
     if (nom === "generer_image") {
       try {
         const res = await fetch(IMAGEGEN_URL, {
@@ -547,7 +560,7 @@ export default function Jarvis() {
 
     if (nom === "obtenir_groupes") {
       const { data: membres } = await supabase.from("membres_groupe").select("groupe_id").eq("user_id", user.id)
-      const ids = (membres || []).map((m: any) => m.groupe_id)
+      const ids = ((membres || []) as { groupe_id: string }[]).map(m => m.groupe_id)
       if (ids.length === 0) return { groupes: [] }
       const { data } = await supabase.from("groupes").select("nom,description").in("id", ids)
       return { groupes: data || [] }
@@ -561,9 +574,9 @@ export default function Jarvis() {
     const texteEnvoye = documentJoint
       ? `[Document joint : "${documentJoint.nom}"]\n\n${documentJoint.contenu}\n\n---\n\nQuestion de Pierre : ${texte}`
       : texte
-    let messagesActuels: any[] = [...historiqueCloud, { role: "user", content: texteEnvoye }]
+    let messagesActuels: MessageClaude[] = [...historiqueCloud, { role: "user", content: texteEnvoye }]
     setHistoriqueCloud(messagesActuels)
-    setMessages(prev => [...prev, { role: "user", texte }, { role: "assistant", texte: "Jarvis (cloud) réfléchit..." }])
+    setMessages(prev => [...prev, { role: "user", texte }, { role: "assistant", texte: "Jarvis (cloud) réfléchit…" }])
 
     try {
       let reponseFinaleTexte = ""
@@ -591,18 +604,18 @@ export default function Jarvis() {
           throw new Error(texteErreur)
         }
         const data = await res.json()
-        const contenu = data.content || []
-        const toolUses = contenu.filter((b: any) => b.type === "tool_use")
-        const texteBlocs = contenu.filter((b: any) => b.type === "text").map((b: any) => b.text).join("")
+        const contenu: BlocClaude[] = data.content || []
+        const toolUses = contenu.filter((b): b is Extract<BlocClaude, { type: "tool_use" }> => b.type === "tool_use")
+        const texteBlocs = contenu.filter((b): b is Extract<BlocClaude, { type: "text" }> => b.type === "text").map(b => b.text).join("")
 
         if (toolUses.length > 0) {
           messagesActuels = [...messagesActuels, { role: "assistant", content: contenu }]
           setMessages(prev => {
             const copie = [...prev]
-            copie[copie.length - 1] = { role: "assistant", texte: "Jarvis consulte tes données..." }
+            copie[copie.length - 1] = { role: "assistant", texte: "Jarvis consulte tes données…" }
             return copie
           })
-          const resultats = []
+          const resultats: BlocClaude[] = []
           for (const tu of toolUses) {
             const resultat = await executerOutil(tu.name, tu.input || {})
             resultats.push({ type: "tool_result", tool_use_id: tu.id, content: JSON.stringify(resultat) })
@@ -622,9 +635,9 @@ export default function Jarvis() {
       })
       setHistoriqueCloud(messagesActuels)
       parler(reponseFinaleTexte)
-    } catch (e: any) {
+    } catch (e) {
       console.error("Erreur Jarvis Cloud:", e)
-      let detail = e?.message || "raison inconnue"
+      let detail = e instanceof Error ? e.message : "raison inconnue"
       try {
         const parsed = JSON.parse(detail)
         detail = parsed?.error?.message || detail
@@ -658,9 +671,9 @@ export default function Jarvis() {
     const texteEnvoye = documentJoint
       ? `[Document joint : "${documentJoint.nom}"]\n\n${documentJoint.contenu}\n\n---\n\nQuestion de Pierre : ${texte}`
       : texte
-    const nouvelHistorique: any[] = [...historique, { role: "user" as const, content: texteEnvoye }]
+    const nouvelHistorique: Msg[] = [...historique, { role: "user" as const, content: texteEnvoye }]
     setHistorique(nouvelHistorique)
-    setMessages(prev => [...prev, { role: "user", texte }, { role: "assistant", texte: "Jarvis réfléchit..." }])
+    setMessages(prev => [...prev, { role: "user", texte }, { role: "assistant", texte: "Jarvis réfléchit…" }])
 
     try {
       let historiquePourFinal = nouvelHistorique
@@ -676,7 +689,7 @@ export default function Jarvis() {
       if (data1.message?.tool_calls?.length) {
         setMessages(prev => {
           const copie = [...prev]
-          copie[copie.length - 1] = { role: "assistant", texte: "Jarvis consulte tes données..." }
+          copie[copie.length - 1] = { role: "assistant", texte: "Jarvis consulte tes données…" }
           return copie
         })
         historiquePourFinal = [...nouvelHistorique, data1.message]
@@ -749,9 +762,9 @@ export default function Jarvis() {
   if (!accesAutorise) {
     return (
       <main style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "radial-gradient(ellipse at top, #0A1628 0%, #050810 100%)", color: "#E8F1FF", padding: "24px", textAlign: "center" }}>
-        <div style={{ fontSize: "18px", fontWeight: 500, marginBottom: "8px" }}>Jarvis n'est pas disponible ici</div>
-        <div style={{ fontSize: "13px", color: "rgba(232,241,255,0.6)", marginBottom: "20px" }}>Cet assistant est réservé à l'administrateur de Nexia.</div>
-        <a href="/" style={{ fontSize: "13px", color: "#2B7FFF", textDecoration: "none" }}>← Retour à l'accueil</a>
+        <div style={{ fontSize: "18px", fontWeight: 500, marginBottom: "8px" }}>Jarvis n’est pas disponible ici</div>
+        <div style={{ fontSize: "13px", color: "rgba(232,241,255,0.6)", marginBottom: "20px" }}>Cet assistant est réservé à l’administrateur de Nexia.</div>
+        <Link href="/" transitionTypes={['nav-back']} style={{ fontSize: "13px", color: "#2B7FFF", textDecoration: "none" }}>← Retour à l’accueil</Link>
       </main>
     )
   }
@@ -762,7 +775,7 @@ export default function Jarvis() {
       <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", flex: 1, minHeight: "100vh" }}>
       <style>{`@keyframes pulseRing { 0% { opacity: 0.9; transform: scale(0.9); } 100% { opacity: 0; transform: scale(1.35); } }`}</style>
       <div style={{ padding: "14px 18px", display: "flex", alignItems: "center", gap: "14px", borderBottom: "0.5px solid rgba(43,127,255,0.2)", background: "rgba(10,22,40,0.35)", backdropFilter: "blur(10px)" }}>
-        <a href="/" style={{ fontSize: "12px", color: "rgba(255,255,255,0.5)", textDecoration: "none", marginRight: "4px" }}>←</a>
+        <Link href="/" transitionTypes={['nav-back']} style={{ fontSize: "12px", color: "rgba(255,255,255,0.5)", textDecoration: "none", marginRight: "4px" }}>←</Link>
         <div style={{ fontSize: "15px", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "#fff" }}>Jarvis</div>
         <div style={{ fontSize: "11px", color: modeCloud ? (claudeKey ? "#10B981" : "#F43F5E") : (statut.ok === true ? "#10B981" : statut.ok === false ? "#F43F5E" : "rgba(232,241,255,0.4)"), marginLeft: "auto" }}>
           {modeCloud ? (claudeKey ? "Cloud (Claude) actif" : "Ajoute ta clé API →") : statut.texte}
@@ -783,7 +796,7 @@ export default function Jarvis() {
           )}
         </button>
         {voixDisponibles.length > 0 && (
-          <select
+          <select aria-label="Voix"
             value={voixChoisie}
             onChange={e => { setVoixChoisie(e.target.value); localStorage.setItem("jarvis_voix", e.target.value) }}
             style={{ background: "rgba(255,255,255,0.08)", border: "0.5px solid rgba(43,127,255,0.3)", borderRadius: "8px", color: "#E8F1FF", fontSize: "11px", padding: "3px 6px", maxWidth: "110px" }}>
@@ -796,7 +809,7 @@ export default function Jarvis() {
 
       {montrerConfigCloud && (
         <div style={{ padding: "12px 18px", borderBottom: "0.5px solid rgba(43,127,255,0.2)", background: "rgba(10,22,40,0.4)", display: "flex", gap: "8px", alignItems: "center" }}>
-          <input
+          <input aria-label="Ta clé API Claude"
             type="password"
             defaultValue={claudeKey}
             placeholder="sk-ant-... (ta clé API Claude)"
@@ -806,8 +819,8 @@ export default function Jarvis() {
           <button
             onClick={() => {
               const cle = claudeKey.trim()
-              setClaudeKey(cle)
-              localStorage.setItem("jarvis_claude_key", cle)
+              setClaudeKey(null)
+              ecrireStockage("local", "jarvis_claude_key", cle)
               setMontrerConfigCloud(false)
             }}
             style={{ background: "#2B7FFF", color: "#fff", border: "none", borderRadius: "8px", padding: "8px 14px", fontSize: "12px", fontWeight: 500, cursor: "pointer" }}>
@@ -834,7 +847,7 @@ export default function Jarvis() {
           }}>
             {m.texte}
             {m.image && (
-              <img src={`data:image/png;base64,${m.image}`} alt="Image générée par Jarvis" style={{ width: "100%", maxWidth: "320px", borderRadius: "10px", marginTop: "10px", display: "block" }} />
+              <Image unoptimized width={800} height={600} src={`data:image/png;base64,${m.image}`} alt="Image générée par Jarvis" style={{ width: "100%", maxWidth: "320px", borderRadius: "10px", marginTop: "10px", display: "block" ,height:'auto'}} />
             )}
           </div>
         ))}
@@ -856,12 +869,12 @@ export default function Jarvis() {
             style={{ background: "rgba(255,255,255,0.08)", border: "0.5px solid rgba(43,127,255,0.3)", borderRadius: "12px", width: "44px", height: "44px", flexShrink: 0, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
           </button>
-          <textarea
+          <textarea aria-label="Écris à Jarvis"
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); envoyer() } }}
             rows={1}
-            placeholder="Écris à Jarvis..."
+            placeholder="Écris à Jarvis…"
             style={{ flex: 1, resize: "none", background: "rgba(255,255,255,0.06)", border: "0.5px solid rgba(43,127,255,0.3)", borderRadius: "12px", padding: "12px 14px", color: "#fff", fontSize: "14px", fontFamily: "inherit", outline: "none", maxHeight: "140px" }}
           />
           <button

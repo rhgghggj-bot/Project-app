@@ -1,5 +1,7 @@
 "use client"
-import { useEffect, useState } from "react"
+import { useChargement } from "@/lib/useChargement"
+import Link from "next/link"
+import { useState } from "react"
 import { supabase } from "@/lib/supabase"
 
 const COULEURS_CARTE = [
@@ -11,11 +13,25 @@ const COULEURS_CARTE = [
   "linear-gradient(135deg,#1a3a6e,#87CEEB)",
 ]
 
+type StatsAnnee = {
+  annee: number
+  totalDepense: number
+  totalRevenu: number
+  solde: number
+  nbTransactions: number
+  nbGroupes: number
+  categoriePrefere: string | null
+  moisActif: string | null
+  objectifsAtteints: number
+  totalContribGroupe: number
+  nbVentes: number
+  nbProjets: number
+}
+
 export default function BilanAnnuelPage() {
   const [chargement, setChargement] = useState(true)
-  const [stats, setStats] = useState<any>(null)
+  const [stats, setStats] = useState<StatsAnnee | null>(null)
 
-  useEffect(() => { charger() }, [])
 
   async function charger() {
     try {
@@ -44,7 +60,7 @@ export default function BilanAnnuelPage() {
       const categoriePrefere = Object.entries(parCategorie).sort((a, b) => b[1] - a[1])[0]
 
       const parMois: Record<number, number> = {}
-      ;[...(depenses.data || []), ...(revenus.data || [])].forEach((t: any) => {
+      ;[...(depenses.data || []), ...(revenus.data || [])].forEach((t: { date: string }) => {
         const mois = new Date(t.date).getMonth()
         parMois[mois] = (parMois[mois] || 0) + 1
       })
@@ -69,6 +85,8 @@ export default function BilanAnnuelPage() {
     }
   }
 
+  useChargement(charger)
+
   if (chargement) return null
 
   if (!stats) {
@@ -76,7 +94,7 @@ export default function BilanAnnuelPage() {
       <main style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#0A1628", color: "#fff", padding: "24px", textAlign: "center" }}>
         <div>
           <div style={{ fontSize: "16px", marginBottom: "8px" }}>Connecte-toi pour voir ton bilan</div>
-          <a href="/connexion" style={{ color: "#2B7FFF", fontSize: "14px" }}>Se connecter →</a>
+          <Link href="/connexion" style={{ color: "#2B7FFF", fontSize: "14px" }}>Se connecter →</Link>
         </div>
       </main>
     )
@@ -96,7 +114,7 @@ export default function BilanAnnuelPage() {
 
   return (
     <main style={{ minHeight: "100vh", background: "#0A1628" }}>
-      <a href="/profile" style={{ position: "fixed", top: "16px", left: "16px", zIndex: 10, fontSize: "13px", color: "rgba(255,255,255,0.6)", textDecoration: "none" }}>← Profil</a>
+      <Link href="/profile" transitionTypes={['nav-back']} style={{ position: "fixed", top: "16px", left: "16px", zIndex: 10, fontSize: "13px", color: "rgba(255,255,255,0.6)", textDecoration: "none" }}>← Profil</Link>
       <div style={{ display: "flex", flexDirection: "column", gap: "14px", padding: "60px 16px 40px", maxWidth: "440px", margin: "0 auto" }}>
         {cartes.map((c, i) => (
           <div key={i} style={{ background: COULEURS_CARTE[i % COULEURS_CARTE.length], borderRadius: "24px", padding: "36px 24px", textAlign: "center", color: "#fff", minHeight: "200px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "10px" }}>

@@ -1,4 +1,7 @@
 "use client"
+import { EvenementCalendrier, User } from "@/lib/types"
+import { onActivate } from "@/lib/a11y"
+import Link from "next/link"
 import Tutorial from "../components/Tutorial"
 import dynamic from "next/dynamic"
 import { useEffect, useState } from "react"
@@ -46,9 +49,9 @@ function parseICS(texte: string) {
 }
 
 export default function Semaine() {
-  const [evenements, setEvenements] = useState<any[]>([])
-  const [user, setUser] = useState<any>(null)
-  const [selectedDay, setSelectedDay] = useState<any>(null)
+  const [evenements, setEvenements] = useState<EvenementCalendrier[]>([])
+  const [user, setUser] = useState<User | null>(null)
+  const [selectedDay, setSelectedDay] = useState<Date | null>(null)
   const [importEnCours, setImportEnCours] = useState(false)
   const [importMessage, setImportMessage] = useState("")
   const [semaineOffset, setSemaineOffset] = useState(0)
@@ -138,8 +141,8 @@ export default function Semaine() {
   const debutSemaine = jours[0].toLocaleDateString('fr-FR', {day:'numeric', month:'long'})
   const finSemaine = jours[6].toLocaleDateString('fr-FR', {day:'numeric', month:'long', year:'numeric'})
 
-  const renderEvt = (e: any) => (
-    <a key={e.id} href={`/evenement/${e.id}`} style={{textDecoration:'none',display:'block'}}>
+  const renderEvt = (e: EvenementCalendrier & { _occId?: string }) => (
+    <Link key={e.id} href={`/evenement/${e.id}`} style={{textDecoration:'none',display:'block'}}>
       <div style={{background:'#fff',border:`0.5px solid ${e.couleur}44`,borderLeft:`3px solid ${e.couleur}`,borderRadius:'10px',padding:'10px 12px',marginBottom:'6px',display:'flex',alignItems:'center',justifyContent:'space-between',cursor:'pointer'}}>
         <div style={{minWidth:0}}>
           <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',display:'flex',alignItems:'center',gap:'5px'}}>
@@ -160,7 +163,7 @@ export default function Semaine() {
         </div>
         <button onClick={(ev) => { ev.preventDefault(); ev.stopPropagation(); supprimerEvt(e.id) }} style={{background:'none',border:'none',color:'#ddd',cursor:'pointer',fontSize:'18px',flexShrink:0,marginLeft:'8px'}}>×</button>
       </div>
-    </a>
+    </Link>
   )
 
   const evtsJourFiltre = evtDuJour(jourFiltre)
@@ -180,7 +183,7 @@ export default function Semaine() {
       dates = []
       for (let d = new Date(debut); d <= fin; d.setDate(d.getDate() + 1)) dates.push(new Date(d))
     }
-    return dates.flatMap(d => evtDuJour(d).map((e: any) => ({ ...e, _occId: `${e.id}-${d.toISOString().slice(0,10)}` })))
+    return dates.flatMap(d => evtDuJour(d).map(e => ({ ...e, _occId: `${e.id}-${d.toISOString().slice(0,10)}` })))
   })()
   const jourFiltreEstAujourdhui = jourFiltre.toDateString() === today.toDateString()
 
@@ -189,9 +192,9 @@ export default function Semaine() {
       <div style={{background:'linear-gradient(160deg,#0A1628,#1a3a6e)',padding:'20px 18px 32px',position:'relative',overflow:'hidden'}}>
         <div style={{position:'absolute',top:'-40px',right:'-40px',width:'180px',height:'180px',borderRadius:'50%',background:'rgba(43,127,255,0.15)'}}></div>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'8px'}}>
-          <a href="/" style={{fontSize:'12px',color:'rgba(255,255,255,0.5)'}}>← Accueil</a>
+          <Link href="/" transitionTypes={['nav-back']} style={{fontSize:'12px',color:'rgba(255,255,255,0.5)'}}>← Accueil</Link>
           <label style={{fontSize:'11px',color:'rgba(255,255,255,0.7)',background:'rgba(255,255,255,0.1)',border:'0.5px solid rgba(255,255,255,0.2)',borderRadius:'99px',padding:'5px 12px',cursor:'pointer'}}>
-            {importEnCours ? 'Import...' : '+ Importer .ics'}
+            {importEnCours ? 'Import…' : '+ Importer .ics'}
             <input type="file" accept=".ics" style={{display:'none'}} onChange={e => { const f = e.target.files?.[0]; if (f) importerICS(f); e.target.value = '' }} />
           </label>
         </div>
@@ -205,7 +208,7 @@ export default function Semaine() {
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'12px'}}>
           <button onClick={() => setSemaineOffset(o => o-1)} style={{width:'28px',height:'28px',borderRadius:'50%',border:'none',background:'#EEF5FF',color:'#2B7FFF',cursor:'pointer',fontSize:'16px'}}>‹</button>
           <button onClick={() => setSemaineOffset(0)} style={{fontSize:'12px',color:'#2B7FFF',background:'#EEF5FF',border:'none',padding:'4px 12px',borderRadius:'99px',cursor:'pointer',fontWeight:'500'}}>
-            Aujourd'hui
+            Aujourd’hui
           </button>
           <button onClick={() => setSemaineOffset(o => o+1)} style={{width:'28px',height:'28px',borderRadius:'50%',border:'none',background:'#EEF5FF',color:'#2B7FFF',cursor:'pointer',fontSize:'16px'}}>›</button>
         </div>
@@ -216,7 +219,7 @@ export default function Semaine() {
             const evts = evtDuJour(jour)
             const isSelected = selectedDay?.toDateString() === jour.toDateString()
             return (
-              <div key={i} onClick={() => { setSelectedDay(jour); setJourFiltre(jour); setVoirTouteLaSemaine(false) }}
+              <div key={i} role="button" tabIndex={0} onClick={() => { setSelectedDay(jour); setJourFiltre(jour); setVoirTouteLaSemaine(false) }} onKeyDown={onActivate(() => { setSelectedDay(jour); setJourFiltre(jour); setVoirTouteLaSemaine(false) })}
                 style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:'3px',cursor:'pointer',padding:'4px 2px',borderRadius:'10px',background: isSelected ? '#EEF5FF' : 'transparent'}}>
                 <div style={{fontSize:'10px',color:'#aaa',fontWeight:'500'}}>{JOURS[i]}</div>
                 <div style={{width:'28px',height:'28px',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'13px',fontWeight:'500',
@@ -250,11 +253,11 @@ export default function Semaine() {
           </button>
         </div>
 
-        <a href={`/evenement/nouveau?date=${(selectedDay || jourFiltre).getFullYear()}-${String((selectedDay || jourFiltre).getMonth()+1).padStart(2,'0')}-${String((selectedDay || jourFiltre).getDate()).padStart(2,'0')}`}
+        <Link href={`/evenement/nouveau?date=${(selectedDay || jourFiltre).getFullYear()}-${String((selectedDay || jourFiltre).getMonth()+1).padStart(2,'0')}-${String((selectedDay || jourFiltre).getDate()).padStart(2,'0')}`}
           style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'6px',width:'100%',boxSizing:'border-box',background:'#EEF5FF',color:'#2B7FFF',border:'1px dashed #B8D4FF',borderRadius:'10px',padding:'10px',fontSize:'13px',fontWeight:'500',textDecoration:'none',marginBottom:'14px'}}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2B7FFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           Ajouter un événement
-        </a>
+        </Link>
 
         <div style={{display:'flex',justifyContent:'flex-end',marginBottom:'10px'}}>
           <button onClick={() => setVue3D(v => !v)} style={{fontSize:'11px',color: vue3D ? '#fff' : '#8B5CF6',background: vue3D ? '#8B5CF6' : '#F5F1FF',border:'none',padding:'4px 10px',borderRadius:'99px',cursor:'pointer',fontWeight:'500',display:'flex',alignItems:'center',gap:'4px'}}>

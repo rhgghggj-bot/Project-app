@@ -1,4 +1,7 @@
 'use client'
+import type { RealtimeChannel } from "@supabase/supabase-js"
+import { Groupe, MembreGroupe, PartieJeu, Profil, User } from "@/lib/types"
+import { toast } from "@/lib/toast"
 import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
@@ -23,14 +26,14 @@ function verifierGagnant(grille: number[][]): number {
 
 export default function Puissance4() {
   const router = useRouter()
-  const [user, setUser] = useState<any>(null)
-  const [groupes, setGroupes] = useState<any[]>([])
+  const [user, setUser] = useState<User | null>(null)
+  const [groupes, setGroupes] = useState<Groupe[]>([])
   const [groupeId, setGroupeId] = useState<string|null>(null)
-  const [profils, setProfils] = useState<any>({})
-  const [membres, setMembres] = useState<any[]>([])
-  const [partie, setPartie] = useState<any>(null)
+  const [profils, setProfils] = useState<Record<string, Pick<Profil, 'id' | 'nom'>>>({})
+  const [membres, setMembres] = useState<MembreGroupe[]>([])
+  const [partie, setPartie] = useState<PartieJeu<{ grille: number[][] }> | null>(null)
   const [loading, setLoading] = useState(true)
-  const channelRef = useRef<any>(null)
+  const channelRef = useRef<RealtimeChannel | null>(null)
 
   useEffect(() => {
     async function init() {
@@ -38,7 +41,7 @@ export default function Puissance4() {
       setUser(user)
       if (user) {
         const { data: mb } = await supabase.from('membres_groupe').select('groupe_id').eq('user_id', user.id)
-        const ids = mb?.map((m: any) => m.groupe_id) || []
+        const ids = (mb as Pick<MembreGroupe, 'groupe_id'>[] | null)?.map(m => m.groupe_id) || []
         if (ids.length > 0) {
           const { data: g } = await supabase.from('groupes').select('*').in('id', ids)
           setGroupes(g || [])
@@ -55,10 +58,10 @@ export default function Puissance4() {
       const { data: mb } = await supabase.from('membres_groupe').select('*').eq('groupe_id', groupeId)
       setMembres(mb || [])
       if (mb && mb.length > 0) {
-        const ids = mb.map((m: any) => m.user_id)
+        const ids = (mb as MembreGroupe[]).map(m => m.user_id)
         const { data: profs } = await supabase.from('profiles').select('id,nom').in('id', ids)
-        const map: any = {}
-        profs?.forEach((p: any) => { map[p.id] = p })
+        const map: Record<string, Pick<Profil, 'id' | 'nom'>> = {}
+        ;(profs as Pick<Profil, 'id' | 'nom'>[] | null)?.forEach(p => { map[p.id] = p })
         setProfils(map)
       }
       const { data: p } = await supabase.from('jeux_groupe')
@@ -67,12 +70,12 @@ export default function Puissance4() {
       if (p && p.length > 0) setPartie(p[0])
 
       const nomCanal = 'puissance4-' + groupeId
-      supabase.getChannels().filter((ch: any) => ch.topic?.includes(nomCanal)).forEach((ch: any) => supabase.removeChannel(ch))
+      supabase.getChannels().filter(ch => ch.topic?.includes(nomCanal)).forEach(ch => supabase.removeChannel(ch))
 
       channelRef.current = supabase
         .channel(nomCanal)
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'jeux_groupe', filter: 'groupe_id=eq.' + groupeId }, (payload) => {
-          setPartie(payload.new)
+        .on<PartieJeu<{ grille: number[][] }>>('postgres_changes', { event: '*', schema: 'public', table: 'jeux_groupe', filter: 'groupe_id=eq.' + groupeId }, (payload) => {
+          if ('id' in payload.new) setPartie(payload.new)
         })
         .subscribe()
     }
@@ -90,7 +93,7 @@ export default function Puissance4() {
       tour: user.id
     }).select().single()
     if (error) {
-      alert('Erreur en créant la partie : ' + error.message)
+      toast('Impossible de créer la partie : ' + error.message + '. Réessaie dans un instant.', 'error')
       return
     }
     setPartie(data)
@@ -125,7 +128,7 @@ export default function Puissance4() {
       updated_at: new Date().toISOString()
     }).eq('id', partie.id).select().single()
     if (error) {
-      alert('Erreur en jouant le coup : ' + error.message)
+      toast('Coup non enregistré : ' + error.message + '. Rejoue ton coup.', 'error')
       return
     }
     if (data) setPartie(data)
@@ -143,7 +146,7 @@ export default function Puissance4() {
 
   if (loading) return (
     <main style={{minHeight:'100vh',background:'linear-gradient(160deg,#0A1628,#1a3a6e)',display:'flex',alignItems:'center',justifyContent:'center'}}>
-      <div style={{color:'#fff'}}>Chargement...</div>
+      <div style={{color:'#fff'}}>Chargement…</div>
     </main>
   )
 
@@ -180,7 +183,7 @@ export default function Puissance4() {
       {!partie && (
         <div>
           <div style={{color:'#fff',fontWeight:'500',fontSize:'15px',marginBottom:'14px',textAlign:'center'}}>Choisir un adversaire</div>
-          {membres.filter((m: any) => m.user_id !== user?.id).map((m: any) => (
+          {membres.filter(m => m.user_id !== user?.id).map(m => (
             <button key={m.user_id} onClick={() => nouvellePartie(m.user_id)}
               style={{width:'100%',background:'rgba(255,255,255,0.1)',border:'1px solid rgba(255,255,255,0.2)',borderRadius:'16px',padding:'16px',marginBottom:'10px',display:'flex',alignItems:'center',gap:'12px',cursor:'pointer'}}>
               <div style={{width:'44px',height:'44px',borderRadius:'50%',background:'linear-gradient(135deg,#2B7FFF,#87CEEB)',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:'500',fontSize:'18px'}}>
@@ -190,7 +193,7 @@ export default function Puissance4() {
               <span style={{marginLeft:'auto',color:'rgba(255,255,255,0.5)',fontSize:'13px'}}>Défier →</span>
             </button>
           ))}
-          {membres.filter((m: any) => m.user_id !== user?.id).length === 0 && (
+          {membres.filter(m => m.user_id !== user?.id).length === 0 && (
             <div style={{textAlign:'center',color:'rgba(255,255,255,0.5)',fontSize:'14px',padding:'32px 0'}}>
               Aucun autre membre dans ce groupe
             </div>

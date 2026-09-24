@@ -1,4 +1,8 @@
 "use client"
+import type { CommentaireProjet, Profil, Projet as LigneProjet, ProjetLike, SoutienProjet, User } from "@/lib/types"
+import { SkeletonPage } from "@/app/components/ui/Skeleton"
+import { toast } from "@/lib/toast"
+import Link from "next/link"
 import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
@@ -7,13 +11,13 @@ import { authHeaders } from "@/lib/authFetch"
 
 export default function Projet() {
   const { id } = useParams()
-  const [projet, setProjet] = useState<any>(null)
-  const [commentaires, setCommentaires] = useState<any[]>([])
+  const [projet, setProjet] = useState<LigneProjet | null>(null)
+  const [commentaires, setCommentaires] = useState<CommentaireProjet[]>([])
   const [contenu, setContenu] = useState("")
-  const [user, setUser] = useState<any>(null)
-  const [likes, setLikes] = useState<any[]>([])
-  const [createur, setCreateur] = useState<any>(null)
-  const [soutiens, setSoutiens] = useState<any[]>([])
+  const [user, setUser] = useState<User | null>(null)
+  const [likes, setLikes] = useState<ProjetLike[]>([])
+  const [createur, setCreateur] = useState<Pick<Profil, 'id' | 'nom' | 'stripe_account_id' | 'stripe_onboarding_complete'> | null>(null)
+  const [soutiens, setSoutiens] = useState<SoutienProjet[]>([])
   const [montantSoutien, setMontantSoutien] = useState("")
   const [enCoursSoutien, setEnCoursSoutien] = useState(false)
 
@@ -39,7 +43,7 @@ export default function Projet() {
 
   async function soutenirProjet() {
     const montant = parseFloat(montantSoutien)
-    if (!montant || montant <= 0 || !user) { if (!user) window.location.href = "/connexion"; return }
+    if (!montant || montant <= 0 || !user) { if (!user) window.location.assign("/connexion"); return }
     setEnCoursSoutien(true)
     const res = await fetch("/api/stripe/soutenir-projet", {
       method: "POST",
@@ -48,8 +52,8 @@ export default function Projet() {
     })
     const data = await res.json()
     setEnCoursSoutien(false)
-    if (data.url) window.location.href = data.url
-    else alert(data.error || "Erreur lors du paiement")
+    if (data.url) window.location.assign(data.url)
+    else toast(data.error || "Paiement impossible. Réessaie ou utilise une autre carte.", "error")
   }
 
   async function commenter() {
@@ -67,7 +71,7 @@ export default function Projet() {
   }
 
   async function toggleLike() {
-    if (!user) { window.location.href = "/connexion"; return }
+    if (!user) { window.location.assign("/connexion"); return }
     const dejaLike = likes.find(l => l.user_id === user.id)
     if (dejaLike) {
       await supabase.from("projets_likes").delete().eq("id", dejaLike.id)
@@ -78,14 +82,14 @@ export default function Projet() {
     }
   }
 
-  if (!projet) return <div style={{padding:'32px',textAlign:'center',color:'#aaa',fontSize:'14px'}}>Chargement...</div>
+  if (!projet) return <SkeletonPage />
 
   const jaimeMoi = likes.some(l => l.user_id === user?.id)
 
   return (
     <main style={{minHeight:'100vh',background:'#f8faff'}}>
       <div style={{padding:'16px 18px',background:'#fff',borderBottom:'0.5px solid #E8F1FF',display:'flex',alignItems:'center',gap:'12px'}}>
-        <a href="/" style={{fontSize:'12px',color:'#aaa',textDecoration:'none'}}>← Retour</a>
+        <Link href="/" transitionTypes={['nav-back']} style={{fontSize:'12px',color:'#aaa',textDecoration:'none'}}>← Retour</Link>
         <h1 style={{fontSize:'15px',fontWeight:'500',color:'#1a1a2e',margin:0}}>{projet.titre}</h1>
       </div>
       <div style={{padding:'16px 18px'}}>
@@ -96,7 +100,7 @@ export default function Projet() {
           <div style={{padding:'16px'}}>
             <span style={{fontSize:'11px',background:'#EEF5FF',color:'#2B7FFF',padding:'3px 10px',borderRadius:'99px',fontWeight:'500'}}>{projet.categorie}</span>
             {projet.user_id && (
-              <a href={'/profil/'+projet.user_id} style={{display:'block',fontSize:'12px',color:'#2B7FFF',marginTop:'8px',textDecoration:'none'}}>Voir le profil du créateur →</a>
+              <Link href={'/profil/'+projet.user_id} style={{display:'block',fontSize:'12px',color:'#2B7FFF',marginTop:'8px',textDecoration:'none'}}>Voir le profil du créateur →</Link>
             )}
             <h2 style={{fontSize:'16px',fontWeight:'600',color:'#1a1a2e',marginTop:'10px',marginBottom:'8px'}}>{projet.titre}</h2>
             <p style={{fontSize:'13px',color:'#666',lineHeight:'1.6',marginBottom:'14px'}}>{projet.description}</p>
@@ -111,10 +115,10 @@ export default function Projet() {
               <div style={{background:'#EEF5FF',border:'0.5px solid #DCE9FF',borderRadius:'14px',padding:'14px',marginBottom: projet.image_url ? '10px' : 0}}>
                 <p style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',margin:'0 0 2px'}}>Soutenir ce projet</p>
                 {soutiens.length > 0 && (
-                  <p style={{fontSize:'11px',color:'#aaa',margin:'0 0 10px'}}>{soutiens.reduce((s,x)=>s+parseFloat(x.montant),0).toFixed(0)} CHF récoltés · {soutiens.length} soutien{soutiens.length>1?'s':''}</p>
+                  <p style={{fontSize:'11px',color:'#aaa',margin:'0 0 10px'}}>{soutiens.reduce((s,x)=>s+Number(x.montant),0).toFixed(0)} CHF récoltés · {soutiens.length} soutien{soutiens.length>1?'s':''}</p>
                 )}
                 <div style={{display:'flex',gap:'8px'}}>
-                  <input value={montantSoutien} onChange={e => setMontantSoutien(e.target.value)} type="number" min="1" step="5" placeholder="Montant CHF"
+                  <input aria-label="Montant CHF" value={montantSoutien} onChange={e => setMontantSoutien(e.target.value)} type="number" min="1" step="5" placeholder="Montant CHF"
                     style={{flex:1,border:'1px solid #DCE9FF',borderRadius:'10px',padding:'8px 12px',fontSize:'16px',color:'#1a1a2e',background:'#fff',boxSizing:'border-box'}}/>
                   <button onClick={soutenirProjet} disabled={enCoursSoutien}
                     style={{background:'#2B7FFF',color:'#fff',border:'none',borderRadius:'10px',padding:'8px 18px',fontSize:'13px',fontWeight:'500',cursor:'pointer'}}>
@@ -140,7 +144,7 @@ export default function Projet() {
         {commentaires.length === 0 && (
           <p style={{fontSize:'13px',color:'#aaa',textAlign:'center',padding:'16px 0'}}>Sois le premier à laisser un conseil !</p>
         )}
-        {commentaires.map((c: any) => (
+        {commentaires.map(c => (
           <div key={c.id} style={{display:'flex',gap:'10px',marginBottom:'10px'}}>
             <div style={{width:'30px',height:'30px',borderRadius:'50%',background:'#2B7FFF',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:'11px',fontWeight:'500',flexShrink:0}}>
               {c.user_id.slice(0, 2).toUpperCase()}
@@ -151,9 +155,9 @@ export default function Projet() {
           </div>
         ))}
         <div style={{display:'flex',gap:'8px',marginTop:'14px',alignItems:'center'}}>
-          <input
+          <input aria-label="Laisser un conseil"
             type="text"
-            placeholder="Laisser un conseil..."
+            placeholder="Laisser un conseil…"
             value={contenu}
             onChange={e => setContenu(e.target.value)}
             onKeyDown={e => e.key === "Enter" && commenter()}

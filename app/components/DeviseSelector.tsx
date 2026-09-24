@@ -1,4 +1,6 @@
 "use client"
+import { ecrireStockage } from "@/lib/useStockage"
+import { onActivate } from "@/lib/a11y"
 import { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabase"
 
@@ -17,7 +19,7 @@ const DEVISES = [
 
 export default function DeviseSelector({ onClose }: { onClose: () => void }) {
   const [devise, setDevise] = useState('CHF')
-  const [taux, setTaux] = useState<any>(null)
+  const [taux, setTaux] = useState<Record<string, number> | null>(null)
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
@@ -41,7 +43,7 @@ export default function DeviseSelector({ onClose }: { onClose: () => void }) {
     if (user) {
       await supabase.from('profiles').update({ devise }).eq('id', user.id)
     }
-    localStorage.setItem('nexia_devise', devise)
+    ecrireStockage('local', 'nexia_devise', devise)
     setLoading(false)
     onClose()
     window.location.reload()
@@ -70,7 +72,7 @@ export default function DeviseSelector({ onClose }: { onClose: () => void }) {
 
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'10px',marginBottom:'16px'}}>
           {DEVISES.map(d => (
-            <div key={d.code} onClick={() => setDevise(d.code)}
+            <div key={d.code} role="button" tabIndex={0} onClick={() => setDevise(d.code)} onKeyDown={onActivate(() => setDevise(d.code))}
               style={{borderRadius:'14px',padding:'14px',cursor:'pointer',border: devise===d.code ? '2px solid #2B7FFF' : '0.5px solid #E8F1FF',
                 background: devise===d.code ? '#EEF5FF' : '#fff'}}>
               <div style={{fontSize:'22px',marginBottom:'4px'}}>{d.flag}</div>
@@ -85,7 +87,7 @@ export default function DeviseSelector({ onClose }: { onClose: () => void }) {
 
         <button onClick={sauvegarder} disabled={loading}
           style={{width:'100%',background:'linear-gradient(135deg,#1a3a6e,#2B7FFF)',color:'#fff',border:'none',borderRadius:'14px',padding:'14px',fontSize:'14px',fontWeight:'600',cursor:'pointer'}}>
-          {loading ? 'Sauvegarde...' : 'Confirmer ma devise'}
+          {loading ? 'Sauvegarde…' : 'Confirmer ma devise'}
         </button>
       </div>
     </div>

@@ -1,5 +1,7 @@
 "use client"
-import { useEffect, useState } from "react"
+import { ContributionObjectif, MembreGroupe, ObjectifGroupe, Profil, User } from "@/lib/types"
+import { useChargement } from "@/lib/useChargement"
+import { useState } from "react"
 import { useParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import SectionHeader from "@/app/components/ui/SectionHeader"
@@ -16,10 +18,10 @@ export default function ObjectifsGroupePage() {
   const params = useParams()
   const id = Array.isArray(params.id) ? params.id[0] : params.id
 
-  const [user, setUser] = useState<any>(null)
-  const [profils, setProfils] = useState<Record<string, any>>({})
-  const [objectifs, setObjectifs] = useState<any[]>([])
-  const [contributions, setContributions] = useState<any[]>([])
+  const [user, setUser] = useState<User | null>(null)
+  const [profils, setProfils] = useState<Record<string, Pick<Profil, 'id' | 'nom'>>>({})
+  const [objectifs, setObjectifs] = useState<ObjectifGroupe[]>([])
+  const [contributions, setContributions] = useState<ContributionObjectif[]>([])
   const [showForm, setShowForm] = useState(false)
   const [titre, setTitre] = useState("")
   const [montantCible, setMontantCible] = useState("")
@@ -27,7 +29,6 @@ export default function ObjectifsGroupePage() {
   const [contribuerA, setContribuerA] = useState<string | null>(null)
   const [montantContrib, setMontantContrib] = useState("")
 
-  useEffect(() => { charger() }, [])
 
   async function charger() {
     const { data: { user } } = await supabase.auth.getUser()
@@ -35,21 +36,23 @@ export default function ObjectifsGroupePage() {
 
     const { data: mb } = await supabase.from("membres_groupe").select("user_id").eq("groupe_id", id)
     if (mb && mb.length > 0) {
-      const { data: profs } = await supabase.from("profiles").select("id,nom").in("id", mb.map((m: any) => m.user_id))
-      const map: Record<string, any> = {}
-      profs?.forEach((p: any) => { map[p.id] = p })
+      const { data: profs } = await supabase.from("profiles").select("id,nom").in("id", (mb as MembreGroupe[]).map(m => m.user_id))
+      const map: Record<string, Pick<Profil, 'id' | 'nom'>> = {}
+      for (const p of (profs || []) as Pick<Profil, 'id' | 'nom'>[]) map[p.id] = p
       setProfils(map)
     }
 
     const { data: obj } = await supabase.from("objectifs_groupe").select("*").eq("groupe_id", id).order("created_at", { ascending: false })
     setObjectifs(obj || [])
     if (obj && obj.length > 0) {
-      const { data: contribs } = await supabase.from("objectifs_groupe_contributions").select("*").in("objectif_id", obj.map((o: any) => o.id))
+      const { data: contribs } = await supabase.from("objectifs_groupe_contributions").select("*").in("objectif_id", (obj as ObjectifGroupe[]).map(o => o.id))
       setContributions(contribs || [])
     } else {
       setContributions([])
     }
   }
+
+  useChargement(charger, id)
 
   async function creerObjectif() {
     const cible = parseFloat(montantCible)
@@ -93,19 +96,19 @@ export default function ObjectifsGroupePage() {
         backHref={`/groupes/${id}`}
         backLabel="← Retour au groupe"
         title="Objectifs de groupe"
-        action={<Button variant="secondary" onClick={() => setShowForm(!showForm)}>+ Nouveau</Button>}
+        action={<Button variant="onDark" onClick={() => setShowForm(!showForm)}>+ Nouveau</Button>}
       />
 
       <div style={{ padding: "16px 14px" }}>
         {showForm && (
           <Card style={{ background: colors.goldLight, border: `0.5px solid ${colors.goldBorder}`, marginBottom: "14px" }}>
             <div style={{ fontSize: "13px", fontWeight: 500, color: colors.text, marginBottom: "10px" }}>Nouvel objectif</div>
-            <input value={titre} onChange={e => setTitre(e.target.value)} placeholder="Ex: Voyage à Barcelone, Cadeau..."
+            <input aria-label="Voyage à Barcelone, Cadeau" value={titre} onChange={e => setTitre(e.target.value)} placeholder="Ex: Voyage à Barcelone, Cadeau…"
               style={{ width: "100%", border: `1px solid ${colors.goldBorder}`, borderRadius: "10px", padding: "10px 12px", fontSize: "16px", color: colors.text, background: "#fff", marginBottom: "10px", boxSizing: "border-box" }} />
-            <input value={montantCible} onChange={e => setMontantCible(e.target.value)} type="number" min="0" step="10" placeholder="Montant visé (CHF)"
+            <input aria-label="Montant visé (CHF)" value={montantCible} onChange={e => setMontantCible(e.target.value)} type="number" min="0" step="10" placeholder="Montant visé (CHF)"
               style={{ width: "100%", border: `1px solid ${colors.goldBorder}`, borderRadius: "10px", padding: "10px 12px", fontSize: "16px", color: colors.text, background: "#fff", marginBottom: "10px", boxSizing: "border-box" }} />
             <div style={{ fontSize: "12px", color: "#8a6d1a", marginBottom: "6px" }}>Date limite (optionnel)</div>
-            <input value={dateLimite} onChange={e => setDateLimite(e.target.value)} type="date"
+            <input aria-label="Date limite" value={dateLimite} onChange={e => setDateLimite(e.target.value)} type="date"
               style={{ width: "100%", border: `1px solid ${colors.goldBorder}`, borderRadius: "10px", padding: "10px 12px", fontSize: "16px", color: colors.text, background: "#fff", marginBottom: "12px", boxSizing: "border-box" }} />
             <div style={{ display: "flex", gap: "8px" }}>
               <Button variant="gold" full onClick={creerObjectif}>Créer</Button>
@@ -120,10 +123,10 @@ export default function ObjectifsGroupePage() {
 
         {objectifs.map(o => {
           const contribsObjectif = contributions.filter(c => c.objectif_id === o.id)
-          const total = contribsObjectif.reduce((s, c) => s + parseFloat(c.montant), 0)
-          const pct = Math.min(100, (total / parseFloat(o.montant_cible)) * 100)
+          const total = contribsObjectif.reduce((s, c) => s + Number(c.montant), 0)
+          const pct = Math.min(100, (total / Number(o.montant_cible)) * 100)
           const parPersonne: Record<string, number> = {}
-          contribsObjectif.forEach(c => { parPersonne[c.user_id] = (parPersonne[c.user_id] || 0) + parseFloat(c.montant) })
+          contribsObjectif.forEach(c => { parPersonne[c.user_id] = (parPersonne[c.user_id] || 0) + Number(c.montant) })
 
           return (
             <Card key={o.id} elevated style={{ marginBottom: "12px", padding: "16px" }}>
@@ -140,7 +143,7 @@ export default function ObjectifsGroupePage() {
               </div>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "12px" }}>
                 <span style={{ fontSize: "13px", fontWeight: 500, color: colors.text }}>{total.toFixed(0)} CHF</span>
-                <span style={{ fontSize: "12px", color: colors.textFaint }}>sur {parseFloat(o.montant_cible).toFixed(0)} CHF</span>
+                <span style={{ fontSize: "12px", color: colors.textFaint }}>sur {Number(o.montant_cible).toFixed(0)} CHF</span>
               </div>
 
               {Object.keys(parPersonne).length > 0 && (
@@ -153,7 +156,7 @@ export default function ObjectifsGroupePage() {
 
               {contribuerA === o.id ? (
                 <div style={{ display: "flex", gap: "8px" }}>
-                  <input value={montantContrib} onChange={e => setMontantContrib(e.target.value)} type="number" min="0" step="5" autoFocus placeholder="Montant CHF"
+                  <input aria-label="Montant CHF" value={montantContrib} onChange={e => setMontantContrib(e.target.value)} type="number" min="0" step="5" autoFocus placeholder="Montant CHF"
                     style={{ flex: 1, border: `1px solid ${colors.goldBorder}`, borderRadius: "10px", padding: "8px 12px", fontSize: "16px", color: colors.text, boxSizing: "border-box" }} />
                   <Button variant="gold" onClick={() => ajouterContribution(o.id)}>OK</Button>
                   <Button variant="ghost" onClick={() => { setContribuerA(null); setMontantContrib("") }}>✕</Button>

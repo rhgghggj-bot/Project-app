@@ -1,5 +1,6 @@
 "use client"
-import { useEffect, useState } from "react"
+import { useChargement } from "@/lib/useChargement"
+import { useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { colors } from "./ui/tokens"
 
@@ -34,7 +35,6 @@ export default function BadgesSection() {
   const [streak, setStreak] = useState(0)
   const [chargement, setChargement] = useState(true)
 
-  useEffect(() => { charger() }, [])
 
   async function charger() {
     const { data: { user } } = await supabase.auth.getUser()
@@ -67,6 +67,8 @@ export default function BadgesSection() {
     setDebloques(nouveaux)
     setChargement(false)
   }
+
+  useChargement(charger)
 
   if (chargement) return null
 

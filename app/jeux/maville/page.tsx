@@ -1,5 +1,8 @@
 'use client'
-import { useEffect, useRef, useState } from 'react'
+import { ecrireStockage, useStockageLocal } from "@/lib/useStockage"
+import { useChargement } from "@/lib/useChargement"
+import { confirmer } from "@/lib/toast"
+import { useEffect, useRef, useState, useEffectEvent } from 'react'
 import { useRouter } from 'next/navigation'
 
 const N = 14
@@ -23,7 +26,7 @@ const OUTILS: {id:TypeTuile|'demolir', nom:string, cout:number, couleur:string, 
   { id:'demolir', nom:'Démolir', cout:0, couleur:'#F43F5E', icone:'🧨' },
 ]
 
-const MAINTENANCE: any = { route:1, police:15, ecole:20, centrale:25, parc:2 }
+const MAINTENANCE: Record<string, number> = { route:1, police:15, ecole:20, centrale:25, parc:2 }
 const SAVE_KEY = 'simcity_save_v1'
 
 function grilleVide(): Tuile[][] {
@@ -79,14 +82,14 @@ export default function SimCityLite() {
   const [outil, setOutil] = useState<TypeTuile|'demolir'|null>(null)
   const [vitesse, setVitesse] = useState(1)
   const [toast, setToast] = useState<string|null>(null)
-  const [meilleurePop, setMeilleurePop] = useState(0)
+  // Record enregistré sur l’appareil (source unique, mis à jour par ecrireStockage)
+  const meilleurePop = parseInt(useStockageLocal('simcity_meilleure_population') || '0') || 0
   const [tremble, setTremble] = useState(false)
 
   const etatRef = useRef({ grille: grilleVide(), argent: 20000, jour: 1, mois: 1, tauxTaxe: 0.12 })
 
-  useEffect(() => {
-    const mp = localStorage.getItem('simcity_meilleure_population')
-    if (mp) setMeilleurePop(parseInt(mp))
+  // Reprend la partie sauvegardée sur l’appareil, une fois la page affichée
+  useChargement(() => {
     const save = localStorage.getItem(SAVE_KEY)
     if (save) {
       try {
@@ -100,7 +103,7 @@ export default function SimCityLite() {
       } catch {}
     }
     setPret(true)
-  }, [])
+  })
 
   function sauvegarder() {
     localStorage.setItem(SAVE_KEY, JSON.stringify(etatRef.current))
@@ -184,19 +187,18 @@ export default function SimCityLite() {
     setBonheur(bonheurCalc)
     setDemandes({ r: Math.round(demandR), c: Math.round(demandC), i: Math.round(demandI) })
 
-    if (pop > meilleurePop) {
-      setMeilleurePop(pop)
-      localStorage.setItem('simcity_meilleure_population', String(pop))
-    }
+    if (pop > meilleurePop) ecrireStockage('local', 'simcity_meilleure_population', String(pop))
     sauvegarder()
   }
 
+  // tick() lit toujours l’état à jour : l’horloge ne redémarre que si la vitesse change
+  const tickEvent = useEffectEvent(() => tick())
   useEffect(() => {
     if (!pret || vitesse === 0) return
     const delai = vitesse === 1 ? 2200 : 700
-    const id = setInterval(tick, delai)
+    const id = setInterval(() => tickEvent(), delai)
     return () => clearInterval(id)
-  }, [pret, vitesse, tauxTaxe])
+  }, [pret, vitesse])
 
   function poserTuile(r:number, c:number) {
     if (!outil) return
@@ -227,8 +229,8 @@ export default function SimCityLite() {
     sauvegarder()
   }
 
-  function nouvelleVille() {
-    if (!confirm('Recommencer une nouvelle ville ? Ta ville actuelle sera perdue.')) return
+  async function nouvelleVille() {
+    if (!(await confirmer('Recommencer une nouvelle ville ? Ta ville actuelle sera perdue.', 'Recommencer'))) return
     const g = grilleVide()
     etatRef.current = { grille: g, argent: 20000, jour: 1, mois: 1, tauxTaxe: 0.12 }
     setGrilleAff(g); setArgent(20000); setJour(1); setMois(1); setTauxTaxe(0.12)
@@ -291,7 +293,7 @@ export default function SimCityLite() {
       </div>
 
       <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',width:'100%',maxWidth:'420px',marginBottom:'10px',background:'rgba(255,255,255,0.06)',borderRadius:'10px',padding:'6px 10px'}}>
-        <div style={{fontSize:'11px',color:'rgba(255,255,255,0.6)'}}>Taux d'imposition : <b style={{color:'#fff'}}>{Math.round(tauxTaxe*100)}%</b></div>
+        <div style={{fontSize:'11px',color:'rgba(255,255,255,0.6)'}}>Taux d’imposition : <b style={{color:'#fff'}}>{Math.round(tauxTaxe*100)}%</b></div>
         <div style={{display:'flex',gap:'6px'}}>
           <button onClick={() => ajusterTaxe(-0.01)} style={{width:'24px',height:'24px',borderRadius:'50%',background:'rgba(255,255,255,0.1)',border:'none',color:'#fff',cursor:'pointer'}}>−</button>
           <button onClick={() => ajusterTaxe(0.01)} style={{width:'24px',height:'24px',borderRadius:'50%',background:'rgba(255,255,255,0.1)',border:'none',color:'#fff',cursor:'pointer'}}>+</button>
@@ -326,7 +328,7 @@ export default function SimCityLite() {
           animation: tremble ? 'shakeCity 0.3s' : 'none'
         }}>
           {grilleAff.map((row, r) => row.map((t, c) => (
-            <div key={r+'-'+c} onClick={() => poserTuile(r,c)}
+            <div key={r+'-'+c} role="button" tabIndex={0} onClick={() => poserTuile(r,c)} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); poserTuile(r,c) } }}
               style={{
                 aspectRatio:'1', background: couleurTuile(t), borderRadius:'2px', cursor: outil ? 'pointer':'default',
                 display:'flex',alignItems:'center',justifyContent:'center',fontSize:'8px',

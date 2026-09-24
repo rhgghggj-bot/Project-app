@@ -1,4 +1,9 @@
 "use client"
+import { LienSuivi, Profil, Projet, User } from "@/lib/types"
+import Image from "next/image"
+import { SkeletonProfil } from "@/app/components/ui/Skeleton"
+import { useEscape } from "@/lib/a11y"
+import Link from "next/link"
 import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
@@ -7,20 +12,21 @@ import { ouvrirConversationPrivee } from "@/lib/dm"
 export default function ProfilPublic() {
   const { id } = useParams()
   const profilId = String(id)
-  const [user, setUser] = useState<any>(null)
-  const [profil, setProfil] = useState<any>(null)
-  const [projets, setProjets] = useState<any[]>([])
-  const [followers, setFollowers] = useState<any[]>([])
-  const [abonnements, setAbonnements] = useState<any[]>([])
+  const [user, setUser] = useState<User | null>(null)
+  const [profil, setProfil] = useState<Profil | null>(null)
+  const [projets, setProjets] = useState<Projet[]>([])
+  const [followers, setFollowers] = useState<LienSuivi[]>([])
+  const [abonnements, setAbonnements] = useState<LienSuivi[]>([])
   const [chargement, setChargement] = useState(true)
   const [listeOuverte, setListeOuverte] = useState<"followers" | "abonnements" | null>(null)
-  const [profilsListe, setProfilsListe] = useState<any[]>([])
+  useEscape(!!listeOuverte, () => setListeOuverte(null))
+  const [profilsListe, setProfilsListe] = useState<Profil[]>([])
 
   useEffect(() => {
     async function charger() {
       const { data: { user } } = await supabase.auth.getUser()
       setUser(user)
-      if (user && user.id === profilId) { window.location.href = "/profile"; return }
+      if (user && user.id === profilId) { window.location.assign("/profile"); return }
       const { data: p } = await supabase.from("profiles").select("*").eq("id", profilId).single()
       setProfil(p)
       const { data: pj } = await supabase.from("projets").select("*").eq("user_id", profilId).eq("prive", false).order("created_at", { ascending: false })
@@ -35,7 +41,7 @@ export default function ProfilPublic() {
   }, [profilId])
 
   async function toggleSuivre() {
-    if (!user) { window.location.href = "/connexion"; return }
+    if (!user) { window.location.assign("/connexion"); return }
     const dejaSuivi = followers.find(f => f.follower_id === user.id)
     if (dejaSuivi) {
       await supabase.from("app_followers").delete().eq("id", dejaSuivi.id)
@@ -47,9 +53,9 @@ export default function ProfilPublic() {
   }
 
   async function envoyerMessage() {
-    if (!user) { window.location.href = "/connexion"; return }
+    if (!user) { window.location.assign("/connexion"); return }
     const idConv = await ouvrirConversationPrivee(supabase, user.id, profilId)
-    if (idConv) window.location.href = "/groupes/" + idConv
+    if (idConv) window.location.assign("/groupes/" + idConv)
   }
 
   async function ouvrirListe(type: "followers" | "abonnements") {
@@ -61,7 +67,7 @@ export default function ProfilPublic() {
     setListeOuverte(type)
   }
 
-  if (chargement) return <div style={{padding:'32px',textAlign:'center',color:'#aaa',fontSize:'14px'}}>Chargement...</div>
+  if (chargement) return <SkeletonProfil />
   if (!profil) return <div style={{padding:'32px',textAlign:'center',color:'#aaa',fontSize:'14px'}}>Profil introuvable</div>
 
   const jeSuis = followers.some(f => f.follower_id === user?.id)
@@ -70,10 +76,10 @@ export default function ProfilPublic() {
   return (
     <main style={{minHeight:'100vh',background:'#f8faff'}}>
       <div style={{background:'linear-gradient(160deg,#0A1628,#1a3a6e,#2B7FFF)',padding:'20px 18px 28px'}}>
-        <a href="/" style={{fontSize:'12px',color:'rgba(255,255,255,0.5)',textDecoration:'none'}}>← Accueil</a>
+        <Link href="/" transitionTypes={['nav-back']} style={{fontSize:'12px',color:'rgba(255,255,255,0.5)',textDecoration:'none'}}>← Accueil</Link>
         <div style={{display:'flex',alignItems:'center',gap:'16px',marginTop:'16px'}}>
           {profil.avatar_url ? (
-            <img src={profil.avatar_url} alt={nom} style={{width:'72px',height:'72px',borderRadius:'50%',objectFit:'cover',flexShrink:0,border:'2px solid rgba(255,255,255,0.3)'}}/>
+            <Image unoptimized width={72} height={72} src={profil.avatar_url} alt={nom} style={{width:'72px',height:'72px',borderRadius:'50%',objectFit:'cover',flexShrink:0,border:'2px solid rgba(255,255,255,0.3)'}} />
           ) : (
             <div style={{width:'72px',height:'72px',borderRadius:'50%',background:'rgba(255,255,255,0.15)',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:'26px',fontWeight:'600',flexShrink:0}}>
               {nom[0]?.toUpperCase()}
@@ -111,10 +117,10 @@ export default function ProfilPublic() {
       <div style={{padding:'16px 18px'}}>
         <div style={{fontSize:'13px',fontWeight:'600',color:'#1a1a2e',marginBottom:'12px'}}>Projets publiés</div>
         {projets.length === 0 && (
-          <div style={{textAlign:'center',padding:'40px 0',color:'#aaa',fontSize:'13px'}}>Aucun projet publié pour l'instant</div>
+          <div style={{textAlign:'center',padding:'40px 0',color:'#aaa',fontSize:'13px'}}>Aucun projet publié pour l’instant</div>
         )}
         {projets.map(projet => (
-          <a key={projet.id} href={'/projet/'+projet.id} style={{textDecoration:'none',display:'block',marginBottom:'10px'}}>
+          <Link key={projet.id} href={'/projet/'+projet.id} style={{textDecoration:'none',display:'block',marginBottom:'10px'}}>
             <div style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'16px',padding:'14px'}}>
               <div style={{display:'flex',alignItems:'center',gap:'6px',marginBottom:'6px'}}>
                 <span style={{fontSize:'10px',background:'#EEF5FF',color:'#2B7FFF',padding:'2px 8px',borderRadius:'99px',fontWeight:'500'}}>{projet.categorie}</span>
@@ -122,27 +128,27 @@ export default function ProfilPublic() {
               <div style={{fontSize:'14px',fontWeight:'500',color:'#1a1a2e',marginBottom:'4px'}}>{projet.titre}</div>
               <div style={{fontSize:'12px',color:'#666',lineHeight:'1.5'}}>{projet.description}</div>
             </div>
-          </a>
+          </Link>
         ))}
       </div>
 
       {listeOuverte && (
-        <div onClick={() => setListeOuverte(null)} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',zIndex:200,display:'flex',alignItems:'flex-end'}}>
-          <div onClick={e => e.stopPropagation()} style={{width:'100%',maxHeight:'70vh',overflowY:'auto',background:'#fff',borderRadius:'22px 22px 0 0',padding:'10px 18px 24px'}}>
+        <div role="presentation" onClick={() => setListeOuverte(null)} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',zIndex:200,display:'flex',alignItems:'flex-end'}}>
+          <div role="dialog" aria-modal="true" onClick={e => e.stopPropagation()} style={{width:'100%',maxHeight:'70vh',overflowY:'auto',background:'#fff',borderRadius:'22px 22px 0 0',padding:'10px 18px 24px'}}>
             <div style={{width:'36px',height:'4px',background:'#E8F1FF',borderRadius:'99px',margin:'6px auto 14px'}}></div>
             <div style={{fontSize:'15px',fontWeight:'600',color:'#1a1a2e',marginBottom:'12px'}}>{listeOuverte === "followers" ? "Followers" : "Abonnements"}</div>
-            {profilsListe.length === 0 && <div style={{textAlign:'center',padding:'24px 0',color:'#aaa',fontSize:'13px'}}>Personne pour l'instant</div>}
-            {profilsListe.map((p: any) => (
-              <a key={p.id} href={'/profil/'+p.id} style={{textDecoration:'none',display:'flex',alignItems:'center',gap:'12px',padding:'10px 0',borderBottom:'0.5px solid #F5F8FC'}}>
+            {profilsListe.length === 0 && <div style={{textAlign:'center',padding:'24px 0',color:'#aaa',fontSize:'13px'}}>Personne pour l’instant</div>}
+            {profilsListe.map(p => (
+              <Link key={p.id} href={'/profil/'+p.id} style={{textDecoration:'none',display:'flex',alignItems:'center',gap:'12px',padding:'10px 0',borderBottom:'0.5px solid #F5F8FC'}}>
                 {p.avatar_url ? (
-                  <img src={p.avatar_url} alt={p.nom} style={{width:'40px',height:'40px',borderRadius:'50%',objectFit:'cover'}}/>
+                  <Image unoptimized width={40} height={40} src={p.avatar_url} alt={p.nom} style={{width:'40px',height:'40px',borderRadius:'50%',objectFit:'cover'}} />
                 ) : (
                   <div style={{width:'40px',height:'40px',borderRadius:'50%',background:'linear-gradient(135deg,#2B7FFF,#8B5CF6)',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:'14px',fontWeight:'600'}}>
                     {(p.nom || "M")[0]?.toUpperCase()}
                   </div>
                 )}
                 <div style={{fontSize:'14px',color:'#1a1a2e',fontWeight:'500'}}>{p.nom || "Membre"}</div>
-              </a>
+              </Link>
             ))}
           </div>
         </div>

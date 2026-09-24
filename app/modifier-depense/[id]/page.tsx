@@ -1,4 +1,5 @@
 "use client"
+import Link from "next/link"
 import { useEffect, useState } from "react"
 import { useParams, useSearchParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
@@ -41,14 +42,14 @@ export default function ModifierDepense() {
       setMessage("Erreur : " + error.message)
     } else {
       setMessage("Mis à jour !")
-      setTimeout(() => window.location.href = "/finances", 1500)
+      setTimeout(() => window.location.assign("/finances"), 1500)
     }
   }
 
   async function supprimer() {
     const table = type === "depense" ? "depenses" : "revenus"
     await supabase.from(table).delete().eq("id", id)
-    window.location.href = "/finances"
+    window.location.assign("/finances")
   }
 
   const isRevenu = type === "revenu"
@@ -59,7 +60,7 @@ export default function ModifierDepense() {
     <main className="min-h-screen bg-white">
       <div style={{background:'linear-gradient(160deg,#0A1628,#1a3a6e)',padding:'20px 18px 28px'}}>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-          <a href="/finances" style={{fontSize:'12px',color:'rgba(255,255,255,0.5)'}}>← Retour</a>
+          <Link href="/finances" transitionTypes={['nav-back']} style={{fontSize:'12px',color:'rgba(255,255,255,0.5)'}}>← Retour</Link>
           <button onClick={supprimer} style={{fontSize:'12px',color:'#F43F5E',background:'rgba(244,63,94,0.15)',border:'none',padding:'5px 12px',borderRadius:'99px',cursor:'pointer'}}>
             Supprimer
           </button>
@@ -72,25 +73,25 @@ export default function ModifierDepense() {
       <div style={{padding:'20px 18px',display:'flex',flexDirection:'column',gap:'14px'}}>
         <div>
           <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Titre</label>
-          <input value={titre} onChange={e => setTitre(e.target.value)}
+          <input aria-label="Titre" value={titre} onChange={e => setTitre(e.target.value)}
             style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 14px',fontSize:'13px',color:'#1a1a2e',background:'#F8FBFF'}}/>
         </div>
 
         <div>
           <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Montant (CHF)</label>
-          <input value={montant} onChange={e => setMontant(e.target.value)} type="number"
+          <input aria-label="Montant (CHF)" value={montant} onChange={e => setMontant(e.target.value)} type="number"
             style={{width:'100%',border:`1px solid ${couleur}44`,borderRadius:'10px',padding:'10px 14px',fontSize:'16px',fontWeight:'500',color:couleur,background:'#F8FBFF'}}/>
         </div>
 
         <div>
           <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Date</label>
-          <input value={date} onChange={e => setDate(e.target.value)} type="date"
+          <input aria-label="Date" value={date} onChange={e => setDate(e.target.value)} type="date"
             style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 14px',fontSize:'13px',color:'#1a1a2e',background:'#F8FBFF'}}/>
         </div>
 
         <div>
           <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Catégorie</label>
-          <select value={categorie} onChange={e => setCategorie(e.target.value)}
+          <select aria-label="Catégorie" value={categorie} onChange={e => setCategorie(e.target.value)}
             style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 14px',fontSize:'13px',color:'#1a1a2e',background:'#F8FBFF'}}>
             <option value="">Choisir une catégorie</option>
             {categories.map(c => <option key={c} value={c}>{c}</option>)}

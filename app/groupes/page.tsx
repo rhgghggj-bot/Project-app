@@ -1,5 +1,8 @@
 "use client"
-import Tutorial from "../components/Tutorial"
+import { Groupe, MembreGroupe, MessageGroupe, Profil, User } from "@/lib/types"
+import Image from "next/image"
+import { onActivate } from "@/lib/a11y"
+import Link from "next/link"
 
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
@@ -18,15 +21,24 @@ function formaterHeure(dateStr: string) {
   return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
 }
 
+// Une ligne de la liste : groupe ou message privé, avec son dernier message
+type ElementDiscussion = Groupe & {
+  type: 'dm' | 'groupe'
+  autreId?: string
+  profil: Profil | null
+  dernierMessage: string | null
+  dernierTemps: string
+}
+
 export default function Groupes() {
-  const [items, setItems] = useState<any[]>([])
-  const [user, setUser] = useState<any>(null)
+  const [items, setItems] = useState<ElementDiscussion[]>([])
+  const [user, setUser] = useState<User | null>(null)
   const [message, setMessage] = useState("")
 
   const [composeOuvert, setComposeOuvert] = useState(false)
   const [recherche, setRecherche] = useState("")
-  const [resultats, setResultats] = useState<any[]>([])
-  const [selectionnes, setSelectionnes] = useState<any[]>([])
+  const [resultats, setResultats] = useState<Pick<Profil, 'id' | 'nom' | 'avatar_url'>[]>([])
+  const [selectionnes, setSelectionnes] = useState<Pick<Profil, 'id' | 'nom' | 'avatar_url'>[]>([])
   const [nomGroupe, setNomGroupe] = useState("")
   const [enCreation, setEnCreation] = useState(false)
 
@@ -37,22 +49,23 @@ export default function Groupes() {
       if (!user) { setItems([]); return }
 
       const { data: membres } = await supabase.from("membres_groupe").select("groupe_id").eq("user_id", user.id)
-      const idsGroupes = membres?.map((m: any) => m.groupe_id) || []
+      const idsGroupes = (membres as Pick<MembreGroupe, 'groupe_id'>[] | null)?.map(m => m.groupe_id) || []
       if (idsGroupes.length === 0) { setItems([]); return }
 
-      const { data } = await supabase.from("groupes").select("*").in("id", idsGroupes).order("created_at", { ascending: false })
+      const [{ data }, { data: tousMessages }, { data: membresDesGroupes }] = await Promise.all([
+        supabase.from("groupes").select("*").in("id", idsGroupes).order("created_at", { ascending: false }),
+        supabase.from("messages_groupe").select("groupe_id,contenu,created_at,user_id").in("groupe_id", idsGroupes).order("created_at", { ascending: false }),
+        supabase.from("membres_groupe").select("groupe_id,user_id").in("groupe_id", idsGroupes),
+      ])
       const tousGroupes = data || []
-
-      const { data: tousMessages } = await supabase.from("messages_groupe").select("groupe_id,contenu,created_at,user_id").in("groupe_id", idsGroupes).order("created_at", { ascending: false })
-      const dernierMessageParGroupe: Record<string, any> = {}
-      tousMessages?.forEach((m: any) => { if (!dernierMessageParGroupe[m.groupe_id]) dernierMessageParGroupe[m.groupe_id] = m })
+      const dernierMessageParGroupe: Record<string, MessageGroupe> = {}
+      ;(tousMessages as MessageGroupe[] | null)?.forEach(m => { if (!dernierMessageParGroupe[m.groupe_id]) dernierMessageParGroupe[m.groupe_id] = m })
 
       const idsAutresDM: string[] = []
-      const itemsBruts: any[] = []
-      for (const g of tousGroupes) {
+      const itemsBruts: (Groupe & { type: 'dm' | 'groupe'; autreId?: string })[] = []
+      for (const g of tousGroupes as Groupe[]) {
         if (g.est_dm) {
-          const { data: mb } = await supabase.from("membres_groupe").select("user_id").eq("groupe_id", g.id)
-          const autre = (mb || []).find((m: any) => m.user_id !== user.id)
+          const autre = ((membresDesGroupes || []) as MembreGroupe[]).find(m => m.groupe_id === g.id && m.user_id !== user.id)
           if (autre) idsAutresDM.push(autre.user_id)
           itemsBruts.push({ ...g, type: 'dm', autreId: autre?.user_id })
         } else {
@@ -60,10 +73,10 @@ export default function Groupes() {
         }
       }
 
-      let profilsMap: any = {}
+      const profilsMap: Record<string, Profil> = {}
       if (idsAutresDM.length > 0) {
         const { data: profs } = await supabase.from("profiles").select("id,nom,avatar_url").in("id", idsAutresDM)
-        profs?.forEach((p: any) => { profilsMap[p.id] = p })
+        for (const p of (profs || []) as Profil[]) profilsMap[p.id] = p
       }
 
       const itemsFinal = itemsBruts.map(it => {
@@ -85,13 +98,13 @@ export default function Groupes() {
     async function rechercher() {
       if (!recherche.trim() || !user) { setResultats([]); return }
       const { data } = await supabase.from("profiles").select("id,nom,avatar_url").ilike("nom", `%${recherche.trim()}%`).neq("id", user.id).limit(15)
-      setResultats((data || []).filter((p: any) => !selectionnes.some(s => s.id === p.id)))
+      setResultats(((data || []) as Pick<Profil, 'id' | 'nom' | 'avatar_url'>[]).filter(p => !selectionnes.some(s => s.id === p.id)))
     }
     const t = setTimeout(rechercher, 250)
     return () => clearTimeout(t)
   }, [recherche, selectionnes, user])
 
-  function ajouterSelection(p: any) {
+  function ajouterSelection(p: Pick<Profil, 'id' | 'nom' | 'avatar_url'>) {
     setSelectionnes(prev => [...prev, p])
     setRecherche("")
     setResultats([])
@@ -116,7 +129,7 @@ export default function Groupes() {
     if (selectionnes.length === 1) {
       const idConv = await ouvrirConversationPrivee(supabase, user.id, selectionnes[0].id)
       setEnCreation(false)
-      if (idConv) window.location.href = "/groupes/" + idConv
+      if (idConv) window.location.assign("/groupes/" + idConv)
       return
     }
 
@@ -131,14 +144,14 @@ export default function Groupes() {
       ...selectionnes.map(p => ({ groupe_id: data.id, user_id: p.id }))
     ])
     setEnCreation(false)
-    window.location.href = `/groupes/${data.id}`
+    window.location.assign(`/groupes/${data.id}`)
   }
 
   return (
     <main className="min-h-screen bg-white">
       <div style={{background:'linear-gradient(160deg,#0A1628,#1a3a6e,#2B7FFF)',padding:'20px 18px 24px'}}>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-          <div style={{fontSize:'22px',fontWeight:'600',color:'#fff'}}>Discussions</div>
+          <h1 style={{fontSize:'28px',fontWeight:'600',color:'#fff',margin:0}}>Discussions</h1>
           <button onClick={() => setComposeOuvert(true)}
             style={{background:'#fff',border:'none',color:'#1a3a6e',borderRadius:'99px',width:'48px',height:'48px',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',boxShadow:'0 4px 14px rgba(0,0,0,0.25)'}}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1a3a6e" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>
@@ -153,11 +166,11 @@ export default function Groupes() {
           const avatarUrl = it.type === 'dm' ? it.profil?.avatar_url : null
           const apercu = it.dernierMessage ? it.dernierMessage : (it.type === 'dm' ? 'Dites bonjour 👋' : (it.description || 'Nouveau groupe'))
           return (
-            <a key={it.id} href={'/groupes/'+it.id} style={{textDecoration:'none',display:'block'}}>
+            <Link key={it.id} href={'/groupes/'+it.id} transitionTypes={['nav-forward']} style={{textDecoration:'none',display:'block'}}>
               <div className="active:bg-gray-50" style={{display:'flex',alignItems:'center',gap:'14px',padding:'12px 18px',cursor:'pointer',transition:'background 0.1s'}}>
                 <div style={{position:'relative',flexShrink:0}}>
                   {avatarUrl ? (
-                    <img src={avatarUrl} alt={nom} style={{width:'56px',height:'56px',borderRadius:'50%',objectFit:'cover'}}/>
+                    <Image unoptimized width={56} height={56} src={avatarUrl} alt={nom} style={{width:'56px',height:'56px',borderRadius:'50%',objectFit:'cover'}} />
                   ) : it.type === 'dm' ? (
                     <div style={{width:'56px',height:'56px',borderRadius:'50%',background:'linear-gradient(135deg,#2B7FFF,#8B5CF6)',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:'19px',fontWeight:'600'}}>
                       {nom[0]?.toUpperCase()}
@@ -179,15 +192,15 @@ export default function Groupes() {
                 </div>
                 <div style={{fontSize:'12px',color:'#bbb',flexShrink:0}}>{formaterHeure(it.dernierTemps)}</div>
               </div>
-            </a>
+            </Link>
           )
         })}
 
         {items.length === 0 && (
           <div style={{textAlign:'center',padding:'60px 20px'}}>
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ddd" strokeWidth="1.5" style={{margin:'0 auto 12px',display:'block'}}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-            <div style={{fontSize:'14px',color:'#aaa'}}>Aucune discussion pour l'instant</div>
-            <div style={{fontSize:'12px',color:'#ccc',marginTop:'4px'}}>Touche le + en haut pour écrire à quelqu'un</div>
+            <div style={{fontSize:'14px',color:'#aaa'}}>Aucune discussion pour l’instant</div>
+            <div style={{fontSize:'12px',color:'#ccc',marginTop:'4px'}}>Touche le + en haut pour écrire à quelqu’un</div>
           </div>
         )}
       </div>
@@ -208,16 +221,16 @@ export default function Groupes() {
                   <button onClick={() => retirerSelection(p.id)} style={{background:'rgba(255,255,255,0.25)',border:'none',color:'#fff',cursor:'pointer',fontSize:'13px',lineHeight:1,padding:0,width:'18px',height:'18px',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center'}}>×</button>
                 </span>
               ))}
-              <input value={recherche} onChange={e => setRecherche(e.target.value)} placeholder={selectionnes.length ? "Ajouter..." : "À :"}
+              <input aria-label="selectionnes.length ?" value={recherche} onChange={e => setRecherche(e.target.value)} placeholder={selectionnes.length ? "Ajouter…" : "À :"}
                 style={{flex:1,minWidth:'100px',border:'none',outline:'none',fontSize:'16px',padding:'6px 0'}}/>
             </div>
           </div>
 
           <div style={{flex:1,overflowY:'auto'}}>
             {resultats.map(p => (
-              <div key={p.id} onClick={() => ajouterSelection(p)} style={{display:'flex',alignItems:'center',gap:'12px',padding:'12px 18px',cursor:'pointer',borderBottom:'0.5px solid #F5F8FC'}}>
+              <div key={p.id} role="button" tabIndex={0} onClick={() => ajouterSelection(p)} onKeyDown={onActivate(() => ajouterSelection(p))} style={{display:'flex',alignItems:'center',gap:'12px',padding:'12px 18px',cursor:'pointer',borderBottom:'0.5px solid #F5F8FC'}}>
                 {p.avatar_url ? (
-                  <img src={p.avatar_url} alt={p.nom} style={{width:'44px',height:'44px',borderRadius:'50%',objectFit:'cover'}}/>
+                  <Image unoptimized width={44} height={44} src={p.avatar_url} alt={p.nom} style={{width:'44px',height:'44px',borderRadius:'50%',objectFit:'cover'}} />
                 ) : (
                   <div style={{width:'44px',height:'44px',borderRadius:'50%',background:'linear-gradient(135deg,#2B7FFF,#8B5CF6)',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:'15px',fontWeight:'600'}}>
                     {(p.nom || "M")[0]?.toUpperCase()}
@@ -233,7 +246,7 @@ export default function Groupes() {
 
           {selectionnes.length > 1 && (
             <div style={{padding:'12px 18px',borderTop:'0.5px solid #E8F1FF'}}>
-              <input value={nomGroupe} onChange={e => setNomGroupe(e.target.value)} placeholder="Nom du groupe"
+              <input aria-label="Nom du groupe" value={nomGroupe} onChange={e => setNomGroupe(e.target.value)} placeholder="Nom du groupe"
                 style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 12px',fontSize:'14px',boxSizing:'border-box'}}/>
             </div>
           )}
@@ -251,7 +264,7 @@ export default function Groupes() {
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                   )
                 )}
-                {enCreation ? 'Création...' : selectionnes.length === 1 ? 'Discuter avec ' + (selectionnes[0].nom || 'ce membre') : 'Créer le groupe'}
+                {enCreation ? 'Création…' : selectionnes.length === 1 ? 'Discuter avec ' + (selectionnes[0].nom || 'ce membre') : 'Créer le groupe'}
               </button>
             </div>
           )}

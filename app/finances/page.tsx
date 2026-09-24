@@ -1,4 +1,8 @@
 "use client"
+import { Depense, Revenu, User } from "@/lib/types"
+import { SkeletonPage } from "@/app/components/ui/Skeleton"
+import { useEscape } from "@/lib/a11y"
+import Link from "next/link"
 import DeviseSelector from "../components/DeviseSelector"
 import Tutorial from "../components/Tutorial"
 import PlacementsSection from "../components/PlacementsSection"
@@ -33,15 +37,16 @@ function IconeCategorie({ cat, size = 15 }: { cat: string; size?: number }) {
 }
 
 function FinancesContent() {
-  const [depenses, setDepenses] = useState<any[]>([])
-  const [revenus, setRevenus] = useState<any[]>([])
-  const [user, setUser] = useState<any>(null)
+  const [depenses, setDepenses] = useState<Depense[]>([])
+  const [revenus, setRevenus] = useState<Revenu[]>([])
+  const [user, setUser] = useState<User | null>(null)
   const [devise, setDevise] = useState("CHF")
-  const [tauxChange, setTauxChange] = useState<any>(null)
+  const [tauxChange, setTauxChange] = useState<Record<string, number> | null>(null)
   const [showDevise, setShowDevise] = useState(false)
   const searchParams = useSearchParams()
   const [onglet, setOnglet] = useState("vue")
   const [showForm, setShowForm] = useState(false)
+  useEscape(!!showForm, () => fermerForm())
   const [typeForm, setTypeForm] = useState<"depense"|"revenu">("depense")
   const [titre, setTitre] = useState("")
   const [montant, setMontant] = useState("")
@@ -49,7 +54,7 @@ function FinancesContent() {
   const [date, setDate] = useState(new Date().toISOString().split("T")[0])
   const [recurrent, setRecurrent] = useState(false)
   const [jourDuMois, setJourDuMois] = useState("")
-  const [moisSelectionne, setMoisSelectionne] = useState<any>(null)
+  const [moisSelectionne, setMoisSelectionne] = useState<{ mois: number; annee: number; label: string; depenses: number; revenus: number } | null>(null)
   const chartRef = useRef<HTMLDivElement>(null)
   const [chartW, setChartW] = useState(300)
   const [moisOuverts, setMoisOuverts] = useState<Set<string>>(() => {
@@ -68,10 +73,13 @@ function FinancesContent() {
   const [dureeObjectif, setDureeObjectif] = useState(12)
   const [annees, setAnnees] = useState(1)
   const [moisExtra, setMoisExtra] = useState(0)
-  const [duree, setDuree] = useState("12")
-  const [showEpargne, setShowEpargne] = useState(false)
 
-  useEffect(() => {
+  // Lien entrant (ex. depuis le scanner : ?action=depense&montant=42) : ouvre le bon formulaire.
+  // Ajusté pendant le rendu quand l’URL change, plutôt que dans un effet (pas de rendu en cascade).
+  const paramsUrl = searchParams.toString()
+  const [paramsTraites, setParamsTraites] = useState<string | null>(null)
+  if (paramsUrl !== paramsTraites) {
+    setParamsTraites(paramsUrl)
     const action = searchParams.get('action')
     const montant_url = searchParams.get('montant')
     const titre_url = searchParams.get('titre')
@@ -90,7 +98,7 @@ function FinancesContent() {
     } else if (action === 'fiscalite') {
       setOnglet('fiscalite')
     }
-  }, [searchParams])
+  }
 
   useEffect(() => {
     async function charger() {
@@ -146,8 +154,8 @@ function FinancesContent() {
     const totalRev = conv(moisActuelData.revenus).toFixed(0)
     const totalDep = conv(moisActuelData.depenses).toFixed(0)
     const solde = conv(moisActuelData.revenus - moisActuelData.depenses).toFixed(0)
-    const revList = revenusMoisAff.map(r => `<tr><td style="padding:8px;border-bottom:1px solid #E8F1FF">${r.titre}</td><td style="padding:8px;border-bottom:1px solid #E8F1FF;color:#10B981;text-align:right">+${conv(parseFloat(r.montant)).toFixed(0)} ${devise}</td></tr>`).join('')
-    const depList = depensesMoisAff.map(d => `<tr><td style="padding:8px;border-bottom:1px solid #E8F1FF">${d.titre}</td><td style="padding:8px;border-bottom:1px solid #E8F1FF;color:#F43F5E;text-align:right">-${conv(parseFloat(d.montant)).toFixed(0)} ${devise}</td></tr>`).join('')
+    const revList = revenusMoisAff.map(r => `<tr><td style="padding:8px;border-bottom:1px solid #E8F1FF">${r.titre}</td><td style="padding:8px;border-bottom:1px solid #E8F1FF;color:#10B981;text-align:right">+${conv(Number(r.montant)).toFixed(0)} ${devise}</td></tr>`).join('')
+    const depList = depensesMoisAff.map(d => `<tr><td style="padding:8px;border-bottom:1px solid #E8F1FF">${d.titre}</td><td style="padding:8px;border-bottom:1px solid #E8F1FF;color:#F43F5E;text-align:right">-${conv(Number(d.montant)).toFixed(0)} ${devise}</td></tr>`).join('')
 
     const html = `<!DOCTYPE html>
 <html>
@@ -209,11 +217,11 @@ function FinancesContent() {
   const moisActuel = today.getMonth()
   const anneeActuelle = today.getFullYear()
 
-  const filtrerMois = (items: any[], mois: number, annee: number) =>
+  const filtrerMois = <T extends { date: string }>(items: T[], mois: number, annee: number) =>
     items.filter(d => { const dt = new Date(d.date); return dt.getMonth() === mois && dt.getFullYear() === annee })
 
-  const totalMois = (items: any[], mois: number, annee: number) =>
-    filtrerMois(items, mois, annee).reduce((s, d) => s + parseFloat(d.montant), 0)
+  const totalMois = (items: (Depense | Revenu)[], mois: number, annee: number) =>
+    filtrerMois(items, mois, annee).reduce((s, d) => s + Number(d.montant), 0)
 
   const donneesGraphique = Array.from({length: 6}, (_, i) => {
     const m = (moisActuel - 5 + i + 12) % 12
@@ -223,12 +231,10 @@ function FinancesContent() {
 
   const moisActuelData = donneesGraphique[5]
   const solde = moisActuelData.revenus - moisActuelData.depenses
-  const maxVal = Math.max(...donneesGraphique.map(d => Math.max(d.depenses, d.revenus)), 1)
   const pctDepenses = moisActuelData.revenus > 0 ? Math.min((moisActuelData.depenses / moisActuelData.revenus) * 100, 100) : 0
   const pctEpargne = moisActuelData.revenus > 0 ? Math.max(0, Math.min(100 - pctDepenses, 100)) : 0
   const statutSolde = solde > 0 ? "benefice" : solde < 0 ? "deficit" : "equilibre"
   const couleurSolde = statutSolde === "benefice" ? "#10B981" : statutSolde === "deficit" ? "#F43F5E" : "#D4A843"
-  const iconeSolde = ""
   const texteSolde = statutSolde === "benefice" ? "Bénéfice" : statutSolde === "deficit" ? "Déficit" : "Équilibre"
 
   const moisMaxDep = donneesGraphique.reduce((a, b) => a.depenses > b.depenses ? a : b)
@@ -236,14 +242,14 @@ function FinancesContent() {
 
   const depensesMoisAff = moisSelectionne ? filtrerMois(depenses, moisSelectionne.mois, moisSelectionne.annee) : filtrerMois(depenses, moisActuel, anneeActuelle)
   const revenusMoisAff = moisSelectionne ? filtrerMois(revenus, moisSelectionne.mois, moisSelectionne.annee) : filtrerMois(revenus, moisActuel, anneeActuelle)
-  const totalDep = depensesMoisAff.reduce((s, d) => s + parseFloat(d.montant), 0)
+  const totalDep = depensesMoisAff.reduce((s, d) => s + Number(d.montant), 0)
 
   const depensesParCat = CAT_DEPENSES.map(cat => ({
     cat, total: filtrerMois(depenses, moisSelectionne?.mois ?? moisActuel, moisSelectionne?.annee ?? anneeActuelle)
-      .filter(d => d.categorie === cat).reduce((s, d) => s + parseFloat(d.montant), 0)
+      .filter(d => d.categorie === cat).reduce((s, d) => s + Number(d.montant), 0)
   })).filter(c => c.total > 0).sort((a, b) => b.total - a.total)
 
-  const ItemDepense = ({ d, type }: { d: any, type: "depense"|"revenu" }) => (
+  const ItemDepense = ({ d, type }: { d: Depense | Revenu, type: "depense"|"revenu" }) => (
     <div style={{background: type === "revenu" ? '#F0FFF8' : '#fff', border:`0.5px solid ${type === "revenu" ? '#A7F3D0' : '#E8F1FF'}`,borderRadius:'14px',padding:'12px 14px',marginBottom:'8px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
       <div style={{display:'flex',alignItems:'center',gap:'10px',flex:1,minWidth:0}}>
         <div style={{width:'36px',height:'36px',background: type === "revenu" ? '#E1F5EE' : '#EEF5FF',color: type === "revenu" ? '#10B981' : '#2B7FFF',borderRadius:'10px',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
@@ -256,11 +262,9 @@ function FinancesContent() {
       </div>
       <div style={{display:'flex',alignItems:'center',gap:'6px',flexShrink:0}}>
         <div style={{fontSize:'14px',fontWeight:'500',color: type === "revenu" ? '#10B981' : '#F43F5E'}}>
-          {type === "revenu" ? '+' : '-'}{conv(parseFloat(d.montant)).toFixed(0)} {devise}
+          {type === "revenu" ? '+' : '-'}{conv(Number(d.montant)).toFixed(0)} {devise}
         </div>
-        <a href={`/modifier-depense/${d.id}?type=${type}`}>
-          <button style={{background:'#F0F8FF',border:'none',borderRadius:'8px',width:'28px',height:'28px',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',fontSize:'12px'}}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-        </a>
+        <Link href={`/modifier-depense/${d.id}?type=${type}`} style={{textDecoration:'none',background:'#F0F8FF',border:'none',borderRadius:'8px',width:'28px',height:'28px',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',fontSize:'12px'}}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></Link>
         <button onClick={() => supprimer(d.id, type)} style={{background:'none',border:'none',color:'#ddd',cursor:'pointer',fontSize:'16px'}}>×</button>
       </div>
     </div>
@@ -271,7 +275,7 @@ function FinancesContent() {
       {showDevise && <DeviseSelector onClose={() => setShowDevise(false)} />}<Tutorial page="finances" />
       <div style={{background:'linear-gradient(160deg,#0A1628,#1a3a6e)',padding:'20px 18px 28px'}}>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'8px'}}>
-          <a href="/" style={{fontSize:'12px',color:'rgba(255,255,255,0.5)',textDecoration:'none'}}>← Accueil</a>
+          <Link href="/" transitionTypes={['nav-back']} style={{fontSize:'12px',color:'rgba(255,255,255,0.5)',textDecoration:'none'}}>← Accueil</Link>
           <button onClick={() => setShowDevise(true)}
             style={{background:'rgba(255,255,255,0.15)',border:'0.5px solid rgba(255,255,255,0.3)',borderRadius:'99px',padding:'5px 12px',color:'#fff',fontSize:'12px',cursor:'pointer'}}>
             {devise}
@@ -293,7 +297,7 @@ function FinancesContent() {
             </div>
             <div style={{flex:1,minWidth:0}}>
               <div style={{fontSize:'13px',fontWeight:'500',color:couleurSolde,marginBottom:'2px'}}>{texteSolde}</div>
-              <div style={{fontSize:'28px',fontWeight:'600',color:'#fff',marginBottom:'6px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+              <div className="nx-display" style={{fontSize:'32px',fontWeight:'600',color:'#fff',marginBottom:'6px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',letterSpacing:'-0.03em'}}>
                 {solde >= 0 ? '+' : ''}{conv(solde).toFixed(0)} {devise}
               </div>
               <div style={{fontSize:'11px',color: pctEpargne < 10 ? '#F43F5E' : pctEpargne < 30 ? '#D4A843' : '#10B981',fontWeight:'500',background: pctEpargne < 10 ? 'rgba(244,63,94,0.15)' : pctEpargne < 30 ? 'rgba(212,168,67,0.15)' : 'rgba(16,185,129,0.15)',display:'inline-block',padding:'3px 9px',borderRadius:'99px'}}>
@@ -542,8 +546,8 @@ function FinancesContent() {
             {moisSelectionne ? `${moisSelectionne.label} ${moisSelectionne.annee}` : 'Ce mois'}
           </div>
 
-          {revenusMoisAff.map((r: any) => <ItemDepense key={r.id} d={r} type="revenu" />)}
-          {depensesMoisAff.map((d: any) => <ItemDepense key={d.id} d={d} type="depense" />)}
+          {revenusMoisAff.map(r => <ItemDepense key={r.id} d={r} type="revenu" />)}
+          {depensesMoisAff.map(d => <ItemDepense key={d.id} d={d} type="depense" />)}
 
           {depensesMoisAff.length === 0 && revenusMoisAff.length === 0 && (
             <div style={{textAlign:'center',padding:'32px 0',color:'#aaa'}}>
@@ -571,14 +575,14 @@ function FinancesContent() {
           )}
           {(() => {
             const cleMois = (dStr: string) => { const d = new Date(dStr); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}` }
-            const groupes = new Map<string, any[]>()
+            const groupes = new Map<string, Revenu[]>()
             revenus.forEach(r => { const cle = cleMois(r.date); if (!groupes.has(cle)) groupes.set(cle, []); groupes.get(cle)!.push(r) })
             const clesTriees = Array.from(groupes.keys()).sort().reverse()
             return clesTriees.map(cle => {
               const items = groupes.get(cle)!
               const [an, m] = cle.split('-')
               const label = new Date(parseInt(an), parseInt(m)-1, 1).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })
-              const total = items.reduce((s, r) => s + parseFloat(r.montant), 0)
+              const total = items.reduce((s, r) => s + Number(r.montant), 0)
               const ouvert = moisOuverts.has(cle)
               return (
                 <div key={cle} style={{marginBottom:'10px'}}>
@@ -590,7 +594,7 @@ function FinancesContent() {
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2" style={{transform: ouvert ? 'rotate(180deg)' : 'none',transition:'transform 0.2s'}}><polyline points="6 9 12 15 18 9"/></svg>
                     </span>
                   </button>
-                  {ouvert && <div style={{marginTop:'8px'}}>{items.map((r: any) => <ItemDepense key={r.id} d={r} type="revenu" />)}</div>}
+                  {ouvert && <div style={{marginTop:'8px'}}>{items.map(r => <ItemDepense key={r.id} d={r} type="revenu" />)}</div>}
                 </div>
               )
             })
@@ -604,26 +608,26 @@ function FinancesContent() {
           {depenses.filter(d => d.recurrent).length === 0 && revenus.filter(r => r.recurrent).length === 0 && (
             <div style={{textAlign:'center',padding:'32px 0',color:'#aaa'}}>
               <svg width='32' height='32' viewBox='0 0 24 24' fill='none' stroke='#aaa' strokeWidth='1.5' style={{marginBottom:'8px'}}><polyline points='23 4 23 10 17 10'/><polyline points='1 20 1 14 7 14'/><path d='M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15'/></svg>
-              <div style={{fontSize:'13px'}}>Coche "Récurrent" en ajoutant une dépense</div>
+              <div style={{fontSize:'13px'}}>Coche “Récurrent” en ajoutant une dépense</div>
             </div>
           )}
-          {revenus.filter(r => r.recurrent).map((r: any) => <ItemDepense key={r.id} d={r} type="revenu" />)}
-          {depenses.filter(d => d.recurrent).map((d: any) => <ItemDepense key={d.id} d={d} type="depense" />)}
+          {revenus.filter(r => r.recurrent).map(r => <ItemDepense key={r.id} d={r} type="revenu" />)}
+          {depenses.filter(d => d.recurrent).map(d => <ItemDepense key={d.id} d={d} type="depense" />)}
           {(depenses.filter(d => d.recurrent).length > 0 || revenus.filter(r => r.recurrent).length > 0) && (
             <div style={{background:'#EEF5FF',borderRadius:'14px',padding:'14px',marginTop:'8px'}}>
               <div style={{display:'flex',justifyContent:'space-between',marginBottom:'6px'}}>
                 <span style={{fontSize:'13px',color:'#10B981',fontWeight:'500'}}>Revenus fixes</span>
-                <span style={{fontSize:'14px',fontWeight:'500',color:'#10B981'}}>+{conv(revenus.filter(r=>r.recurrent).reduce((s,r)=>s+parseFloat(r.montant),0)).toFixed(0)} {devise}</span>
+                <span style={{fontSize:'14px',fontWeight:'500',color:'#10B981'}}>+{conv(revenus.filter(r=>r.recurrent).reduce((s,r)=>s+Number(r.montant),0)).toFixed(0)} {devise}</span>
               </div>
               <div style={{display:'flex',justifyContent:'space-between',marginBottom:'6px'}}>
                 <span style={{fontSize:'13px',color:'#F43F5E',fontWeight:'500'}}>Charges fixes</span>
-                <span style={{fontSize:'14px',fontWeight:'500',color:'#F43F5E'}}>-{conv(depenses.filter(d=>d.recurrent).reduce((s,d)=>s+parseFloat(d.montant),0)).toFixed(0)} {devise}</span>
+                <span style={{fontSize:'14px',fontWeight:'500',color:'#F43F5E'}}>-{conv(depenses.filter(d=>d.recurrent).reduce((s,d)=>s+Number(d.montant),0)).toFixed(0)} {devise}</span>
               </div>
               <div style={{height:'0.5px',background:'#DCE9FF',margin:'8px 0'}}></div>
               <div style={{display:'flex',justifyContent:'space-between'}}>
                 <span style={{fontSize:'13px',fontWeight:'500',color:'#2B7FFF'}}>Reste après charges</span>
-                <span style={{fontSize:'15px',fontWeight:'500',color:(revenus.filter(r=>r.recurrent).reduce((s,r)=>s+parseFloat(r.montant),0)-depenses.filter(d=>d.recurrent).reduce((s,d)=>s+parseFloat(d.montant),0))>=0?'#10B981':'#F43F5E'}}>
-                  {conv(revenus.filter(r=>r.recurrent).reduce((s,r)=>s+parseFloat(r.montant),0)-depenses.filter(d=>d.recurrent).reduce((s,d)=>s+parseFloat(d.montant),0)).toFixed(0)} {devise}
+                <span style={{fontSize:'15px',fontWeight:'500',color:(revenus.filter(r=>r.recurrent).reduce((s,r)=>s+Number(r.montant),0)-depenses.filter(d=>d.recurrent).reduce((s,d)=>s+Number(d.montant),0))>=0?'#10B981':'#F43F5E'}}>
+                  {conv(revenus.filter(r=>r.recurrent).reduce((s,r)=>s+Number(r.montant),0)-depenses.filter(d=>d.recurrent).reduce((s,d)=>s+Number(d.montant),0)).toFixed(0)} {devise}
                 </span>
               </div>
             </div>
@@ -643,23 +647,23 @@ function FinancesContent() {
 
           {/* Plan épargne */}
           <div style={{background:'linear-gradient(135deg,#1a3a6e,#2B7FFF)',borderRadius:'18px',padding:'16px',marginBottom:'14px'}}>
-            <div style={{fontSize:'15px',fontWeight:'500',color:'#fff',marginBottom:'4px'}}>Plan d'épargne</div>
+            <div style={{fontSize:'15px',fontWeight:'500',color:'#fff',marginBottom:'4px'}}>Plan d’épargne</div>
             <div style={{fontSize:'12px',color:'rgba(255,255,255,0.6)'}}>Entre ton objectif et vois combien épargner par mois</div>
           </div>
 
           <div style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'16px',padding:'14px',marginBottom:'14px'}}>
             <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',marginBottom:'10px'}}>Mon objectif</div>
-            <input value={objectif} onChange={e => setObjectif(e.target.value)} placeholder="Ex: Voyage au Japon, Voiture..."
+            <input aria-label="Voyage au Japon, Voiture" value={objectif} onChange={e => setObjectif(e.target.value)} placeholder="Ex: Voyage au Japon, Voiture…"
               style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'8px 12px',fontSize:'16px',color:'#1a1a2e',background:'#F8FBFF',marginBottom:'8px'}}/>
             <div style={{fontSize:'11px',color:'#aaa',marginBottom:'4px'}}>Montant cible (CHF)</div>
-            <input value={montantEpargne} onChange={e => setMontantEpargne(e.target.value)} placeholder="Ex: 5000" type="number"
+            <input aria-label="5000" value={montantEpargne} onChange={e => setMontantEpargne(e.target.value)} placeholder="Ex: 5000" type="number"
               style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'8px 12px',fontSize:'16px',color:'#1a1a2e',background:'#F8FBFF'}}/>
           </div>
 
           {montantEpargne && parseFloat(montantEpargne) > 0 && (() => {
             const cible = parseFloat(montantEpargne)
             const parMois = cible / dureeObjectif
-            const resteApresCharges = revenus.filter(r=>r.recurrent).reduce((sum,r)=>sum+parseFloat(r.montant),0) - depenses.filter(d=>d.recurrent).reduce((sum,d)=>sum+parseFloat(d.montant),0)
+            const resteApresCharges = revenus.filter(r=>r.recurrent).reduce((sum,r)=>sum+Number(r.montant),0) - depenses.filter(d=>d.recurrent).reduce((sum,d)=>sum+Number(d.montant),0)
             const faisable = parMois <= resteApresCharges
             const label = dureeObjectif < 12 ? dureeObjectif+' mois' : dureeObjectif === 12 ? '1 an' : Math.floor(dureeObjectif/12)+'ans '+(dureeObjectif%12 > 0 ? (dureeObjectif%12)+'mois' : '')
             return (
@@ -759,19 +763,19 @@ function FinancesContent() {
       )}
 
       {showForm && (
-        <div onClick={fermerForm} style={{position:'fixed',inset:0,background:'rgba(10,22,40,0.45)',zIndex:100,display:'flex',alignItems:'flex-end'}}>
-          <div onClick={e => e.stopPropagation()} style={{width:'100%',maxHeight:'86vh',overflowY:'auto',background:'#fff',borderRadius:'22px 22px 0 0',padding:'10px 18px 24px',boxShadow:'0 -8px 30px rgba(0,0,0,0.15)'}}>
+        <div role="presentation" onClick={fermerForm} style={{position:'fixed',inset:0,background:'rgba(10,22,40,0.45)',zIndex:100,display:'flex',alignItems:'flex-end'}}>
+          <div role="dialog" aria-modal="true" onClick={e => e.stopPropagation()} style={{width:'100%',maxHeight:'86vh',overflowY:'auto',background:'#fff',borderRadius:'22px 22px 0 0',padding:'10px 18px 24px',boxShadow:'0 -8px 30px rgba(0,0,0,0.15)'}}>
             <div style={{width:'36px',height:'4px',background:'#E8F1FF',borderRadius:'99px',margin:'6px auto 14px'}}></div>
             <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'14px'}}>
               <div style={{fontSize:'15px',fontWeight:'600',color:'#1a1a2e'}}>{typeForm === "depense" ? 'Nouvelle dépense' : 'Nouveau revenu'}</div>
               <button onClick={fermerForm} style={{background:'#F5F8FC',border:'none',borderRadius:'50%',width:'28px',height:'28px',fontSize:'15px',color:'#888',cursor:'pointer'}}>×</button>
             </div>
-            <input value={titre} onChange={e => setTitre(e.target.value)} placeholder={typeForm === "depense" ? "Ex: Loyer..." : "Ex: Salaire..."}
+            <input aria-label="typeForm ===" value={titre} onChange={e => setTitre(e.target.value)} placeholder={typeForm === "depense" ? "Ex: Loyer…" : "Ex: Salaire…"}
               style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 12px',fontSize:'14px',color:'#1a1a2e',background:'#F8FBFF',marginBottom:'10px',boxSizing:'border-box'}}/>
             <div style={{display:'flex',gap:'8px',marginBottom:'10px'}}>
-              <input value={montant} onChange={e => setMontant(e.target.value)} placeholder="Montant" type="number"
+              <input aria-label="Montant" value={montant} onChange={e => setMontant(e.target.value)} placeholder="Montant" type="number"
                 style={{flex:1,border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 12px',fontSize:'14px',color:'#1a1a2e',background:'#F8FBFF'}}/>
-              <input value={date} onChange={e => setDate(e.target.value)} type="date"
+              <input aria-label="Date" value={date} onChange={e => setDate(e.target.value)} type="date"
                 style={{flex:1,border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 12px',fontSize:'14px',color:'#1a1a2e',background:'#F8FBFF'}}/>
             </div>
             <div style={{marginBottom:'12px'}}>
@@ -796,7 +800,7 @@ function FinancesContent() {
             {recurrent && typeForm === 'depense' && (
               <div style={{marginBottom:'14px'}}>
                 <div style={{fontSize:'11px',color:'#aaa',marginBottom:'4px'}}>Jour du mois (pour te le rappeler 3 jours avant)</div>
-                <input type="number" min="1" max="31" value={jourDuMois} onChange={e => setJourDuMois(e.target.value)} placeholder="Ex: 1 pour le 1er du mois"
+                <input aria-label="1 pour le 1er du mois" type="number" min="1" max="31" value={jourDuMois} onChange={e => setJourDuMois(e.target.value)} placeholder="Ex: 1 pour le 1er du mois"
                   style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'8px 12px',fontSize:'16px',color:'#1a1a2e',background:'#F8FBFF',boxSizing:'border-box'}}/>
               </div>
             )}
@@ -815,7 +819,7 @@ function FinancesContent() {
 
 export default function Finances() {
   return (
-    <Suspense fallback={<div className="p-8 text-center text-gray-400">Chargement...</div>}>
+    <Suspense fallback={<SkeletonPage />}>
       <FinancesContent />
     </Suspense>
   )

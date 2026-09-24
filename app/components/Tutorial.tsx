@@ -50,7 +50,7 @@ export default function Tutorial({ page }: { page: string }) {
   const step = steps[etape]
   const total = steps.length
 
-  const positions: any = {
+  const positions: Record<string, React.CSSProperties> = {
     'top-right':    { top:'80px', right:'12px' },
     'top-left':     { top:'80px', left:'12px' },
     'bottom-left':  { bottom:'110px', left:'12px' },
@@ -63,7 +63,7 @@ export default function Tutorial({ page }: { page: string }) {
 
   return (
     <>
-      <div onClick={fermer} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.6)',zIndex:1498}}/>
+      <div aria-hidden="true" onClick={fermer} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.6)',zIndex:1498}}/>
       <div style={{
         position:'fixed',
         ...positions[step.position],

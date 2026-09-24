@@ -1,4 +1,7 @@
 "use client"
+import { SkeletonPage } from "@/app/components/ui/Skeleton"
+import { onActivate } from "@/lib/a11y"
+import Link from "next/link"
 import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
@@ -49,7 +52,7 @@ export default function DetailEvenement() {
   async function sauvegarder() {
     let lat: number | null = null, lng: number | null = null
     if (lieu.trim()) {
-      setMessage("Localisation du lieu...")
+      setMessage("Localisation du lieu…")
       const geo = await geocoder(lieu.trim())
       if (geo) { lat = geo.lat; lng = geo.lng }
     }
@@ -60,24 +63,24 @@ export default function DetailEvenement() {
       setMessage("Erreur : " + error.message)
     } else {
       setMessage("Enregistré !")
-      setTimeout(() => { window.location.href = "/semaine" }, 800)
+      setTimeout(() => { window.location.assign("/semaine") }, 800)
     }
   }
 
   async function supprimer() {
     await supabase.from("evenements_calendrier").delete().eq("id", id)
-    window.location.href = "/semaine"
+    window.location.assign("/semaine")
   }
 
   if (loading) {
-    return <main className="min-h-screen bg-white flex items-center justify-center"><p className="text-gray-400 text-sm">Chargement...</p></main>
+    return <SkeletonPage />
   }
 
   if (introuvable) {
     return (
       <main className="min-h-screen bg-white flex flex-col items-center justify-center gap-3">
         <p className="text-gray-400 text-sm">Événement introuvable</p>
-        <a href="/semaine" className="text-blue-500 text-sm font-medium">← Retour au calendrier</a>
+        <Link href="/semaine" transitionTypes={['nav-back']} className="text-blue-500 text-sm font-medium">← Retour au calendrier</Link>
       </main>
     )
   }
@@ -86,7 +89,7 @@ export default function DetailEvenement() {
     <main className="min-h-screen bg-white">
       <div style={{background:'linear-gradient(160deg,#0A1628,#1a3a6e)',padding:'20px 18px 28px'}}>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-          <a href="/semaine" style={{fontSize:'12px',color:'rgba(255,255,255,0.5)'}}>← Retour</a>
+          <Link href="/semaine" transitionTypes={['nav-back']} style={{fontSize:'12px',color:'rgba(255,255,255,0.5)'}}>← Retour</Link>
           <button onClick={supprimer} style={{fontSize:'12px',color:'#F43F5E',background:'rgba(244,63,94,0.15)',border:'none',padding:'5px 12px',borderRadius:'99px',cursor:'pointer'}}>
             Supprimer
           </button>
@@ -108,26 +111,26 @@ export default function DetailEvenement() {
       <div style={{padding:'20px 18px',display:'flex',flexDirection:'column',gap:'14px'}}>
         <div>
           <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Titre</label>
-          <input value={titre} onChange={e => setTitre(e.target.value)}
+          <input aria-label="Titre" value={titre} onChange={e => setTitre(e.target.value)}
             style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 14px',fontSize:'14px',color:'#1a1a2e',background:'#F8FBFF',boxSizing:'border-box'}}/>
         </div>
 
         <div style={{display:'flex',gap:'10px'}}>
           <div style={{flex:1}}>
             <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Date</label>
-            <input value={date} onChange={e => setDate(e.target.value)} type="date"
+            <input aria-label="Date" value={date} onChange={e => setDate(e.target.value)} type="date"
               style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 14px',fontSize:'13px',color:'#1a1a2e',background:'#F8FBFF',boxSizing:'border-box'}}/>
           </div>
           <div style={{flex:1}}>
             <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Heure</label>
-            <input value={heure} onChange={e => setHeure(e.target.value)} type="time"
+            <input aria-label="Heure" value={heure} onChange={e => setHeure(e.target.value)} type="time"
               style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 14px',fontSize:'13px',color:'#1a1a2e',background:'#F8FBFF',boxSizing:'border-box'}}/>
           </div>
         </div>
 
         <div>
           <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Durée (minutes)</label>
-          <input value={duree} onChange={e => setDuree(Number(e.target.value) || 0)} type="number" min="0" step="5"
+          <input aria-label="Durée (minutes)" value={duree} onChange={e => setDuree(Number(e.target.value) || 0)} type="number" min="0" step="5"
             style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 14px',fontSize:'13px',color:'#1a1a2e',background:'#F8FBFF',boxSizing:'border-box'}}/>
         </div>
 
@@ -135,21 +138,21 @@ export default function DetailEvenement() {
           <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'6px'}}>Couleur</label>
           <div style={{display:'flex',gap:'8px'}}>
             {COULEURS_EVT.map(c => (
-              <div key={c} onClick={() => setCouleur(c)} style={{width:'26px',height:'26px',borderRadius:'50%',background:c,cursor:'pointer',border: couleur === c ? '3px solid #1a1a2e' : '3px solid transparent'}}/>
+              <div key={c} role="button" tabIndex={0} onClick={() => setCouleur(c)} onKeyDown={onActivate(() => setCouleur(c))} style={{width:'26px',height:'26px',borderRadius:'50%',background:c,cursor:'pointer',border: couleur === c ? '3px solid #1a1a2e' : '3px solid transparent'}}/>
             ))}
           </div>
         </div>
 
         <div>
           <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Description</label>
-          <textarea value={description} onChange={e => setDescription(e.target.value)} rows={4}
-            placeholder="Ajoute des détails sur cet événement..."
+          <textarea aria-label="Description" value={description} onChange={e => setDescription(e.target.value)} rows={4}
+            placeholder="Ajoute des détails sur cet événement…"
             style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 14px',fontSize:'13px',color:'#1a1a2e',background:'#F8FBFF',boxSizing:'border-box',resize:'vertical',fontFamily:'inherit'}}/>
         </div>
 
         <div>
           <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Lieu / Adresse</label>
-          <input value={lieu} onChange={e => setLieu(e.target.value)}
+          <input aria-label="Lieu / Adresse" value={lieu} onChange={e => setLieu(e.target.value)}
             placeholder="Ex: 12 rue du Rhône, Genève"
             style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 14px',fontSize:'13px',color:'#1a1a2e',background:'#F8FBFF',boxSizing:'border-box'}}/>
 

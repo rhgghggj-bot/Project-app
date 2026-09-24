@@ -1,5 +1,13 @@
 "use client"
-import { useEffect, useState, useRef } from "react"
+import type { RealtimeChannel } from "@supabase/supabase-js"
+import { Annonce, Groupe, Liste, MembreGroupe, MessageGroupe, Profil, Projet, User } from "@/lib/types"
+import Image from "next/image"
+import { useMaintenant } from "@/lib/useMaintenant"
+import { SkeletonChat } from "@/app/components/ui/Skeleton"
+import { toast } from "@/lib/toast"
+import { useEscape } from "@/lib/a11y"
+import Link from "next/link"
+import { useEffect, useState, useRef, useEffectEvent } from "react"
 import { useParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import { authHeaders } from "@/lib/authFetch"
@@ -23,6 +31,7 @@ function GlisserConfirmer({ label, couleur, onConfirm }: { label: string; couleu
   const posRef = useRef(0)
   const rgb = hexVersRgb(couleur)
 
+  const confirmerGlissement = useEffectEvent(() => onConfirm())
   useEffect(() => {
     if (!dragging) return
     function calc(clientX: number) {
@@ -35,8 +44,8 @@ function GlisserConfirmer({ label, couleur, onConfirm }: { label: string; couleu
       posRef.current = pct
       setPos(pct)
     }
-    function onMove(e: any) {
-      const clientX = e.touches ? e.touches[0].clientX : e.clientX
+    function onMove(e: MouseEvent | TouchEvent) {
+      const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
       calc(clientX)
     }
     function onUp() {
@@ -44,7 +53,7 @@ function GlisserConfirmer({ label, couleur, onConfirm }: { label: string; couleu
       if (posRef.current > 78) {
         setPos(100)
         setFait(true)
-        onConfirm()
+        confirmerGlissement()
       } else {
         setPos(0)
         posRef.current = 0
@@ -102,83 +111,85 @@ function GlisserConfirmer({ label, couleur, onConfirm }: { label: string; couleu
 
 export default function GroupePage() {
   const { id } = useParams()
-  const [groupe, setGroupe] = useState<any>(null)
-  const [autreProfilDM, setAutreProfilDM] = useState<any>(null)
-  const [annonceLiee, setAnnonceLiee] = useState<any>(null)
+  const [groupe, setGroupe] = useState<Groupe | null>(null)
+  const [autreProfilDM, setAutreProfilDM] = useState<Profil | null>(null)
+  const [annonceLiee, setAnnonceLiee] = useState<Annonce | null>(null)
   const [montrerAvis, setMontrerAvis] = useState(false)
   const [noteAvis, setNoteAvis] = useState(0)
   const [commentaireAvis, setCommentaireAvis] = useState("")
-  const [messages, setMessages] = useState<any[]>([])
-  const [projets, setProjets] = useState<any[]>([])
-  const [membres, setMembres] = useState<any[]>([])
-  const [profils, setProfils] = useState<any>({})
-  const [user, setUser] = useState<any>(null)
+  const [messages, setMessages] = useState<MessageGroupe[]>([])
+  const [projets, setProjets] = useState<Projet[]>([])
+  const [membres, setMembres] = useState<MembreGroupe[]>([])
+  const [profils, setProfils] = useState<Record<string, Profil>>({})
+  const [user, setUser] = useState<User | null>(null)
   const [contenu, setContenu] = useState("")
   const [onglet, setOnglet] = useState("discussion")
-  const [listes, setListes] = useState<any[]>([])
+  const [listes, setListes] = useState<Liste[]>([])
   const [estMembre, setEstMembre] = useState(false)
   const [paiementEnCours, setPaiementEnCours] = useState(false)
   const [lienInvitation, setLienInvitation] = useState("")
   const [copie, setCopie] = useState(false)
   const [menuOuvert, setMenuOuvert] = useState(false)
-  const [messageActif, setMessageActif] = useState<any>(null)
+  const maintenant = useMaintenant()
+  useEscape(!!menuOuvert, () => setMenuOuvert(false))
+  const [messageActif, setMessageActif] = useState<string | null>(null)
   const [editionId, setEditionId] = useState<string|null>(null)
   const [editionTexte, setEditionTexte] = useState("")
-  const [reactions, setReactions] = useState<Record<string,Record<string,number>>>({})
-  const [pickerMsg, setPickerMsg] = useState<string|null>(null)
-  const messagesEndRef = useRef<any>(null)
-  const channelRef = useRef<any>(null)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const channelRef = useRef<RealtimeChannel | null>(null)
 
   useEffect(() => {
     async function charger() {
-      const { data: { user } } = await supabase.auth.getUser()
+      // Requêtes indépendantes lancées en parallèle (avant : une par une)
+      const [
+        { data: { user } },
+        { data: g },
+        { data: m },
+        { data: mb },
+        { data: p },
+        { data: lst },
+      ] = await Promise.all([
+        supabase.auth.getUser(),
+        supabase.from("groupes").select("*").eq("id", id).single(),
+        supabase.from("messages_groupe").select("*").eq("groupe_id", id).order("created_at", { ascending: true }),
+        supabase.from("membres_groupe").select("*").eq("groupe_id", id),
+        supabase.from("projets").select("*").eq("groupe_id", id).order("created_at", { ascending: false }),
+        supabase.from('listes').select('*').eq('groupe_id', id).order('created_at', { ascending: false }),
+      ])
       setUser(user)
-      const { data: g } = await supabase.from("groupes").select("*").eq("id", id).single()
-      setGroupe(g)
-      if (g?.annonce_id) {
-        const { data: ann } = await supabase.from("marketplace_annonces").select("*").eq("id", g.annonce_id).single()
-        setAnnonceLiee(ann)
-      }
-      if (g?.est_dm && user) {
-        const { data: mbDm } = await supabase.from("membres_groupe").select("user_id").eq("groupe_id", id)
-        const autre = (mbDm || []).find((m: any) => m.user_id !== user.id)
-        if (autre) {
-          const { data: prof } = await supabase.from("profiles").select("id,nom,avatar_url").eq("id", autre.user_id).single()
-          setAutreProfilDM(prof)
-        }
-      }
-      const { data: m } = await supabase.from("messages_groupe").select("*").eq("groupe_id", id).order("created_at", { ascending: true })
       setMessages(m || [])
-      const { data: mb } = await supabase.from("membres_groupe").select("*").eq("groupe_id", id)
       setMembres(mb || [])
-      if (mb && mb.length > 0) {
-        const ids = mb.map((m: any) => m.user_id)
-        const { data: profs } = await supabase.from("profiles").select("id,nom,avatar_url").in("id", ids)
-        const profilsMap: any = {}
-        profs?.forEach((p: any) => { profilsMap[p.id] = p })
-        setProfils(profilsMap)
-      }
-      if (user) {
-        const membre = mb?.find((m: any) => m.user_id === user.id)
-        setEstMembre(!!membre)
-      }
-      const { data: p } = await supabase.from("projets").select("*").eq("groupe_id", id).order("created_at", { ascending: false })
       setProjets(p || [])
-      const { data: lst } = await supabase.from('listes').select('*').eq('groupe_id', id).order('created_at', { ascending: false })
       setListes(lst || [])
+      if (user) setEstMembre(!!(mb as MembreGroupe[] | null)?.find(x => x.user_id === user.id))
+
+      const ids = ((mb || []) as MembreGroupe[]).map(x => x.user_id)
+      const [{ data: profs }, { data: ann }] = await Promise.all([
+        ids.length > 0 ? supabase.from("profiles").select("id,nom,avatar_url").in("id", ids) : Promise.resolve({ data: [] as Profil[] }),
+        g?.annonce_id ? supabase.from("marketplace_annonces").select("*").eq("id", g.annonce_id).single() : Promise.resolve({ data: null }),
+      ])
+      const profilsMap: Record<string, Profil> = {}
+      ;(profs as Profil[] | null)?.forEach(pr => { profilsMap[pr.id] = pr })
+      setProfils(profilsMap)
+      if (ann) setAnnonceLiee(ann)
+      if (g?.est_dm && user) {
+        const autre = ((mb || []) as MembreGroupe[]).find(x => x.user_id !== user.id)
+        if (autre) setAutreProfilDM(profilsMap[autre.user_id] || null)
+      }
+      setGroupe(g)
     }
     charger()
 
     const nomCanal = 'messages-' + id
-    supabase.getChannels().filter((ch: any) => ch.topic?.includes(nomCanal)).forEach((ch: any) => supabase.removeChannel(ch))
+    supabase.getChannels().filter(ch => ch.topic?.includes(nomCanal)).forEach(ch => supabase.removeChannel(ch))
 
     channelRef.current = supabase
       .channel(nomCanal)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages_groupe', filter: 'groupe_id=eq.' + id },
+      .on<MessageGroupe>('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages_groupe', filter: 'groupe_id=eq.' + id },
         (payload) => setMessages(prev => prev.some(m => m.id === payload.new.id) ? prev : [...prev, payload.new]))
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages_groupe', filter: 'groupe_id=eq.' + id },
+      .on<MessageGroupe>('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages_groupe', filter: 'groupe_id=eq.' + id },
         (payload) => setMessages(prev => prev.map(m => m.id === payload.new.id ? payload.new : m)))
-      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'messages_groupe', filter: 'groupe_id=eq.' + id },
+      .on<MessageGroupe>('postgres_changes', { event: 'DELETE', schema: 'public', table: 'messages_groupe', filter: 'groupe_id=eq.' + id },
         (payload) => setMessages(prev => prev.filter(m => m.id !== payload.old.id)))
       .subscribe()
 
@@ -192,11 +203,11 @@ export default function GroupePage() {
   useEffect(() => {
     if (!groupe?.annonce_id) return
     const nomCanalAnnonce = 'annonce-liee-' + groupe.annonce_id
-    supabase.getChannels().filter((ch: any) => ch.topic?.includes(nomCanalAnnonce)).forEach((ch: any) => supabase.removeChannel(ch))
+    supabase.getChannels().filter(ch => ch.topic?.includes(nomCanalAnnonce)).forEach(ch => supabase.removeChannel(ch))
     const canalAnnonce = supabase
       .channel(nomCanalAnnonce)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'marketplace_annonces', filter: 'id=eq.' + groupe.annonce_id },
-        (payload: any) => setAnnonceLiee(payload.new))
+        (payload: { new: Annonce }) => setAnnonceLiee(payload.new))
       .subscribe()
     return () => { supabase.removeChannel(canalAnnonce) }
   }, [groupe?.annonce_id])
@@ -211,8 +222,8 @@ export default function GroupePage() {
     })
     const data = await res.json()
     setPaiementEnCours(false)
-    if (data.url) window.location.href = data.url
-    else alert(data.error || "Erreur lors du paiement")
+    if (data.url) window.location.assign(data.url)
+    else toast(data.error || "Paiement impossible. Réessaie ou utilise une autre carte.", "error")
   }
 
   async function libererPaiement() {
@@ -223,8 +234,8 @@ export default function GroupePage() {
       body: JSON.stringify({ annonceId: annonceLiee.id }),
     })
     const data = await res.json()
-    if (!data.success) { alert(data.error || "Erreur lors de la libération du paiement"); return }
-    setAnnonceLiee((prev: any) => ({ ...prev, statut: "vendu" }))
+    if (!data.success) { toast(data.error || "Le paiement n'a pas pu être libéré. Réessaie dans un instant.", "error"); return }
+    setAnnonceLiee(prev => prev && ({ ...prev, statut: "vendu" }))
     await supabase.from("messages_groupe").insert({ groupe_id: id, user_id: user.id, contenu: `✅ Réception confirmée pour "${annonceLiee.titre}" — paiement transféré au vendeur, reçus ajoutés dans les Finances de chacun.` })
     setMontrerAvis(true)
   }
@@ -261,7 +272,7 @@ export default function GroupePage() {
     if (!error && data) {
       setMessages(prev => prev.some(m => m.id === data.id) ? prev : [...prev, data])
       // Notifier les autres membres
-      const autresMembers = membres.filter((m: any) => m.user_id !== user.id)
+      const autresMembers = membres.filter(m => m.user_id !== user.id)
       const nomExp = profils[user.id]?.nom || user.email?.split('@')[0] || 'Quelquun'
       for (const membre of autresMembers) {
         await supabase.from("notifications").insert({
@@ -290,7 +301,7 @@ export default function GroupePage() {
 
   function estMessageAppel(contenu: string, createdAt: string) {
     if (!contenu.includes('a lance un appel')) return false
-    const minutes = (Date.now() - new Date(createdAt).getTime()) / 60000
+    const minutes = (maintenant - new Date(createdAt).getTime()) / 60000
     return minutes < 30
   }
 
@@ -299,7 +310,7 @@ export default function GroupePage() {
     return true
   })
 
-  if (!groupe) return <div className="p-8 text-center text-gray-400">Chargement...</div>
+  if (!groupe) return <SkeletonChat />
 
   if (!estMembre) {
     return (
@@ -307,38 +318,27 @@ export default function GroupePage() {
         <div className="text-center">
           <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="1.5" style={{marginBottom:"16px"}}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
           <h1 className="text-lg font-medium text-gray-900 mb-2">{groupe.nom}</h1>
-          <p className="text-sm text-gray-400 mb-6">Ce groupe est privé. Tu as besoin d'une invitation pour y accéder.</p>
-          <a href="/groupes" className="text-blue-500 text-sm font-medium">← Retour aux groupes</a>
+          <p className="text-sm text-gray-400 mb-6">Ce groupe est privé. Tu as besoin d’une invitation pour y accéder.</p>
+          <Link href="/groupes" transitionTypes={['nav-back']} className="text-blue-500 text-sm font-medium">← Retour aux groupes</Link>
         </div>
       </main>
     )
   }
 
-  function toggleReaction(msgId: string, emoji: string) {
-    setReactions(prev => {
-      const msgR = prev[msgId] || {}
-      const count = msgR[emoji] || 0
-      return { ...prev, [msgId]: { ...msgR, [emoji]: count + 1 } }
-    })
-    setPickerMsg(null)
-  }
-
   return (
-    <main className="h-screen bg-white flex flex-col overflow-hidden">
+    <main className="bg-white flex flex-col overflow-hidden h-[calc(100dvh-90px-env(safe-area-inset-top))] md:h-[calc(100dvh-52px)]">
       <div className="bg-white border-b border-blue-50 px-5 py-4 flex items-center justify-between">
-        <a href="/groupes" className="text-gray-400 text-sm">← Retour</a>
+        <Link href="/groupes" transitionTypes={['nav-back']} className="text-gray-400 text-sm">← Retour</Link>
         <div className="text-center">
-          <p className="text-base font-medium text-gray-900">{groupe.est_dm ? (autreProfilDM?.nom || "Conversation") : groupe.nom}</p>
+          <h1 className="nx-display text-[17px] font-semibold text-gray-900 m-0">{groupe.est_dm ? (autreProfilDM?.nom || "Conversation") : groupe.nom}</h1>
           <p className="text-xs text-gray-400">{groupe.est_dm ? "Message privé" : `${membres.length} membres`}</p>
         </div>
         {!groupe.est_dm && (
         <div style={{position:'relative'}}>
           <div style={{display:'flex',gap:'10px',alignItems:'center'}}>
-            <a href={'/groupes/' + id + '/appel'}>
-              <button style={{width:'42px',height:'42px',borderRadius:'50%',background:'#E8F5E9',border:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>
+            <Link href={'/groupes/' + id + '/appel'} aria-label="Lancer un appel de groupe" style={{textDecoration:'none',width:'42px',height:'42px',borderRadius:'50%',background:'#E8F5E9',border:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.58 3.47 2 2 0 0 1 3.54 1h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 8.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-              </button>
-            </a>
+              </Link>
             <button onClick={() => setMenuOuvert(!menuOuvert)}
               style={{height:'42px',padding:'0 14px',borderRadius:'12px',background:'#EEF5FF',border:'1.5px solid #2B7FFF',cursor:'pointer',display:'flex',alignItems:'center',gap:'6px'}}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2B7FFF" strokeWidth="2.5"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
@@ -347,10 +347,10 @@ export default function GroupePage() {
           </div>
           {menuOuvert && (
             <>
-              <div onClick={() => setMenuOuvert(false)} style={{position:'fixed',inset:0,zIndex:10}}></div>
+              <div aria-hidden="true" onClick={() => setMenuOuvert(false)} style={{position:'fixed',inset:0,zIndex:10}}></div>
               <div style={{position:'absolute',top:'44px',right:0,background:'#fff',borderRadius:'16px',boxShadow:'0 8px 30px rgba(0,0,0,0.12)',border:'0.5px solid #E8F1FF',overflow:'hidden',zIndex:20,minWidth:'200px'}}>
 
-                <a href={'/groupes/' + id + '/listes'} style={{textDecoration:'none'}}><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 16px',borderBottom:'0.5px solid #F0F4FA'}}><div style={{display:'flex',alignItems:'center',gap:'12px'}}><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='#10B981' strokeWidth='2'><line x1='8' y1='6' x2='21' y2='6'/><line x1='8' y1='12' x2='21' y2='12'/><line x1='8' y1='18' x2='21' y2='18'/><line x1='3' y1='6' x2='3.01' y2='6'/><line x1='3' y1='12' x2='3.01' y2='12'/><line x1='3' y1='18' x2='3.01' y2='18'/></svg><span style={{fontSize:'14px',color:'#1a1a2e'}}>Listes partagees</span></div><svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='#aaa' strokeWidth='2'><polyline points='9 18 15 12 9 6'/></svg></div></a><a href={'/groupes/' + id + '/depenses'} style={{textDecoration:'none'}}><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 16px',borderBottom:'0.5px solid #F0F4FA'}}><div style={{display:'flex',alignItems:'center',gap:'12px'}}><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='#2B7FFF' strokeWidth='2'><line x1='12' y1='1' x2='12' y2='23'/><path d='M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6'/></svg><span style={{fontSize:'14px',color:'#1a1a2e'}}>Dépenses partagées</span></div><svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='#aaa' strokeWidth='2'><polyline points='9 18 15 12 9 6'/></svg></div></a><a href={'/groupes/' + id + '/objectifs'} style={{textDecoration:'none'}}><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 16px',borderBottom:'0.5px solid #F0F4FA'}}><div style={{display:'flex',alignItems:'center',gap:'12px'}}><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='#D4A843' strokeWidth='2'><circle cx='12' cy='12' r='10'/><circle cx='12' cy='12' r='6'/><circle cx='12' cy='12' r='2'/></svg><span style={{fontSize:'14px',color:'#1a1a2e'}}>Objectifs de groupe</span></div><svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='#aaa' strokeWidth='2'><polyline points='9 18 15 12 9 6'/></svg></div></a><a href={'/groupes/' + id + '/sondages'} style={{textDecoration:'none'}}><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 16px',borderBottom:'0.5px solid #F0F4FA'}}><div style={{display:'flex',alignItems:'center',gap:'12px'}}><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='#F97316' strokeWidth='2'><path d='M18 20V10'/><path d='M12 20V4'/><path d='M6 20v-6'/></svg><span style={{fontSize:'14px',color:'#1a1a2e'}}>Sondages</span></div><svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='#aaa' strokeWidth='2'><polyline points='9 18 15 12 9 6'/></svg></div></a><a href={'/groupes/' + id + '/activites'} style={{textDecoration:'none'}}><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 16px',borderBottom:'0.5px solid #F0F4FA'}}><div style={{display:'flex',alignItems:'center',gap:'12px'}}><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='#8B5CF6' strokeWidth='2'><rect x='3' y='4' width='18' height='18' rx='2' ry='2'/><line x1='16' y1='2' x2='16' y2='6'/><line x1='8' y1='2' x2='8' y2='6'/><line x1='3' y1='10' x2='21' y2='10'/></svg><span style={{fontSize:'14px',color:'#1a1a2e'}}>Activites</span></div><svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='#aaa' strokeWidth='2'><polyline points='9 18 15 12 9 6'/></svg></div></a><a href={'/groupes/' + id + '/journal'} style={{textDecoration:'none'}}><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 16px',borderBottom:'0.5px solid #F0F4FA'}}><div style={{display:'flex',alignItems:'center',gap:'12px'}}><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='#0A1628' strokeWidth='2'><path d='M4 19.5A2.5 2.5 0 0 1 6.5 17H20'/><path d='M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z'/></svg><span style={{fontSize:'14px',color:'#1a1a2e'}}>Journal du groupe</span></div><svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='#aaa' strokeWidth='2'><polyline points='9 18 15 12 9 6'/></svg></div></a><a href={'/groupes/' + id + '/colocation'} style={{textDecoration:'none'}}><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 16px',borderBottom:'0.5px solid #F0F4FA'}}><div style={{display:'flex',alignItems:'center',gap:'12px'}}><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='#2B7FFF' strokeWidth='2'><path d='M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z'/></svg><span style={{fontSize:'14px',color:'#1a1a2e'}}>Mode colocation</span></div><svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='#aaa' strokeWidth='2'><polyline points='9 18 15 12 9 6'/></svg></div></a><a href={'/groupes/' + id + '/disponibilites'} style={{textDecoration:'none'}}><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 16px',borderBottom:'0.5px solid #F0F4FA'}}><div style={{display:'flex',alignItems:'center',gap:'12px'}}><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='#10B981' strokeWidth='2'><rect x='3' y='4' width='18' height='18' rx='2' ry='2'/><line x1='16' y1='2' x2='16' y2='6'/><line x1='8' y1='2' x2='8' y2='6'/><line x1='3' y1='10' x2='21' y2='10'/><path d='M9 16l2 2 4-4'/></svg><span style={{fontSize:'14px',color:'#1a1a2e'}}>Disponibilités</span></div><svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='#aaa' strokeWidth='2'><polyline points='9 18 15 12 9 6'/></svg></div></a><div onClick={genererInvitation} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 16px',cursor:'pointer'}}>
+                <Link href={'/groupes/' + id + '/listes'} transitionTypes={['nav-forward']} style={{textDecoration:'none'}}><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 16px',borderBottom:'0.5px solid #F0F4FA'}}><div style={{display:'flex',alignItems:'center',gap:'12px'}}><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='#10B981' strokeWidth='2'><line x1='8' y1='6' x2='21' y2='6'/><line x1='8' y1='12' x2='21' y2='12'/><line x1='8' y1='18' x2='21' y2='18'/><line x1='3' y1='6' x2='3.01' y2='6'/><line x1='3' y1='12' x2='3.01' y2='12'/><line x1='3' y1='18' x2='3.01' y2='18'/></svg><span style={{fontSize:'14px',color:'#1a1a2e'}}>Listes partagees</span></div><svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='#aaa' strokeWidth='2'><polyline points='9 18 15 12 9 6'/></svg></div></Link><Link href={'/groupes/' + id + '/depenses'} transitionTypes={['nav-forward']} style={{textDecoration:'none'}}><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 16px',borderBottom:'0.5px solid #F0F4FA'}}><div style={{display:'flex',alignItems:'center',gap:'12px'}}><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='#2B7FFF' strokeWidth='2'><line x1='12' y1='1' x2='12' y2='23'/><path d='M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6'/></svg><span style={{fontSize:'14px',color:'#1a1a2e'}}>Dépenses partagées</span></div><svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='#aaa' strokeWidth='2'><polyline points='9 18 15 12 9 6'/></svg></div></Link><Link href={'/groupes/' + id + '/objectifs'} transitionTypes={['nav-forward']} style={{textDecoration:'none'}}><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 16px',borderBottom:'0.5px solid #F0F4FA'}}><div style={{display:'flex',alignItems:'center',gap:'12px'}}><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='#D4A843' strokeWidth='2'><circle cx='12' cy='12' r='10'/><circle cx='12' cy='12' r='6'/><circle cx='12' cy='12' r='2'/></svg><span style={{fontSize:'14px',color:'#1a1a2e'}}>Objectifs de groupe</span></div><svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='#aaa' strokeWidth='2'><polyline points='9 18 15 12 9 6'/></svg></div></Link><Link href={'/groupes/' + id + '/sondages'} transitionTypes={['nav-forward']} style={{textDecoration:'none'}}><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 16px',borderBottom:'0.5px solid #F0F4FA'}}><div style={{display:'flex',alignItems:'center',gap:'12px'}}><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='#F97316' strokeWidth='2'><path d='M18 20V10'/><path d='M12 20V4'/><path d='M6 20v-6'/></svg><span style={{fontSize:'14px',color:'#1a1a2e'}}>Sondages</span></div><svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='#aaa' strokeWidth='2'><polyline points='9 18 15 12 9 6'/></svg></div></Link><Link href={'/groupes/' + id + '/activites'} transitionTypes={['nav-forward']} style={{textDecoration:'none'}}><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 16px',borderBottom:'0.5px solid #F0F4FA'}}><div style={{display:'flex',alignItems:'center',gap:'12px'}}><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='#8B5CF6' strokeWidth='2'><rect x='3' y='4' width='18' height='18' rx='2' ry='2'/><line x1='16' y1='2' x2='16' y2='6'/><line x1='8' y1='2' x2='8' y2='6'/><line x1='3' y1='10' x2='21' y2='10'/></svg><span style={{fontSize:'14px',color:'#1a1a2e'}}>Activites</span></div><svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='#aaa' strokeWidth='2'><polyline points='9 18 15 12 9 6'/></svg></div></Link><Link href={'/groupes/' + id + '/journal'} transitionTypes={['nav-forward']} style={{textDecoration:'none'}}><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 16px',borderBottom:'0.5px solid #F0F4FA'}}><div style={{display:'flex',alignItems:'center',gap:'12px'}}><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='#0A1628' strokeWidth='2'><path d='M4 19.5A2.5 2.5 0 0 1 6.5 17H20'/><path d='M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z'/></svg><span style={{fontSize:'14px',color:'#1a1a2e'}}>Journal du groupe</span></div><svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='#aaa' strokeWidth='2'><polyline points='9 18 15 12 9 6'/></svg></div></Link><Link href={'/groupes/' + id + '/colocation'} transitionTypes={['nav-forward']} style={{textDecoration:'none'}}><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 16px',borderBottom:'0.5px solid #F0F4FA'}}><div style={{display:'flex',alignItems:'center',gap:'12px'}}><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='#2B7FFF' strokeWidth='2'><path d='M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z'/></svg><span style={{fontSize:'14px',color:'#1a1a2e'}}>Mode colocation</span></div><svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='#aaa' strokeWidth='2'><polyline points='9 18 15 12 9 6'/></svg></div></Link><Link href={'/groupes/' + id + '/disponibilites'} transitionTypes={['nav-forward']} style={{textDecoration:'none'}}><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 16px',borderBottom:'0.5px solid #F0F4FA'}}><div style={{display:'flex',alignItems:'center',gap:'12px'}}><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='#10B981' strokeWidth='2'><rect x='3' y='4' width='18' height='18' rx='2' ry='2'/><line x1='16' y1='2' x2='16' y2='6'/><line x1='8' y1='2' x2='8' y2='6'/><line x1='3' y1='10' x2='21' y2='10'/><path d='M9 16l2 2 4-4'/></svg><span style={{fontSize:'14px',color:'#1a1a2e'}}>Disponibilités</span></div><svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='#aaa' strokeWidth='2'><polyline points='9 18 15 12 9 6'/></svg></div></Link><div onClick={genererInvitation} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 16px',cursor:'pointer'}}>
                   <div style={{display:'flex',alignItems:'center',gap:'12px'}}>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
                     <span style={{fontSize:'14px',color:'#1a1a2e'}}>Inviter un membre</span>
@@ -369,14 +369,14 @@ export default function GroupePage() {
           <div style={{display:'flex', alignItems:'center', gap:'12px', marginBottom:'12px'}}>
             <div style={{width:'46px', height:'46px', borderRadius:'12px', background:'linear-gradient(135deg,#EEF5FF,#DCE9FF)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, overflow:'hidden'}}>
               {annonceLiee.image_url ? (
-                <img src={annonceLiee.image_url} alt={annonceLiee.titre} style={{width:'100%', height:'100%', objectFit:'cover'}}/>
+                <Image unoptimized width={800} height={600} src={annonceLiee.image_url} alt={annonceLiee.titre} style={{width:'100%', height:'100%', objectFit:'cover'}} />
               ) : (
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2B7FFF" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
               )}
             </div>
             <div style={{flex:1, minWidth:0}}>
               <div style={{fontSize:'13px', fontWeight:'600', color:'#1a1a2e', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{annonceLiee.titre}</div>
-              <div style={{fontSize:'13px', fontWeight:'700', color:'#2B7FFF'}}>{parseFloat(annonceLiee.prix).toFixed(0)} CHF</div>
+              <div style={{fontSize:'13px', fontWeight:'700', color:'#2B7FFF'}}>{Number(annonceLiee.prix).toFixed(0)} CHF</div>
             </div>
             <span style={{fontSize:'10px', fontWeight:'600', padding:'4px 10px', borderRadius:'99px', flexShrink:0,
               background: annonceLiee.statut === 'vendu' ? '#E1F5EE' : annonceLiee.statut === 'réservé' ? '#FDF8EC' : '#EEF5FF',
@@ -389,17 +389,17 @@ export default function GroupePage() {
             <button onClick={payerAnnonce} disabled={paiementEnCours}
               style={{width:'100%',display:'flex',alignItems:'center',justifyContent:'center',gap:'8px',background:'#1a1a2e',color:'#fff',border:'none',borderRadius:'14px',padding:'14px',fontSize:'14px',fontWeight:'700',cursor: paiementEnCours ? 'default' : 'pointer',opacity: paiementEnCours ? 0.6 : 1}}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-              {paiementEnCours ? 'Redirection...' : `Payer ${parseFloat(annonceLiee.prix).toFixed(0)} CHF en sécurité`}
+              {paiementEnCours ? 'Redirection…' : `Payer ${Number(annonceLiee.prix).toFixed(0)} CHF en sécurité`}
             </button>
           )}
           {user && annonceLiee.user_id === user.id && annonceLiee.statut === 'disponible' && (
-            <div style={{fontSize:'12px', color:'#aaa', textAlign:'center'}}>En attente que l'acheteur paie</div>
+            <div style={{fontSize:'12px', color:'#aaa', textAlign:'center'}}>En attente que l’acheteur paie</div>
           )}
           {user && annonceLiee.statut === 'réservé' && annonceLiee.acheteur_id === user.id && (
             <GlisserConfirmer label="Glisser une fois l'objet bien reçu" couleur="#10B981" onConfirm={libererPaiement} />
           )}
           {user && annonceLiee.statut === 'réservé' && annonceLiee.user_id === user.id && (
-            <div style={{fontSize:'12px', color:'#D4A843', textAlign:'center'}}>💳 Paiement reçu et retenu en sécurité — en attente que l'acheteur confirme la réception</div>
+            <div style={{fontSize:'12px', color:'#D4A843', textAlign:'center'}}>💳 Paiement reçu et retenu en sécurité — en attente que l’acheteur confirme la réception</div>
           )}
         </div>
       )}
@@ -407,14 +407,14 @@ export default function GroupePage() {
       {montrerAvis && annonceLiee && (
         <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',zIndex:2000,display:'flex',alignItems:'center',justifyContent:'center',padding:'20px'}}>
           <Card style={{maxWidth:'340px',width:'100%'}}>
-            <div style={{fontSize:'15px',fontWeight:600,color:colors.text,marginBottom:'4px',textAlign:'center'}}>Comment s'est passé l'achat ?</div>
+            <div style={{fontSize:'15px',fontWeight:600,color:colors.text,marginBottom:'4px',textAlign:'center'}}>Comment s’est passé l’achat ?</div>
             <div style={{fontSize:'12px',color:colors.textFaint,marginBottom:'14px',textAlign:'center'}}>Note ton expérience avec le vendeur</div>
             <div style={{display:'flex',justifyContent:'center',gap:'6px',marginBottom:'14px'}}>
               {[1,2,3,4,5].map(n => (
                 <button key={n} onClick={() => setNoteAvis(n)} style={{background:'none',border:'none',cursor:'pointer',fontSize:'28px',padding:0,color: n <= noteAvis ? colors.gold : '#E8F1FF'}}>★</button>
               ))}
             </div>
-            <textarea value={commentaireAvis} onChange={e => setCommentaireAvis(e.target.value)} placeholder="Un commentaire (optionnel)"
+            <textarea aria-label="Un commentaire (optionnel)" value={commentaireAvis} onChange={e => setCommentaireAvis(e.target.value)} placeholder="Un commentaire (optionnel)"
               style={{width:'100%',border:`1px solid ${colors.border}`,borderRadius:'10px',padding:'10px 12px',fontSize:'14px',color:colors.text,marginBottom:'12px',boxSizing:'border-box',resize:'none',height:'60px'}}/>
             <div style={{display:'flex',gap:'8px'}}>
               <Button full disabled={noteAvis === 0} onClick={envoyerAvis}>Envoyer</Button>
@@ -426,7 +426,7 @@ export default function GroupePage() {
 
       {lienInvitation && (
         <div className="mx-5 mt-3 bg-blue-50 border border-blue-100 rounded-xl p-3">
-          <p className="text-xs font-medium text-gray-700 mb-2">Lien d'invitation :</p>
+          <p className="text-xs font-medium text-gray-700 mb-2">Lien d’invitation :</p>
           <div className="flex gap-2 items-center">
             <p className="text-xs text-blue-500 flex-1 truncate">{lienInvitation}</p>
             <button onClick={copierLien} className="text-xs bg-blue-500 text-white px-3 py-1 rounded-full flex-shrink-0">
@@ -458,31 +458,29 @@ export default function GroupePage() {
 
       {onglet === 'listes' && (
         <div style={{padding:'14px'}}>
-          <a href={'/groupes/'+id+'/listes'} style={{textDecoration:'none',display:'block',marginBottom:'14px'}}>
-            <button style={{width:'100%',background:'#EEF5FF',color:'#2B7FFF',border:'0.5px solid #DCE9FF',borderRadius:'12px',padding:'12px',fontSize:'13px',fontWeight:'500',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:'6px'}}>
+          <Link href={'/groupes/'+id+'/listes'} style={{textDecoration:'none',display:'flex',marginBottom:'14px',width:'100%',background:'#EEF5FF',color:'#2B7FFF',border:'0.5px solid #DCE9FF',borderRadius:'12px',padding:'12px',fontSize:'13px',fontWeight:'500',cursor:'pointer',alignItems:'center',justifyContent:'center',gap:'6px'}}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2B7FFF" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
               Nouvelle liste
-            </button>
-          </a>
+            </Link>
           {listes.length === 0 && (
             <div style={{textAlign:'center',padding:'32px 0',color:'#aaa',fontSize:'13px'}}>Aucune liste pour l instant</div>
           )}
-          {listes.map((l: any, i: number) => {
+          {listes.map((l, i) => {
             const couleurs = [{bg:'#EEF5FF',stroke:'#2B7FFF'},{bg:'#FDF8EC',stroke:'#D4A843'},{bg:'#E1F5EE',stroke:'#10B981'}]
             const col = couleurs[i % 3]
             return (
-              <a key={l.id} href={'/groupes/'+id+'/listes/'+l.id} style={{textDecoration:'none',display:'block',marginBottom:'10px'}}>
+              <Link key={l.id} href={'/groupes/'+id+'/listes/'+l.id} style={{textDecoration:'none',display:'block',marginBottom:'10px'}}>
                 <div style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'14px',padding:'14px',display:'flex',alignItems:'center',gap:'12px'}}>
                   <div style={{width:'40px',height:'40px',borderRadius:'12px',background:col.bg,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={col.stroke} strokeWidth="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
                   </div>
                   <div style={{flex:1}}>
                     <div style={{fontSize:'14px',fontWeight:'500',color:'#1a1a2e',marginBottom:'2px'}}>{l.titre}</div>
-                    <div style={{fontSize:'11px',color:'#aaa'}}>{l.budget > 0 ? 'Budget: '+parseFloat(l.budget).toFixed(0)+' CHF' : 'Pas de budget'}</div>
+                    <div style={{fontSize:'11px',color:'#aaa'}}>{l.budget > 0 ? 'Budget: '+Number(l.budget).toFixed(0)+' CHF' : 'Pas de budget'}</div>
                   </div>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
                 </div>
-              </a>
+              </Link>
             )
           })}
         </div>
@@ -497,7 +495,7 @@ export default function GroupePage() {
                 <p className="text-sm">Sois le premier à écrire dans ce groupe !</p>
               </div>
             )}
-            {messagesAffiches.map((m: any, i: number) => {
+            {messagesAffiches.map((m, i) => {
               const estMoi = m.user_id === user?.id
               const enEdition = editionId === m.id
               const suivant = messagesAffiches[i + 1]
@@ -514,7 +512,7 @@ export default function GroupePage() {
                   <div style={{maxWidth:'75%'}}>
                     {enEdition ? (
                       <div style={{background:'#fff',border:'1px solid #2B7FFF',borderRadius:'18px',padding:'8px 12px'}}>
-                        <input value={editionTexte} onChange={e => setEditionTexte(e.target.value)}
+                        <input aria-label="Modifier le message" value={editionTexte} onChange={e => setEditionTexte(e.target.value)}
                           onKeyDown={e => e.key === 'Enter' && sauverEdition()}
                           style={{width:'100%',border:'none',outline:'none',fontSize:'14px',color:'#1a1a2e'}} autoFocus/>
                         <div style={{display:'flex',gap:'8px',marginTop:'6px'}}>
@@ -554,43 +552,41 @@ export default function GroupePage() {
             <div ref={messagesEndRef}></div>
           </div>
           <div className="px-5 py-3 border-t border-blue-50 flex gap-3 items-center">
-            <input type="text" placeholder="Écrire un message..." value={contenu}
+            <input aria-label="Écrire un message" type="text" placeholder="Écrire un message…" value={contenu}
               onChange={e => setContenu(e.target.value)}
               onKeyDown={e => e.key === "Enter" && envoyer()}
               className="flex-1 border border-blue-100 rounded-full px-4 py-2 text-sm text-gray-900 bg-blue-50 focus:outline-none focus:border-blue-400"/>
-            <button onClick={envoyer} className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white text-lg">↑</button>
+            <button onClick={envoyer} aria-label="Envoyer" className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white text-lg">↑</button>
           </div>
         </div>
       )}
 
       {onglet === "projets" && (
         <div className="px-5 py-4">
-          <a href="/nouveau-projet">
-            <button className="w-full bg-blue-50 border border-blue-100 text-blue-500 text-sm font-medium py-3 rounded-xl mb-4">
+          <Link href="/nouveau-projet" className="w-full bg-blue-50 border border-blue-100 text-blue-500 text-sm font-medium py-3 rounded-xl mb-4 block text-center">
               + Partager un projet dans ce groupe
-            </button>
-          </a>
+            </Link>
           {projets.length === 0 && (
             <div className="text-center py-8 text-gray-400">
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-2"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
               <p className="text-sm">Aucun projet partagé dans ce groupe</p>
             </div>
           )}
-          {projets.map((p: any) => (
-            <a key={p.id} href={`/projet/${p.id}`}>
+          {projets.map(p => (
+            <Link key={p.id} href={`/projet/${p.id}`}>
               <div className="bg-white border border-blue-100 rounded-2xl p-4 mb-3 cursor-pointer hover:border-blue-300">
                 <span className="text-xs bg-blue-50 text-blue-500 px-2 py-1 rounded-full font-medium">{p.categorie}</span>
                 <p className="font-medium text-gray-900 mt-2 mb-1">{p.titre}</p>
                 <p className="text-xs text-gray-400">{p.description}</p>
               </div>
-            </a>
+            </Link>
           ))}
         </div>
       )}
 
       {onglet === "membres" && (
         <div className="px-5 py-4">
-          {membres.map((m: any) => (
+          {membres.map(m => (
             <div key={m.id} className="flex items-center gap-3 bg-white border border-blue-100 rounded-xl p-3 mb-2">
               <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium">
                 {(profils[m.user_id]?.nom || "?")[0].toUpperCase()}

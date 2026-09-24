@@ -1,5 +1,7 @@
 "use client"
-import { useEffect, useState } from "react"
+import { ChargeColocation, MembreGroupe, PartChargeColocation, Profil, User } from "@/lib/types"
+import { useChargement } from "@/lib/useChargement"
+import { useState } from "react"
 import { useParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import SectionHeader from "@/app/components/ui/SectionHeader"
@@ -14,18 +16,17 @@ export default function ColocationPage() {
   const params = useParams()
   const id = Array.isArray(params.id) ? params.id[0] : params.id
 
-  const [user, setUser] = useState<any>(null)
-  const [membres, setMembres] = useState<any[]>([])
-  const [profils, setProfils] = useState<Record<string, any>>({})
-  const [charges, setCharges] = useState<any[]>([])
-  const [parts, setParts] = useState<any[]>([])
+  const [user, setUser] = useState<User | null>(null)
+  const [membres, setMembres] = useState<Pick<MembreGroupe, "user_id">[]>([])
+  const [profils, setProfils] = useState<Record<string, Pick<Profil, 'id' | 'nom'>>>({})
+  const [charges, setCharges] = useState<ChargeColocation[]>([])
+  const [parts, setParts] = useState<PartChargeColocation[]>([])
   const [showForm, setShowForm] = useState(false)
   const [titre, setTitre] = useState("")
   const [payeurId, setPayeurId] = useState("")
   const [jourDuMois, setJourDuMois] = useState("1")
   const [montants, setMontants] = useState<Record<string, string>>({})
 
-  useEffect(() => { charger() }, [])
 
   async function charger() {
     const { data: { user } } = await supabase.auth.getUser()
@@ -35,21 +36,23 @@ export default function ColocationPage() {
     const { data: mb } = await supabase.from("membres_groupe").select("user_id").eq("groupe_id", id)
     setMembres(mb || [])
     if (mb && mb.length > 0) {
-      const { data: profs } = await supabase.from("profiles").select("id,nom").in("id", mb.map((m: any) => m.user_id))
-      const map: Record<string, any> = {}
-      profs?.forEach((p: any) => { map[p.id] = p })
+      const { data: profs } = await supabase.from("profiles").select("id,nom").in("id", (mb as MembreGroupe[]).map(m => m.user_id))
+      const map: Record<string, Pick<Profil, 'id' | 'nom'>> = {}
+      for (const p of (profs || []) as Pick<Profil, 'id' | 'nom'>[]) map[p.id] = p
       setProfils(map)
     }
 
     const { data: ch } = await supabase.from("colocation_charges").select("*").eq("groupe_id", id).order("created_at", { ascending: false })
     setCharges(ch || [])
     if (ch && ch.length > 0) {
-      const { data: pt } = await supabase.from("colocation_charges_parts").select("*").in("charge_id", ch.map((c: any) => c.id))
+      const { data: pt } = await supabase.from("colocation_charges_parts").select("*").in("charge_id", (ch as ChargeColocation[]).map(c => c.id))
       setParts(pt || [])
     } else {
       setParts([])
     }
   }
+
+  useChargement(charger, id)
 
   async function creerCharge() {
     const jour = parseInt(jourDuMois, 10)
@@ -86,7 +89,7 @@ export default function ColocationPage() {
         backHref={`/groupes/${id}`}
         backLabel="← Retour au groupe"
         title="Mode colocation"
-        action={<Button variant="secondary" onClick={() => setShowForm(!showForm)}>+ Charge</Button>}
+        action={<Button variant="onDark" onClick={() => setShowForm(!showForm)}>+ Charge</Button>}
       />
 
       <div style={{ padding: "16px 14px" }}>
@@ -97,24 +100,24 @@ export default function ColocationPage() {
         {showForm && (
           <Card style={{ background: colors.blueLight, border: `0.5px solid ${colors.blueBorder}`, marginBottom: "14px" }}>
             <div style={{ fontSize: "13px", fontWeight: 500, color: colors.text, marginBottom: "10px" }}>Nouvelle charge récurrente</div>
-            <input value={titre} onChange={e => setTitre(e.target.value)} placeholder="Ex: Loyer, Internet, Électricité..."
+            <input aria-label="Loyer, Internet, Électricité" value={titre} onChange={e => setTitre(e.target.value)} placeholder="Ex: Loyer, Internet, Électricité…"
               style={{ width: "100%", border: `1px solid ${colors.border}`, borderRadius: "10px", padding: "10px 12px", fontSize: "16px", color: colors.text, background: "#fff", marginBottom: "10px", boxSizing: "border-box" }} />
 
             <div style={{ fontSize: "12px", color: colors.textMuted, marginBottom: "6px" }}>Qui collecte et paie le bailleur/fournisseur ?</div>
-            <select value={payeurId} onChange={e => setPayeurId(e.target.value)}
+            <select aria-label="Payé par" value={payeurId} onChange={e => setPayeurId(e.target.value)}
               style={{ width: "100%", border: `1px solid ${colors.border}`, borderRadius: "10px", padding: "10px 12px", fontSize: "14px", color: colors.text, background: "#fff", marginBottom: "10px" }}>
-              {membres.map((m: any) => <option key={m.user_id} value={m.user_id}>{profils[m.user_id]?.nom || 'Membre'}{m.user_id === user?.id ? ' (toi)' : ''}</option>)}
+              {membres.map(m => <option key={m.user_id} value={m.user_id}>{profils[m.user_id]?.nom || 'Membre'}{m.user_id === user?.id ? ' (toi)' : ''}</option>)}
             </select>
 
             <div style={{ fontSize: "12px", color: colors.textMuted, marginBottom: "6px" }}>Jour du mois</div>
-            <input type="number" min="1" max="31" value={jourDuMois} onChange={e => setJourDuMois(e.target.value)}
+            <input aria-label="Jour du mois" type="number" min="1" max="31" value={jourDuMois} onChange={e => setJourDuMois(e.target.value)}
               style={{ width: "100%", border: `1px solid ${colors.border}`, borderRadius: "10px", padding: "10px 12px", fontSize: "16px", color: colors.text, background: "#fff", marginBottom: "10px", boxSizing: "border-box" }} />
 
             <div style={{ fontSize: "12px", color: colors.textMuted, marginBottom: "6px" }}>Part de chacun (CHF)</div>
-            {membres.map((m: any) => (
+            {membres.map(m => (
               <div key={m.user_id} style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
                 <span style={{ flex: 1, fontSize: "13px", color: colors.text }}>{profils[m.user_id]?.nom || 'Membre'}{m.user_id === user?.id ? ' (toi)' : ''}</span>
-                <input type="number" min="0" step="10" value={montants[m.user_id] || ""} onChange={e => setMontants(prev => ({ ...prev, [m.user_id]: e.target.value }))} placeholder="0"
+                <input aria-label="0" type="number" min="0" step="10" value={montants[m.user_id] || ""} onChange={e => setMontants(prev => ({ ...prev, [m.user_id]: e.target.value }))} placeholder="0"
                   style={{ width: "90px", border: `1px solid ${colors.border}`, borderRadius: "8px", padding: "6px 10px", fontSize: "14px", color: colors.text, boxSizing: "border-box" }} />
               </div>
             ))}
@@ -132,7 +135,7 @@ export default function ColocationPage() {
 
         {charges.map(c => {
           const partsCharge = parts.filter(p => p.charge_id === c.id)
-          const total = partsCharge.reduce((s, p) => s + parseFloat(p.montant), 0)
+          const total = partsCharge.reduce((s, p) => s + Number(p.montant), 0)
           return (
             <Card key={c.id} style={{ marginBottom: "10px" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px" }}>
@@ -145,7 +148,7 @@ export default function ColocationPage() {
               {partsCharge.map(p => (
                 <div key={p.id} style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", color: colors.textMuted, padding: "3px 0" }}>
                   <span>{profils[p.user_id]?.nom || 'Membre'}</span>
-                  <span>{parseFloat(p.montant).toFixed(0)} CHF</span>
+                  <span>{Number(p.montant).toFixed(0)} CHF</span>
                 </div>
               ))}
               {c.created_by === user?.id && (

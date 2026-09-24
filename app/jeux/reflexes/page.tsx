@@ -1,4 +1,5 @@
 'use client'
+import { ecrireStockage, useStockageLocal } from "@/lib/useStockage"
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
@@ -22,14 +23,14 @@ export default function TestReflexes() {
   const [dernierTemps, setDernierTemps] = useState<number|null>(null)
   const [dernierPoints, setDernierPoints] = useState(0)
   const [scores, setScores] = useState<number[]>([])
-  const [meilleur, setMeilleur] = useState(0)
+  // Record enregistré sur l’appareil (source unique, mis à jour par ecrireStockage)
+  const meilleur = parseInt(useStockageLocal('reflexes_meilleur_score') || '0') || 0
   const debutRef = useRef(0)
-  const timeoutsRef = useRef<any[]>([])
+  const timeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([])
 
   useEffect(() => {
-    const m = localStorage.getItem('reflexes_meilleur_score')
-    if (m) setMeilleur(parseInt(m))
-    return () => timeoutsRef.current.forEach(clearTimeout)
+    const timeouts = timeoutsRef.current
+    return () => timeouts.forEach(clearTimeout)
   }, [])
 
   function nettoyerTimeouts() {
@@ -90,8 +91,7 @@ export default function TestReflexes() {
         const total = nouveauxScores.reduce((a,b) => a+b, 0)
         setEtat('fini')
         if (total > meilleur) {
-          setMeilleur(total)
-          localStorage.setItem('reflexes_meilleur_score', String(total))
+          ecrireStockage('local', 'reflexes_meilleur_score', String(total))
         }
         vibrer([15,20,15,20,30])
       } else {
@@ -103,7 +103,7 @@ export default function TestReflexes() {
 
   const totalActuel = scores.reduce((a,b) => a+b, 0)
 
-  const fonds: any = {
+  const fonds: Record<string, string> = {
     accueil: 'linear-gradient(160deg,#0A1628,#1a3a6e)',
     sequence: 'linear-gradient(160deg,#4c1414,#7a1f1f)',
     pret: 'linear-gradient(160deg,#0d5c3a,#10B981)',
@@ -170,7 +170,7 @@ export default function TestReflexes() {
             </div>
           ) : (
             <div style={{fontSize:'18px',fontWeight:'600',color:'#fff',textAlign:'center',padding:'0 20px'}}>
-              {etat === 'sequence' ? 'Attends le vert...' : etat === 'pret' ? 'TAPE MAINTENANT !' : 'Trop tôt ! Retouche pour réessayer'}
+              {etat === 'sequence' ? 'Attends le vert…' : etat === 'pret' ? 'TAPE MAINTENANT !' : 'Trop tôt ! Retouche pour réessayer'}
             </div>
           )}
         </button>
