@@ -1,4 +1,5 @@
 "use client"
+import { onActivate } from "@/lib/a11y"
 import Link from "next/link"
 import Tutorial from "../components/Tutorial"
 import dynamic from "next/dynamic"
@@ -217,7 +218,7 @@ export default function Semaine() {
             const evts = evtDuJour(jour)
             const isSelected = selectedDay?.toDateString() === jour.toDateString()
             return (
-              <div key={i} onClick={() => { setSelectedDay(jour); setJourFiltre(jour); setVoirTouteLaSemaine(false) }}
+              <div key={i} role="button" tabIndex={0} onClick={() => { setSelectedDay(jour); setJourFiltre(jour); setVoirTouteLaSemaine(false) }} onKeyDown={onActivate(() => { setSelectedDay(jour); setJourFiltre(jour); setVoirTouteLaSemaine(false) })}
                 style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:'3px',cursor:'pointer',padding:'4px 2px',borderRadius:'10px',background: isSelected ? '#EEF5FF' : 'transparent'}}>
                 <div style={{fontSize:'10px',color:'#aaa',fontWeight:'500'}}>{JOURS[i]}</div>
                 <div style={{width:'28px',height:'28px',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'13px',fontWeight:'500',

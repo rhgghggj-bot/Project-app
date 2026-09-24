@@ -1,4 +1,5 @@
 "use client"
+import { onActivate } from "@/lib/a11y"
 import SectionHeader from "@/app/components/ui/SectionHeader"
 import Tutorial from "../components/Tutorial"
 import { useState, useRef, useEffect } from "react"
@@ -138,7 +139,7 @@ export default function Scanner() {
       <div style={{padding:'20px 18px'}}>
         {etape === "upload" && (
           <div>
-            <div onClick={() => fileRef.current?.click()}
+            <div role="button" tabIndex={0} onClick={() => fileRef.current?.click()} onKeyDown={onActivate(() => fileRef.current?.click())}
               style={{border:'2px dashed #DCE9FF',borderRadius:'20px',padding:'48px 20px',textAlign:'center',cursor:'pointer',background:'#F8FBFF',marginBottom:'16px'}}>
               <div style={{fontSize:'48px',marginBottom:'12px'}}>📷</div>
               <div style={{fontSize:'15px',fontWeight:'500',color:'#1a1a2e',marginBottom:'6px'}}>Prendre une photo ou choisir un fichier</div>

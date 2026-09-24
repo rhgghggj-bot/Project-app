@@ -1,4 +1,5 @@
 "use client"
+import { onActivate } from "@/lib/a11y"
 import { useEffect, useRef, useState } from "react"
 import { supabase } from "@/lib/supabase"
 
@@ -536,7 +537,7 @@ export default function Constellation({ evenements, periodeLabel = "cette semain
                     return (
                       <div key={i}
                         style={{ background: estActif ? "rgba(255,163,79,0.22)" : "rgba(255,255,255,0.06)", borderLeft: "3px solid #FFA34F", borderRadius: "8px", padding: "8px 10px", marginBottom: "5px" }}>
-                        <div onClick={() => setSegmentActif(estActif ? null : indexGlobal)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer" }}>
+                        <div role="button" tabIndex={0} onClick={() => setSegmentActif(estActif ? null : indexGlobal)} onKeyDown={onActivate(() => setSegmentActif(estActif ? null : indexGlobal))} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer" }}>
                           <span style={{ fontSize: "12px", color: "#fff" }}>{seg.de.titre} <span style={{ color: "rgba(255,255,255,0.4)" }}>({seg.de.heure})</span> → {seg.a.titre} <span style={{ color: "rgba(255,255,255,0.4)" }}>({seg.a.heure})</span></span>
                           <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0, marginLeft: "8px" }}>{fr(seg.km, 1)} km · {formatDuree(seg.min)}</span>
                         </div>

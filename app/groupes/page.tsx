@@ -1,4 +1,5 @@
 "use client"
+import { onActivate } from "@/lib/a11y"
 import Link from "next/link"
 import Tutorial from "../components/Tutorial"
 
@@ -217,7 +218,7 @@ export default function Groupes() {
 
           <div style={{flex:1,overflowY:'auto'}}>
             {resultats.map(p => (
-              <div key={p.id} onClick={() => ajouterSelection(p)} style={{display:'flex',alignItems:'center',gap:'12px',padding:'12px 18px',cursor:'pointer',borderBottom:'0.5px solid #F5F8FC'}}>
+              <div key={p.id} role="button" tabIndex={0} onClick={() => ajouterSelection(p)} onKeyDown={onActivate(() => ajouterSelection(p))} style={{display:'flex',alignItems:'center',gap:'12px',padding:'12px 18px',cursor:'pointer',borderBottom:'0.5px solid #F5F8FC'}}>
                 {p.avatar_url ? (
                   <img src={p.avatar_url} alt={p.nom} style={{width:'44px',height:'44px',borderRadius:'50%',objectFit:'cover'}}/>
                 ) : (

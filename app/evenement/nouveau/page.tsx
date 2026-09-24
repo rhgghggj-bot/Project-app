@@ -1,4 +1,5 @@
 "use client"
+import { onActivate } from "@/lib/a11y"
 import SectionHeader from "@/app/components/ui/SectionHeader"
 import { useState, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
@@ -103,7 +104,7 @@ function Formulaire() {
           <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'6px'}}>Couleur</label>
           <div style={{display:'flex',gap:'8px'}}>
             {COULEURS_EVT.map(c => (
-              <div key={c} onClick={() => setCouleur(c)} style={{width:'26px',height:'26px',borderRadius:'50%',background:c,cursor:'pointer',border: couleur === c ? '3px solid #1a1a2e' : '3px solid transparent'}}/>
+              <div key={c} role="button" tabIndex={0} onClick={() => setCouleur(c)} onKeyDown={onActivate(() => setCouleur(c))} style={{width:'26px',height:'26px',borderRadius:'50%',background:c,cursor:'pointer',border: couleur === c ? '3px solid #1a1a2e' : '3px solid transparent'}}/>
             ))}
           </div>
         </div>

@@ -1,4 +1,5 @@
 'use client'
+import { onActivate } from "@/lib/a11y"
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
@@ -326,7 +327,7 @@ export default function SimCityLite() {
           animation: tremble ? 'shakeCity 0.3s' : 'none'
         }}>
           {grilleAff.map((row, r) => row.map((t, c) => (
-            <div key={r+'-'+c} onClick={() => poserTuile(r,c)}
+            <div key={r+'-'+c} role="button" tabIndex={0} onClick={() => poserTuile(r,c)} onKeyDown={onActivate(() => poserTuile(r,c))}
               style={{
                 aspectRatio:'1', background: couleurTuile(t), borderRadius:'2px', cursor: outil ? 'pointer':'default',
                 display:'flex',alignItems:'center',justifyContent:'center',fontSize:'8px',

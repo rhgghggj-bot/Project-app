@@ -1,4 +1,5 @@
 "use client"
+import Link from "next/link"
 import { useEffect } from "react"
 
 export default function QRCodePage() {
@@ -44,11 +45,9 @@ export default function QRCodePage() {
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1a3a6e" strokeWidth="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
           Imprimer / PDF
         </button>
-        <a href="/profile" style={{textDecoration:'none',display:'block'}}>
-          <button style={{width:'100%',background:'transparent',color:'rgba(255,255,255,0.6)',border:'0.5px solid rgba(255,255,255,0.2)',borderRadius:'12px',padding:'12px',fontSize:'13px',cursor:'pointer'}}>
+        <Link href="/profile" style={{textDecoration:'none',display:'block',width:'100%',background:'transparent',color:'rgba(255,255,255,0.6)',border:'0.5px solid rgba(255,255,255,0.2)',borderRadius:'12px',padding:'12px',fontSize:'13px',cursor:'pointer',textAlign:'center'}}>
             Retour au profil
-          </button>
-        </a>
+          </Link>
       </div>
     </main>
   )

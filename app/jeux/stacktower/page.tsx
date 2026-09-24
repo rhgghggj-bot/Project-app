@@ -1,4 +1,5 @@
 'use client'
+import { onActivate } from "@/lib/a11y"
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
@@ -152,7 +153,7 @@ export default function StackTower() {
         </div>
       </div>
 
-      <div onClick={poser} style={{position:'relative',width:GAME_W,height:HAUTEUR_VISIBLE,background:'rgba(255,255,255,0.05)',borderRadius:'16px',overflow:'hidden',cursor:'pointer'}}>
+      <div role="button" tabIndex={0} onClick={poser} onKeyDown={onActivate(poser)} style={{position:'relative',width:GAME_W,height:HAUTEUR_VISIBLE,background:'rgba(255,255,255,0.05)',borderRadius:'16px',overflow:'hidden',cursor:'pointer'}}>
         {parfait && (
           <div style={{position:'absolute',top:'30%',left:'50%',transform:'translate(-50%,-50%)',zIndex:10,background:'linear-gradient(135deg,#D4A843,#F97316)',color:'#fff',padding:'8px 20px',borderRadius:'99px',fontSize:'15px',fontWeight:'700',boxShadow:'0 8px 20px rgba(212,168,67,0.5)'}}>
             {streak >= 3 ? 'PARFAIT x'+streak+' !' : 'PARFAIT !'}

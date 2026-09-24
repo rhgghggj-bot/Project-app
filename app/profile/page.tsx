@@ -1,4 +1,5 @@
 "use client"
+import { onActivate, useEscape } from "@/lib/a11y"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
@@ -15,6 +16,7 @@ export default function Profile() {
   const [stripeActif, setStripeActif] = useState(false)
   const [chargementStripe, setChargementStripe] = useState(false)
   const [listeOuverte, setListeOuverte] = useState<"followers" | "abonnements" | null>(null)
+  useEscape(!!listeOuverte, () => setListeOuverte(null))
   const [profilsListe, setProfilsListe] = useState<any[]>([])
   const [user, setUser] = useState<any>(null)
   const [profil, setProfil] = useState<any>(null)
@@ -131,9 +133,7 @@ export default function Profile() {
           </div>
           <div style={{display:'flex',gap:'8px'}}>
             <button onClick={() => setOnglet("settings")} style={{fontSize:'12px',padding:'7px 12px',borderRadius:'99px',border:'1.5px solid #E8F1FF',background:'#fff',color:'#666',cursor:'pointer'}}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
-            <a href="/nouveau-projet">
-              <button style={{fontSize:'12px',padding:'7px 14px',borderRadius:'99px',background:couleurProfil,color:'#fff',border:'none',cursor:'pointer',fontWeight:'500'}}>+ Projet</button>
-            </a>
+            <Link href="/nouveau-projet" style={{textDecoration:'none',fontSize:'12px',padding:'7px 14px',borderRadius:'99px',background:couleurProfil,color:'#fff',border:'none',cursor:'pointer',fontWeight:'500',display:'inline-block',textAlign:'center'}}>+ Projet</Link>
           </div>
         </div>
 
@@ -229,9 +229,7 @@ export default function Profile() {
                 <div style={{padding:'12px 14px'}}>
                   <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'8px'}}>
                     <span style={{fontSize:'11px',background:`${couleurProfil}22`,color:couleurProfil,padding:'2px 8px',borderRadius:'99px',fontWeight:'500'}}>{projet.categorie}</span>
-                    <a href={`/modifier-projet/${projet.id}`}>
-                      <button style={{fontSize:'11px',color:'#aaa',background:'#F5F5F5',border:'none',padding:'3px 10px',borderRadius:'99px',cursor:'pointer'}}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Modifier</button>
-                    </a>
+                    <Link href={`/modifier-projet/${projet.id}`} style={{textDecoration:'none',fontSize:'11px',color:'#aaa',background:'#F5F5F5',border:'none',padding:'3px 10px',borderRadius:'99px',cursor:'pointer',display:'inline-block',textAlign:'center'}}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Modifier</Link>
                   </div>
                   <div style={{fontSize:'14px',fontWeight:'500',color:'#1a1a2e',marginBottom:'4px'}}>{projet.titre}</div>
                   <div style={{fontSize:'12px',color:'#aaa',marginBottom:'10px'}}>{projet.description}</div>
@@ -279,7 +277,7 @@ export default function Profile() {
                 <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'8px'}}>Couleur du profil</label>
                 <div style={{display:'grid',gridTemplateColumns:'repeat(8,1fr)',gap:'8px'}}>
                   {COULEURS.map(c => (
-                    <div key={c} onClick={() => setCouleur(c)}
+                    <div key={c} role="button" tabIndex={0} onClick={() => setCouleur(c)} onKeyDown={onActivate(() => setCouleur(c))}
                       style={{height:'36px',borderRadius:'10px',background:c,cursor:'pointer',border: couleur === c ? '3px solid #1a1a2e' : '3px solid transparent'}}/>
                   ))}
                 </div>
@@ -355,8 +353,8 @@ export default function Profile() {
       </div>
 
       {listeOuverte && (
-        <div onClick={() => setListeOuverte(null)} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',zIndex:200,display:'flex',alignItems:'flex-end'}}>
-          <div onClick={e => e.stopPropagation()} style={{width:'100%',maxHeight:'70vh',overflowY:'auto',background:'#fff',borderRadius:'22px 22px 0 0',padding:'10px 18px 24px'}}>
+        <div role="presentation" onClick={() => setListeOuverte(null)} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',zIndex:200,display:'flex',alignItems:'flex-end'}}>
+          <div role="dialog" aria-modal="true" onClick={e => e.stopPropagation()} style={{width:'100%',maxHeight:'70vh',overflowY:'auto',background:'#fff',borderRadius:'22px 22px 0 0',padding:'10px 18px 24px'}}>
             <div style={{width:'36px',height:'4px',background:'#E8F1FF',borderRadius:'99px',margin:'6px auto 14px'}}></div>
             <div style={{fontSize:'15px',fontWeight:'600',color:'#1a1a2e',marginBottom:'12px'}}>{listeOuverte === "followers" ? "Followers" : "Abonnements"}</div>
             {profilsListe.length === 0 && <div style={{textAlign:'center',padding:'24px 0',color:'#aaa',fontSize:'13px'}}>Personne pour l'instant</div>}

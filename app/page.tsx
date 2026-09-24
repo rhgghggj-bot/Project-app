@@ -1,4 +1,5 @@
 "use client"
+import Link from "next/link"
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { syncActivitesGroupeVersCalendrier } from "@/lib/syncActivites"
@@ -140,15 +141,9 @@ export default function Home() {
             <div style={{fontSize:'22px',fontWeight:'500',color:'#fff',marginBottom:'8px'}}>Bienvenue sur Nexia</div>
             <p style={{fontSize:'14px',color:'rgba(255,255,255,0.6)',marginBottom:'24px'}}>Connecte-toi pour accéder à toutes les fonctionnalités</p>
             <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
-              <a href="/inscription" style={{textDecoration:'none'}}>
-                <button style={{width:'100%',background:'#fff',color:'#1a3a6e',fontWeight:'500',fontSize:'15px',padding:'14px',borderRadius:'14px',border:'none',cursor:'pointer'}}>Créer mon compte</button>
-              </a>
-              <a href="/connexion" style={{textDecoration:'none'}}>
-                <button style={{width:'100%',background:'transparent',color:'rgba(255,255,255,0.7)',fontWeight:'500',fontSize:'14px',padding:'13px',borderRadius:'14px',border:'0.5px solid rgba(255,255,255,0.3)',cursor:'pointer'}}>J'ai déjà un compte</button>
-              </a>
-              <a href="/onboarding" style={{textDecoration:'none'}}>
-                <button style={{width:'100%',background:'transparent',color:'rgba(255,255,255,0.5)',fontSize:'13px',padding:'10px',borderRadius:'14px',border:'none',cursor:'pointer'}}>Voir les fonctionnalités →</button>
-              </a>
+              <Link href="/inscription" style={{textDecoration:'none',width:'100%',background:'#fff',color:'#1a3a6e',fontWeight:'500',fontSize:'15px',padding:'14px',borderRadius:'14px',border:'none',cursor:'pointer',display:'block',textAlign:'center'}}>Créer mon compte</Link>
+              <Link href="/connexion" style={{textDecoration:'none',width:'100%',background:'transparent',color:'rgba(255,255,255,0.7)',fontWeight:'500',fontSize:'14px',padding:'13px',borderRadius:'14px',border:'0.5px solid rgba(255,255,255,0.3)',cursor:'pointer',display:'block',textAlign:'center'}}>J'ai déjà un compte</Link>
+              <Link href="/onboarding" style={{textDecoration:'none',width:'100%',background:'transparent',color:'rgba(255,255,255,0.5)',fontSize:'13px',padding:'10px',borderRadius:'14px',border:'none',cursor:'pointer',display:'block',textAlign:'center'}}>Voir les fonctionnalités →</Link>
             </div>
           </div>
         )}
@@ -305,7 +300,7 @@ export default function Home() {
               <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="1.5" style={{margin:'0 auto 12px'}}><path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/></svg>
               <p className="text-sm font-medium text-gray-900 mb-1">Soyez les premiers !</p>
               <p className="text-xs text-gray-400 mb-4">Aucun projet pour l'instant. Lance le tien !</p>
-              <a href="/nouveau-projet"><button className="bg-blue-500 text-white text-sm font-medium px-6 py-2 rounded-full">Publier mon projet</button></a>
+              <Link href="/nouveau-projet" className="bg-blue-500 text-white text-sm font-medium px-6 py-2 rounded-full inline-block text-center">Publier mon projet</Link>
             </div>
           )}
 
@@ -317,7 +312,7 @@ export default function Home() {
                 <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="1.5" style={{margin:'0 auto 12px'}}><path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/></svg>
                 <p className="text-sm font-medium text-gray-900 mb-1">Aucun projet dans cette catégorie</p>
                 <p className="text-xs text-gray-400 mb-4">Sois le premier à publier dans "{categorie}" !</p>
-                <a href="/nouveau-projet"><button className="bg-blue-500 text-white text-sm font-medium px-6 py-2 rounded-full">Publier mon projet</button></a>
+                <Link href="/nouveau-projet" className="bg-blue-500 text-white text-sm font-medium px-6 py-2 rounded-full inline-block text-center">Publier mon projet</Link>
               </div>
             )
             return (
@@ -402,11 +397,9 @@ export default function Home() {
           })}
 
           {user && (
-            <a href="/nouveau-projet" style={{textDecoration:'none',display:'block',marginTop:'8px'}}>
-              <button style={{width:'100%',background:'#EEF5FF',color:'#2B7FFF',fontSize:'13px',fontWeight:'500',padding:'14px',borderRadius:'14px',border:'0.5px solid #DCE9FF',cursor:'pointer'}}>
+            <Link href="/nouveau-projet" style={{textDecoration:'none',display:'block',marginTop:'8px',width:'100%',background:'#EEF5FF',color:'#2B7FFF',fontSize:'13px',fontWeight:'500',padding:'14px',borderRadius:'14px',border:'0.5px solid #DCE9FF',cursor:'pointer',textAlign:'center'}}>
                 + Publier mon projet
-              </button>
-            </a>
+              </Link>
           )}
         </div>
       </div>

@@ -1,4 +1,5 @@
 'use client'
+import { onActivate } from "@/lib/a11y"
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
@@ -257,7 +258,7 @@ export default function CasseBriques() {
           style={{width:'100%',height:'auto',borderRadius:'16px',touchAction:'none',display:'block'}}
         />
         {enPause && !gameOver && (
-          <div onClick={() => setEnPause(false)} style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.4)',display:'flex',alignItems:'center',justifyContent:'center',borderRadius:'16px',cursor:'pointer'}}>
+          <div role="button" tabIndex={0} onClick={() => setEnPause(false)} onKeyDown={onActivate(() => setEnPause(false))} style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.4)',display:'flex',alignItems:'center',justifyContent:'center',borderRadius:'16px',cursor:'pointer'}}>
             <div style={{background:'rgba(255,255,255,0.15)',color:'#fff',padding:'12px 24px',borderRadius:'99px',fontSize:'14px',fontWeight:'500'}}>Touche pour lancer</div>
           </div>
         )}

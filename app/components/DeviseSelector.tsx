@@ -1,4 +1,5 @@
 "use client"
+import { onActivate } from "@/lib/a11y"
 import { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabase"
 
@@ -70,7 +71,7 @@ export default function DeviseSelector({ onClose }: { onClose: () => void }) {
 
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'10px',marginBottom:'16px'}}>
           {DEVISES.map(d => (
-            <div key={d.code} onClick={() => setDevise(d.code)}
+            <div key={d.code} role="button" tabIndex={0} onClick={() => setDevise(d.code)} onKeyDown={onActivate(() => setDevise(d.code))}
               style={{borderRadius:'14px',padding:'14px',cursor:'pointer',border: devise===d.code ? '2px solid #2B7FFF' : '0.5px solid #E8F1FF',
                 background: devise===d.code ? '#EEF5FF' : '#fff'}}>
               <div style={{fontSize:'22px',marginBottom:'4px'}}>{d.flag}</div>

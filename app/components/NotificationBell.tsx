@@ -1,4 +1,5 @@
 "use client"
+import { onActivate, useEscape } from "@/lib/a11y"
 import { useEffect, useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
@@ -6,6 +7,7 @@ import { supabase } from "@/lib/supabase"
 export default function NotificationBell() {
   const [notifs, setNotifs] = useState<any[]>([])
   const [ouvert, setOuvert] = useState(false)
+  useEscape(!!ouvert, () => setOuvert(false))
   const [user, setUser] = useState<any>(null)
   const router = useRouter()
   const channelRef = useRef<any>(null)
@@ -88,7 +90,7 @@ export default function NotificationBell() {
 
       {ouvert && (
         <>
-          <div onClick={() => setOuvert(false)} style={{position:'fixed',inset:0,zIndex:40}}></div>
+          <div aria-hidden="true" onClick={() => setOuvert(false)} style={{position:'fixed',inset:0,zIndex:40}}></div>
           <div style={{position:'absolute',top:'46px',right:0,width:'300px',background:'#fff',borderRadius:'16px',boxShadow:'0 8px 30px rgba(0,0,0,0.12)',border:'0.5px solid #E8F1FF',zIndex:50,overflow:'hidden'}}>
             <div style={{padding:'12px 16px',borderBottom:'0.5px solid #E8F1FF',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
               <span style={{fontSize:'14px',fontWeight:'500',color:'#1a1a2e'}}>Notifications</span>
@@ -104,7 +106,7 @@ export default function NotificationBell() {
                   Aucune notification pour l'instant
                 </div>
               ) : notifs.map((n: any) => (
-                <div key={n.id} onClick={() => marquerLu(n.id, n.lien)}
+                <div key={n.id} role="button" tabIndex={0} onClick={() => marquerLu(n.id, n.lien)} onKeyDown={onActivate(() => marquerLu(n.id, n.lien))}
                   style={{padding:'12px 16px',borderBottom:'0.5px solid #F0F4FA',cursor:'pointer',background: n.lu ? '#fff' : '#F8FBFF',display:'flex',gap:'10px',alignItems:'flex-start'}}>
                   <div style={{width:'32px',height:'32px',borderRadius:'10px',background:couleurType(n.type)+'22',color:couleurType(n.type),display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
                     {iconType(n.type)}

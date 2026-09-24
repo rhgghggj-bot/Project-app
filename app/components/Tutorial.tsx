@@ -63,7 +63,7 @@ export default function Tutorial({ page }: { page: string }) {
 
   return (
     <>
-      <div onClick={fermer} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.6)',zIndex:1498}}/>
+      <div aria-hidden="true" onClick={fermer} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.6)',zIndex:1498}}/>
       <div style={{
         position:'fixed',
         ...positions[step.position],

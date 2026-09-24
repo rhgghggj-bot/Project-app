@@ -1,4 +1,5 @@
 "use client"
+import { onActivate, useEscape } from "@/lib/a11y"
 import { useEffect, useState, useRef } from "react"
 import { supabase } from "@/lib/supabase"
 import { ouvrirConversationPrivee } from "@/lib/dm"
@@ -43,10 +44,12 @@ export default function Marketplace() {
   const [prixAnnonce, setPrixAnnonce] = useState("")
   const [catAnnonce, setCatAnnonce] = useState("Autre")
   const [annonceOuverte, setAnnonceOuverte] = useState<any>(null)
+  useEscape(!!annonceOuverte, () => setAnnonceOuverte(null))
   const [profilsVendeurs, setProfilsVendeurs] = useState<any>({})
   const [animCoeurs, setAnimCoeurs] = useState<Record<string, { id: number; x: number; delay: number; size: number; rot: number; couleur: string }[]>>({})
   const [menuOuvertId, setMenuOuvertId] = useState<string | null>(null)
   const [confirmSupprId, setConfirmSupprId] = useState<string | null>(null)
+  useEscape(!!confirmSupprId, () => setConfirmSupprId(null))
   const [favoris, setFavoris] = useState<any[]>([])
   const [signales, setSignales] = useState<string[]>([])
   const [likes, setLikes] = useState<any[]>([])
@@ -281,7 +284,7 @@ export default function Marketplace() {
                       const estSignale = signales.includes(a.id)
                       return (
                       <>
-                        <div onClick={() => setMenuOuvertId(null)} style={{position:"fixed",inset:0,zIndex:200}}/>
+                        <div aria-hidden="true" onClick={() => setMenuOuvertId(null)} style={{position:"fixed",inset:0,zIndex:200}}/>
                         <div style={{position:"absolute",top:"26px",right:0,background:"#fff",borderRadius:"12px",boxShadow:"0 6px 24px rgba(0,0,0,0.15)",border:"0.5px solid #E8F1FF",overflow:"hidden",zIndex:201,minWidth:"190px"}}>
                           <button onClick={() => toggleFavori(a.id)} style={{width:"100%",textAlign:"left",padding:"11px 16px",background:"none",border:"none",fontSize:"13px",color:"#1a1a2e",cursor:"pointer",display:"flex",alignItems:"center",gap:"8px"}}>
                             <svg width="15" height="15" viewBox="0 0 24 24" fill={estFavori?"#2B7FFF":"none"} stroke="#2B7FFF" strokeWidth="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
@@ -304,7 +307,7 @@ export default function Marketplace() {
                   </div>
                 </div>
 
-                <div onClick={() => onTapImage(a)}
+                <div role="button" tabIndex={0} onClick={() => onTapImage(a)} onKeyDown={onActivate(() => onTapImage(a))}
                   style={{width:"100%",minHeight:"220px",maxHeight:"420px",background:"linear-gradient(135deg,#EEF5FF,#DCE9FF)",position:"relative",overflow:"hidden",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
                   {a.image_url ? (
                     <img src={a.image_url} alt={a.titre} style={{width:"100%",height:"100%",maxHeight:"420px",objectFit:"contain",filter: a.statut === "réservé" ? "grayscale(1) brightness(0.82)" : "none"}}/>
@@ -529,8 +532,8 @@ export default function Marketplace() {
           )}
 
           {confirmSupprId && (
-            <div onClick={() => setConfirmSupprId(null)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",zIndex:2000,display:"flex",alignItems:"center",justifyContent:"center",padding:"20px"}}>
-              <div onClick={e => e.stopPropagation()} style={{background:"#fff",borderRadius:"18px",padding:"22px",maxWidth:"320px",width:"100%",textAlign:"center"}}>
+            <div role="presentation" onClick={() => setConfirmSupprId(null)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",zIndex:2000,display:"flex",alignItems:"center",justifyContent:"center",padding:"20px"}}>
+              <div role="dialog" aria-modal="true" onClick={e => e.stopPropagation()} style={{background:"#fff",borderRadius:"18px",padding:"22px",maxWidth:"320px",width:"100%",textAlign:"center"}}>
                 <div style={{fontSize:"15px",fontWeight:"600",color:"#1a1a2e",marginBottom:"8px"}}>Retirer cette publication ?</div>
                 <div style={{fontSize:"13px",color:"#666",marginBottom:"18px",lineHeight:"1.5"}}>Cette action est définitive. La publication sera supprimée pour tout le monde.</div>
                 <div style={{display:"flex",gap:"8px"}}>
@@ -542,8 +545,8 @@ export default function Marketplace() {
           )}
 
           {annonceOuverte && (
-            <div onClick={() => setAnnonceOuverte(null)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:1500,display:"flex",alignItems:"flex-end"}}>
-              <div onClick={(e) => e.stopPropagation()} style={{background:"#fff",borderRadius:"20px 20px 0 0",width:"100%",maxHeight:"88vh",overflowY:"auto"}}>
+            <div role="presentation" onClick={() => setAnnonceOuverte(null)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:1500,display:"flex",alignItems:"flex-end"}}>
+              <div role="dialog" aria-modal="true" onClick={e => e.stopPropagation()} style={{background:"#fff",borderRadius:"20px 20px 0 0",width:"100%",maxHeight:"88vh",overflowY:"auto"}}>
                 <div style={{position:"relative"}}>
                   {annonceOuverte.image_url ? (
                     <div style={{width:"100%",maxHeight:"50vh",background:"linear-gradient(135deg,#EEF5FF,#DCE9FF)",display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden"}}>

@@ -1,4 +1,5 @@
 "use client"
+import Link from "next/link"
 import { useEffect, useRef, useState } from "react"
 import dynamic from "next/dynamic"
 import gsap from "gsap"
@@ -489,11 +490,9 @@ export default function Presentation() {
           <a href="/connexion" style={{ fontSize: '12.5px', color: 'rgba(255,255,255,0.7)', textDecoration: 'none' }}>
             Connexion
           </a>
-          <a href="/inscription" style={{ textDecoration: 'none' }}>
-            <button style={{ background: '#fff', color: '#1a3a6e', border: 'none', borderRadius: '99px', padding: '8px 16px', fontSize: '12.5px', fontWeight: 600, cursor: 'pointer' }}>
+          <Link href="/inscription" style={{textDecoration:'none',background:'#fff',color:'#1a3a6e',border:'none',borderRadius:'99px',padding:'8px 16px',fontSize:'12.5px',fontWeight:600,cursor:'pointer',display:'inline-block',textAlign:'center'}}>
               Créer mon compte
-            </button>
-          </a>
+            </Link>
         </div>
       </div>
 
@@ -542,16 +541,12 @@ export default function Presentation() {
           opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(18px)',
           transition: 'opacity 0.7s ease 0.45s, transform 0.7s ease 0.45s'
         }}>
-          <a href="/inscription" style={{ textDecoration: 'none' }}>
-            <button style={{ background: '#fff', color: '#1a3a6e', border: 'none', borderRadius: '99px', padding: '14px 28px', fontSize: '15px', fontWeight: 600, cursor: 'pointer' }}>
+          <Link href="/inscription" style={{textDecoration:'none',background:'#fff',color:'#1a3a6e',border:'none',borderRadius:'99px',padding:'14px 28px',fontSize:'15px',fontWeight:600,cursor:'pointer',display:'inline-block',textAlign:'center'}}>
               Créer mon compte
-            </button>
-          </a>
-          <a href="/connexion" style={{ textDecoration: 'none' }}>
-            <button style={{ background: 'rgba(255,255,255,0.12)', color: '#fff', border: '0.5px solid rgba(255,255,255,0.3)', borderRadius: '99px', padding: '14px 28px', fontSize: '15px', fontWeight: 500, cursor: 'pointer' }}>
+            </Link>
+          <Link href="/connexion" style={{textDecoration:'none',background:'rgba(255,255,255,0.12)',color:'#fff',border:'0.5px solid rgba(255,255,255,0.3)',borderRadius:'99px',padding:'14px 28px',fontSize:'15px',fontWeight:500,cursor:'pointer',display:'inline-block',textAlign:'center'}}>
               J&apos;ai déjà un compte
-            </button>
-          </a>
+            </Link>
         </div>
 
         <div style={{
@@ -711,11 +706,9 @@ export default function Presentation() {
           <div style={{ fontSize: '14px', color: 'rgba(255,255,255,0.7)', marginBottom: '28px', position: 'relative' }}>
             Rejoins Nexia gratuitement, en moins d&apos;une minute.
           </div>
-          <a href="/inscription" style={{ textDecoration: 'none', position: 'relative' }}>
-            <button style={{ background: '#fff', color: '#1a3a6e', border: 'none', borderRadius: '99px', padding: '15px 34px', fontSize: '15px', fontWeight: 700, cursor: 'pointer' }}>
+          <Link href="/inscription" style={{textDecoration:'none',position:'relative',background:'#fff',color:'#1a3a6e',border:'none',borderRadius:'99px',padding:'15px 34px',fontSize:'15px',fontWeight:700,cursor:'pointer',display:'inline-block',textAlign:'center'}}>
               Créer mon compte gratuitement
-            </button>
-          </a>
+            </Link>
         </Reveal>
       </section>
 

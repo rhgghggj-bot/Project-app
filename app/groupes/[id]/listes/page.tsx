@@ -1,4 +1,5 @@
 "use client"
+import { onActivate } from "@/lib/a11y"
 import Button from "@/app/components/ui/Button"
 import SectionHeader from "@/app/components/ui/SectionHeader"
 import { useEffect, useState } from "react"
@@ -95,7 +96,7 @@ export default function ListesPage() {
         )}
 
         {listes.map(l => (
-          <div key={l.id} onClick={() => router.push(`/groupes/${id}/listes/${l.id}`)}
+          <div key={l.id} role="button" tabIndex={0} onClick={() => router.push(`/groupes/${id}/listes/${l.id}`)} onKeyDown={onActivate(() => router.push(`/groupes/${id}/listes/${l.id}`))}
             style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'14px',padding:'14px',marginBottom:'10px',cursor:'pointer',display:'flex',alignItems:'center',gap:'12px'}}>
             <div style={{width:'40px',height:'40px',borderRadius:'12px',background:'#EEF5FF',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,color:'#2B7FFF'}}>
               <IconList />

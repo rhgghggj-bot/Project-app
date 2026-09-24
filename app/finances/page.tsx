@@ -1,4 +1,5 @@
 "use client"
+import { useEscape } from "@/lib/a11y"
 import Link from "next/link"
 import DeviseSelector from "../components/DeviseSelector"
 import Tutorial from "../components/Tutorial"
@@ -43,6 +44,7 @@ function FinancesContent() {
   const searchParams = useSearchParams()
   const [onglet, setOnglet] = useState("vue")
   const [showForm, setShowForm] = useState(false)
+  useEscape(!!showForm, () => fermerForm())
   const [typeForm, setTypeForm] = useState<"depense"|"revenu">("depense")
   const [titre, setTitre] = useState("")
   const [montant, setMontant] = useState("")
@@ -259,9 +261,7 @@ function FinancesContent() {
         <div style={{fontSize:'14px',fontWeight:'500',color: type === "revenu" ? '#10B981' : '#F43F5E'}}>
           {type === "revenu" ? '+' : '-'}{conv(parseFloat(d.montant)).toFixed(0)} {devise}
         </div>
-        <a href={`/modifier-depense/${d.id}?type=${type}`}>
-          <button style={{background:'#F0F8FF',border:'none',borderRadius:'8px',width:'28px',height:'28px',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',fontSize:'12px'}}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-        </a>
+        <Link href={`/modifier-depense/${d.id}?type=${type}`} style={{textDecoration:'none',background:'#F0F8FF',border:'none',borderRadius:'8px',width:'28px',height:'28px',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',fontSize:'12px'}}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></Link>
         <button onClick={() => supprimer(d.id, type)} style={{background:'none',border:'none',color:'#ddd',cursor:'pointer',fontSize:'16px'}}>×</button>
       </div>
     </div>
@@ -760,8 +760,8 @@ function FinancesContent() {
       )}
 
       {showForm && (
-        <div onClick={fermerForm} style={{position:'fixed',inset:0,background:'rgba(10,22,40,0.45)',zIndex:100,display:'flex',alignItems:'flex-end'}}>
-          <div onClick={e => e.stopPropagation()} style={{width:'100%',maxHeight:'86vh',overflowY:'auto',background:'#fff',borderRadius:'22px 22px 0 0',padding:'10px 18px 24px',boxShadow:'0 -8px 30px rgba(0,0,0,0.15)'}}>
+        <div role="presentation" onClick={fermerForm} style={{position:'fixed',inset:0,background:'rgba(10,22,40,0.45)',zIndex:100,display:'flex',alignItems:'flex-end'}}>
+          <div role="dialog" aria-modal="true" onClick={e => e.stopPropagation()} style={{width:'100%',maxHeight:'86vh',overflowY:'auto',background:'#fff',borderRadius:'22px 22px 0 0',padding:'10px 18px 24px',boxShadow:'0 -8px 30px rgba(0,0,0,0.15)'}}>
             <div style={{width:'36px',height:'4px',background:'#E8F1FF',borderRadius:'99px',margin:'6px auto 14px'}}></div>
             <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'14px'}}>
               <div style={{fontSize:'15px',fontWeight:'600',color:'#1a1a2e'}}>{typeForm === "depense" ? 'Nouvelle dépense' : 'Nouveau revenu'}</div>

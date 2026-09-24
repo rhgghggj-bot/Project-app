@@ -1,4 +1,5 @@
 "use client"
+import { useEscape } from "@/lib/a11y"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
@@ -15,6 +16,7 @@ export default function ProfilPublic() {
   const [abonnements, setAbonnements] = useState<any[]>([])
   const [chargement, setChargement] = useState(true)
   const [listeOuverte, setListeOuverte] = useState<"followers" | "abonnements" | null>(null)
+  useEscape(!!listeOuverte, () => setListeOuverte(null))
   const [profilsListe, setProfilsListe] = useState<any[]>([])
 
   useEffect(() => {
@@ -128,8 +130,8 @@ export default function ProfilPublic() {
       </div>
 
       {listeOuverte && (
-        <div onClick={() => setListeOuverte(null)} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',zIndex:200,display:'flex',alignItems:'flex-end'}}>
-          <div onClick={e => e.stopPropagation()} style={{width:'100%',maxHeight:'70vh',overflowY:'auto',background:'#fff',borderRadius:'22px 22px 0 0',padding:'10px 18px 24px'}}>
+        <div role="presentation" onClick={() => setListeOuverte(null)} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',zIndex:200,display:'flex',alignItems:'flex-end'}}>
+          <div role="dialog" aria-modal="true" onClick={e => e.stopPropagation()} style={{width:'100%',maxHeight:'70vh',overflowY:'auto',background:'#fff',borderRadius:'22px 22px 0 0',padding:'10px 18px 24px'}}>
             <div style={{width:'36px',height:'4px',background:'#E8F1FF',borderRadius:'99px',margin:'6px auto 14px'}}></div>
             <div style={{fontSize:'15px',fontWeight:'600',color:'#1a1a2e',marginBottom:'12px'}}>{listeOuverte === "followers" ? "Followers" : "Abonnements"}</div>
             {profilsListe.length === 0 && <div style={{textAlign:'center',padding:'24px 0',color:'#aaa',fontSize:'13px'}}>Personne pour l'instant</div>}
