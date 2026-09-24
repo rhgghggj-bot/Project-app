@@ -1,4 +1,5 @@
 "use client"
+import { useMaintenant } from "@/lib/useMaintenant"
 import { onActivate, useEscape } from "@/lib/a11y"
 import { useEffect, useState, useRef } from "react"
 import { useRouter } from "next/navigation"
@@ -7,6 +8,7 @@ import { supabase } from "@/lib/supabase"
 export default function NotificationBell() {
   const [notifs, setNotifs] = useState<any[]>([])
   const [ouvert, setOuvert] = useState(false)
+  const maintenant = useMaintenant()
   useEscape(!!ouvert, () => setOuvert(false))
   const [user, setUser] = useState<any>(null)
   const router = useRouter()
@@ -64,7 +66,7 @@ export default function NotificationBell() {
   }
 
   const tempsEcoule = (date: string) => {
-    const diff = (Date.now() - new Date(date).getTime()) / 1000
+    const diff = (maintenant - new Date(date).getTime()) / 1000
     if (diff < 60) return 'maintenant'
     if (diff < 3600) return Math.floor(diff/60) + 'min'
     if (diff < 86400) return Math.floor(diff/3600) + 'h'
@@ -103,7 +105,7 @@ export default function NotificationBell() {
             <div style={{maxHeight:'360px',overflowY:'auto'}}>
               {notifs.length === 0 ? (
                 <div style={{padding:'32px 16px',textAlign:'center',color:'#aaa',fontSize:'13px'}}>
-                  Aucune notification pour l'instant
+                  Aucune notification pour l’instant
                 </div>
               ) : notifs.map((n: any) => (
                 <div key={n.id} role="button" tabIndex={0} onClick={() => marquerLu(n.id, n.lien)} onKeyDown={onActivate(() => marquerLu(n.id, n.lien))}

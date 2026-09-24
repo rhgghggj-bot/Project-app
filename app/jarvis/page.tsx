@@ -1,6 +1,7 @@
 "use client"
+import { ecrireStockage, useStockageLocal } from "@/lib/useStockage"
 import Link from "next/link"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState, useEffectEvent } from "react"
 import { supabase } from "@/lib/supabase"
 import { isJarvisOwner } from "@/lib/jarvisOwner"
 
@@ -142,7 +143,10 @@ export default function Jarvis() {
   const [documentJoint, setDocumentJoint] = useState<{ nom: string; contenu: string } | null>(null)
   const fichierInputRef = useRef<HTMLInputElement>(null)
   const [modeCloud, setModeCloud] = useState(false)
-  const [claudeKey, setClaudeKey] = useState("")
+  // Clé enregistrée sur l’appareil ; la saisie en cours prend le dessus tant qu’elle n’est pas enregistrée
+  const cleStockee = useStockageLocal("jarvis_claude_key")
+  const [cleSaisie, setClaudeKey] = useState<string | null>(null)
+  const claudeKey = cleSaisie ?? (cleStockee?.trim() || "")
   const [montrerConfigCloud, setMontrerConfigCloud] = useState(false)
   const [historiqueCloud, setHistoriqueCloud] = useState<any[]>([])
   const [statut, setStatut] = useState<{ texte: string; ok: boolean | null }>({ texte: "Connexion à Ollama…", ok: null })
@@ -178,8 +182,6 @@ export default function Jarvis() {
       }
     }
     verifier()
-    const sauvegardee = localStorage.getItem("jarvis_claude_key")
-    if (sauvegardee) setClaudeKey(sauvegardee.trim())
   }, [])
 
   useEffect(() => {
@@ -441,6 +443,8 @@ export default function Jarvis() {
     setEcoute(false)
   }
 
+  // Version à jour de la fonction, appelée depuis la boucle audio sans relancer l’effet
+  const demarrerEnregistrementEvent = useEffectEvent(() => demarrerEnregistrementAuto())
   useEffect(() => {
     if (!modeVocal) {
       if (vadRafRef.current) cancelAnimationFrame(vadRafRef.current)
@@ -481,7 +485,7 @@ export default function Jarvis() {
 
         if (!enPause && volume > SEUIL) {
           if (silenceTimerRef.current) { clearTimeout(silenceTimerRef.current); silenceTimerRef.current = null }
-          if (!enregistrementActifRef.current) demarrerEnregistrementAuto()
+          if (!enregistrementActifRef.current) demarrerEnregistrementEvent()
         } else if (enregistrementActifRef.current && !silenceTimerRef.current) {
           silenceTimerRef.current = setTimeout(() => {
             silenceTimerRef.current = null
@@ -750,9 +754,9 @@ export default function Jarvis() {
   if (!accesAutorise) {
     return (
       <main style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "radial-gradient(ellipse at top, #0A1628 0%, #050810 100%)", color: "#E8F1FF", padding: "24px", textAlign: "center" }}>
-        <div style={{ fontSize: "18px", fontWeight: 500, marginBottom: "8px" }}>Jarvis n'est pas disponible ici</div>
-        <div style={{ fontSize: "13px", color: "rgba(232,241,255,0.6)", marginBottom: "20px" }}>Cet assistant est réservé à l'administrateur de Nexia.</div>
-        <Link href="/" transitionTypes={['nav-back']} style={{ fontSize: "13px", color: "#2B7FFF", textDecoration: "none" }}>← Retour à l'accueil</Link>
+        <div style={{ fontSize: "18px", fontWeight: 500, marginBottom: "8px" }}>Jarvis n’est pas disponible ici</div>
+        <div style={{ fontSize: "13px", color: "rgba(232,241,255,0.6)", marginBottom: "20px" }}>Cet assistant est réservé à l’administrateur de Nexia.</div>
+        <Link href="/" transitionTypes={['nav-back']} style={{ fontSize: "13px", color: "#2B7FFF", textDecoration: "none" }}>← Retour à l’accueil</Link>
       </main>
     )
   }
@@ -797,7 +801,7 @@ export default function Jarvis() {
 
       {montrerConfigCloud && (
         <div style={{ padding: "12px 18px", borderBottom: "0.5px solid rgba(43,127,255,0.2)", background: "rgba(10,22,40,0.4)", display: "flex", gap: "8px", alignItems: "center" }}>
-          <input aria-label="sk-ant-... (ta clé API Claude)"
+          <input aria-label="Ta clé API Claude"
             type="password"
             defaultValue={claudeKey}
             placeholder="sk-ant-... (ta clé API Claude)"
@@ -807,8 +811,8 @@ export default function Jarvis() {
           <button
             onClick={() => {
               const cle = claudeKey.trim()
-              setClaudeKey(cle)
-              localStorage.setItem("jarvis_claude_key", cle)
+              setClaudeKey(null)
+              ecrireStockage("local", "jarvis_claude_key", cle)
               setMontrerConfigCloud(false)
             }}
             style={{ background: "#2B7FFF", color: "#fff", border: "none", borderRadius: "8px", padding: "8px 14px", fontSize: "12px", fontWeight: 500, cursor: "pointer" }}>

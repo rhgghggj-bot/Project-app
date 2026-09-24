@@ -1,4 +1,5 @@
 'use client'
+import { ecrireStockage, useStockageLocal } from "@/lib/useStockage"
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
@@ -22,14 +23,14 @@ export default function TestReflexes() {
   const [dernierTemps, setDernierTemps] = useState<number|null>(null)
   const [dernierPoints, setDernierPoints] = useState(0)
   const [scores, setScores] = useState<number[]>([])
-  const [meilleur, setMeilleur] = useState(0)
+  // Record enregistré sur l’appareil (source unique, mis à jour par ecrireStockage)
+  const meilleur = parseInt(useStockageLocal('reflexes_meilleur_score') || '0') || 0
   const debutRef = useRef(0)
   const timeoutsRef = useRef<any[]>([])
 
   useEffect(() => {
-    const m = localStorage.getItem('reflexes_meilleur_score')
-    if (m) setMeilleur(parseInt(m))
-    return () => timeoutsRef.current.forEach(clearTimeout)
+    const timeouts = timeoutsRef.current
+    return () => timeouts.forEach(clearTimeout)
   }, [])
 
   function nettoyerTimeouts() {
@@ -90,8 +91,7 @@ export default function TestReflexes() {
         const total = nouveauxScores.reduce((a,b) => a+b, 0)
         setEtat('fini')
         if (total > meilleur) {
-          setMeilleur(total)
-          localStorage.setItem('reflexes_meilleur_score', String(total))
+          ecrireStockage('local', 'reflexes_meilleur_score', String(total))
         }
         vibrer([15,20,15,20,30])
       } else {

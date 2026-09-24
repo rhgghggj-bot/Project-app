@@ -20,7 +20,7 @@ export default function Connexion() {
       setMessage(messageErreurAuth(error.message))
       setEnvoi(false)
     } else {
-      window.location.href = "/"
+      window.location.assign("/")
     }
   }
 

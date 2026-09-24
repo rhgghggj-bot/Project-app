@@ -1,4 +1,5 @@
 'use client'
+import { ecrireStockage, useStockageLocal } from "@/lib/useStockage"
 import { onActivate } from "@/lib/a11y"
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -49,7 +50,8 @@ export default function CasseBriques() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const rafRef = useRef<number>(0)
   const [score, setScore] = useState(0)
-  const [meilleur, setMeilleur] = useState(0)
+  // Record enregistré sur l’appareil (source unique, mis à jour par ecrireStockage)
+  const meilleur = parseInt(useStockageLocal('cassebriques_meilleur') || '0') || 0
   const [vies, setVies] = useState(3)
   const [niveau, setNiveau] = useState(1)
   const [combo, setCombo] = useState(0)
@@ -69,11 +71,6 @@ export default function CasseBriques() {
     niveau: 1,
     combo: 0,
   })
-
-  useEffect(() => {
-    const m = localStorage.getItem('cassebriques_meilleur')
-    if (m) setMeilleur(parseInt(m))
-  }, [])
 
   function afficherToast(msg: string) {
     setToast(msg)
@@ -166,7 +163,7 @@ export default function CasseBriques() {
               if (e.combo > 0 && e.combo % 5 === 0) afficherToast('Combo x' + e.combo + ' !')
             }
             vibrer(12)
-            if (e.score > meilleur) localStorage.setItem('cassebriques_meilleur', String(e.score))
+            if (e.score > meilleur) ecrireStockage('local', 'cassebriques_meilleur', String(e.score))
             break
           }
         }
@@ -180,7 +177,7 @@ export default function CasseBriques() {
           setVies(e.vies)
           if (e.vies <= 0) {
             setGameOver(true)
-            if (e.score > meilleur) { setMeilleur(e.score); localStorage.setItem('cassebriques_meilleur', String(e.score)) }
+            if (e.score > meilleur) { ecrireStockage('local', 'cassebriques_meilleur', String(e.score)) }
             vibrer([50,30,50,30,80])
           } else {
             e.balleX = LARGEUR / 2

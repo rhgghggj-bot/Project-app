@@ -175,7 +175,7 @@ export default function AppelGroupe() {
       setLoading(false)
     }
     init()
-  }, [])
+  }, [params.id, router])
 
   if (loading) return (
     <main style={{position:'fixed',inset:0,display:'flex',alignItems:'center',justifyContent:'center',height:'100dvh',background:'linear-gradient(135deg,#1a3a6e,#2B7FFF,#87CEEB)',zIndex:2000}}>

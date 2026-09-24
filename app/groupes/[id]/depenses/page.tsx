@@ -1,6 +1,7 @@
 "use client"
+import { useChargement } from "@/lib/useChargement"
 import { toast } from "@/lib/toast"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { useParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import { authHeaders } from "@/lib/authFetch"
@@ -27,7 +28,6 @@ export default function DepensesPartageesPage() {
   const [participants, setParticipants] = useState<Record<string, boolean>>({})
   const [enCours, setEnCours] = useState(false)
 
-  useEffect(() => { charger() }, [])
 
   async function charger() {
     const { data: { user } } = await supabase.auth.getUser()
@@ -57,6 +57,8 @@ export default function DepensesPartageesPage() {
       setParts([])
     }
   }
+
+  useChargement(charger, id)
 
   async function creerDepense() {
     const total = parseFloat(montant)
@@ -96,7 +98,7 @@ export default function DepensesPartageesPage() {
     })
     const data = await res.json()
     setEnCours(false)
-    if (data.url) window.location.href = data.url
+    if (data.url) window.location.assign(data.url)
     else toast(data.error || "Règlement impossible. Réessaie dans un instant.", "error")
   }
 

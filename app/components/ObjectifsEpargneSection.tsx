@@ -1,5 +1,6 @@
 "use client"
-import { useEffect, useState } from "react"
+import { useChargement } from "@/lib/useChargement"
+import { useState } from "react"
 import { supabase } from "@/lib/supabase"
 import Card from "./ui/Card"
 import Button from "./ui/Button"
@@ -19,7 +20,6 @@ export default function ObjectifsEpargneSection() {
   const [contribuerA, setContribuerA] = useState<string | null>(null)
   const [montantContrib, setMontantContrib] = useState("")
 
-  useEffect(() => { charger() }, [])
 
   async function charger() {
     const { data: { user } } = await supabase.auth.getUser()
@@ -28,6 +28,8 @@ export default function ObjectifsEpargneSection() {
     const { data } = await supabase.from("objectifs_personnels").select("*").eq("user_id", user.id).order("created_at", { ascending: false })
     setObjectifs(data || [])
   }
+
+  useChargement(charger)
 
   async function creerObjectif() {
     const cible = parseFloat(montantCible)
@@ -51,7 +53,7 @@ export default function ObjectifsEpargneSection() {
   return (
     <div style={{ marginBottom: "14px" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px" }}>
-        <div style={{ fontSize: "13px", fontWeight: 500, color: colors.text }}>Mes objectifs d'épargne</div>
+        <div style={{ fontSize: "13px", fontWeight: 500, color: colors.text }}>Mes objectifs d’épargne</div>
         <Button variant="secondary" onClick={() => setShowForm(!showForm)}>+ Nouvel objectif</Button>
       </div>
 
@@ -96,7 +98,7 @@ export default function ObjectifsEpargneSection() {
                 <Button variant="ghost" onClick={() => { setContribuerA(null); setMontantContrib("") }}>✕</Button>
               </div>
             ) : (
-              <Button full onClick={() => setContribuerA(o.id)}>+ J'ai épargné</Button>
+              <Button full onClick={() => setContribuerA(o.id)}>+ J’ai épargné</Button>
             )}
           </Card>
         )

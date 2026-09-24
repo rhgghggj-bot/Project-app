@@ -1,9 +1,14 @@
 "use client"
+import { Fraunces } from "next/font/google"
+import { useMediaQuery } from "@/lib/useStockage"
 import Link from "next/link"
 import { useEffect, useRef, useState } from "react"
 import dynamic from "next/dynamic"
 import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
+
+// Police du titre de la présentation, servie par next/font (auto-hébergée, sans décalage au chargement)
+const fraunces = Fraunces({ subsets: ["latin"], weight: ["600", "900"], style: ["normal", "italic"] })
 
 const StarScene3D = dynamic(() => import("../components/StarScene3D"), { ssr: false })
 
@@ -167,7 +172,7 @@ function FeaturesJourney() {
   const wrapRef = useRef<HTMLDivElement>(null)
   const [progress, setProgress] = useState(0)
   const [mouse, setMouse] = useState({ x: 0, y: 0 })
-  const [reducedMotion, setReducedMotion] = useState(false)
+  const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)')
   const scrollDistance = 4600
 
   useEffect(() => {
@@ -179,8 +184,6 @@ function FeaturesJourney() {
       scrub: 0.45,
       onUpdate: (self) => setProgress(self.progress),
     })
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
-    setReducedMotion(mq.matches)
     return () => st.kill()
   }, [])
 
@@ -275,14 +278,14 @@ function FeaturesJourney() {
                 }}>
                   <div style={{ color: f.color, marginBottom: '16px', transform: 'scale(2)' }}>{f.icon}</div>
                   <div style={{
-                    fontFamily: "'Fraunces', Georgia, serif", fontWeight: 900, fontStyle: 'italic',
+                    fontFamily: fraunces.style.fontFamily, fontWeight: 900, fontStyle: 'italic',
                     fontSize: 'clamp(28px,4.8vw,46px)', color: '#fff', marginBottom: '10px', letterSpacing: '-0.01em'
                   }}>
                     {f.title}
                   </div>
                   <div style={{
                     display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '0.35em',
-                    fontFamily: "'Fraunces', Georgia, serif", fontStyle: 'italic', fontWeight: 600,
+                    fontFamily: fraunces.style.fontFamily, fontStyle: 'italic', fontWeight: 600,
                     fontSize: 'clamp(15px,1.8vw,19px)', color: f.color, marginBottom: '26px', maxWidth: '520px'
                   }}>
                     {words.map((w, wi) => {
@@ -467,9 +470,6 @@ export default function Presentation() {
 
   return (
     <main style={{ background: '#fff', fontFamily: '-apple-system,BlinkMacSystemFont,sans-serif' }}>
-      <link rel="preconnect" href="https://fonts.googleapis.com" />
-      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,600;0,900;1,600;1,900&display=swap" />
 
       {/* ---------- MINI NAV (fixe pendant tout le scroll) ---------- */}
       <div style={{
@@ -487,9 +487,9 @@ export default function Presentation() {
           <span style={{ fontSize: '14px', fontWeight: 700, color: '#fff', letterSpacing: '0.02em' }}>NEXIA</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-          <a href="/connexion" style={{ fontSize: '12.5px', color: 'rgba(255,255,255,0.7)', textDecoration: 'none' }}>
+          <Link href="/connexion" style={{ fontSize: '12.5px', color: 'rgba(255,255,255,0.7)', textDecoration: 'none' }}>
             Connexion
-          </a>
+          </Link>
           <Link href="/inscription" style={{textDecoration:'none',background:'#fff',color:'#1a3a6e',border:'none',borderRadius:'99px',padding:'8px 16px',fontSize:'12.5px',fontWeight:600,cursor:'pointer',display:'inline-block',textAlign:'center'}}>
               Créer mon compte
             </Link>

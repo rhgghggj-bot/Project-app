@@ -1,4 +1,5 @@
 "use client"
+import { ecrireStockage } from "@/lib/useStockage"
 import { onActivate } from "@/lib/a11y"
 import { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabase"
@@ -42,7 +43,7 @@ export default function DeviseSelector({ onClose }: { onClose: () => void }) {
     if (user) {
       await supabase.from('profiles').update({ devise }).eq('id', user.id)
     }
-    localStorage.setItem('nexia_devise', devise)
+    ecrireStockage('local', 'nexia_devise', devise)
     setLoading(false)
     onClose()
     window.location.reload()

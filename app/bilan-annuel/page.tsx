@@ -1,6 +1,7 @@
 "use client"
+import { useChargement } from "@/lib/useChargement"
 import Link from "next/link"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { supabase } from "@/lib/supabase"
 
 const COULEURS_CARTE = [
@@ -16,7 +17,6 @@ export default function BilanAnnuelPage() {
   const [chargement, setChargement] = useState(true)
   const [stats, setStats] = useState<any>(null)
 
-  useEffect(() => { charger() }, [])
 
   async function charger() {
     try {
@@ -70,6 +70,8 @@ export default function BilanAnnuelPage() {
     }
   }
 
+  useChargement(charger)
+
   if (chargement) return null
 
   if (!stats) {
@@ -77,7 +79,7 @@ export default function BilanAnnuelPage() {
       <main style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#0A1628", color: "#fff", padding: "24px", textAlign: "center" }}>
         <div>
           <div style={{ fontSize: "16px", marginBottom: "8px" }}>Connecte-toi pour voir ton bilan</div>
-          <a href="/connexion" style={{ color: "#2B7FFF", fontSize: "14px" }}>Se connecter →</a>
+          <Link href="/connexion" style={{ color: "#2B7FFF", fontSize: "14px" }}>Se connecter →</Link>
         </div>
       </main>
     )

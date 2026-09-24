@@ -1,4 +1,5 @@
 "use client"
+import Link from "next/link"
 import { toast } from "@/lib/toast"
 import { onActivate, useEscape } from "@/lib/a11y"
 import { useEffect, useState, useRef } from "react"
@@ -87,12 +88,12 @@ export default function Marketplace() {
   }
 
   async function contacterVendeur(annonce: any) {
-    if (!user) { window.location.href = "/connexion"; return }
+    if (!user) { window.location.assign("/connexion"); return }
     if (annonce.user_id === user.id) return
     const idConv = await ouvrirConversationPrivee(supabase, user.id, annonce.user_id)
     if (idConv) {
       await supabase.from("groupes").update({ annonce_id: annonce.id }).eq("id", idConv)
-      window.location.href = "/groupes/" + idConv
+      window.location.assign("/groupes/" + idConv)
     }
   }
 
@@ -271,7 +272,7 @@ export default function Marketplace() {
                     {vendeur[0]?.toUpperCase()}
                   </div>
                   <div style={{flex:1,minWidth:0}}>
-                    <a href={'/vendeur/'+a.user_id} onClick={e => e.stopPropagation()} style={{fontSize:"13px",fontWeight:"600",color:"#1a1a2e",textDecoration:"none"}}>{vendeur}</a>
+                    <Link href={'/vendeur/'+a.user_id} onClick={e => e.stopPropagation()} style={{fontSize:"13px",fontWeight:"600",color:"#1a1a2e",textDecoration:"none"}}>{vendeur}</Link>
                     <div style={{fontSize:"11px",color:"#aaa"}}>{a.categorie}</div>
                   </div>
                   {a.statut === "réservé" && <div style={{flexShrink:0,background:"#D4A843",borderRadius:"99px",padding:"3px 10px",fontSize:"10px",color:"#fff",fontWeight:"600"}}>Réservé</div>}
@@ -346,11 +347,11 @@ export default function Marketplace() {
                 </div>
 
                 {nbLikes > 0 && (
-                  <div style={{padding:"4px 14px 0",fontSize:"13px",fontWeight:"600",color:"#1a1a2e"}}>{nbLikes} j'aime</div>
+                  <div style={{padding:"4px 14px 0",fontSize:"13px",fontWeight:"600",color:"#1a1a2e"}}>{nbLikes} j’aime</div>
                 )}
 
                 <div style={{padding:"4px 14px 16px",fontSize:"13px",color:"#333",lineHeight:"1.5"}}>
-                  <div><a href={'/vendeur/'+a.user_id} onClick={e => e.stopPropagation()} style={{fontWeight:"600",color:"#1a1a2e",textDecoration:"none"}}>{vendeur}</a> {a.titre}</div>
+                  <div><Link href={'/vendeur/'+a.user_id} onClick={e => e.stopPropagation()} style={{fontWeight:"600",color:"#1a1a2e",textDecoration:"none"}}>{vendeur}</Link> {a.titre}</div>
                   {a.description && <div style={{marginTop:"4px",color:"#555"}}>{a.description}</div>}
                   {commentaires.filter(c => c.annonce_id === a.id).length > 0 && (
                     <button onClick={() => setAnnonceOuverte(a)} style={{background:"none",border:"none",padding:0,marginTop:"6px",fontSize:"12px",color:"#aaa",cursor:"pointer"}}>
@@ -529,7 +530,7 @@ export default function Marketplace() {
           </div>
 
           {annoncesFiltrees.length === 0 && (
-            <div style={{textAlign:"center",padding:"48px 0",color:"#aaa",fontSize:"13px"}}>Aucune annonce pour l'instant</div>
+            <div style={{textAlign:"center",padding:"48px 0",color:"#aaa",fontSize:"13px"}}>Aucune annonce pour l’instant</div>
           )}
 
           {confirmSupprId && (
@@ -586,7 +587,7 @@ export default function Marketplace() {
                   <div style={{marginTop:"18px"}}>
                     <div style={{fontSize:"13px",fontWeight:"500",color:"#1a1a2e",marginBottom:"10px"}}>Commentaires</div>
                     {commentaires.filter(c => c.annonce_id === annonceOuverte.id).length === 0 && (
-                      <div style={{fontSize:"12px",color:"#aaa",marginBottom:"10px"}}>Aucun commentaire pour l'instant</div>
+                      <div style={{fontSize:"12px",color:"#aaa",marginBottom:"10px"}}>Aucun commentaire pour l’instant</div>
                     )}
                     {commentaires.filter(c => c.annonce_id === annonceOuverte.id).map(c => (
                       <div key={c.id} style={{display:"flex",gap:"8px",marginBottom:"10px"}}>
@@ -647,8 +648,8 @@ export default function Marketplace() {
           {annonces.filter(a => favoris.some(f => f.annonce_id === a.id && f.user_id === user?.id)).length === 0 && (
             <div style={{textAlign:"center",padding:"48px 0",color:"#aaa"}}>
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="1.5" style={{marginBottom:"8px"}}><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
-              <div style={{fontSize:"13px"}}>Rien d'enregistré pour l'instant</div>
-              <div style={{fontSize:"12px",marginTop:"4px"}}>Touche "•••" sur une publication pour l'enregistrer</div>
+              <div style={{fontSize:"13px"}}>Rien d’enregistré pour l’instant</div>
+              <div style={{fontSize:"12px",marginTop:"4px"}}>Touche “•••” sur une publication pour l’enregistrer</div>
             </div>
           )}
         </div>

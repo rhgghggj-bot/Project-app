@@ -1,7 +1,6 @@
 "use client"
 import { onActivate } from "@/lib/a11y"
 import Link from "next/link"
-import Tutorial from "../components/Tutorial"
 
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
@@ -63,7 +62,7 @@ export default function Groupes() {
         }
       }
 
-      let profilsMap: any = {}
+      const profilsMap: any = {}
       if (idsAutresDM.length > 0) {
         const { data: profs } = await supabase.from("profiles").select("id,nom,avatar_url").in("id", idsAutresDM)
         profs?.forEach((p: any) => { profilsMap[p.id] = p })
@@ -119,7 +118,7 @@ export default function Groupes() {
     if (selectionnes.length === 1) {
       const idConv = await ouvrirConversationPrivee(supabase, user.id, selectionnes[0].id)
       setEnCreation(false)
-      if (idConv) window.location.href = "/groupes/" + idConv
+      if (idConv) window.location.assign("/groupes/" + idConv)
       return
     }
 
@@ -134,7 +133,7 @@ export default function Groupes() {
       ...selectionnes.map(p => ({ groupe_id: data.id, user_id: p.id }))
     ])
     setEnCreation(false)
-    window.location.href = `/groupes/${data.id}`
+    window.location.assign(`/groupes/${data.id}`)
   }
 
   return (
@@ -189,8 +188,8 @@ export default function Groupes() {
         {items.length === 0 && (
           <div style={{textAlign:'center',padding:'60px 20px'}}>
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ddd" strokeWidth="1.5" style={{margin:'0 auto 12px',display:'block'}}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-            <div style={{fontSize:'14px',color:'#aaa'}}>Aucune discussion pour l'instant</div>
-            <div style={{fontSize:'12px',color:'#ccc',marginTop:'4px'}}>Touche le + en haut pour écrire à quelqu'un</div>
+            <div style={{fontSize:'14px',color:'#aaa'}}>Aucune discussion pour l’instant</div>
+            <div style={{fontSize:'12px',color:'#ccc',marginTop:'4px'}}>Touche le + en haut pour écrire à quelqu’un</div>
           </div>
         )}
       </div>

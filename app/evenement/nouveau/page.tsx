@@ -45,7 +45,7 @@ function Formulaire() {
   async function creer() {
     if (!titre.trim()) { setMessage("Donne un titre à l'événement"); return }
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { window.location.href = "/connexion"; return }
+    if (!user) { window.location.assign("/connexion"); return }
 
     setEnregistrement(true)
     let lat: number | null = null, lng: number | null = null
@@ -67,7 +67,7 @@ function Formulaire() {
       setEnregistrement(false)
     } else {
       setMessage("Enregistré !")
-      setTimeout(() => { window.location.href = "/semaine" }, 700)
+      setTimeout(() => { window.location.assign("/semaine") }, 700)
     }
   }
 
@@ -113,7 +113,7 @@ function Formulaire() {
         <div style={{background:'#F8FBFF',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 12px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
           <div>
             <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e'}}>Sur plusieurs jours</div>
-            <div style={{fontSize:'11px',color:'#aaa',marginTop:'2px'}}>Du jour choisi jusqu'à une date de fin</div>
+            <div style={{fontSize:'11px',color:'#aaa',marginTop:'2px'}}>Du jour choisi jusqu’à une date de fin</div>
           </div>
           <button onClick={() => { const v=!multiJours; setMultiJours(v); if (v) { setRecurrence(false); setJoursRecurrence([]) } }}
             style={{width:'40px',height:'22px',borderRadius:'99px',border:'none',cursor:'pointer',position:'relative',background: multiJours ? '#2B7FFF' : '#E2E8F0'}}>
@@ -156,7 +156,7 @@ function Formulaire() {
                 </button>
               ))}
             </div>
-            <label style={{fontSize:'11px',color:'#2B7FFF',fontWeight:'600',textTransform:'uppercase',letterSpacing:'.05em',display:'block',marginBottom:'6px'}}>Jusqu'au (optionnel)</label>
+            <label style={{fontSize:'11px',color:'#2B7FFF',fontWeight:'600',textTransform:'uppercase',letterSpacing:'.05em',display:'block',marginBottom:'6px'}}>Jusqu’au (optionnel)</label>
             <input aria-label="Jusqu'au (optionnel)" type="date" value={recurrenceFin} onChange={e => setRecurrenceFin(e.target.value)}
               style={{width:'100%',border:'none',fontSize:'15px',color:'#1a1a2e',outline:'none',background:'transparent'}}/>
             {!recurrenceFin && <div style={{fontSize:'11px',color:'#aaa',marginTop:'2px'}}>Se répète indéfiniment si laissé vide</div>}

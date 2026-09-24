@@ -1,8 +1,8 @@
 "use client"
-import { onActivate } from "@/lib/a11y"
+import Link from "next/link"
 import SectionHeader from "@/app/components/ui/SectionHeader"
 import Tutorial from "../components/Tutorial"
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef } from "react"
 import { supabase } from "@/lib/supabase"
 
 export default function Scanner() {
@@ -11,7 +11,6 @@ export default function Scanner() {
   const [analyse, setAnalyse] = useState<any>(null)
   const [etape, setEtape] = useState<"upload"|"analyse"|"resultat">("upload")
   const fileRef = useRef<HTMLInputElement>(null)
-  const canvasRef = useRef<HTMLCanvasElement>(null)
 
   async function analyserTexte(txt: string) {
     const lignes = txt.split("\n").map(l => l.trim()).filter(l => l.length > 1)
@@ -124,7 +123,6 @@ export default function Scanner() {
     )
   }
 
-  const typeIcon: any = {}
   const typeLabel: any = { facture:"Facture / Reçu", releve_bancaire:"Relevé bancaire", contrat:"Contrat", assurance:"Assurance", autre:"Document" }
 
   return (
@@ -139,7 +137,7 @@ export default function Scanner() {
       <div style={{padding:'20px 18px'}}>
         {etape === "upload" && (
           <div>
-            <div role="button" tabIndex={0} onClick={() => fileRef.current?.click()} onKeyDown={onActivate(() => fileRef.current?.click())}
+            <div role="button" tabIndex={0} onClick={() => fileRef.current?.click()} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileRef.current?.click() } }}
               style={{border:'2px dashed #DCE9FF',borderRadius:'20px',padding:'48px 20px',textAlign:'center',cursor:'pointer',background:'#F8FBFF',marginBottom:'16px'}}>
               <div style={{fontSize:'48px',marginBottom:'12px'}}>📷</div>
               <div style={{fontSize:'15px',fontWeight:'500',color:'#1a1a2e',marginBottom:'6px'}}>Prendre une photo ou choisir un fichier</div>
@@ -241,7 +239,7 @@ export default function Scanner() {
 <div style={{marginBottom:'14px'}}>
               <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',marginBottom:'10px'}}>Utiliser ces données</div>
               {analyse.montant && (
-                <a href={'/finances?action=depense&montant='+analyse.montant+'&titre='+encodeURIComponent(analyse.titre||'')} style={{textDecoration:'none',display:'block',marginBottom:'8px'}}>
+                <Link href={'/finances?action=depense&montant='+analyse.montant+'&titre='+encodeURIComponent(analyse.titre||'')} style={{textDecoration:'none',display:'block',marginBottom:'8px'}}>
                   <div style={{background:'#FFE4E6',border:'0.5px solid #FECDD3',borderRadius:'12px',padding:'12px',display:'flex',alignItems:'center',gap:'10px'}}>
                     <svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='#F43F5E' strokeWidth='2'><line x1='12' y1='5' x2='12' y2='19'/><line x1='5' y1='12' x2='19' y2='12'/></svg>
                     <div>
@@ -250,10 +248,10 @@ export default function Scanner() {
                     </div>
                     <span style={{marginLeft:'auto',color:'#F43F5E'}}>›</span>
                   </div>
-                </a>
+                </Link>
               )}
               {analyse.montant && (
-                <a href={'/finances?action=revenu&montant='+analyse.montant+'&titre='+encodeURIComponent(analyse.titre||'')} style={{textDecoration:'none',display:'block',marginBottom:'8px'}}>
+                <Link href={'/finances?action=revenu&montant='+analyse.montant+'&titre='+encodeURIComponent(analyse.titre||'')} style={{textDecoration:'none',display:'block',marginBottom:'8px'}}>
                   <div style={{background:'#E1F5EE',border:'0.5px solid #A7F3D0',borderRadius:'12px',padding:'12px',display:'flex',alignItems:'center',gap:'10px'}}>
                     <svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='#10B981' strokeWidth='2'><line x1='12' y1='19' x2='12' y2='5'/><line x1='5' y1='12' x2='19' y2='12'/></svg>
                     <div>
@@ -262,9 +260,9 @@ export default function Scanner() {
                     </div>
                     <span style={{marginLeft:'auto',color:'#10B981'}}>›</span>
                   </div>
-                </a>
+                </Link>
               )}
-              <a href={'/finances?action=fiscalite&salaire='+encodeURIComponent(String(analyse.montant||0))} style={{textDecoration:'none',display:'block',marginBottom:'8px'}}>
+              <Link href={'/finances?action=fiscalite&salaire='+encodeURIComponent(String(analyse.montant||0))} style={{textDecoration:'none',display:'block',marginBottom:'8px'}}>
                 <div style={{background:'#EEF5FF',border:'0.5px solid #DCE9FF',borderRadius:'12px',padding:'12px',display:'flex',alignItems:'center',gap:'10px'}}>
                   <svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='#2B7FFF' strokeWidth='2'><rect x='2' y='3' width='20' height='14' rx='2'/><line x1='8' y1='21' x2='16' y2='21'/><line x1='12' y1='17' x2='12' y2='21'/></svg>
                   <div>
@@ -273,9 +271,9 @@ export default function Scanner() {
                   </div>
                   <span style={{marginLeft:'auto',color:'#2B7FFF'}}>›</span>
                 </div>
-              </a>
+              </Link>
               {analyse.date && (
-                <a href={'/semaine?titre='+encodeURIComponent(analyse.titre||'')+'&date='+(analyse.date||'')} style={{textDecoration:'none',display:'block',marginBottom:'8px'}}>
+                <Link href={'/semaine?titre='+encodeURIComponent(analyse.titre||'')+'&date='+(analyse.date||'')} style={{textDecoration:'none',display:'block',marginBottom:'8px'}}>
                   <div style={{background:'#FDF8EC',border:'0.5px solid #F0D88A',borderRadius:'12px',padding:'12px',display:'flex',alignItems:'center',gap:'10px'}}>
                     <svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='#D4A843' strokeWidth='2'><rect x='3' y='4' width='18' height='18' rx='2'/><line x1='16' y1='2' x2='16' y2='6'/><line x1='8' y1='2' x2='8' y2='6'/><line x1='3' y1='10' x2='21' y2='10'/></svg>
                     <div>
@@ -284,7 +282,7 @@ export default function Scanner() {
                     </div>
                     <span style={{marginLeft:'auto',color:'#D4A843'}}>›</span>
                   </div>
-                </a>
+                </Link>
               )}
             </div>
             <button onClick={reset} style={{width:'100%',background:'#F8FBFF',color:'#2B7FFF',fontSize:'13px',fontWeight:'500',padding:'12px',borderRadius:'12px',border:'0.5px solid #DCE9FF',cursor:'pointer'}}>

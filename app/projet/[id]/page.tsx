@@ -42,7 +42,7 @@ export default function Projet() {
 
   async function soutenirProjet() {
     const montant = parseFloat(montantSoutien)
-    if (!montant || montant <= 0 || !user) { if (!user) window.location.href = "/connexion"; return }
+    if (!montant || montant <= 0 || !user) { if (!user) window.location.assign("/connexion"); return }
     setEnCoursSoutien(true)
     const res = await fetch("/api/stripe/soutenir-projet", {
       method: "POST",
@@ -51,7 +51,7 @@ export default function Projet() {
     })
     const data = await res.json()
     setEnCoursSoutien(false)
-    if (data.url) window.location.href = data.url
+    if (data.url) window.location.assign(data.url)
     else toast(data.error || "Paiement impossible. Réessaie ou utilise une autre carte.", "error")
   }
 
@@ -70,7 +70,7 @@ export default function Projet() {
   }
 
   async function toggleLike() {
-    if (!user) { window.location.href = "/connexion"; return }
+    if (!user) { window.location.assign("/connexion"); return }
     const dejaLike = likes.find(l => l.user_id === user.id)
     if (dejaLike) {
       await supabase.from("projets_likes").delete().eq("id", dejaLike.id)
@@ -99,7 +99,7 @@ export default function Projet() {
           <div style={{padding:'16px'}}>
             <span style={{fontSize:'11px',background:'#EEF5FF',color:'#2B7FFF',padding:'3px 10px',borderRadius:'99px',fontWeight:'500'}}>{projet.categorie}</span>
             {projet.user_id && (
-              <a href={'/profil/'+projet.user_id} style={{display:'block',fontSize:'12px',color:'#2B7FFF',marginTop:'8px',textDecoration:'none'}}>Voir le profil du créateur →</a>
+              <Link href={'/profil/'+projet.user_id} style={{display:'block',fontSize:'12px',color:'#2B7FFF',marginTop:'8px',textDecoration:'none'}}>Voir le profil du créateur →</Link>
             )}
             <h2 style={{fontSize:'16px',fontWeight:'600',color:'#1a1a2e',marginTop:'10px',marginBottom:'8px'}}>{projet.titre}</h2>
             <p style={{fontSize:'13px',color:'#666',lineHeight:'1.6',marginBottom:'14px'}}>{projet.description}</p>

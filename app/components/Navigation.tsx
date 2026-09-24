@@ -100,7 +100,7 @@ export default function Navigation() {
           {user ? (
             <Link href="/profile" transitionTypes={['nav-tab']} style={{fontSize:'13px',fontWeight:'500',background:'#2B7FFF',color:'#fff',padding:'6px 14px',borderRadius:'99px',textDecoration:'none'}}>Mon profil</Link>
           ) : (
-            <a href="/connexion" style={{fontSize:'13px',fontWeight:'500',background:'#2B7FFF',color:'#fff',padding:'6px 14px',borderRadius:'99px',textDecoration:'none'}}>Connexion</a>
+            <Link href="/connexion" style={{fontSize:'13px',fontWeight:'500',background:'#2B7FFF',color:'#fff',padding:'6px 14px',borderRadius:'99px',textDecoration:'none'}}>Connexion</Link>
           )}
         </div>
       </nav>

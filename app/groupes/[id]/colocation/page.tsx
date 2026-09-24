@@ -1,5 +1,6 @@
 "use client"
-import { useEffect, useState } from "react"
+import { useChargement } from "@/lib/useChargement"
+import { useState } from "react"
 import { useParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import SectionHeader from "@/app/components/ui/SectionHeader"
@@ -25,7 +26,6 @@ export default function ColocationPage() {
   const [jourDuMois, setJourDuMois] = useState("1")
   const [montants, setMontants] = useState<Record<string, string>>({})
 
-  useEffect(() => { charger() }, [])
 
   async function charger() {
     const { data: { user } } = await supabase.auth.getUser()
@@ -50,6 +50,8 @@ export default function ColocationPage() {
       setParts([])
     }
   }
+
+  useChargement(charger, id)
 
   async function creerCharge() {
     const jour = parseInt(jourDuMois, 10)

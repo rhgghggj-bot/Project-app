@@ -1,5 +1,6 @@
 'use client'
-import { useEffect, useRef, useState } from 'react'
+import { ecrireStockage, useStockageLocal } from "@/lib/useStockage"
+import { useEffect, useRef, useState, useEffectEvent } from 'react'
 import { useRouter } from 'next/navigation'
 
 const TAILLE = 15
@@ -26,7 +27,8 @@ export default function Snake() {
   const [nourriture, setNourriture] = useState<Pos>({ r: 10, c: 10 })
   const [direction, setDirectionAffichee] = useState<Direction>('droite')
   const [score, setScore] = useState(0)
-  const [meilleur, setMeilleur] = useState(0)
+  // Record enregistré sur l’appareil (source unique, mis à jour par ecrireStockage)
+  const meilleur = parseInt(useStockageLocal('snake_meilleur') || '0') || 0
   const [gameOver, setGameOver] = useState(false)
   const [enPause, setEnPause] = useState(true)
   const [pulse, setPulse] = useState(false)
@@ -35,11 +37,6 @@ export default function Snake() {
   const serpentRef = useRef(serpent)
   const nourritureRef = useRef(nourriture)
   const touchStart = useRef<{x:number,y:number}|null>(null)
-
-  useEffect(() => {
-    const m = localStorage.getItem('snake_meilleur')
-    if (m) setMeilleur(parseInt(m))
-  }, [])
 
   useEffect(() => { serpentRef.current = serpent }, [serpent])
   useEffect(() => { nourritureRef.current = nourriture }, [nourriture])
@@ -51,7 +48,7 @@ export default function Snake() {
       setDirectionAffichee(directionRef.current)
       const s = serpentRef.current
       const tete = s[0]
-      let nouvelleTete: Pos = { ...tete }
+      const nouvelleTete: Pos = { ...tete }
       if (directionRef.current === 'haut') nouvelleTete.r -= 1
       if (directionRef.current === 'bas') nouvelleTete.r += 1
       if (directionRef.current === 'gauche') nouvelleTete.c -= 1
@@ -74,7 +71,7 @@ export default function Snake() {
         setNourriture(nf)
         setScore(sc => {
           const ns = sc + 10
-          if (ns > meilleur) { setMeilleur(ns); localStorage.setItem('snake_meilleur', String(ns)) }
+          if (ns > meilleur) { ecrireStockage('local', 'snake_meilleur', String(ns)) }
           return ns
         })
       }
@@ -90,12 +87,14 @@ export default function Snake() {
     if (enPause) setEnPause(false)
   }
 
+  // Toujours la version à jour de changerDirection (elle lit enPause) sans réabonner le clavier
+  const directionClavier = useEffectEvent((d: Direction) => changerDirection(d))
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (e.key === 'ArrowUp') changerDirection('haut')
-      if (e.key === 'ArrowDown') changerDirection('bas')
-      if (e.key === 'ArrowLeft') changerDirection('gauche')
-      if (e.key === 'ArrowRight') changerDirection('droite')
+      if (e.key === 'ArrowUp') directionClavier('haut')
+      if (e.key === 'ArrowDown') directionClavier('bas')
+      if (e.key === 'ArrowLeft') directionClavier('gauche')
+      if (e.key === 'ArrowRight') directionClavier('droite')
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)

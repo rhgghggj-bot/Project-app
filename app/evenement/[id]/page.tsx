@@ -63,13 +63,13 @@ export default function DetailEvenement() {
       setMessage("Erreur : " + error.message)
     } else {
       setMessage("Enregistré !")
-      setTimeout(() => { window.location.href = "/semaine" }, 800)
+      setTimeout(() => { window.location.assign("/semaine") }, 800)
     }
   }
 
   async function supprimer() {
     await supabase.from("evenements_calendrier").delete().eq("id", id)
-    window.location.href = "/semaine"
+    window.location.assign("/semaine")
   }
 
   if (loading) {

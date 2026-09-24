@@ -1,4 +1,5 @@
 "use client"
+import Link from "next/link"
 import { onActivate } from "@/lib/a11y"
 import { useEffect, useRef, useState } from "react"
 import { supabase } from "@/lib/supabase"
@@ -103,7 +104,6 @@ export default function Constellation({ evenements, periodeLabel = "cette semain
   const [plein, setPlein] = useState(false)
   const [noms, setNoms] = useState<Record<string, string>>(NOMS_PAR_DEFAUT)
   const stateRef = useRef({ rx: 0.4, ry: 0.6, dragging: false, lastX: 0, lastY: 0, vitesse: 2, cibleVitesse: 2 })
-  const debounceRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({})
   const starsRef = useRef<Star[]>([])
   const rafRef = useRef<number | null>(null)
 
@@ -396,7 +396,7 @@ export default function Constellation({ evenements, periodeLabel = "cette semain
       canvas.removeEventListener("click", onClick)
       canvas.removeEventListener("wheel", onWheel)
     }
-  }, [evenements, domaineActif, plein, voirTrajets, segmentActif])
+  }, [evenements, domaineActif, plein, voirTrajets, segmentActif, trajets.segments])
 
   const contenu = (
     <>
@@ -415,11 +415,11 @@ export default function Constellation({ evenements, periodeLabel = "cette semain
 
       <div style={{ minHeight: "16px", margin: "8px 0 10px", textAlign: "center" }}>
         {selected && !domaineActif && (
-          <a href={`/evenement/${selected.id}`} style={{ fontSize: "13px", color: "#fff", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "6px" }}>
+          <Link href={`/evenement/${selected.id}`} style={{ fontSize: "13px", color: "#fff", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "6px" }}>
             <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: selected.couleur || "#2B7FFF", flexShrink: 0 }}></span>
             {selected.titre}{selected.heure ? ` · ${selected.heure}` : ""}
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
-          </a>
+          </Link>
         )}
         {!selected && !domaineActif && !voirTrajets && (
           <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.4)" }}>Fais glisser pour tourner, touche un point ou un domaine</span>
@@ -453,7 +453,7 @@ export default function Constellation({ evenements, periodeLabel = "cette semain
             <div style={{ fontSize: "13px", color: "#fff", marginBottom: "4px" }}>
               <strong style={{ fontWeight: 600 }}>{formatDuree(trajets.totalMin)}</strong> de trajet estimé {periodeLabel}
             </div>
-            <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)" }}>Estimation à vol d'oiseau · selon le mode de transport choisi sur chaque événement</div>
+            <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)" }}>Estimation à vol d’oiseau · selon le mode de transport choisi sur chaque événement</div>
           </div>
         )}
       </div>
@@ -585,12 +585,12 @@ export default function Constellation({ evenements, periodeLabel = "cette semain
       {domaineActif && !modeEdition && !voirTrajets && (
         <div style={{ marginTop: "10px", maxHeight: plein ? "22vh" : "none", overflowY: plein ? "auto" : "visible" }}>
           {parCouleur.get(domaineActif)!.evts.map(e => (
-            <a key={e._occId || e.id} href={`/evenement/${e.id}`} style={{ textDecoration: "none", display: "block" }}>
+            <Link key={e._occId || e.id} href={`/evenement/${e.id}`} style={{ textDecoration: "none", display: "block" }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(255,255,255,0.06)", borderLeft: `3px solid ${e.couleur || "#2B7FFF"}`, borderRadius: "8px", padding: "8px 10px", marginBottom: "5px" }}>
                 <span style={{ fontSize: "12px", color: "#fff" }}>{e.titre}</span>
                 <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.5)" }}>{e.heure}{e.duree ? ` · ${formatDuree(e.duree)}` : ""}</span>
               </div>
-            </a>
+            </Link>
           ))}
         </div>
       )}

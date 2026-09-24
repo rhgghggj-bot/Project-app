@@ -72,10 +72,13 @@ function FinancesContent() {
   const [dureeObjectif, setDureeObjectif] = useState(12)
   const [annees, setAnnees] = useState(1)
   const [moisExtra, setMoisExtra] = useState(0)
-  const [duree, setDuree] = useState("12")
-  const [showEpargne, setShowEpargne] = useState(false)
 
-  useEffect(() => {
+  // Lien entrant (ex. depuis le scanner : ?action=depense&montant=42) : ouvre le bon formulaire.
+  // Ajusté pendant le rendu quand l’URL change, plutôt que dans un effet (pas de rendu en cascade).
+  const paramsUrl = searchParams.toString()
+  const [paramsTraites, setParamsTraites] = useState<string | null>(null)
+  if (paramsUrl !== paramsTraites) {
+    setParamsTraites(paramsUrl)
     const action = searchParams.get('action')
     const montant_url = searchParams.get('montant')
     const titre_url = searchParams.get('titre')
@@ -94,7 +97,7 @@ function FinancesContent() {
     } else if (action === 'fiscalite') {
       setOnglet('fiscalite')
     }
-  }, [searchParams])
+  }
 
   useEffect(() => {
     async function charger() {
@@ -227,12 +230,10 @@ function FinancesContent() {
 
   const moisActuelData = donneesGraphique[5]
   const solde = moisActuelData.revenus - moisActuelData.depenses
-  const maxVal = Math.max(...donneesGraphique.map(d => Math.max(d.depenses, d.revenus)), 1)
   const pctDepenses = moisActuelData.revenus > 0 ? Math.min((moisActuelData.depenses / moisActuelData.revenus) * 100, 100) : 0
   const pctEpargne = moisActuelData.revenus > 0 ? Math.max(0, Math.min(100 - pctDepenses, 100)) : 0
   const statutSolde = solde > 0 ? "benefice" : solde < 0 ? "deficit" : "equilibre"
   const couleurSolde = statutSolde === "benefice" ? "#10B981" : statutSolde === "deficit" ? "#F43F5E" : "#D4A843"
-  const iconeSolde = ""
   const texteSolde = statutSolde === "benefice" ? "Bénéfice" : statutSolde === "deficit" ? "Déficit" : "Équilibre"
 
   const moisMaxDep = donneesGraphique.reduce((a, b) => a.depenses > b.depenses ? a : b)
@@ -606,7 +607,7 @@ function FinancesContent() {
           {depenses.filter(d => d.recurrent).length === 0 && revenus.filter(r => r.recurrent).length === 0 && (
             <div style={{textAlign:'center',padding:'32px 0',color:'#aaa'}}>
               <svg width='32' height='32' viewBox='0 0 24 24' fill='none' stroke='#aaa' strokeWidth='1.5' style={{marginBottom:'8px'}}><polyline points='23 4 23 10 17 10'/><polyline points='1 20 1 14 7 14'/><path d='M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15'/></svg>
-              <div style={{fontSize:'13px'}}>Coche "Récurrent" en ajoutant une dépense</div>
+              <div style={{fontSize:'13px'}}>Coche “Récurrent” en ajoutant une dépense</div>
             </div>
           )}
           {revenus.filter(r => r.recurrent).map((r: any) => <ItemDepense key={r.id} d={r} type="revenu" />)}
@@ -645,7 +646,7 @@ function FinancesContent() {
 
           {/* Plan épargne */}
           <div style={{background:'linear-gradient(135deg,#1a3a6e,#2B7FFF)',borderRadius:'18px',padding:'16px',marginBottom:'14px'}}>
-            <div style={{fontSize:'15px',fontWeight:'500',color:'#fff',marginBottom:'4px'}}>Plan d'épargne</div>
+            <div style={{fontSize:'15px',fontWeight:'500',color:'#fff',marginBottom:'4px'}}>Plan d’épargne</div>
             <div style={{fontSize:'12px',color:'rgba(255,255,255,0.6)'}}>Entre ton objectif et vois combien épargner par mois</div>
           </div>
 

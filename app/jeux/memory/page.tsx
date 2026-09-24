@@ -1,4 +1,5 @@
 'use client'
+import { ecrireStockage, useStockagesLocaux } from "@/lib/useStockage"
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
@@ -9,6 +10,7 @@ const NIVEAUX = [
   { id: 'moyen', nom: 'Moyen', paires: 10, cols: 4 },
   { id: 'difficile', nom: 'Difficile', paires: 15, cols: 5 },
 ]
+const CLES_RECORDS = NIVEAUX.map(n => 'memory_meilleur_' + n.id)
 
 function vibrer(pattern: number | number[]) {
   if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(pattern)
@@ -35,17 +37,14 @@ export default function Memory() {
   const [retournees, setRetournees] = useState<number[]>([])
   const [trouvees, setTrouvees] = useState<number[]>([])
   const [coups, setCoups] = useState(0)
-  const [meilleurs, setMeilleurs] = useState<any>({})
+  // Records par niveau (moins de coups = mieux), lus depuis l’appareil
+  const records = useStockagesLocaux(CLES_RECORDS)
+  const meilleurs: Record<string, number> = Object.fromEntries(NIVEAUX.map(n => [n.id, parseInt(records['memory_meilleur_' + n.id] || '0') || 0]))
   const [temps, setTemps] = useState(0)
   const [enCours, setEnCours] = useState(false)
   const [termine, setTermine] = useState(false)
   const bloque = useRef(false)
 
-  useEffect(() => {
-    const m: any = {}
-    NIVEAUX.forEach(n => { m[n.id] = parseInt(localStorage.getItem('memory_meilleur_'+n.id) || '0') })
-    setMeilleurs(m)
-  }, [])
 
   useEffect(() => {
     if (!enCours || termine) return
@@ -89,13 +88,7 @@ export default function Memory() {
             vibrer([20,40,20,40,60])
             const score = coups + 1
             const cle = niveau!.id
-            setMeilleurs((prev: any) => {
-              if (prev[cle] === 0 || score < prev[cle]) {
-                localStorage.setItem('memory_meilleur_'+cle, String(score))
-                return { ...prev, [cle]: score }
-              }
-              return prev
-            })
+            if (!meilleurs[cle] || score < meilleurs[cle]) ecrireStockage('local', 'memory_meilleur_'+cle, String(score))
           }
         }, 500)
       } else {

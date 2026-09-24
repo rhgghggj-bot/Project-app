@@ -32,13 +32,13 @@ export default function NouveauProjet() {
 
   async function publier() {
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { window.location.href = "/connexion"; return }
+    if (!user) { window.location.assign("/connexion"); return }
     const { error } = await supabase.from("projets").insert({
       user_id: user.id, titre, description, categorie,
       image_url: revolut, groupe_id: groupeId || null, prive
     })
     if (error) { setMessage("Erreur : " + error.message) }
-    else { setMessage("Projet publié !"); setTimeout(() => window.location.href = "/profile", 1500) }
+    else { setMessage("Projet publié !"); setTimeout(() => window.location.assign("/profile"), 1500) }
   }
 
   const cats = ["Tech","Restauration","Commerce","Musique","Art","Sport","Éducation","Autre"]

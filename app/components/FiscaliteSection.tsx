@@ -143,7 +143,7 @@ export default function FiscaliteSection() {
           <input aria-label="Primes maladie déductibles (CHF)" type="number" value={maladie} onChange={e=>setMaladie(Number(e.target.value))} style={{...inp,marginBottom:'10px'}}/>
           <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Dons à des associations (max 20%)</label>
           <input aria-label="Dons à des associations (max 20%)" type="number" value={dons} onChange={e=>setDons(Number(e.target.value))} style={{...inp,marginBottom:'10px'}}/>
-          <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Frais de garde d'enfants (CHF)</label>
+          <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Frais de garde d’enfants (CHF)</label>
           <input aria-label="Frais de garde d'enfants (CHF)" type="number" value={garde} onChange={e=>setGarde(Number(e.target.value))} style={inp}/>
         </div>
       )}
@@ -161,7 +161,7 @@ export default function FiscaliteSection() {
             <option value="mar">Marié(e)</option>
             <option value="mon">Famille monoparentale</option>
           </select>
-          <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Nombre d'enfants</label>
+          <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Nombre d’enfants</label>
           <select aria-label="Nombre d'enfants" value={enfants} onChange={e=>setEnfants(Number(e.target.value))} style={sel}>
             {[0,1,2,3,4].map(n=><option key={n} value={n}>{n===4?'4+':n}</option>)}
           </select>
@@ -212,7 +212,7 @@ export default function FiscaliteSection() {
           </div>
           <div style={{background:'#FDF8EC',border:'0.5px solid #F0D88A',borderRadius:'12px',padding:'12px'}}>
             <div style={{fontSize:'12px',fontWeight:'600',color:'#D4A843',marginBottom:'4px'}}>Estimation uniquement</div>
-            <div style={{fontSize:'12px',color:'#666',lineHeight:'1.6'}}>Basé sur les barèmes 2025. L'impôt communal n'est pas inclus. Consulte un fiduciaire pour un calcul exact.</div>
+            <div style={{fontSize:'12px',color:'#666',lineHeight:'1.6'}}>Basé sur les barèmes 2025. L’impôt communal n’est pas inclus. Consulte un fiduciaire pour un calcul exact.</div>
           </div>
         </div>
       )}

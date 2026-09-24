@@ -1,5 +1,6 @@
 'use client'
-import { useEffect, useRef, useState } from 'react'
+import { ecrireStockage, useStockageLocal } from "@/lib/useStockage"
+import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 const TAILLE = 8
@@ -74,7 +75,8 @@ export default function BlockBlast() {
   const [pieces, setPieces] = useState<any[]>(() => nouvellesPieces())
   const [selection, setSelection] = useState<number|null>(null)
   const [score, setScore] = useState(0)
-  const [meilleur, setMeilleur] = useState(0)
+  // Record enregistré sur l’appareil (source unique, mis à jour par ecrireStockage)
+  const meilleur = parseInt(useStockageLocal('blockblast_meilleur') || '0') || 0
   const [survole, setSurvole] = useState<{r:number,c:number}|null>(null)
   const [gameOver, setGameOver] = useState(false)
   const [secousse, setSecousse] = useState(false)
@@ -84,13 +86,9 @@ export default function BlockBlast() {
   const [dernierPose, setDernierPose] = useState<Set<string>>(new Set())
   const enCoursRef = useRef(false)
 
-  useEffect(() => {
-    const m = localStorage.getItem('blockblast_meilleur')
-    if (m) setMeilleur(parseInt(m))
-  }, [])
-
+  const popupIdRef = useRef(0)
   function ajouterPopup(texte: string, x: number, y: number, couleur: string) {
-    const id = Math.random().toString(36).slice(2)
+    const id = String(++popupIdRef.current)
     setPopups(p => [...p, { id, texte, x, y, couleur }])
     setTimeout(() => setPopups(p => p.filter(pp => pp.id !== id)), 800)
   }
@@ -162,7 +160,7 @@ export default function BlockBlast() {
         const nouveauScore = score + nbCellules + bonus
         setScore(nouveauScore)
         ajouterPopup('+'+bonus, 45, 40, '#D4A843')
-        if (nouveauScore > meilleur) { setMeilleur(nouveauScore); localStorage.setItem('blockblast_meilleur', String(nouveauScore)) }
+        if (nouveauScore > meilleur) { ecrireStockage('local', 'blockblast_meilleur', String(nouveauScore)) }
         setPieces(piecesFinales)
         setSelection(null)
         setSurvole(null)
@@ -172,7 +170,7 @@ export default function BlockBlast() {
     } else {
       const nouveauScore = score + nbCellules
       setScore(nouveauScore)
-      if (nouveauScore > meilleur) { setMeilleur(nouveauScore); localStorage.setItem('blockblast_meilleur', String(nouveauScore)) }
+      if (nouveauScore > meilleur) { ecrireStockage('local', 'blockblast_meilleur', String(nouveauScore)) }
       setPieces(piecesFinales)
       setSelection(null)
       setSurvole(null)

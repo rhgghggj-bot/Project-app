@@ -1,9 +1,10 @@
 "use client"
+import { useMaintenant } from "@/lib/useMaintenant"
 import { SkeletonChat } from "@/app/components/ui/Skeleton"
 import { toast } from "@/lib/toast"
 import { useEscape } from "@/lib/a11y"
 import Link from "next/link"
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState, useRef, useEffectEvent } from "react"
 import { useParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import { authHeaders } from "@/lib/authFetch"
@@ -27,6 +28,7 @@ function GlisserConfirmer({ label, couleur, onConfirm }: { label: string; couleu
   const posRef = useRef(0)
   const rgb = hexVersRgb(couleur)
 
+  const confirmerGlissement = useEffectEvent(() => onConfirm())
   useEffect(() => {
     if (!dragging) return
     function calc(clientX: number) {
@@ -48,7 +50,7 @@ function GlisserConfirmer({ label, couleur, onConfirm }: { label: string; couleu
       if (posRef.current > 78) {
         setPos(100)
         setFait(true)
-        onConfirm()
+        confirmerGlissement()
       } else {
         setPos(0)
         posRef.current = 0
@@ -125,12 +127,11 @@ export default function GroupePage() {
   const [lienInvitation, setLienInvitation] = useState("")
   const [copie, setCopie] = useState(false)
   const [menuOuvert, setMenuOuvert] = useState(false)
+  const maintenant = useMaintenant()
   useEscape(!!menuOuvert, () => setMenuOuvert(false))
   const [messageActif, setMessageActif] = useState<any>(null)
   const [editionId, setEditionId] = useState<string|null>(null)
   const [editionTexte, setEditionTexte] = useState("")
-  const [reactions, setReactions] = useState<Record<string,Record<string,number>>>({})
-  const [pickerMsg, setPickerMsg] = useState<string|null>(null)
   const messagesEndRef = useRef<any>(null)
   const channelRef = useRef<any>(null)
 
@@ -218,7 +219,7 @@ export default function GroupePage() {
     })
     const data = await res.json()
     setPaiementEnCours(false)
-    if (data.url) window.location.href = data.url
+    if (data.url) window.location.assign(data.url)
     else toast(data.error || "Paiement impossible. Réessaie ou utilise une autre carte.", "error")
   }
 
@@ -297,7 +298,7 @@ export default function GroupePage() {
 
   function estMessageAppel(contenu: string, createdAt: string) {
     if (!contenu.includes('a lance un appel')) return false
-    const minutes = (Date.now() - new Date(createdAt).getTime()) / 60000
+    const minutes = (maintenant - new Date(createdAt).getTime()) / 60000
     return minutes < 30
   }
 
@@ -314,20 +315,11 @@ export default function GroupePage() {
         <div className="text-center">
           <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="1.5" style={{marginBottom:"16px"}}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
           <h1 className="text-lg font-medium text-gray-900 mb-2">{groupe.nom}</h1>
-          <p className="text-sm text-gray-400 mb-6">Ce groupe est privé. Tu as besoin d'une invitation pour y accéder.</p>
+          <p className="text-sm text-gray-400 mb-6">Ce groupe est privé. Tu as besoin d’une invitation pour y accéder.</p>
           <Link href="/groupes" transitionTypes={['nav-back']} className="text-blue-500 text-sm font-medium">← Retour aux groupes</Link>
         </div>
       </main>
     )
-  }
-
-  function toggleReaction(msgId: string, emoji: string) {
-    setReactions(prev => {
-      const msgR = prev[msgId] || {}
-      const count = msgR[emoji] || 0
-      return { ...prev, [msgId]: { ...msgR, [emoji]: count + 1 } }
-    })
-    setPickerMsg(null)
   }
 
   return (
@@ -398,13 +390,13 @@ export default function GroupePage() {
             </button>
           )}
           {user && annonceLiee.user_id === user.id && annonceLiee.statut === 'disponible' && (
-            <div style={{fontSize:'12px', color:'#aaa', textAlign:'center'}}>En attente que l'acheteur paie</div>
+            <div style={{fontSize:'12px', color:'#aaa', textAlign:'center'}}>En attente que l’acheteur paie</div>
           )}
           {user && annonceLiee.statut === 'réservé' && annonceLiee.acheteur_id === user.id && (
             <GlisserConfirmer label="Glisser une fois l'objet bien reçu" couleur="#10B981" onConfirm={libererPaiement} />
           )}
           {user && annonceLiee.statut === 'réservé' && annonceLiee.user_id === user.id && (
-            <div style={{fontSize:'12px', color:'#D4A843', textAlign:'center'}}>💳 Paiement reçu et retenu en sécurité — en attente que l'acheteur confirme la réception</div>
+            <div style={{fontSize:'12px', color:'#D4A843', textAlign:'center'}}>💳 Paiement reçu et retenu en sécurité — en attente que l’acheteur confirme la réception</div>
           )}
         </div>
       )}
@@ -412,7 +404,7 @@ export default function GroupePage() {
       {montrerAvis && annonceLiee && (
         <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',zIndex:2000,display:'flex',alignItems:'center',justifyContent:'center',padding:'20px'}}>
           <Card style={{maxWidth:'340px',width:'100%'}}>
-            <div style={{fontSize:'15px',fontWeight:600,color:colors.text,marginBottom:'4px',textAlign:'center'}}>Comment s'est passé l'achat ?</div>
+            <div style={{fontSize:'15px',fontWeight:600,color:colors.text,marginBottom:'4px',textAlign:'center'}}>Comment s’est passé l’achat ?</div>
             <div style={{fontSize:'12px',color:colors.textFaint,marginBottom:'14px',textAlign:'center'}}>Note ton expérience avec le vendeur</div>
             <div style={{display:'flex',justifyContent:'center',gap:'6px',marginBottom:'14px'}}>
               {[1,2,3,4,5].map(n => (
@@ -431,7 +423,7 @@ export default function GroupePage() {
 
       {lienInvitation && (
         <div className="mx-5 mt-3 bg-blue-50 border border-blue-100 rounded-xl p-3">
-          <p className="text-xs font-medium text-gray-700 mb-2">Lien d'invitation :</p>
+          <p className="text-xs font-medium text-gray-700 mb-2">Lien d’invitation :</p>
           <div className="flex gap-2 items-center">
             <p className="text-xs text-blue-500 flex-1 truncate">{lienInvitation}</p>
             <button onClick={copierLien} className="text-xs bg-blue-500 text-white px-3 py-1 rounded-full flex-shrink-0">
@@ -474,7 +466,7 @@ export default function GroupePage() {
             const couleurs = [{bg:'#EEF5FF',stroke:'#2B7FFF'},{bg:'#FDF8EC',stroke:'#D4A843'},{bg:'#E1F5EE',stroke:'#10B981'}]
             const col = couleurs[i % 3]
             return (
-              <a key={l.id} href={'/groupes/'+id+'/listes/'+l.id} style={{textDecoration:'none',display:'block',marginBottom:'10px'}}>
+              <Link key={l.id} href={'/groupes/'+id+'/listes/'+l.id} style={{textDecoration:'none',display:'block',marginBottom:'10px'}}>
                 <div style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'14px',padding:'14px',display:'flex',alignItems:'center',gap:'12px'}}>
                   <div style={{width:'40px',height:'40px',borderRadius:'12px',background:col.bg,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={col.stroke} strokeWidth="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
@@ -485,7 +477,7 @@ export default function GroupePage() {
                   </div>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
                 </div>
-              </a>
+              </Link>
             )
           })}
         </div>
@@ -578,13 +570,13 @@ export default function GroupePage() {
             </div>
           )}
           {projets.map((p: any) => (
-            <a key={p.id} href={`/projet/${p.id}`}>
+            <Link key={p.id} href={`/projet/${p.id}`}>
               <div className="bg-white border border-blue-100 rounded-2xl p-4 mb-3 cursor-pointer hover:border-blue-300">
                 <span className="text-xs bg-blue-50 text-blue-500 px-2 py-1 rounded-full font-medium">{p.categorie}</span>
                 <p className="font-medium text-gray-900 mt-2 mb-1">{p.titre}</p>
                 <p className="text-xs text-gray-400">{p.description}</p>
               </div>
-            </a>
+            </Link>
           ))}
         </div>
       )}

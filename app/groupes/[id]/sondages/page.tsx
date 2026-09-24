@@ -1,5 +1,6 @@
 "use client"
-import { useEffect, useState } from "react"
+import { useChargement } from "@/lib/useChargement"
+import { useState } from "react"
 import { useParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import SectionHeader from "@/app/components/ui/SectionHeader"
@@ -23,7 +24,6 @@ export default function SondagesGroupePage() {
   const [question, setQuestion] = useState("")
   const [choix, setChoix] = useState(["", ""])
 
-  useEffect(() => { charger() }, [])
 
   async function charger() {
     const { data: { user } } = await supabase.auth.getUser()
@@ -49,6 +49,8 @@ export default function SondagesGroupePage() {
       setOptions([]); setVotes([])
     }
   }
+
+  useChargement(charger, id)
 
   function updateChoix(i: number, val: string) {
     setChoix(prev => prev.map((c, idx) => idx === i ? val : c))

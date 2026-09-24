@@ -141,7 +141,7 @@ export default function Semaine() {
   const finSemaine = jours[6].toLocaleDateString('fr-FR', {day:'numeric', month:'long', year:'numeric'})
 
   const renderEvt = (e: any) => (
-    <a key={e.id} href={`/evenement/${e.id}`} style={{textDecoration:'none',display:'block'}}>
+    <Link key={e.id} href={`/evenement/${e.id}`} style={{textDecoration:'none',display:'block'}}>
       <div style={{background:'#fff',border:`0.5px solid ${e.couleur}44`,borderLeft:`3px solid ${e.couleur}`,borderRadius:'10px',padding:'10px 12px',marginBottom:'6px',display:'flex',alignItems:'center',justifyContent:'space-between',cursor:'pointer'}}>
         <div style={{minWidth:0}}>
           <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',display:'flex',alignItems:'center',gap:'5px'}}>
@@ -162,7 +162,7 @@ export default function Semaine() {
         </div>
         <button onClick={(ev) => { ev.preventDefault(); ev.stopPropagation(); supprimerEvt(e.id) }} style={{background:'none',border:'none',color:'#ddd',cursor:'pointer',fontSize:'18px',flexShrink:0,marginLeft:'8px'}}>×</button>
       </div>
-    </a>
+    </Link>
   )
 
   const evtsJourFiltre = evtDuJour(jourFiltre)
@@ -207,7 +207,7 @@ export default function Semaine() {
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'12px'}}>
           <button onClick={() => setSemaineOffset(o => o-1)} style={{width:'28px',height:'28px',borderRadius:'50%',border:'none',background:'#EEF5FF',color:'#2B7FFF',cursor:'pointer',fontSize:'16px'}}>‹</button>
           <button onClick={() => setSemaineOffset(0)} style={{fontSize:'12px',color:'#2B7FFF',background:'#EEF5FF',border:'none',padding:'4px 12px',borderRadius:'99px',cursor:'pointer',fontWeight:'500'}}>
-            Aujourd'hui
+            Aujourd’hui
           </button>
           <button onClick={() => setSemaineOffset(o => o+1)} style={{width:'28px',height:'28px',borderRadius:'50%',border:'none',background:'#EEF5FF',color:'#2B7FFF',cursor:'pointer',fontSize:'16px'}}>›</button>
         </div>
@@ -252,11 +252,11 @@ export default function Semaine() {
           </button>
         </div>
 
-        <a href={`/evenement/nouveau?date=${(selectedDay || jourFiltre).getFullYear()}-${String((selectedDay || jourFiltre).getMonth()+1).padStart(2,'0')}-${String((selectedDay || jourFiltre).getDate()).padStart(2,'0')}`}
+        <Link href={`/evenement/nouveau?date=${(selectedDay || jourFiltre).getFullYear()}-${String((selectedDay || jourFiltre).getMonth()+1).padStart(2,'0')}-${String((selectedDay || jourFiltre).getDate()).padStart(2,'0')}`}
           style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'6px',width:'100%',boxSizing:'border-box',background:'#EEF5FF',color:'#2B7FFF',border:'1px dashed #B8D4FF',borderRadius:'10px',padding:'10px',fontSize:'13px',fontWeight:'500',textDecoration:'none',marginBottom:'14px'}}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2B7FFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           Ajouter un événement
-        </a>
+        </Link>
 
         <div style={{display:'flex',justifyContent:'flex-end',marginBottom:'10px'}}>
           <button onClick={() => setVue3D(v => !v)} style={{fontSize:'11px',color: vue3D ? '#fff' : '#8B5CF6',background: vue3D ? '#8B5CF6' : '#F5F1FF',border:'none',padding:'4px 10px',borderRadius:'99px',cursor:'pointer',fontWeight:'500',display:'flex',alignItems:'center',gap:'4px'}}>

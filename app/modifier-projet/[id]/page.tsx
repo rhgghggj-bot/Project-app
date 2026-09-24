@@ -11,7 +11,6 @@ export default function ModifierProjet() {
   const [description, setDescription] = useState("")
   const [categorie, setCategorie] = useState("")
   const [revolut, setRevolut] = useState("")
-  const [objectif, setObjectif] = useState("")
   const [prive, setPrive] = useState(false)
   const [message, setMessage] = useState("")
 
@@ -23,7 +22,6 @@ export default function ModifierProjet() {
         setDescription(data.description || "")
         setCategorie(data.categorie || "")
         setRevolut(data.image_url || "")
-        setObjectif(data.objectif || "")
         setPrive(data.prive || false)
       }
     }
@@ -38,14 +36,14 @@ export default function ModifierProjet() {
       setMessage("Erreur : " + error.message)
     } else {
       setMessage("Projet mis à jour ! ✓")
-      setTimeout(() => window.location.href = "/profile", 1500)
+      setTimeout(() => window.location.assign("/profile"), 1500)
     }
   }
 
   async function supprimer() {
     if (!(await confirmer("Supprimer ce projet ? Cette action est définitive.", "Supprimer"))) return
     await supabase.from("projets").delete().eq("id", id)
-    window.location.href = "/profile"
+    window.location.assign("/profile")
   }
 
   return (
@@ -108,7 +106,7 @@ export default function ModifierProjet() {
             <input aria-label="Lien Revolut" type="text" value={revolut} onChange={e => setRevolut(e.target.value)}
               className="flex-1 py-3 pr-4 text-sm text-gray-900 bg-transparent focus:outline-none"/>
           </div>
-          <p className="text-xs text-gray-400 mt-1">Trouve ton pseudo dans l'appli Revolut → Profil → @pseudo</p>
+          <p className="text-xs text-gray-400 mt-1">Trouve ton pseudo dans l’appli Revolut → Profil → @pseudo</p>
         </div>
 
         <button onClick={sauvegarder}

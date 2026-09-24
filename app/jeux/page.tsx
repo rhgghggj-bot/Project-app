@@ -1,6 +1,6 @@
 'use client'
+import { useStockagesLocaux } from "@/lib/useStockage"
 import Link from "next/link"
-import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 const JEUX = [
@@ -30,23 +30,25 @@ function Icone({ type, couleur }: { type: string, couleur: string }) {
   return <svg {...props}><rect x="2" y="7" width="8" height="12" rx="1.5"/><rect x="14" y="7" width="8" height="12" rx="1.5"/><path d="M6 7V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2"/></svg>
 }
 
+// Où chaque jeu enregistre son record sur l’appareil
+const CLE_PAR_JEU: Record<string, string> = {
+  blockblast: 'blockblast_meilleur',
+  '2048': 'jeu2048_meilleur',
+  snake: 'snake_meilleur',
+  memory: 'memory_meilleur_facile',
+  stacktower: 'stacktower_meilleur',
+  cassebriques: 'cassebriques_meilleur',
+  maville: 'simcity_meilleure_population',
+  reflexes: 'reflexes_meilleur_score',
+}
+const CLES_RECORDS = Object.values(CLE_PAR_JEU)
+
 export default function JeuxHub() {
   const router = useRouter()
-  const [meilleurs, setMeilleurs] = useState<any>({})
-
-  useEffect(() => {
-    const m: any = {}
-    m.blockblast = parseInt(localStorage.getItem('blockblast_meilleur') || '0')
-    m['2048'] = parseInt(localStorage.getItem('jeu2048_meilleur') || '0')
-    m.snake = parseInt(localStorage.getItem('snake_meilleur') || '0')
-    m.memory = parseInt(localStorage.getItem('memory_meilleur_facile') || '0')
-    m.stacktower = parseInt(localStorage.getItem('stacktower_meilleur') || '0')
-    m.cassebriques = parseInt(localStorage.getItem('cassebriques_meilleur') || '0')
-    m.maville = parseInt(localStorage.getItem('simcity_meilleure_population') || '0')
-    const r = localStorage.getItem('reflexes_meilleur_score')
-    m.reflexes = r ? parseInt(r) : 0
-    setMeilleurs(m)
-  }, [])
+  const records = useStockagesLocaux(CLES_RECORDS)
+  const meilleurs: Record<string, number> = Object.fromEntries(
+    Object.entries(CLE_PAR_JEU).map(([jeu, cle]) => [jeu, parseInt(records[cle] || '0') || 0])
+  )
 
   return (
     <main className="min-h-screen bg-white">

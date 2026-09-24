@@ -64,7 +64,7 @@ export default function Profile() {
       const texte = await res.text()
       let data: any = {}
       try { data = JSON.parse(texte) } catch { data = { error: "Réponse invalide du serveur : " + texte.slice(0, 200) } }
-      if (data.url) { window.location.href = data.url; return }
+      if (data.url) { window.location.assign(data.url); return }
       toast(data.error || "Connexion à Stripe impossible. Réessaie dans un instant.", "error")
     } catch (e: any) {
       toast("Pas de connexion réseau (" + e.message + "). Vérifie ta connexion et réessaie.", "error")
@@ -102,11 +102,12 @@ export default function Profile() {
     // supprimer ancien avatar
     await supabase.storage.from('Avatar').remove([user.id + '/avatar.jpg', user.id + '/avatar.png', user.id + '/avatar.jpeg', user.id + '/avatar.heic'])
     const { error } = await supabase.storage.from('Avatar').upload(path, file, { upsert: true })
+    if (error) toast("La photo n’a pas pu être envoyée. Essaie une image JPG ou PNG plus légère.", "error")
     if (!error) {
       const { data } = supabase.storage.from('Avatar').getPublicUrl(path)
       await supabase.from('profiles').update({ avatar_url: data.publicUrl }).eq('id', user.id)
       setProfil({ ...profil, avatar_url: data.publicUrl })
-      setMessage('Photo mise a jour')
+      setMessage('Photo mise à jour')
       setTimeout(() => setMessage(''), 2000)
     }
     setUploading(false)
@@ -114,7 +115,7 @@ export default function Profile() {
 
   async function deconnecter() {
     await supabase.auth.signOut()
-    window.location.href = "/"
+    window.location.assign("/")
   }
 
   const initiale = profil?.nom?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || "?"
@@ -129,8 +130,9 @@ export default function Profile() {
       <div style={{padding:"0 18px 100px 18px"}}>
         <div style={{display:'flex',alignItems:'flex-end',justifyContent:'space-between',marginTop:'-40px',marginBottom:'12px'}}>
           <div style={{width:'64px',height:'64px',borderRadius:'50%',background:couleurProfil,border:'4px solid #fff',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:'22px',fontWeight:'500',position:'relative',overflow:'hidden',cursor:'pointer'}}>
-            {profil?.avatar_url ? <img src={profil.avatar_url} style={{width:'100%',height:'100%',borderRadius:'50%',objectFit:'cover'}}/> : initiale}
-            <input type='file' accept='image/*' onChange={uploadAvatar} style={{position:'absolute',inset:0,opacity:0,cursor:'pointer',width:'100%',height:'100%'}}/>
+            {profil?.avatar_url ? <img src={profil.avatar_url} alt="Ta photo de profil" style={{width:'100%',height:'100%',borderRadius:'50%',objectFit:'cover',opacity: uploading ? 0.4 : 1}}/> : initiale}
+            {uploading && <span role="status" style={{position:'absolute',fontSize:'10px',fontWeight:600,color:'#fff'}}>Envoi…</span>}
+            <input type='file' accept='image/*' aria-label="Changer ta photo de profil" disabled={uploading} onChange={uploadAvatar} style={{position:'absolute',inset:0,opacity:0,cursor:'pointer',width:'100%',height:'100%'}}/>
           </div>
           <div style={{display:'flex',gap:'8px'}}>
             <button onClick={() => setOnglet("settings")} style={{fontSize:'12px',padding:'7px 12px',borderRadius:'99px',border:'1.5px solid #E8F1FF',background:'#fff',color:'#666',cursor:'pointer'}}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
@@ -196,16 +198,16 @@ export default function Profile() {
 
         {onglet === "badges" && (
           <div>
-            <a href="/bilan-annuel" style={{textDecoration:'none',display:'block',marginBottom:'14px'}}>
+            <Link href="/bilan-annuel" style={{textDecoration:'none',display:'block',marginBottom:'14px'}}>
               <div style={{background:'linear-gradient(135deg,#1a3a6e,#2B7FFF)',borderRadius:'14px',padding:'14px',display:'flex',alignItems:'center',gap:'12px'}}>
                 <div style={{fontSize:'24px'}}>✨</div>
                 <div style={{flex:1}}>
                   <div style={{fontSize:'13px',fontWeight:'500',color:'#fff'}}>Voir mon bilan {new Date().getFullYear()}</div>
-                  <div style={{fontSize:'11px',color:'rgba(255,255,255,0.6)'}}>Ton année sur Nexia, en un coup d'œil</div>
+                  <div style={{fontSize:'11px',color:'rgba(255,255,255,0.6)'}}>Ton année sur Nexia, en un coup d’œil</div>
                 </div>
                 <span style={{color:'rgba(255,255,255,0.5)'}}>›</span>
               </div>
-            </a>
+            </Link>
             <BadgesSection />
           </div>
         )}
@@ -215,8 +217,8 @@ export default function Profile() {
             {projets.length === 0 && (
               <div style={{textAlign:'center',padding:'48px 0',color:'#aaa'}}>
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{marginBottom:'12px'}}><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
-                <div style={{fontSize:'14px',marginBottom:'8px'}}>Aucun projet pour l'instant</div>
-                <a href="/nouveau-projet" style={{color:couleurProfil,fontSize:'13px',fontWeight:'500'}}>Publier mon premier projet →</a>
+                <div style={{fontSize:'14px',marginBottom:'8px'}}>Aucun projet pour l’instant</div>
+                <Link href="/nouveau-projet" style={{color:couleurProfil,fontSize:'13px',fontWeight:'500'}}>Publier mon premier projet →</Link>
               </div>
             )}
             {projets.map((projet: any) => (
@@ -246,7 +248,7 @@ export default function Profile() {
                   <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',paddingTop:'10px',borderTop:'0.5px solid #E8F1FF'}}>
                     <div style={{display:'flex',gap:'12px'}}>
                       <span style={{fontSize:"12px",color:"#aaa",display:"flex",alignItems:"center",gap:"3px"}}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> 0</span>
-                      <a href={`/projet/${projet.id}`} style={{fontSize:'12px',color:couleurProfil}}>Voir les conseils →</a>
+                      <Link href={`/projet/${projet.id}`} style={{fontSize:'12px',color:couleurProfil}}>Voir les conseils →</Link>
                     </div>
                   </div>
                 </div>
@@ -309,16 +311,16 @@ export default function Profile() {
             </div>
 
             <div style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'16px',overflow:'hidden',marginBottom:'12px'}}>
-              <a href="/groupes" style={{display:'flex',alignItems:'center',gap:'12px',padding:'14px 16px',borderBottom:'0.5px solid #E8F1FF',textDecoration:'none'}}>
+              <Link href="/groupes" style={{display:'flex',alignItems:'center',gap:'12px',padding:'14px 16px',borderBottom:'0.5px solid #E8F1FF',textDecoration:'none'}}>
                 <div style={{width:'36px',height:'36px',background:'#EEF5FF',borderRadius:'10px',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'16px'}}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2B7FFF" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
                 <div style={{flex:1}}><div style={{fontSize:'14px',fontWeight:'500',color:'#1a1a2e'}}>Mes groupes</div><div style={{fontSize:'12px',color:'#aaa'}}>Voir & créer des groupes</div></div>
                 <span style={{color:'#aaa'}}>›</span>
-              </a>
-              <a href="/semaine" style={{display:'flex',alignItems:'center',gap:'12px',padding:'14px 16px',textDecoration:'none'}}>
+              </Link>
+              <Link href="/semaine" style={{display:'flex',alignItems:'center',gap:'12px',padding:'14px 16px',textDecoration:'none'}}>
                 <div style={{width:'36px',height:'36px',background:'#FDF8EC',borderRadius:'10px',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'16px'}}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
                 <div style={{flex:1}}><div style={{fontSize:'14px',fontWeight:'500',color:'#1a1a2e'}}>Calendrier</div><div style={{fontSize:'12px',color:'#aaa'}}>Mes échéances</div></div>
                 <span style={{color:'#aaa'}}>›</span>
-              </a>
+              </Link>
             </div>
 
             <div style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'14px',padding:'14px',marginBottom:'10px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
@@ -339,12 +341,12 @@ export default function Profile() {
                 {typeof window !== 'undefined' && localStorage.getItem('tuto_desactive') ? 'Activer' : 'Desactiver'}
               </button>
             </div>
-            <a href="/qrcode" style={{textDecoration:'none',display:'block',marginBottom:'10px'}}>
+            <Link href="/qrcode" style={{textDecoration:'none',display:'block',marginBottom:'10px'}}>
               <div style={{background:'#EEF5FF',border:'0.5px solid #DCE9FF',borderRadius:'14px',padding:'14px',display:'flex',alignItems:'center',justifyContent:'center',gap:'8px',cursor:'pointer'}}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2B7FFF" strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3M17 14h3M14 17v3"/></svg>
                 <span style={{fontSize:'14px',fontWeight:'500',color:'#2B7FFF'}}>Partager l application</span>
               </div>
-            </a>
+            </Link>
             <button onClick={deconnecter}
               style={{width:'100%',background:'#FFE4E6',color:'#F43F5E',fontSize:'14px',fontWeight:'500',padding:'12px',borderRadius:'14px',border:'none',cursor:'pointer',marginBottom:'24px'}}>
               <span style={{display:"flex",alignItems:"center",gap:"8px",justifyContent:"center"}}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F43F5E" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Se déconnecter</span>
@@ -358,9 +360,9 @@ export default function Profile() {
           <div role="dialog" aria-modal="true" onClick={e => e.stopPropagation()} style={{width:'100%',maxHeight:'70vh',overflowY:'auto',background:'#fff',borderRadius:'22px 22px 0 0',padding:'10px 18px 24px'}}>
             <div style={{width:'36px',height:'4px',background:'#E8F1FF',borderRadius:'99px',margin:'6px auto 14px'}}></div>
             <div style={{fontSize:'15px',fontWeight:'600',color:'#1a1a2e',marginBottom:'12px'}}>{listeOuverte === "followers" ? "Followers" : "Abonnements"}</div>
-            {profilsListe.length === 0 && <div style={{textAlign:'center',padding:'24px 0',color:'#aaa',fontSize:'13px'}}>Personne pour l'instant</div>}
+            {profilsListe.length === 0 && <div style={{textAlign:'center',padding:'24px 0',color:'#aaa',fontSize:'13px'}}>Personne pour l’instant</div>}
             {profilsListe.map((p: any) => (
-              <a key={p.id} href={'/profil/'+p.id} style={{textDecoration:'none',display:'flex',alignItems:'center',gap:'12px',padding:'10px 0',borderBottom:'0.5px solid #F5F8FC'}}>
+              <Link key={p.id} href={'/profil/'+p.id} style={{textDecoration:'none',display:'flex',alignItems:'center',gap:'12px',padding:'10px 0',borderBottom:'0.5px solid #F5F8FC'}}>
                 {p.avatar_url ? (
                   <img src={p.avatar_url} alt={p.nom} style={{width:'40px',height:'40px',borderRadius:'50%',objectFit:'cover'}}/>
                 ) : (
@@ -369,7 +371,7 @@ export default function Profile() {
                   </div>
                 )}
                 <div style={{fontSize:'14px',color:'#1a1a2e',fontWeight:'500'}}>{p.nom || "Membre"}</div>
-              </a>
+              </Link>
             ))}
           </div>
         </div>

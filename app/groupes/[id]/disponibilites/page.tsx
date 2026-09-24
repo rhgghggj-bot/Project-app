@@ -1,5 +1,6 @@
 "use client"
-import { Fragment, useEffect, useState } from "react"
+import { useChargement } from "@/lib/useChargement"
+import { Fragment, useState } from "react"
 import { useParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import SectionHeader from "@/app/components/ui/SectionHeader"
@@ -34,7 +35,6 @@ export default function DisponibilitesGroupePage() {
   const [dispos, setDispos] = useState<any[]>([])
   const jours = joursSuivants(14)
 
-  useEffect(() => { charger() }, [])
 
   async function charger() {
     const { data: { user } } = await supabase.auth.getUser()
@@ -47,6 +47,8 @@ export default function DisponibilitesGroupePage() {
       .eq("groupe_id", id).gte("date", dateStr(jours[0])).lte("date", dateStr(jours[jours.length - 1]))
     setDispos(d || [])
   }
+
+  useChargement(charger, id)
 
   async function toggleCreneau(date: string, creneau: string) {
     if (!user) return

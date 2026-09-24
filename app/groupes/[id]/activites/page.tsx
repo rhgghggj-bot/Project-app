@@ -1,8 +1,9 @@
 "use client"
+import { useChargement } from "@/lib/useChargement"
 import { confirmer } from "@/lib/toast"
 import Button from "@/app/components/ui/Button"
 import SectionHeader from "@/app/components/ui/SectionHeader"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { useParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import { syncActivitesGroupeVersCalendrier } from "@/lib/syncActivites"
@@ -27,19 +28,19 @@ export default function ActivitesGroupe() {
   const [couleur, setCouleur] = useState(COULEURS[0])
   const [message, setMessage] = useState("")
 
-  useEffect(() => {
-    async function init() {
-      const { data: { user } } = await supabase.auth.getUser()
-      setUser(user)
-      const { data: g } = await supabase.from("groupes").select("*").eq("id", id).single()
-      setGroupe(g)
-      if (user) {
-        await syncActivitesGroupeVersCalendrier(user.id)
-      }
-      await charger()
+  async function init() {
+    const [{ data: { user } }, { data: g }] = await Promise.all([
+      supabase.auth.getUser(),
+      supabase.from("groupes").select("*").eq("id", id).single(),
+    ])
+    setUser(user)
+    setGroupe(g)
+    if (user) {
+      await syncActivitesGroupeVersCalendrier(user.id)
     }
-    init()
-  }, [id])
+    await charger()
+  }
+  useChargement(init, id)
 
   async function charger() {
     const { data: a } = await supabase.from("activites_groupe").select("*").eq("groupe_id", id).order("date", { ascending: true })
@@ -55,7 +56,7 @@ export default function ActivitesGroupe() {
     if (!titre.trim() || !date) { setMessage("Un titre et une date sont nécessaires."); return }
     if (!user) return
 
-    const { data: nouvelleActivite, error } = await supabase.from("activites_groupe").insert({
+    const { error } = await supabase.from("activites_groupe").insert({
       groupe_id: id, titre, description, lieu, date, heure, duree: dureeH * 60 + dureeM, couleur, created_by: user.id
     }).select().single()
 

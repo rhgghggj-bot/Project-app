@@ -27,7 +27,7 @@ export default function Home() {
       setAuthChecked(true)
       if (!user) {
         const vu = sessionStorage.getItem('onboardingVu')
-        if (!vu) { sessionStorage.setItem('onboardingVu','1'); window.location.href='/onboarding'; return }
+        if (!vu) { sessionStorage.setItem('onboardingVu','1'); window.location.assign('/onboarding'); return }
       }
       // Deux branches indépendantes en parallèle : le fil "Découvrir" et le tableau de bord perso
       const chargerDecouvrir = async () => {
@@ -70,7 +70,7 @@ export default function Home() {
   }, [])
 
   async function toggleLikeProjet(projetId: string) {
-    if (!user) { window.location.href = "/connexion"; return }
+    if (!user) { window.location.assign("/connexion"); return }
     const dejaLike = likesProjets.find(l => l.projet_id === projetId && l.user_id === user.id)
     if (dejaLike) {
       await supabase.from("projets_likes").delete().eq("id", dejaLike.id)
@@ -142,7 +142,7 @@ export default function Home() {
             <p style={{fontSize:'14px',color:'rgba(255,255,255,0.6)',marginBottom:'24px'}}>Connecte-toi pour accéder à toutes les fonctionnalités</p>
             <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
               <Link href="/inscription" style={{textDecoration:'none',width:'100%',background:'#fff',color:'#1a3a6e',fontWeight:'500',fontSize:'15px',padding:'14px',borderRadius:'14px',border:'none',cursor:'pointer',display:'block',textAlign:'center'}}>Créer mon compte</Link>
-              <Link href="/connexion" style={{textDecoration:'none',width:'100%',background:'transparent',color:'rgba(255,255,255,0.7)',fontWeight:'500',fontSize:'14px',padding:'13px',borderRadius:'14px',border:'0.5px solid rgba(255,255,255,0.3)',cursor:'pointer',display:'block',textAlign:'center'}}>J'ai déjà un compte</Link>
+              <Link href="/connexion" style={{textDecoration:'none',width:'100%',background:'transparent',color:'rgba(255,255,255,0.7)',fontWeight:'500',fontSize:'14px',padding:'13px',borderRadius:'14px',border:'0.5px solid rgba(255,255,255,0.3)',cursor:'pointer',display:'block',textAlign:'center'}}>J’ai déjà un compte</Link>
               <Link href="/onboarding" style={{textDecoration:'none',width:'100%',background:'transparent',color:'rgba(255,255,255,0.5)',fontSize:'13px',padding:'10px',borderRadius:'14px',border:'none',cursor:'pointer',display:'block',textAlign:'center'}}>Voir les fonctionnalités →</Link>
             </div>
           </div>
@@ -187,7 +187,7 @@ export default function Home() {
           <div key={e.id} style={{margin:'0 14px 8px',background:'#FFE4E6',border:'0.5px solid #FECDD3',borderRadius:'10px',padding:'10px 14px',display:'flex',alignItems:'center',gap:'10px'}}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F43F5E" strokeWidth="2" style={{flexShrink:0}}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
             <span style={{fontSize:'12px',color:'#1a1a2e',flex:1}}><b style={{color:'#F43F5E'}}>{e.titre}</b> dans <b style={{color:'#F43F5E'}}>{diffMin} min</b></span>
-            <a href="/semaine" style={{fontSize:'11px',color:'#F43F5E',fontWeight:'500',textDecoration:'none'}}>Voir →</a>
+            <Link href="/semaine" style={{fontSize:'11px',color:'#F43F5E',fontWeight:'500',textDecoration:'none'}}>Voir →</Link>
           </div>
         )
       })}
@@ -198,7 +198,7 @@ export default function Home() {
           <div style={{borderRadius:'16px',padding:'14px',background:'rgba(15,45,92,0.85)',border:'1px solid rgba(255,255,255,0.15)',marginBottom:'10px'}}>
             <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'12px'}}>
               <span style={{fontSize:'13px',fontWeight:'500',color:'#fff'}}>Cette semaine</span>
-              <a href="/semaine" style={{fontSize:'12px',color:'#a8d8f0',fontWeight:'500',textDecoration:'none'}}>Voir tout →</a>
+              <Link href="/semaine" style={{fontSize:'12px',color:'#a8d8f0',fontWeight:'500',textDecoration:'none'}}>Voir tout →</Link>
             </div>
             <div style={{display:'flex',gap:'4px'}}>
               {jours.map((jour, i) => {
@@ -206,7 +206,7 @@ export default function Home() {
                 const evts = evtDuJour(jour)
                 const hasEvts = evts.length > 0
                 return (
-                  <a key={i} href="/semaine" style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:'3px',textDecoration:'none'}}>
+                  <Link key={i} href="/semaine" style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:'3px',textDecoration:'none'}}>
                     <div style={{fontSize:'10px',color:'rgba(255,255,255,0.5)',fontWeight:'500'}}>{JOURS[i]}</div>
                     <div style={{width:'100%',minHeight: hasEvts ? '42px' : '28px',borderRadius:'6px',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:'3px',
                       background: isToday ? '#fff' : hasEvts ? 'rgba(255,255,255,0.12)' : 'transparent',
@@ -226,30 +226,30 @@ export default function Home() {
                         </div>
                       )}
                     </div>
-                  </a>
+                  </Link>
                 )
               })}
             </div>
           </div>
 
           <div style={{display:'flex',gap:'8px',marginBottom:'8px'}}>
-            <a href="/finances" style={{flex:1,textDecoration:'none'}}>
+            <Link href="/finances" style={{flex:1,textDecoration:'none'}}>
               <div style={{background:'rgba(15,45,92,0.85)',borderRadius:'14px',padding:'12px',border:'1px solid rgba(255,255,255,0.15)'}}>
                 <div style={{fontSize:'11px',color:'#a8d8f0',fontWeight:'500',marginBottom:'4px'}}>Finances</div>
                 <div style={{fontSize:'18px',fontWeight:'500',color: solde >= 0 ? '#86efac' : '#fca5a5'}}>{solde >= 0 ? '+' : ''}{format(solde)}</div>
                 <div style={{fontSize:'11px',color:'rgba(255,255,255,0.5)',marginTop:'2px'}}>Solde ce mois</div>
               </div>
-            </a>
-            <a href="/semaine" style={{flex:1,textDecoration:'none'}}>
+            </Link>
+            <Link href="/semaine" style={{flex:1,textDecoration:'none'}}>
               <div style={{background:'rgba(15,45,92,0.85)',borderRadius:'14px',padding:'12px',border:'1px solid rgba(255,255,255,0.15)'}}>
                 <div style={{fontSize:'11px',color:'#fcd34d',fontWeight:'500',marginBottom:'4px'}}>Prochain</div>
                 <div style={{fontSize:'13px',fontWeight:'500',color:'#fff'}}>{prochainEvt?.titre || 'Aucun'}</div>
                 <div style={{fontSize:'11px',color:'rgba(255,255,255,0.5)',marginTop:'2px'}}>{prochainEvt ? new Date(prochainEvt.date).toLocaleDateString('fr-FR',{day:'numeric',month:'short'}) : 'Ajoute un événement'}</div>
               </div>
-            </a>
+            </Link>
           </div>
 
-          <a href="/scanner" style={{textDecoration:'none',display:'block'}}>
+          <Link href="/scanner" style={{textDecoration:'none',display:'block'}}>
             <div style={{background:'rgba(15,45,92,0.85)',borderRadius:'14px',padding:'12px',display:'flex',alignItems:'center',gap:'12px',border:'1px solid rgba(255,255,255,0.15)'}}>
               <div style={{width:'38px',height:'38px',borderRadius:'10px',background:'rgba(255,255,255,0.1)',border:'1px solid rgba(255,255,255,0.2)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8"><polyline points="4 7 4 4 7 4"/><polyline points="17 4 20 4 20 7"/><polyline points="20 17 20 20 17 20"/><polyline points="7 20 4 20 4 17"/><line x1="4" y1="12" x2="20" y2="12"/></svg>
@@ -260,9 +260,9 @@ export default function Home() {
               </div>
               <div style={{marginLeft:'auto',color:'rgba(255,255,255,0.5)',fontSize:'18px'}}>›</div>
             </div>
-          </a>
+          </Link>
 
-          <a href="/jeux" style={{textDecoration:'none',display:'block',marginTop:'10px'}}>
+          <Link href="/jeux" style={{textDecoration:'none',display:'block',marginTop:'10px'}}>
             <div style={{background:'linear-gradient(135deg,rgba(212,168,67,0.32),rgba(249,115,22,0.22)),#1a3a6e',borderRadius:'14px',padding:'12px',display:'flex',alignItems:'center',gap:'12px',border:'1px solid rgba(212,168,67,0.45)'}}>
               <div style={{width:'38px',height:'38px',borderRadius:'10px',background:'rgba(255,255,255,0.12)',border:'1px solid rgba(255,255,255,0.2)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F97316" strokeWidth="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
@@ -273,7 +273,7 @@ export default function Home() {
               </div>
               <div style={{marginLeft:'auto',color:'rgba(255,255,255,0.5)',fontSize:'18px'}}>›</div>
             </div>
-          </a>
+          </Link>
         </div>
       )}
 
@@ -299,7 +299,7 @@ export default function Home() {
             <div className="text-center py-12">
               <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="1.5" style={{margin:'0 auto 12px'}}><path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/></svg>
               <p className="text-sm font-medium text-gray-900 mb-1">Soyez les premiers !</p>
-              <p className="text-xs text-gray-400 mb-4">Aucun projet pour l'instant. Lance le tien !</p>
+              <p className="text-xs text-gray-400 mb-4">Aucun projet pour l’instant. Lance le tien !</p>
               <Link href="/nouveau-projet" className="bg-blue-500 text-white text-sm font-medium px-6 py-2 rounded-full inline-block text-center">Publier mon projet</Link>
             </div>
           )}
@@ -311,14 +311,14 @@ export default function Home() {
               <div className="text-center py-12">
                 <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="1.5" style={{margin:'0 auto 12px'}}><path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/></svg>
                 <p className="text-sm font-medium text-gray-900 mb-1">Aucun projet dans cette catégorie</p>
-                <p className="text-xs text-gray-400 mb-4">Sois le premier à publier dans "{categorie}" !</p>
+                <p className="text-xs text-gray-400 mb-4">Sois le premier à publier dans “{categorie}” !</p>
                 <Link href="/nouveau-projet" className="bg-blue-500 text-white text-sm font-medium px-6 py-2 rounded-full inline-block text-center">Publier mon projet</Link>
               </div>
             )
             return (
               <>
                 {/* Projet en vedette */}
-                <a href={'/projet/'+vedette.id} style={{textDecoration:'none',display:'block',marginBottom:'14px'}}>
+                <Link href={'/projet/'+vedette.id} style={{textDecoration:'none',display:'block',marginBottom:'14px'}}>
                   <div style={{background:'linear-gradient(135deg,#1a3a6e,#2B7FFF)',borderRadius:'20px',padding:'20px',position:'relative',overflow:'hidden'}}>
                     <div style={{position:'absolute',top:'-20px',right:'-20px',width:'100px',height:'100px',borderRadius:'50%',background:'rgba(255,255,255,0.08)'}}></div>
                     <div style={{fontSize:'11px',color:'rgba(255,255,255,0.65)',marginBottom:'6px',fontWeight:'500',display:'flex',alignItems:'center',gap:'5px'}}><span style={{width:'6px',height:'6px',borderRadius:'50%',background:'#D4A843',display:'inline-block'}}></span>En vedette</div>
@@ -334,7 +334,7 @@ export default function Home() {
                       <div style={{background:'rgba(255,255,255,0.15)',borderRadius:'99px',padding:'6px 14px',fontSize:'12px',color:'#fff',fontWeight:'500'}}>Voir</div>
                     </div>
                   </div>
-                </a>
+                </Link>
 
                 <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',marginBottom:'12px'}}>Récents</div>
               </>
@@ -350,8 +350,8 @@ export default function Home() {
               const nbCommentaires = commentairesCount[projet.id] || 0
               return (
             <div key={projet.id} role="link" tabIndex={0}
-              onClick={() => window.location.href = '/projet/'+projet.id}
-              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); window.location.href = '/projet/'+projet.id } }}
+              onClick={() => window.location.assign('/projet/'+projet.id)}
+              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); window.location.assign('/projet/'+projet.id) } }}
               style={{cursor:'pointer',display:'block',marginBottom:'10px'}}>
               <div style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'16px',padding:'14px'}}>
                 <div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'10px'}}>
@@ -364,9 +364,9 @@ export default function Home() {
                       <span style={{fontSize:'10px',background:'#EEF5FF',color:'#2B7FFF',padding:'2px 8px',borderRadius:'99px',fontWeight:'500'}}>{projet.categorie}</span>
                       <span style={{fontSize:'11px',color:'#aaa'}}>{new Date(projet.created_at).toLocaleDateString('fr-FR',{day:'numeric',month:'short'})}</span>
                     </div>
-                    <a href={'/profil/'+projet.user_id} onClick={e => e.stopPropagation()} style={{fontSize:'11px',color:'#2B7FFF',textDecoration:'none'}}>
+                    <Link href={'/profil/'+projet.user_id} onClick={e => e.stopPropagation()} style={{fontSize:'11px',color:'#2B7FFF',textDecoration:'none'}}>
                       par {profilsCreateurs[projet.user_id] || 'Membre'}
-                    </a>
+                    </Link>
                   </div>
                 </div>
                 <div style={{fontSize:'12px',color:'#666',marginBottom:'12px',lineHeight:'1.5'}}>{projet.description}</div>

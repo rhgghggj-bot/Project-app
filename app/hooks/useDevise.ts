@@ -1,16 +1,10 @@
 "use client"
 import { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabase"
+import { useStockageLocal } from "@/lib/useStockage"
 
 export function useDevise() {
-  const [devise, setDevise] = useState('CHF')
-
-  useEffect(() => {
-    const saved = localStorage.getItem('nexia_devise')
-    if (saved) setDevise(saved)
-  }, [])
-
-  return devise
+  return useStockageLocal('nexia_devise') || 'CHF'
 }
 
 // Conversion complète (devise + taux de change en direct), pour tout

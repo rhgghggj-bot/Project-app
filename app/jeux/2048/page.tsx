@@ -1,4 +1,5 @@
 'use client'
+import { ecrireStockage, useStockageLocal } from "@/lib/useStockage"
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
@@ -62,16 +63,6 @@ function rotationHoraire(g: (number|null)[][]) {
   return ng
 }
 
-// direction: 0=gauche,1=haut,2=droite,3=bas
-function bouger(g: (number|null)[][], direction: number) {
-  let gg = g
-  for (let i=0;i<direction;i++) gg = rotationHoraire(gg)
-  // maintenant on applique un "vers la gauche" en fonction de la rotation choisie
-  // gauche(0): pas de rotation prealable a gauche direct
-  // haut(1): apres avoir tourne, "haut" devient "gauche"... on adapte via rotations differentes
-  return gg
-}
-
 function deplacerGauche(g: (number|null)[][]) {
   let gain = 0
   let bouge = false
@@ -111,16 +102,12 @@ export default function Jeu2048() {
   const router = useRouter()
   const [grille, setGrille] = useState<(number|null)[][]>(() => ajouterTuile(ajouterTuile(grilleVide())))
   const [score, setScore] = useState(0)
-  const [meilleur, setMeilleur] = useState(0)
+  // Record enregistré sur l’appareil (source unique, mis à jour par ecrireStockage)
+  const meilleur = parseInt(useStockageLocal('jeu2048_meilleur') || '0') || 0
   const [gameOver, setGameOver] = useState(false)
   const [gagne, setGagne] = useState(false)
   const [continuer, setContinuer] = useState(false)
   const touchStart = useRef<{x:number,y:number}|null>(null)
-
-  useEffect(() => {
-    const m = localStorage.getItem('jeu2048_meilleur')
-    if (m) setMeilleur(parseInt(m))
-  }, [])
 
   function jouer(direction: 'gauche'|'droite'|'haut'|'bas') {
     if (gameOver || (gagne && !continuer)) return
@@ -131,7 +118,7 @@ export default function Jeu2048() {
     vibrer(gain > 0 ? [10,20,10] : 8)
     const nouveauScore = score + gain
     setScore(nouveauScore)
-    if (nouveauScore > meilleur) { setMeilleur(nouveauScore); localStorage.setItem('jeu2048_meilleur', String(nouveauScore)) }
+    if (nouveauScore > meilleur) { ecrireStockage('local', 'jeu2048_meilleur', String(nouveauScore)) }
     if (!gagne && avecNouvelle.some(row => row.some(v => v === 2048))) { setGagne(true); vibrer([20,40,20,40,60]) }
     if (!peutBouger(avecNouvelle)) { setGameOver(true); vibrer([50,30,50,30,80]) }
   }

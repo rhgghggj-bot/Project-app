@@ -259,7 +259,7 @@ export default function PlacementsSection() {
                 </div>
 
                 <div style={{background:'#F8FBFF',borderRadius:'10px',padding:'10px',marginBottom:'10px'}}>
-                  <div style={{fontSize:'10px',color:'#aaa',marginBottom:'6px'}}>1 000 CHF investi → {etf.valeur1000.toLocaleString('fr-FR')} CHF aujourd'hui</div>
+                  <div style={{fontSize:'10px',color:'#aaa',marginBottom:'6px'}}>1 000 CHF investi → {etf.valeur1000.toLocaleString('fr-FR')} CHF aujourd’hui</div>
                   <svg width="100%" height="60" viewBox={"0 0 " + (etf.courbe.length * 20) + " 60"} preserveAspectRatio="none">
                     <polyline
                       points={etf.courbe.map((v,i) => (i * 20) + "," + (58 - (v/max)*54)).join(' ')}
@@ -307,14 +307,14 @@ export default function PlacementsSection() {
           </div>
 
           <div style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'14px',padding:'14px',marginBottom:'10px'}}>
-            <div style={{fontSize:'11px',color:'#2B7FFF',fontWeight:'600',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:'8px'}}>C'est quoi ?</div>
+            <div style={{fontSize:'11px',color:'#2B7FFF',fontWeight:'600',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:'8px'}}>C’est quoi ?</div>
             <div style={{fontSize:'13px',color:'#444',lineHeight:'1.7',marginBottom:'10px'}}>
-              Un ETF (fonds indiciel coté) qui réplique passivement l'indice {etfActif.nom}. En achetant 1 part tu investis automatiquement dans toutes les entreprises de l'indice.
+              Un ETF (fonds indiciel coté) qui réplique passivement l’indice {etfActif.nom}. En achetant 1 part tu investis automatiquement dans toutes les entreprises de l’indice.
             </div>
             <div style={{background:'#EEF5FF',borderRadius:'10px',padding:'10px'}}>
               <div style={{fontSize:'12px',color:'#2B7FFF',fontWeight:'500',marginBottom:'4px'}}>Exemple concret</div>
               <div style={{fontSize:'12px',color:'#444',lineHeight:'1.6'}}>
-                1 000 CHF investi il y a {etfActif.duree} = <b style={{color:etfActif.couleur}}>{etfActif.valeur1000.toLocaleString('fr-FR')} CHF</b> aujourd'hui.
+                1 000 CHF investi il y a {etfActif.duree} = <b style={{color:etfActif.couleur}}>{etfActif.valeur1000.toLocaleString('fr-FR')} CHF</b> aujourd’hui.
                 <span style={{color:'#aaa'}}> Cet exemple est indicatif — ton montant sera différent.</span>
               </div>
             </div>

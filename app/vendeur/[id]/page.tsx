@@ -50,7 +50,7 @@ export default function FicheVendeur() {
   }, [vendeurId])
 
   async function toggleSuivre() {
-    if (!user) { window.location.href = "/connexion"; return }
+    if (!user) { window.location.assign("/connexion"); return }
     const dejaSuivi = followers.find(f => f.suiveur_id === user.id)
     if (dejaSuivi) {
       await supabase.from("marketplace_followers").delete().eq("id", dejaSuivi.id)
@@ -62,9 +62,9 @@ export default function FicheVendeur() {
   }
 
   async function envoyerMessage() {
-    if (!user) { window.location.href = "/connexion"; return }
+    if (!user) { window.location.assign("/connexion"); return }
     const idConv = await ouvrirConversationPrivee(supabase, user.id, vendeurId)
-    if (idConv) window.location.href = "/groupes/" + idConv
+    if (idConv) window.location.assign("/groupes/" + idConv)
   }
 
   async function ouvrirListe(type: "followers" | "abonnements") {
@@ -135,11 +135,11 @@ export default function FicheVendeur() {
       <div style={{padding:'16px 18px'}}>
         <div style={{fontSize:'13px',fontWeight:'600',color:'#1a1a2e',marginBottom:'12px'}}>Publications</div>
         {annonces.length === 0 && (
-          <div style={{textAlign:'center',padding:'40px 0',color:'#aaa',fontSize:'13px'}}>Aucune publication pour l'instant</div>
+          <div style={{textAlign:'center',padding:'40px 0',color:'#aaa',fontSize:'13px'}}>Aucune publication pour l’instant</div>
         )}
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'10px'}}>
           {annonces.map(a => (
-            <a key={a.id} href={'/marketplace?annonce='+a.id} style={{textDecoration:'none'}}>
+            <Link key={a.id} href={'/marketplace?annonce='+a.id} style={{textDecoration:'none'}}>
               <div style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'14px',overflow:'hidden'}}>
                 <div style={{height:'110px',background:'linear-gradient(135deg,#EEF5FF,#DCE9FF)',display:'flex',alignItems:'center',justifyContent:'center'}}>
                   {a.image_url ? (
@@ -153,7 +153,7 @@ export default function FicheVendeur() {
                   <div style={{fontSize:'13px',fontWeight:'700',color:'#2B7FFF'}}>{parseFloat(a.prix).toFixed(0)} CHF</div>
                 </div>
               </div>
-            </a>
+            </Link>
           ))}
         </div>
 
@@ -178,9 +178,9 @@ export default function FicheVendeur() {
           <div role="dialog" aria-modal="true" onClick={e => e.stopPropagation()} style={{width:'100%',maxHeight:'70vh',overflowY:'auto',background:'#fff',borderRadius:'22px 22px 0 0',padding:'10px 18px 24px'}}>
             <div style={{width:'36px',height:'4px',background:'#E8F1FF',borderRadius:'99px',margin:'6px auto 14px'}}></div>
             <div style={{fontSize:'15px',fontWeight:'600',color:'#1a1a2e',marginBottom:'12px'}}>{listeOuverte === "followers" ? "Followers" : "Abonnements"}</div>
-            {profilsListe.length === 0 && <div style={{textAlign:'center',padding:'24px 0',color:'#aaa',fontSize:'13px'}}>Personne pour l'instant</div>}
+            {profilsListe.length === 0 && <div style={{textAlign:'center',padding:'24px 0',color:'#aaa',fontSize:'13px'}}>Personne pour l’instant</div>}
             {profilsListe.map((p: any) => (
-              <a key={p.id} href={'/vendeur/'+p.id} style={{textDecoration:'none',display:'flex',alignItems:'center',gap:'12px',padding:'10px 0',borderBottom:'0.5px solid #F5F8FC'}}>
+              <Link key={p.id} href={'/vendeur/'+p.id} style={{textDecoration:'none',display:'flex',alignItems:'center',gap:'12px',padding:'10px 0',borderBottom:'0.5px solid #F5F8FC'}}>
                 {p.avatar_url ? (
                   <img src={p.avatar_url} alt={p.nom} style={{width:'40px',height:'40px',borderRadius:'50%',objectFit:'cover'}}/>
                 ) : (
@@ -189,7 +189,7 @@ export default function FicheVendeur() {
                   </div>
                 )}
                 <div style={{fontSize:'14px',color:'#1a1a2e',fontWeight:'500'}}>{p.nom || "Membre"}</div>
-              </a>
+              </Link>
             ))}
           </div>
         </div>

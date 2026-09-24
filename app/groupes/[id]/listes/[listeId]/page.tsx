@@ -1,6 +1,7 @@
 "use client"
+import { useChargement } from "@/lib/useChargement"
 import Link from "next/link"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { useParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 
@@ -19,7 +20,6 @@ export default function ListeDetailPage() {
   const listeId = Array.isArray(params.listeId) ? params.listeId[0] : params.listeId
   const [liste, setListe] = useState<any>(null)
   const [articles, setArticles] = useState<any[]>([])
-  const [user, setUser] = useState<any>(null)
   const [profils, setProfils] = useState<any>({})
   const [showForm, setShowForm] = useState(false)
   const [nom, setNom] = useState("")
@@ -30,14 +30,7 @@ export default function ListeDetailPage() {
   const [modeShopping, setModeShopping] = useState(false)
   const [prix, setPrix] = useState<string>("")
 
-  useEffect(() => {
-    if (listeId) {
-      charger()
-      supabase.auth.getUser().then(({ data: { user } }) => {
-        setUser(user)
-      })
-    }
-  }, [listeId])
+  useChargement(() => { if (listeId) charger() }, listeId)
 
   async function charger() {
     const { data: l } = await supabase.from("listes").select("*").eq("id", listeId).single()

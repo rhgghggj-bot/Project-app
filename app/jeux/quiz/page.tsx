@@ -211,7 +211,7 @@ export default function QuizPage() {
       {quizList.length===0 && (
         <div style={{textAlign:'center',padding:'48px 0',color:'rgba(255,255,255,0.5)'}}>
           <svg width='48' height='48' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.4)' strokeWidth='1.5' style={{marginBottom:'12px'}}><circle cx='12' cy='12' r='10'/><path d='M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3'/><line x1='12' y1='17' x2='12.01' y2='17'/></svg>
-          <div style={{fontSize:'14px',marginBottom:'8px'}}>Aucun quiz pour l'instant</div>
+          <div style={{fontSize:'14px',marginBottom:'8px'}}>Aucun quiz pour l’instant</div>
           <button onClick={()=>setMode('creer')} style={{color:'#87CEEB',fontSize:'13px',fontWeight:'500',background:'none',border:'none',cursor:'pointer'}}>
             Crée le premier quiz →
           </button>

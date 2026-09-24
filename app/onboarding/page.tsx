@@ -1,49 +1,53 @@
 "use client"
-import { useEffect, useState } from "react"
+import Link from "next/link"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
+
+type CarteProps = { icon: React.ReactNode; title: string; sub: string }
+
+// Composants définis hors du composant de page : sinon ils sont recréés (et leur état perdu) à chaque rendu
+const CardFeature = ({ icon, title, sub }: CarteProps) => (
+  <div style={{background:'rgba(255,255,255,0.1)',border:'0.5px solid rgba(255,255,255,0.2)',borderRadius:'14px',padding:'14px',display:'flex',flexDirection:'column',alignItems:'flex-start',gap:'6px'}}>
+    {icon}
+    <div style={{fontSize:'13px',fontWeight:'500',color:'#fff'}}>{title}</div>
+    <div style={{fontSize:'11px',color:'rgba(255,255,255,0.5)'}}>{sub}</div>
+  </div>
+)
+
+const CardRow = ({ icon, title, sub }: CarteProps) => (
+  <div style={{background:'rgba(255,255,255,0.1)',border:'0.5px solid rgba(255,255,255,0.2)',borderRadius:'14px',padding:'14px',display:'flex',alignItems:'center',gap:'12px',marginBottom:'10px'}}>
+    {icon}
+    <div>
+      <div style={{fontSize:'13px',fontWeight:'500',color:'#fff',marginBottom:'2px'}}>{title}</div>
+      <div style={{fontSize:'11px',color:'rgba(255,255,255,0.5)'}}>{sub}</div>
+    </div>
+  </div>
+)
+
+const Dots = ({ current }: { current: number }) => (
+  <div style={{display:'flex',justifyContent:'center',gap:'6px',marginBottom:'28px'}}>
+    {[1,2,3].map(i => (
+      <div key={i} style={{height:'4px',borderRadius:'99px',background: i===current ? '#fff' : 'rgba(255,255,255,0.3)',width: i===current ? '24px' : '8px',transition:'all 0.3s'}}></div>
+    ))}
+  </div>
+)
+
+const Logo = ({ size = 72 }: { size?: number }) => (
+  <div style={{width:size+'px',height:size+'px',borderRadius:'20px',background:'rgba(255,255,255,0.12)',border:'1.5px solid rgba(255,255,255,0.25)',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 16px'}}>
+    <svg width={size*0.5} height={size*0.5} viewBox="0 0 60 60">
+      <path d="M30 5 L35 25 L55 30 L35 35 L30 55 L25 35 L5 30 L25 25 Z" fill="url(#obLogoGrad)"/>
+      <defs><linearGradient id="obLogoGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#fff"/><stop offset="100%" stopColor="#D4A843"/></linearGradient></defs>
+    </svg>
+  </div>
+)
 
 export default function Onboarding() {
   const [slide, setSlide] = useState(1)
   const router = useRouter()
 
-  const CardFeature = ({ icon, title, sub }: any) => (
-    <div style={{background:'rgba(255,255,255,0.1)',border:'0.5px solid rgba(255,255,255,0.2)',borderRadius:'14px',padding:'14px',display:'flex',flexDirection:'column',alignItems:'flex-start',gap:'6px'}}>
-      {icon}
-      <div style={{fontSize:'13px',fontWeight:'500',color:'#fff'}}>{title}</div>
-      <div style={{fontSize:'11px',color:'rgba(255,255,255,0.5)'}}>{sub}</div>
-    </div>
-  )
-
-  const CardRow = ({ icon, title, sub }: any) => (
-    <div style={{background:'rgba(255,255,255,0.1)',border:'0.5px solid rgba(255,255,255,0.2)',borderRadius:'14px',padding:'14px',display:'flex',alignItems:'center',gap:'12px',marginBottom:'10px'}}>
-      {icon}
-      <div>
-        <div style={{fontSize:'13px',fontWeight:'500',color:'#fff',marginBottom:'2px'}}>{title}</div>
-        <div style={{fontSize:'11px',color:'rgba(255,255,255,0.5)'}}>{sub}</div>
-      </div>
-    </div>
-  )
-
-  const Dots = ({ current }: any) => (
-    <div style={{display:'flex',justifyContent:'center',gap:'6px',marginBottom:'28px'}}>
-      {[1,2,3].map(i => (
-        <div key={i} style={{height:'4px',borderRadius:'99px',background: i===current ? '#fff' : 'rgba(255,255,255,0.3)',width: i===current ? '24px' : '8px',transition:'all 0.3s'}}></div>
-      ))}
-    </div>
-  )
-
-  const Logo = ({ size = 72 }: any) => (
-    <div style={{width:size+'px',height:size+'px',borderRadius:'20px',background:'rgba(255,255,255,0.12)',border:'1.5px solid rgba(255,255,255,0.25)',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 16px'}}>
-      <svg width={size*0.5} height={size*0.5} viewBox="0 0 60 60">
-        <path d="M30 5 L35 25 L55 30 L35 35 L30 55 L25 35 L5 30 L25 25 Z" fill="url(#obLogoGrad)"/>
-        <defs><linearGradient id="obLogoGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#fff"/><stop offset="100%" stopColor="#D4A843"/></linearGradient></defs>
-      </svg>
-    </div>
-  )
-
-  const bg = {background:'linear-gradient(160deg,#0A1628,#1a3a6e,#2B7FFF)',minHeight:'100vh',padding:'40px 24px 32px',display:'flex',flexDirection:'column' as any,position:'relative' as any,overflow:'hidden' as any}
-  const btn = {width:'100%',background:'#fff',color:'#1a3a6e',border:'none',borderRadius:'14px',padding:'16px',fontSize:'15px',fontWeight:'500',cursor:'pointer',marginBottom:'10px'} as any
-  const btnSec = {width:'100%',background:'transparent',color:'rgba(255,255,255,0.7)',border:'0.5px solid rgba(255,255,255,0.25)',borderRadius:'14px',padding:'14px',fontSize:'14px',cursor:'pointer'} as any
+  const bg: React.CSSProperties = {background:'linear-gradient(160deg,#0A1628,#1a3a6e,#2B7FFF)',minHeight:'100vh',padding:'40px 24px 32px',display:'flex',flexDirection:'column',position:'relative',overflow:'hidden'}
+  const btn: React.CSSProperties = {width:'100%',background:'#fff',color:'#1a3a6e',border:'none',borderRadius:'14px',padding:'16px',fontSize:'15px',fontWeight:'500',cursor:'pointer',marginBottom:'10px'}
+  const btnSec: React.CSSProperties = {width:'100%',background:'transparent',color:'rgba(255,255,255,0.7)',border:'0.5px solid rgba(255,255,255,0.25)',borderRadius:'14px',padding:'14px',fontSize:'14px',cursor:'pointer'}
 
   return (
     <main style={bg} key={slide} className="nexia-in">
@@ -71,9 +75,9 @@ export default function Onboarding() {
               icon={<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#EC4899" strokeWidth="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>}
               title="Fiscalité" sub="Calculateur CH 2025" />
           </div>
-          <a href="/presentation" style={{display:'block',textAlign:'center',fontSize:'12px',color:'rgba(255,255,255,0.55)',textDecoration:'underline',marginBottom:'14px'}}>
+          <Link href="/presentation" style={{display:'block',textAlign:'center',fontSize:'12px',color:'rgba(255,255,255,0.55)',textDecoration:'underline',marginBottom:'14px'}}>
             Découvrir chaque fonctionnalité en détail →
-          </a>
+          </Link>
           <button onClick={() => setSlide(2)} style={btn}>Suivant →</button>
         </>
       )}
@@ -112,7 +116,7 @@ export default function Onboarding() {
             <div style={{fontSize:'13px',color:'rgba(255,255,255,0.6)',lineHeight:'1.7'}}>Gratuit, sans publicité.<br/>Tes données restent privées.</div>
           </div>
           <button onClick={() => router.push('/inscription')} style={btn}>Créer mon compte</button>
-          <button onClick={() => router.push('/connexion')} style={btnSec}>J'ai déjà un compte</button>
+          <button onClick={() => router.push('/connexion')} style={btnSec}>J’ai déjà un compte</button>
         </>
       )}
     </main>

@@ -1,5 +1,6 @@
 "use client"
-import { useEffect, useState } from "react"
+import { useChargement } from "@/lib/useChargement"
+import { useState } from "react"
 import { useParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import SectionHeader from "@/app/components/ui/SectionHeader"
@@ -17,7 +18,6 @@ export default function JournalGroupePage() {
   const [evenements, setEvenements] = useState<Evenement[]>([])
   const [chargement, setChargement] = useState(true)
 
-  useEffect(() => { charger() }, [])
 
   async function charger() {
     try {
@@ -26,6 +26,8 @@ export default function JournalGroupePage() {
       setChargement(false)
     }
   }
+
+  useChargement(charger, id)
 
   async function chargerJournal() {
     const { data: mb } = await supabase.from("membres_groupe").select("user_id").eq("groupe_id", id)

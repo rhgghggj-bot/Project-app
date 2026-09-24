@@ -12,7 +12,7 @@ export default function Rejoindre() {
     async function rejoindre() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
-        window.location.href = `/connexion`
+        window.location.assign(`/connexion`)
         return
       }
       const { data: inv } = await supabase.from("invitations").select("*, groupes(*)").eq("code", code).single()
@@ -25,7 +25,7 @@ export default function Rejoindre() {
         .select("*").eq("groupe_id", inv.groupe_id).eq("user_id", user.id).single()
       if (dejaMembre) {
         setMessage("Tu es déjà membre de ce groupe !")
-        setTimeout(() => window.location.href = `/groupes/${inv.groupe_id}`, 1500)
+        setTimeout(() => window.location.assign(`/groupes/${inv.groupe_id}`), 1500)
         return
       }
       const { error } = await supabase.from("membres_groupe").insert({
@@ -34,7 +34,7 @@ export default function Rejoindre() {
       })
       if (!error) {
         setMessage("Tu as rejoint le groupe ! Redirection…")
-        setTimeout(() => window.location.href = `/groupes/${inv.groupe_id}`, 1500)
+        setTimeout(() => window.location.assign(`/groupes/${inv.groupe_id}`), 1500)
       }
     }
     rejoindre()

@@ -1,9 +1,10 @@
 "use client"
+import { useChargement } from "@/lib/useChargement"
 import { confirmer } from "@/lib/toast"
 import { onActivate } from "@/lib/a11y"
 import Button from "@/app/components/ui/Button"
 import SectionHeader from "@/app/components/ui/SectionHeader"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 
@@ -12,18 +13,14 @@ export default function ListesPage() {
   const id = Array.isArray(params.id) ? params.id[0] : params.id
   const router = useRouter()
   const [listes, setListes] = useState<any[]>([])
-  const [user, setUser] = useState<any>(null)
   const [showForm, setShowForm] = useState(false)
   const [titre, setTitre] = useState("")
   const [categorieBudget, setCategorieBudget] = useState("Alimentation")
-  const [budget, setBudget] = useState(0)
 
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUser(user)
-      if (user) charger()
-    })
-  }, [])
+  useChargement(async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) charger()
+  }, id)
 
   async function charger() {
     const { data } = await supabase.from("listes").select("*").eq("groupe_id", id).order("created_at", { ascending: false })
@@ -91,7 +88,7 @@ export default function ListesPage() {
         {listes.length === 0 && (
           <div style={{textAlign:'center',padding:'48px 0'}}>
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ddd" strokeWidth="1.5" style={{margin:'0 auto 12px',display:'block'}}><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-            <div style={{fontSize:'14px',color:'#aaa'}}>Aucune liste pour l'instant</div>
+            <div style={{fontSize:'14px',color:'#aaa'}}>Aucune liste pour l’instant</div>
             <div style={{fontSize:'12px',color:'#ccc',marginTop:'4px'}}>Crée une liste partagée avec le groupe</div>
           </div>
         )}

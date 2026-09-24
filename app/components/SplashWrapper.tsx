@@ -1,25 +1,22 @@
 "use client"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import SplashScreen from "./SplashScreen"
+import { ecrireStockage, useEstClient, useStockageSession } from "@/lib/useStockage"
 
 export default function SplashWrapper({ children }: { children: React.ReactNode }) {
-  const [splash, setSplash] = useState(false)
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-    const done = sessionStorage.getItem("splashDone")
-    if (!done) setSplash(true)
-  }, [])
+  // Rien au rendu serveur, puis l'écran d'accueil une seule fois par session
+  const estClient = useEstClient()
+  const dejaVu = useStockageSession("splashDone")
+  const [termine, setTermine] = useState(false)
 
   const handleDone = () => {
-    setSplash(false)
-    sessionStorage.setItem("splashDone", "1")
+    setTermine(true)
+    ecrireStockage("session", "splashDone", "1")
   }
 
-  if (!mounted) return null
+  if (!estClient) return null
 
-  if (splash) return <SplashScreen onDone={handleDone} />
+  if (!dejaVu && !termine) return <SplashScreen onDone={handleDone} />
 
   return <>{children}</>
 }

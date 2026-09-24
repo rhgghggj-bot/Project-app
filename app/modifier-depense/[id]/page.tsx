@@ -42,14 +42,14 @@ export default function ModifierDepense() {
       setMessage("Erreur : " + error.message)
     } else {
       setMessage("Mis à jour !")
-      setTimeout(() => window.location.href = "/finances", 1500)
+      setTimeout(() => window.location.assign("/finances"), 1500)
     }
   }
 
   async function supprimer() {
     const table = type === "depense" ? "depenses" : "revenus"
     await supabase.from(table).delete().eq("id", id)
-    window.location.href = "/finances"
+    window.location.assign("/finances")
   }
 
   const isRevenu = type === "revenu"

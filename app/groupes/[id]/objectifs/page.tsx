@@ -1,5 +1,6 @@
 "use client"
-import { useEffect, useState } from "react"
+import { useChargement } from "@/lib/useChargement"
+import { useState } from "react"
 import { useParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import SectionHeader from "@/app/components/ui/SectionHeader"
@@ -27,7 +28,6 @@ export default function ObjectifsGroupePage() {
   const [contribuerA, setContribuerA] = useState<string | null>(null)
   const [montantContrib, setMontantContrib] = useState("")
 
-  useEffect(() => { charger() }, [])
 
   async function charger() {
     const { data: { user } } = await supabase.auth.getUser()
@@ -50,6 +50,8 @@ export default function ObjectifsGroupePage() {
       setContributions([])
     }
   }
+
+  useChargement(charger, id)
 
   async function creerObjectif() {
     const cible = parseFloat(montantCible)
