@@ -1,4 +1,5 @@
 "use client"
+import Image from "next/image"
 import { toast } from "@/lib/toast"
 import { onActivate, useEscape } from "@/lib/a11y"
 import Link from "next/link"
@@ -130,7 +131,7 @@ export default function Profile() {
       <div style={{padding:"0 18px 100px 18px"}}>
         <div style={{display:'flex',alignItems:'flex-end',justifyContent:'space-between',marginTop:'-40px',marginBottom:'12px'}}>
           <div style={{width:'64px',height:'64px',borderRadius:'50%',background:couleurProfil,border:'4px solid #fff',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:'22px',fontWeight:'500',position:'relative',overflow:'hidden',cursor:'pointer'}}>
-            {profil?.avatar_url ? <img src={profil.avatar_url} alt="Ta photo de profil" style={{width:'100%',height:'100%',borderRadius:'50%',objectFit:'cover',opacity: uploading ? 0.4 : 1}}/> : initiale}
+            {profil?.avatar_url ? <Image unoptimized width={800} height={600} src={profil.avatar_url} alt="Ta photo de profil" style={{width:'100%',height:'100%',borderRadius:'50%',objectFit:'cover',opacity: uploading ? 0.4 : 1}} /> : initiale}
             {uploading && <span role="status" style={{position:'absolute',fontSize:'10px',fontWeight:600,color:'#fff'}}>Envoi…</span>}
             <input type='file' accept='image/*' aria-label="Changer ta photo de profil" disabled={uploading} onChange={uploadAvatar} style={{position:'absolute',inset:0,opacity:0,cursor:'pointer',width:'100%',height:'100%'}}/>
           </div>
@@ -364,7 +365,7 @@ export default function Profile() {
             {profilsListe.map((p: any) => (
               <Link key={p.id} href={'/profil/'+p.id} style={{textDecoration:'none',display:'flex',alignItems:'center',gap:'12px',padding:'10px 0',borderBottom:'0.5px solid #F5F8FC'}}>
                 {p.avatar_url ? (
-                  <img src={p.avatar_url} alt={p.nom} style={{width:'40px',height:'40px',borderRadius:'50%',objectFit:'cover'}}/>
+                  <Image unoptimized width={40} height={40} src={p.avatar_url} alt={p.nom} style={{width:'40px',height:'40px',borderRadius:'50%',objectFit:'cover'}} />
                 ) : (
                   <div style={{width:'40px',height:'40px',borderRadius:'50%',background:'linear-gradient(135deg,#2B7FFF,#8B5CF6)',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:'14px',fontWeight:'600'}}>
                     {(p.nom || "M")[0]?.toUpperCase()}

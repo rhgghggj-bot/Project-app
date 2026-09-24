@@ -1,4 +1,5 @@
 "use client"
+import Image from "next/image"
 import Link from "next/link"
 import SectionHeader from "@/app/components/ui/SectionHeader"
 import Tutorial from "../components/Tutorial"
@@ -171,7 +172,7 @@ export default function Scanner() {
           <div>
             {image && (
               <div style={{marginBottom:'16px',borderRadius:'14px',overflow:'hidden',border:'0.5px solid #E8F1FF',maxHeight:'180px',display:'flex',alignItems:'center',justifyContent:'center',background:'#F8FBFF'}}>
-                <img src={image} style={{width:'100%',objectFit:'cover',maxHeight:'180px'}} alt="document"/>
+                <Image unoptimized width={800} height={600} src={image} style={{width:'100%',objectFit:'cover',maxHeight:'180px',height:'auto'}} alt="document" />
               </div>
             )}
 

@@ -1,4 +1,5 @@
 "use client"
+import Image from "next/image"
 import Link from "next/link"
 import { toast } from "@/lib/toast"
 import { onActivate, useEscape } from "@/lib/a11y"
@@ -312,7 +313,7 @@ export default function Marketplace() {
                 <div role="button" tabIndex={0} onClick={() => onTapImage(a)} onKeyDown={onActivate(() => onTapImage(a))}
                   style={{width:"100%",minHeight:"220px",maxHeight:"420px",background:"linear-gradient(135deg,#EEF5FF,#DCE9FF)",position:"relative",overflow:"hidden",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
                   {a.image_url ? (
-                    <img src={a.image_url} alt={a.titre} style={{width:"100%",height:"100%",maxHeight:"420px",objectFit:"contain",filter: a.statut === "réservé" ? "grayscale(1) brightness(0.82)" : "none"}}/>
+                    <Image unoptimized width={800} height={600} src={a.image_url} alt={a.titre} style={{width:"100%",height:"100%",maxHeight:"420px",objectFit:"contain",filter: a.statut === "réservé" ? "grayscale(1) brightness(0.82)" : "none"}} />
                   ) : (
                     <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center"}}>
                       <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#2B7FFF" strokeWidth="1.2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
@@ -483,7 +484,7 @@ export default function Marketplace() {
                     if (f) { setImageAnnonce(f); setImagePreview(URL.createObjectURL(f)) }
                   }} style={{display:"none"}}/>
                 </label>
-                {imagePreview && <img src={imagePreview} alt="preview" style={{width:"100%",height:"140px",objectFit:"cover",borderRadius:"10px",marginTop:"8px"}}/>}
+                {imagePreview && <Image unoptimized width={800} height={600} src={imagePreview} alt="preview" style={{width:"100%",height:"140px",objectFit:"cover",borderRadius:"10px",marginTop:"8px"}} />}
               </div>
               <select aria-label="État" value={etatAnnonce} onChange={e => setEtatAnnonce(e.target.value)} style={{...inp} as any}>
                 <option>Neuf</option>
@@ -552,7 +553,7 @@ export default function Marketplace() {
                 <div style={{position:"relative"}}>
                   {annonceOuverte.image_url ? (
                     <div style={{width:"100%",maxHeight:"50vh",background:"linear-gradient(135deg,#EEF5FF,#DCE9FF)",display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden"}}>
-                      <img src={annonceOuverte.image_url} alt={annonceOuverte.titre} style={{width:"100%",maxHeight:"50vh",objectFit:"contain"}}/>
+                      <Image unoptimized width={800} height={600} src={annonceOuverte.image_url} alt={annonceOuverte.titre} style={{width:"100%",maxHeight:"50vh",objectFit:"contain",height:'auto'}} />
                     </div>
                   ) : (
                     <div style={{width:"100%",height:"260px",background:"linear-gradient(135deg,#EEF5FF,#DCE9FF)",display:"flex",alignItems:"center",justifyContent:"center"}}>

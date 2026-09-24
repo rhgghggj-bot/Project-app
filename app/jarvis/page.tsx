@@ -1,4 +1,5 @@
 "use client"
+import Image from "next/image"
 import { ecrireStockage, useStockageLocal } from "@/lib/useStockage"
 import Link from "next/link"
 import { useEffect, useRef, useState, useEffectEvent } from "react"
@@ -839,7 +840,7 @@ export default function Jarvis() {
           }}>
             {m.texte}
             {m.image && (
-              <img src={`data:image/png;base64,${m.image}`} alt="Image générée par Jarvis" style={{ width: "100%", maxWidth: "320px", borderRadius: "10px", marginTop: "10px", display: "block" }} />
+              <Image unoptimized width={800} height={600} src={`data:image/png;base64,${m.image}`} alt="Image générée par Jarvis" style={{ width: "100%", maxWidth: "320px", borderRadius: "10px", marginTop: "10px", display: "block" ,height:'auto'}} />
             )}
           </div>
         ))}

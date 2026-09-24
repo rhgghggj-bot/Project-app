@@ -1,4 +1,5 @@
 "use client"
+import Image from "next/image"
 import { SkeletonProfil } from "@/app/components/ui/Skeleton"
 import { useEscape } from "@/lib/a11y"
 import Link from "next/link"
@@ -77,7 +78,7 @@ export default function ProfilPublic() {
         <Link href="/" transitionTypes={['nav-back']} style={{fontSize:'12px',color:'rgba(255,255,255,0.5)',textDecoration:'none'}}>← Accueil</Link>
         <div style={{display:'flex',alignItems:'center',gap:'16px',marginTop:'16px'}}>
           {profil.avatar_url ? (
-            <img src={profil.avatar_url} alt={nom} style={{width:'72px',height:'72px',borderRadius:'50%',objectFit:'cover',flexShrink:0,border:'2px solid rgba(255,255,255,0.3)'}}/>
+            <Image unoptimized width={72} height={72} src={profil.avatar_url} alt={nom} style={{width:'72px',height:'72px',borderRadius:'50%',objectFit:'cover',flexShrink:0,border:'2px solid rgba(255,255,255,0.3)'}} />
           ) : (
             <div style={{width:'72px',height:'72px',borderRadius:'50%',background:'rgba(255,255,255,0.15)',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:'26px',fontWeight:'600',flexShrink:0}}>
               {nom[0]?.toUpperCase()}
@@ -139,7 +140,7 @@ export default function ProfilPublic() {
             {profilsListe.map((p: any) => (
               <Link key={p.id} href={'/profil/'+p.id} style={{textDecoration:'none',display:'flex',alignItems:'center',gap:'12px',padding:'10px 0',borderBottom:'0.5px solid #F5F8FC'}}>
                 {p.avatar_url ? (
-                  <img src={p.avatar_url} alt={p.nom} style={{width:'40px',height:'40px',borderRadius:'50%',objectFit:'cover'}}/>
+                  <Image unoptimized width={40} height={40} src={p.avatar_url} alt={p.nom} style={{width:'40px',height:'40px',borderRadius:'50%',objectFit:'cover'}} />
                 ) : (
                   <div style={{width:'40px',height:'40px',borderRadius:'50%',background:'linear-gradient(135deg,#2B7FFF,#8B5CF6)',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:'14px',fontWeight:'600'}}>
                     {(p.nom || "M")[0]?.toUpperCase()}

@@ -1,4 +1,5 @@
 "use client"
+import Image from "next/image"
 import { SkeletonProfil } from "@/app/components/ui/Skeleton"
 import { useEscape } from "@/lib/a11y"
 import Link from "next/link"
@@ -89,7 +90,7 @@ export default function FicheVendeur() {
         <Link href="/marketplace" transitionTypes={['nav-back']} style={{fontSize:'12px',color:'rgba(255,255,255,0.5)',textDecoration:'none'}}>← Marketplace</Link>
         <div style={{display:'flex',alignItems:'center',gap:'16px',marginTop:'16px'}}>
           {profil.avatar_url ? (
-            <img src={profil.avatar_url} alt={nomVendeur} style={{width:'72px',height:'72px',borderRadius:'50%',objectFit:'cover',flexShrink:0,border:'2px solid rgba(255,255,255,0.3)'}}/>
+            <Image unoptimized width={72} height={72} src={profil.avatar_url} alt={nomVendeur} style={{width:'72px',height:'72px',borderRadius:'50%',objectFit:'cover',flexShrink:0,border:'2px solid rgba(255,255,255,0.3)'}} />
           ) : (
             <div style={{width:'72px',height:'72px',borderRadius:'50%',background:'rgba(255,255,255,0.15)',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:'26px',fontWeight:'600',flexShrink:0}}>
               {nomVendeur[0]?.toUpperCase()}
@@ -143,7 +144,7 @@ export default function FicheVendeur() {
               <div style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'14px',overflow:'hidden'}}>
                 <div style={{height:'110px',background:'linear-gradient(135deg,#EEF5FF,#DCE9FF)',display:'flex',alignItems:'center',justifyContent:'center'}}>
                   {a.image_url ? (
-                    <img src={a.image_url} alt={a.titre} style={{width:'100%',height:'100%',objectFit:'cover'}}/>
+                    <Image unoptimized width={800} height={600} src={a.image_url} alt={a.titre} style={{width:'100%',height:'100%',objectFit:'cover'}} />
                   ) : (
                     <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#2B7FFF" strokeWidth="1.2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
                   )}
@@ -182,7 +183,7 @@ export default function FicheVendeur() {
             {profilsListe.map((p: any) => (
               <Link key={p.id} href={'/vendeur/'+p.id} style={{textDecoration:'none',display:'flex',alignItems:'center',gap:'12px',padding:'10px 0',borderBottom:'0.5px solid #F5F8FC'}}>
                 {p.avatar_url ? (
-                  <img src={p.avatar_url} alt={p.nom} style={{width:'40px',height:'40px',borderRadius:'50%',objectFit:'cover'}}/>
+                  <Image unoptimized width={40} height={40} src={p.avatar_url} alt={p.nom} style={{width:'40px',height:'40px',borderRadius:'50%',objectFit:'cover'}} />
                 ) : (
                   <div style={{width:'40px',height:'40px',borderRadius:'50%',background:'linear-gradient(135deg,#2B7FFF,#8B5CF6)',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:'14px',fontWeight:'600'}}>
                     {(p.nom || "M")[0]?.toUpperCase()}

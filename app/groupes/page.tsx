@@ -1,4 +1,5 @@
 "use client"
+import Image from "next/image"
 import { onActivate } from "@/lib/a11y"
 import Link from "next/link"
 
@@ -159,7 +160,7 @@ export default function Groupes() {
               <div className="active:bg-gray-50" style={{display:'flex',alignItems:'center',gap:'14px',padding:'12px 18px',cursor:'pointer',transition:'background 0.1s'}}>
                 <div style={{position:'relative',flexShrink:0}}>
                   {avatarUrl ? (
-                    <img src={avatarUrl} alt={nom} style={{width:'56px',height:'56px',borderRadius:'50%',objectFit:'cover'}}/>
+                    <Image unoptimized width={56} height={56} src={avatarUrl} alt={nom} style={{width:'56px',height:'56px',borderRadius:'50%',objectFit:'cover'}} />
                   ) : it.type === 'dm' ? (
                     <div style={{width:'56px',height:'56px',borderRadius:'50%',background:'linear-gradient(135deg,#2B7FFF,#8B5CF6)',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:'19px',fontWeight:'600'}}>
                       {nom[0]?.toUpperCase()}
@@ -219,7 +220,7 @@ export default function Groupes() {
             {resultats.map(p => (
               <div key={p.id} role="button" tabIndex={0} onClick={() => ajouterSelection(p)} onKeyDown={onActivate(() => ajouterSelection(p))} style={{display:'flex',alignItems:'center',gap:'12px',padding:'12px 18px',cursor:'pointer',borderBottom:'0.5px solid #F5F8FC'}}>
                 {p.avatar_url ? (
-                  <img src={p.avatar_url} alt={p.nom} style={{width:'44px',height:'44px',borderRadius:'50%',objectFit:'cover'}}/>
+                  <Image unoptimized width={44} height={44} src={p.avatar_url} alt={p.nom} style={{width:'44px',height:'44px',borderRadius:'50%',objectFit:'cover'}} />
                 ) : (
                   <div style={{width:'44px',height:'44px',borderRadius:'50%',background:'linear-gradient(135deg,#2B7FFF,#8B5CF6)',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:'15px',fontWeight:'600'}}>
                     {(p.nom || "M")[0]?.toUpperCase()}
