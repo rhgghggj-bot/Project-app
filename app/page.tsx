@@ -115,11 +115,10 @@ export default function Home() {
     })[0]
 
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen" style={{background:'#F7F9FC'}}>
 
-      {/* Zone bleue - header */}
-      <div style={{background:'linear-gradient(160deg,#0A1628,#1a3a6e,#2B7FFF)',padding:'20px 18px 20px',position:'relative',overflow:'hidden'}}>
-        <div style={{position:'absolute',top:'-40px',right:'-40px',width:'200px',height:'200px',borderRadius:'50%',background:'rgba(43,127,255,0.15)'}}></div>
+      {/* Ciel de nuit - header */}
+      <div style={{background:'radial-gradient(120% 90% at 85% 0%, #1a3a6e 0%, #0A1628 60%)',padding:'20px 20px 18px',position:'relative',overflow:'hidden'}}>
 
         {!authChecked && (
           <div style={{minHeight:'160px'}}></div>
@@ -127,7 +126,7 @@ export default function Home() {
 
         {authChecked && !user && (
           <div style={{textAlign:'center',paddingBottom:'20px'}}>
-            <div style={{fontSize:'22px',fontWeight:'500',color:'#fff',marginBottom:'8px'}}>Bienvenue sur Nexia</div>
+            <h1 style={{fontSize:'26px',fontWeight:'600',color:'#fff',margin:'0 0 8px'}}>Bienvenue sur Nexia</h1>
             <p style={{fontSize:'14px',color:'rgba(255,255,255,0.6)',marginBottom:'24px'}}>Connecte-toi pour accéder à toutes les fonctionnalités</p>
             <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
               <a href="/inscription" style={{textDecoration:'none'}}>
@@ -137,32 +136,67 @@ export default function Home() {
                 <button style={{width:'100%',background:'transparent',color:'rgba(255,255,255,0.7)',fontWeight:'500',fontSize:'14px',padding:'13px',borderRadius:'14px',border:'0.5px solid rgba(255,255,255,0.3)',cursor:'pointer'}}>J'ai déjà un compte</button>
               </a>
               <a href="/onboarding" style={{textDecoration:'none'}}>
-                <button style={{width:'100%',background:'transparent',color:'rgba(255,255,255,0.5)',fontSize:'13px',padding:'10px',borderRadius:'14px',border:'none',cursor:'pointer'}}>Voir les fonctionnalités →</button>
+                <button style={{width:'100%',background:'transparent',color:'rgba(255,255,255,0.5)',fontSize:'13px',padding:'10px',borderRadius:'14px',border:'none',cursor:'pointer'}}>Voir les fonctionnalités</button>
               </a>
             </div>
           </div>
         )}
 
         {user && (
-          <div>
-            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'12px'}}>
+          <div style={{maxWidth:'640px',margin:'0 auto'}}>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'22px'}}>
               <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
-                <svg width='22' height='22' viewBox='0 0 60 60' style={{flexShrink:0}}>
-                  <path d='M30 5 L35 25 L55 30 L35 35 L30 55 L25 35 L5 30 L25 25 Z' fill='url(#navGrad)'/>
-                  <defs><linearGradient id='navGrad' x1='0%' y1='0%' x2='100%' y2='100%'><stop offset='0%' stopColor='#2B7FFF'/><stop offset='100%' stopColor='#D4A843'/></linearGradient></defs>
+                <svg aria-hidden="true" width='18' height='18' viewBox='0 0 60 60' style={{flexShrink:0}}>
+                  <path d='M30 5 L35 25 L55 30 L35 35 L30 55 L25 35 L5 30 L25 25 Z' fill='#D4A843'/>
                 </svg>
-                <span style={{fontSize:'16px',fontWeight:'700',color:'#fff',letterSpacing:'2px'}}>NEXIA</span>
+                <span className="nx-display" style={{fontSize:'15px',fontWeight:'600',color:'#fff',letterSpacing:'0.14em'}}>NEXIA</span>
               </div>
+              <span style={{fontSize:'12px',color:'rgba(255,255,255,0.55)'}}>
+                {today.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})}
+              </span>
             </div>
-            <div style={{fontSize:'12px',color:'rgba(255,255,255,0.5)',marginBottom:'4px'}}>
-              {today.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}
-            </div>
-            <h1 className="nx-display" style={{fontSize:'30px',fontWeight:'600',color:'#fff',margin:'0 0 12px',lineHeight:1.1}}>Bonjour</h1>
-            <div style={{display:'flex',gap:'12px'}}>
-              <div style={{fontSize:'13px',color:'#86efac',fontWeight:'500'}}><span style={{color:'rgba(255,255,255,0.5)'}}>Rev. </span>{format(totalRev)}</div>
-              <div style={{fontSize:'13px',color:'#fca5a5',fontWeight:'500'}}><span style={{color:'rgba(255,255,255,0.5)'}}>Dép. </span>{format(totalDep)}</div>
-              <div style={{fontSize:'13px',color: solde >= 0 ? '#86efac' : '#fca5a5',fontWeight:'500'}}>Solde : {solde >= 0 ? '+' : ''}{format(solde)}</div>
-            </div>
+
+            <h1 className="nx-display" style={{fontSize:'17px',fontWeight:'500',color:'rgba(255,255,255,0.7)',margin:'0 0 4px',letterSpacing:0}}>Bonjour</h1>
+            <a href="/finances" style={{textDecoration:'none',display:'block'}}>
+              <div className="nx-display" style={{fontSize:'44px',fontWeight:'600',lineHeight:1.05,letterSpacing:'-0.035em',color: solde >= 0 ? '#fff' : '#fca5a5'}}>
+                {solde >= 0 ? '+' : ''}{format(solde)}
+              </div>
+              <div style={{fontSize:'13px',color:'rgba(255,255,255,0.55)',marginTop:'6px'}}>
+                Solde de {today.toLocaleDateString('fr-FR',{month:'long'})} : <span style={{color:'#86efac'}}>{format(totalRev)}</span> gagnés, <span style={{color:'#fca5a5'}}>{format(totalDep)}</span> dépensés
+              </div>
+            </a>
+
+            {/* Signature : la semaine dessinée comme une constellation */}
+            <a href="/semaine" aria-label="Voir ma semaine" style={{display:'block',maxWidth:'440px',margin:'22px auto 0',textDecoration:'none'}}>
+              <svg viewBox="0 0 350 104" width="100%" role="img" aria-hidden="true" style={{display:'block',overflow:'visible'}}>
+                {(() => {
+                  const ys = [58, 40, 52, 30, 46, 24, 42]
+                  const pts = jours.map((_, i) => ({ x: 25 + i * 50, y: ys[i] }))
+                  return (
+                    <>
+                      <polyline points={pts.map(p => `${p.x},${p.y}`).join(' ')} fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth="1" />
+                      {jours.map((jour, i) => {
+                        const isToday = jour.toDateString() === today.toDateString()
+                        const nb = evtDuJour(jour).length
+                        const { x, y } = pts[i]
+                        return (
+                          <g key={i}>
+                            {isToday && <circle cx={x} cy={y} r="13" fill="#D4A843" opacity="0.18" />}
+                            <circle cx={x} cy={y} r={isToday ? 5 : nb > 0 ? 4 : 2.5}
+                              fill={isToday ? '#D4A843' : nb > 0 ? '#fff' : 'rgba(255,255,255,0.45)'} />
+                            {nb > 0 && (
+                              <text x={x} y={y - 12} textAnchor="middle" fontSize="10" fill={isToday ? '#D4A843' : 'rgba(255,255,255,0.8)'}>{nb}</text>
+                            )}
+                            <text x={x} y="86" textAnchor="middle" fontSize="10" fill={isToday ? '#D4A843' : 'rgba(255,255,255,0.45)'}>{JOURS[i]}</text>
+                            <text x={x} y="100" textAnchor="middle" fontSize="12" fontWeight={isToday ? 600 : 400} fill={isToday ? '#fff' : 'rgba(255,255,255,0.7)'}>{jour.getDate()}</text>
+                          </g>
+                        )
+                      })}
+                    </>
+                  )
+                })()}
+              </svg>
+            </a>
           </div>
         )}
       </div>
@@ -187,109 +221,69 @@ export default function Home() {
         )
       })}
 
-      {/* Zone gris clair - calendrier + cartes */}
+      {/* Prochain rendez-vous + raccourcis */}
       {user && (
-        <div style={{background:'#f0f4ff',padding:'14px'}}>
-          <div style={{borderRadius:'16px',padding:'14px',background:'rgba(15,45,92,0.85)',border:'1px solid rgba(255,255,255,0.15)',marginBottom:'10px'}}>
-            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'12px'}}>
-              <span style={{fontSize:'13px',fontWeight:'500',color:'#fff'}}>Cette semaine</span>
-              <a href="/semaine" style={{fontSize:'12px',color:'#a8d8f0',fontWeight:'500',textDecoration:'none'}}>Voir tout →</a>
+        <div style={{maxWidth:'640px',margin:'0 auto',padding:'20px 16px 8px'}}>
+          <a href="/semaine" style={{textDecoration:'none',display:'flex',alignItems:'center',gap:'14px',background:'#fff',borderRadius:'18px',padding:'14px 16px',boxShadow:'0 1px 2px rgba(10,22,40,0.06)'}}>
+            <div style={{width:'48px',flexShrink:0,textAlign:'center',borderRight:'1px solid #E8EEF7',paddingRight:'12px'}}>
+              <div className="nx-display" style={{fontSize:'20px',fontWeight:'600',color:'#0A1628',lineHeight:1}}>
+                {prochainEvt ? new Date(prochainEvt.date).getDate() : '–'}
+              </div>
+              <div style={{fontSize:'11px',color:'#8A94A6',marginTop:'2px'}}>
+                {prochainEvt ? new Date(prochainEvt.date).toLocaleDateString('fr-FR',{month:'short'}) : ''}
+              </div>
             </div>
-            <div style={{display:'flex',gap:'4px'}}>
-              {jours.map((jour, i) => {
-                const isToday = jour.toDateString() === today.toDateString()
-                const evts = evtDuJour(jour)
-                const hasEvts = evts.length > 0
-                return (
-                  <a key={i} href="/semaine" style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:'3px',textDecoration:'none'}}>
-                    <div style={{fontSize:'10px',color:'rgba(255,255,255,0.5)',fontWeight:'500'}}>{JOURS[i]}</div>
-                    <div style={{width:'100%',minHeight: hasEvts ? '42px' : '28px',borderRadius:'6px',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:'3px',
-                      background: isToday ? '#fff' : hasEvts ? 'rgba(255,255,255,0.12)' : 'transparent',
-                      border: hasEvts && !isToday ? '1px solid rgba(255,255,255,0.2)' : 'none',
-                      padding: hasEvts ? '3px 0' : '0'}}>
-                      <span style={{fontSize:'12px',fontWeight:'600',color: isToday ? '#1e56a0' : 'rgba(255,255,255,0.85)'}}>
-                        {jour.getDate()}
-                      </span>
-                      {hasEvts && (
-                        <div style={{display:'flex',gap:'2px',alignItems:'center'}}>
-                          {evts.slice(0,3).map((e:any,j:number) => (
-                            <div key={j} style={{width:'4px',height:'4px',borderRadius:'50%',background:e.couleur}}></div>
-                          ))}
-                          {evts.length > 3 && (
-                            <div style={{background:'rgba(255,255,255,0.3)',borderRadius:'3px',padding:'0 3px',fontSize:'7px',color:'#fff',fontWeight:'600'}}>+{evts.length-3}</div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </a>
-                )
-              })}
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:'12px',color:'#8A94A6',marginBottom:'2px'}}>Prochain rendez-vous</div>
+              <div style={{fontSize:'15px',fontWeight:'500',color:'#0A1628',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
+                {prochainEvt ? prochainEvt.titre : 'Rien de prévu'}
+              </div>
+              <div style={{fontSize:'12px',color:'#8A94A6',marginTop:'1px'}}>
+                {prochainEvt ? (prochainEvt.heure ? `à ${prochainEvt.heure.slice(0,5)}` : 'toute la journée') : 'Ajoute un événement'}
+              </div>
             </div>
-          </div>
-
-          <div style={{display:'flex',gap:'8px',marginBottom:'8px'}}>
-            <a href="/finances" style={{flex:1,textDecoration:'none'}}>
-              <div style={{background:'rgba(15,45,92,0.85)',borderRadius:'14px',padding:'12px',border:'1px solid rgba(255,255,255,0.15)'}}>
-                <div style={{fontSize:'11px',color:'#a8d8f0',fontWeight:'500',marginBottom:'4px'}}>Finances</div>
-                <div style={{fontSize:'18px',fontWeight:'500',color: solde >= 0 ? '#86efac' : '#fca5a5'}}>{solde >= 0 ? '+' : ''}{format(solde)}</div>
-                <div style={{fontSize:'11px',color:'rgba(255,255,255,0.5)',marginTop:'2px'}}>Solde ce mois</div>
-              </div>
-            </a>
-            <a href="/semaine" style={{flex:1,textDecoration:'none'}}>
-              <div style={{background:'rgba(15,45,92,0.85)',borderRadius:'14px',padding:'12px',border:'1px solid rgba(255,255,255,0.15)'}}>
-                <div style={{fontSize:'11px',color:'#fcd34d',fontWeight:'500',marginBottom:'4px'}}>Prochain</div>
-                <div style={{fontSize:'13px',fontWeight:'500',color:'#fff'}}>{prochainEvt?.titre || 'Aucun'}</div>
-                <div style={{fontSize:'11px',color:'rgba(255,255,255,0.5)',marginTop:'2px'}}>{prochainEvt ? new Date(prochainEvt.date).toLocaleDateString('fr-FR',{day:'numeric',month:'short'}) : 'Ajoute un événement'}</div>
-              </div>
-            </a>
-          </div>
-
-          <a href="/scanner" style={{textDecoration:'none',display:'block'}}>
-            <div style={{background:'rgba(15,45,92,0.85)',borderRadius:'14px',padding:'12px',display:'flex',alignItems:'center',gap:'12px',border:'1px solid rgba(255,255,255,0.15)'}}>
-              <div style={{width:'38px',height:'38px',borderRadius:'10px',background:'rgba(255,255,255,0.1)',border:'1px solid rgba(255,255,255,0.2)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8"><polyline points="4 7 4 4 7 4"/><polyline points="17 4 20 4 20 7"/><polyline points="20 17 20 20 17 20"/><polyline points="7 20 4 20 4 17"/><line x1="4" y1="12" x2="20" y2="12"/></svg>
-              </div>
-              <div>
-                <div style={{fontSize:'13px',fontWeight:'500',color:'#fff'}}>Scanner un document</div>
-                <div style={{fontSize:'11px',color:'rgba(255,255,255,0.6)',marginTop:'2px'}}>Facture, relevé, contrat…</div>
-              </div>
-              <div style={{marginLeft:'auto',color:'rgba(255,255,255,0.5)',fontSize:'18px'}}>›</div>
-            </div>
+            <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#B4BDCC" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
           </a>
 
-          <a href="/jeux" style={{textDecoration:'none',display:'block',marginTop:'10px'}}>
-            <div style={{background:'linear-gradient(135deg,rgba(212,168,67,0.32),rgba(249,115,22,0.22)),#1a3a6e',borderRadius:'14px',padding:'12px',display:'flex',alignItems:'center',gap:'12px',border:'1px solid rgba(212,168,67,0.45)'}}>
-              <div style={{width:'38px',height:'38px',borderRadius:'10px',background:'rgba(255,255,255,0.12)',border:'1px solid rgba(255,255,255,0.2)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F97316" strokeWidth="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-              </div>
-              <div>
-                <div style={{fontSize:'13px',fontWeight:'500',color:'#fff'}}>Jeux</div>
-                <div style={{fontSize:'11px',color:'rgba(255,255,255,0.75)',marginTop:'2px'}}>Block Blast, 2048, Snake, Memory</div>
-              </div>
-              <div style={{marginLeft:'auto',color:'rgba(255,255,255,0.5)',fontSize:'18px'}}>›</div>
-            </div>
-          </a>
+          <div style={{background:'#fff',borderRadius:'18px',marginTop:'12px',boxShadow:'0 1px 2px rgba(10,22,40,0.06)',overflow:'hidden'}}>
+            {[
+              { href: '/scanner', titre: 'Scanner un document', sous: 'Facture, relevé, contrat…', icon: <><polyline points="4 7 4 4 7 4"/><polyline points="17 4 20 4 20 7"/><polyline points="20 17 20 20 17 20"/><polyline points="7 20 4 20 4 17"/><line x1="4" y1="12" x2="20" y2="12"/></> },
+              { href: '/jeux', titre: 'Jeux', sous: 'Block Blast, 2048, Snake, Memory', icon: <><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></> },
+            ].map((l, i) => (
+              <a key={l.href} href={l.href} style={{display:'flex',alignItems:'center',gap:'14px',padding:'14px 16px',textDecoration:'none',borderTop: i ? '1px solid #EEF2F8' : 'none'}}>
+                <div style={{width:'36px',height:'36px',borderRadius:'50%',background:'#0A1628',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                  <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.8">{l.icon}</svg>
+                </div>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:'15px',fontWeight:'500',color:'#0A1628'}}>{l.titre}</div>
+                  <div style={{fontSize:'12px',color:'#8A94A6',marginTop:'1px'}}>{l.sous}</div>
+                </div>
+                <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#B4BDCC" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
+              </a>
+            ))}
+          </div>
         </div>
       )}
-
       {/* Zone decouvrir */}
-      <div style={{background:'#f8faff'}}>
-        <div style={{padding:'16px 14px 8px'}}>
-          <div style={{fontSize:'11px',color:'#aaa',marginBottom:'4px'}}>Réseau Nexia</div>
-          <h2 style={{fontSize:'24px',fontWeight:'600',color:'#1a1a2e',margin:'0 0 12px'}}>Découvrir</h2>
+      <div style={{maxWidth:'640px',margin:'0 auto'}}>
+        <div style={{padding:'24px 16px 8px'}}>
+          <h2 style={{fontSize:'24px',fontWeight:'600',color:'#0A1628',margin:'0 0 4px'}}>Découvrir</h2>
+          <p style={{fontSize:'13px',color:'#8A94A6',margin:'0 0 14px'}}>Les projets lancés par la communauté Nexia</p>
           <div style={{display:'flex',gap:'8px',overflowX:'auto',paddingBottom:'4px'}}>
             {['Tous','Tech','Business','Art','Sport','Éducation','Santé','Autre'].map(cat => (
               <button key={cat} onClick={() => setCategorie(cat)}
-                style={{whiteSpace:'nowrap',padding:'6px 14px',borderRadius:'99px',border:'none',cursor:'pointer',fontSize:'12px',fontWeight:'500',
-                  background: categorie === cat ? '#2B7FFF' : '#EEF5FF',
-                  color: categorie === cat ? '#fff' : '#2B7FFF'}}>
+                aria-pressed={categorie === cat}
+                style={{whiteSpace:'nowrap',padding:'7px 14px',borderRadius:'99px',cursor:'pointer',fontSize:'13px',fontWeight:'500',
+                  border: categorie === cat ? '1px solid #0A1628' : '1px solid #DDE3EC',
+                  background: categorie === cat ? '#0A1628' : '#fff',
+                  color: categorie === cat ? '#fff' : '#4A5568'}}>
                 {cat}
               </button>
             ))}
           </div>
         </div>
 
-        <div style={{padding:'16px 14px'}}>
+        <div style={{padding:'12px 16px 24px'}}>
           {projets.length === 0 && (
             <div className="text-center py-12">
               <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="1.5" style={{margin:'0 auto 12px'}}><path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/></svg>
@@ -314,10 +308,12 @@ export default function Home() {
               <>
                 {/* Projet en vedette */}
                 <a href={'/projet/'+vedette.id} style={{textDecoration:'none',display:'block',marginBottom:'14px'}}>
-                  <div style={{background:'linear-gradient(135deg,#1a3a6e,#2B7FFF)',borderRadius:'20px',padding:'20px',position:'relative',overflow:'hidden'}}>
-                    <div style={{position:'absolute',top:'-20px',right:'-20px',width:'100px',height:'100px',borderRadius:'50%',background:'rgba(255,255,255,0.08)'}}></div>
-                    <div style={{fontSize:'11px',color:'rgba(255,255,255,0.65)',marginBottom:'6px',fontWeight:'500',display:'flex',alignItems:'center',gap:'5px'}}><span style={{width:'6px',height:'6px',borderRadius:'50%',background:'#D4A843',display:'inline-block'}}></span>En vedette</div>
-                    <div style={{fontSize:'17px',fontWeight:'500',color:'#fff',marginBottom:'6px'}}>{vedette.titre}</div>
+                  <div style={{background:'#0A1628',borderRadius:'22px',padding:'22px',position:'relative',overflow:'hidden'}}>
+                    <svg aria-hidden="true" width="120" height="120" viewBox='0 0 60 60' style={{position:'absolute',top:'-26px',right:'-26px',opacity:0.12}}>
+                      <path d='M30 5 L35 25 L55 30 L35 35 L30 55 L25 35 L5 30 L25 25 Z' fill='#D4A843'/>
+                    </svg>
+                    <div style={{fontSize:'12px',color:'#D4A843',marginBottom:'8px',fontWeight:'500'}}>En vedette</div>
+                    <div className="nx-display" style={{fontSize:'22px',fontWeight:'600',color:'#fff',marginBottom:'6px',lineHeight:1.2}}>{vedette.titre}</div>
                     <div style={{fontSize:'12px',color:'rgba(255,255,255,0.7)',marginBottom:'14px',lineHeight:'1.5'}}>{vedette.description}</div>
                     <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
                       <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
@@ -326,12 +322,12 @@ export default function Home() {
                         </div>
                         <span style={{fontSize:'12px',color:'rgba(255,255,255,0.7)'}}>{vedette.categorie}</span>
                       </div>
-                      <div style={{background:'rgba(255,255,255,0.15)',borderRadius:'99px',padding:'6px 14px',fontSize:'12px',color:'#fff',fontWeight:'500'}}>Voir</div>
+                      <div style={{background:'#D4A843',borderRadius:'99px',padding:'7px 16px',fontSize:'13px',color:'#0A1628',fontWeight:'600'}}>Découvrir le projet</div>
                     </div>
                   </div>
                 </a>
 
-                <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',marginBottom:'12px'}}>Récents</div>
+                <h3 style={{fontSize:'15px',fontWeight:'600',color:'#0A1628',margin:'8px 0 12px'}}>Récents</h3>
               </>
             )
           })()}
@@ -348,15 +344,15 @@ export default function Home() {
               onClick={() => window.location.href = '/projet/'+projet.id}
               onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); window.location.href = '/projet/'+projet.id } }}
               style={{cursor:'pointer',display:'block',marginBottom:'10px'}}>
-              <div style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'16px',padding:'14px'}}>
+              <div style={{background:'#fff',borderRadius:'18px',padding:'16px',boxShadow:'0 1px 2px rgba(10,22,40,0.06)'}}>
                 <div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'10px'}}>
-                  <div style={{width:'40px',height:'40px',borderRadius:'12px',background:'linear-gradient(135deg,#EEF5FF,#DCE9FF)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2B7FFF" strokeWidth="1.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                  <div style={{width:'40px',height:'40px',borderRadius:'12px',background:'#EEF2F8',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                    <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0A1628" strokeWidth="1.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
                   </div>
                   <div style={{flex:1}}>
-                    <div style={{fontSize:'14px',fontWeight:'500',color:'#1a1a2e',marginBottom:'3px'}}>{projet.titre}</div>
+                    <div style={{fontSize:'15px',fontWeight:'500',color:'#0A1628',marginBottom:'3px'}}>{projet.titre}</div>
                     <div style={{display:'flex',alignItems:'center',gap:'6px',marginBottom:'3px'}}>
-                      <span style={{fontSize:'10px',background:'#EEF5FF',color:'#2B7FFF',padding:'2px 8px',borderRadius:'99px',fontWeight:'500'}}>{projet.categorie}</span>
+                      <span style={{fontSize:'11px',background:'#EEF2F8',color:'#4A5568',padding:'2px 8px',borderRadius:'99px',fontWeight:'500'}}>{projet.categorie}</span>
                       <span style={{fontSize:'11px',color:'#aaa'}}>{new Date(projet.created_at).toLocaleDateString('fr-FR',{day:'numeric',month:'short'})}</span>
                     </div>
                     <a href={'/profil/'+projet.user_id} onClick={e => e.stopPropagation()} style={{fontSize:'11px',color:'#2B7FFF',textDecoration:'none'}}>
@@ -393,8 +389,8 @@ export default function Home() {
 
           {user && (
             <a href="/nouveau-projet" style={{textDecoration:'none',display:'block',marginTop:'8px'}}>
-              <button style={{width:'100%',background:'#EEF5FF',color:'#2B7FFF',fontSize:'13px',fontWeight:'500',padding:'14px',borderRadius:'14px',border:'0.5px solid #DCE9FF',cursor:'pointer'}}>
-                + Publier mon projet
+              <button style={{width:'100%',background:'transparent',color:'#0A1628',fontSize:'14px',fontWeight:'500',padding:'14px',borderRadius:'18px',border:'1.5px dashed #C5CEDB',cursor:'pointer'}}>
+                Publier mon projet
               </button>
             </a>
           )}
