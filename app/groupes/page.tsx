@@ -1,4 +1,5 @@
 "use client"
+import Link from "next/link"
 import Tutorial from "../components/Tutorial"
 
 import { useEffect, useState } from "react"
@@ -40,10 +41,12 @@ export default function Groupes() {
       const idsGroupes = membres?.map((m: any) => m.groupe_id) || []
       if (idsGroupes.length === 0) { setItems([]); return }
 
-      const { data } = await supabase.from("groupes").select("*").in("id", idsGroupes).order("created_at", { ascending: false })
+      const [{ data }, { data: tousMessages }, { data: membresDesGroupes }] = await Promise.all([
+        supabase.from("groupes").select("*").in("id", idsGroupes).order("created_at", { ascending: false }),
+        supabase.from("messages_groupe").select("groupe_id,contenu,created_at,user_id").in("groupe_id", idsGroupes).order("created_at", { ascending: false }),
+        supabase.from("membres_groupe").select("groupe_id,user_id").in("groupe_id", idsGroupes),
+      ])
       const tousGroupes = data || []
-
-      const { data: tousMessages } = await supabase.from("messages_groupe").select("groupe_id,contenu,created_at,user_id").in("groupe_id", idsGroupes).order("created_at", { ascending: false })
       const dernierMessageParGroupe: Record<string, any> = {}
       tousMessages?.forEach((m: any) => { if (!dernierMessageParGroupe[m.groupe_id]) dernierMessageParGroupe[m.groupe_id] = m })
 
@@ -51,8 +54,7 @@ export default function Groupes() {
       const itemsBruts: any[] = []
       for (const g of tousGroupes) {
         if (g.est_dm) {
-          const { data: mb } = await supabase.from("membres_groupe").select("user_id").eq("groupe_id", g.id)
-          const autre = (mb || []).find((m: any) => m.user_id !== user.id)
+          const autre = (membresDesGroupes || []).find((m: any) => m.groupe_id === g.id && m.user_id !== user.id)
           if (autre) idsAutresDM.push(autre.user_id)
           itemsBruts.push({ ...g, type: 'dm', autreId: autre?.user_id })
         } else {
@@ -153,7 +155,7 @@ export default function Groupes() {
           const avatarUrl = it.type === 'dm' ? it.profil?.avatar_url : null
           const apercu = it.dernierMessage ? it.dernierMessage : (it.type === 'dm' ? 'Dites bonjour 👋' : (it.description || 'Nouveau groupe'))
           return (
-            <a key={it.id} href={'/groupes/'+it.id} style={{textDecoration:'none',display:'block'}}>
+            <Link key={it.id} href={'/groupes/'+it.id} transitionTypes={['nav-forward']} style={{textDecoration:'none',display:'block'}}>
               <div className="active:bg-gray-50" style={{display:'flex',alignItems:'center',gap:'14px',padding:'12px 18px',cursor:'pointer',transition:'background 0.1s'}}>
                 <div style={{position:'relative',flexShrink:0}}>
                   {avatarUrl ? (
@@ -179,7 +181,7 @@ export default function Groupes() {
                 </div>
                 <div style={{fontSize:'12px',color:'#bbb',flexShrink:0}}>{formaterHeure(it.dernierTemps)}</div>
               </div>
-            </a>
+            </Link>
           )
         })}
 

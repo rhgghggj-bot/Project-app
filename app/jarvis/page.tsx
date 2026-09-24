@@ -1,4 +1,5 @@
 "use client"
+import Link from "next/link"
 import { useEffect, useRef, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { isJarvisOwner } from "@/lib/jarvisOwner"
@@ -751,7 +752,7 @@ export default function Jarvis() {
       <main style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "radial-gradient(ellipse at top, #0A1628 0%, #050810 100%)", color: "#E8F1FF", padding: "24px", textAlign: "center" }}>
         <div style={{ fontSize: "18px", fontWeight: 500, marginBottom: "8px" }}>Jarvis n'est pas disponible ici</div>
         <div style={{ fontSize: "13px", color: "rgba(232,241,255,0.6)", marginBottom: "20px" }}>Cet assistant est réservé à l'administrateur de Nexia.</div>
-        <a href="/" style={{ fontSize: "13px", color: "#2B7FFF", textDecoration: "none" }}>← Retour à l'accueil</a>
+        <Link href="/" transitionTypes={['nav-back']} style={{ fontSize: "13px", color: "#2B7FFF", textDecoration: "none" }}>← Retour à l'accueil</Link>
       </main>
     )
   }
@@ -762,7 +763,7 @@ export default function Jarvis() {
       <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", flex: 1, minHeight: "100vh" }}>
       <style>{`@keyframes pulseRing { 0% { opacity: 0.9; transform: scale(0.9); } 100% { opacity: 0; transform: scale(1.35); } }`}</style>
       <div style={{ padding: "14px 18px", display: "flex", alignItems: "center", gap: "14px", borderBottom: "0.5px solid rgba(43,127,255,0.2)", background: "rgba(10,22,40,0.35)", backdropFilter: "blur(10px)" }}>
-        <a href="/" style={{ fontSize: "12px", color: "rgba(255,255,255,0.5)", textDecoration: "none", marginRight: "4px" }}>←</a>
+        <Link href="/" transitionTypes={['nav-back']} style={{ fontSize: "12px", color: "rgba(255,255,255,0.5)", textDecoration: "none", marginRight: "4px" }}>←</Link>
         <div style={{ fontSize: "15px", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "#fff" }}>Jarvis</div>
         <div style={{ fontSize: "11px", color: modeCloud ? (claudeKey ? "#10B981" : "#F43F5E") : (statut.ok === true ? "#10B981" : statut.ok === false ? "#F43F5E" : "rgba(232,241,255,0.4)"), marginLeft: "auto" }}>
           {modeCloud ? (claudeKey ? "Cloud (Claude) actif" : "Ajoute ta clé API →") : statut.texte}

@@ -86,7 +86,7 @@ export default function ColocationPage() {
         backHref={`/groupes/${id}`}
         backLabel="← Retour au groupe"
         title="Mode colocation"
-        action={<Button variant="secondary" onClick={() => setShowForm(!showForm)}>+ Charge</Button>}
+        action={<Button variant="onDark" onClick={() => setShowForm(!showForm)}>+ Charge</Button>}
       />
 
       <div style={{ padding: "16px 14px" }}>

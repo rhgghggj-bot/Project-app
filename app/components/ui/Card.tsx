@@ -1,3 +1,4 @@
+import Link from "next/link"
 import { colors, radius, shadow } from "./tokens"
 
 export default function Card({
@@ -28,7 +29,7 @@ export default function Card({
     ...style,
   }
 
-  if (href) return <a href={href} style={base}>{children}</a>
+  if (href) return <Link href={href} style={base}>{children}</Link>
   if (onClick) return (
     <div role="button" tabIndex={0} onClick={onClick}
       onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick() } }}

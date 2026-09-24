@@ -1,4 +1,5 @@
 "use client"
+import SectionHeader from "@/app/components/ui/SectionHeader"
 import Tutorial from "../components/Tutorial"
 import { useState, useRef, useEffect } from "react"
 import { supabase } from "@/lib/supabase"
@@ -127,11 +128,12 @@ export default function Scanner() {
 
   return (
     <main className="min-h-screen bg-white"><Tutorial page="scanner" />
-      <div style={{background:'linear-gradient(160deg,#0A1628,#1a3a6e)',padding:'20px 18px 28px'}}>
-        <a href="/" style={{fontSize:'12px',color:'rgba(255,255,255,0.5)',display:'block',marginBottom:'8px'}}>← Accueil</a>
-        <div style={{fontSize:'22px',fontWeight:'500',color:'#fff',marginBottom:'2px',display:'flex',alignItems:'center',gap:'8px'}}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="4 7 4 4 7 4"/><polyline points="17 4 20 4 20 7"/><polyline points="20 17 20 20 17 20"/><polyline points="7 20 4 20 4 17"/><line x1="4" y1="12" x2="20" y2="12"/></svg>Scanner</div>
-        <div style={{fontSize:'13px',color:'rgba(255,255,255,0.6)'}}>Reconnaissance de texte — 100% gratuit</div>
-      </div>
+      <SectionHeader
+        backHref="/"
+        backLabel="← Accueil"
+        title={<><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="4 7 4 4 7 4"/><polyline points="17 4 20 4 20 7"/><polyline points="20 17 20 20 17 20"/><polyline points="7 20 4 20 4 17"/><line x1="4" y1="12" x2="20" y2="12"/></svg>Scanner</>}
+        subtitle="Reconnaissance de texte, 100 % gratuite"
+      />
 
       <div style={{padding:'20px 18px'}}>
         {etape === "upload" && (

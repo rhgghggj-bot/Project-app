@@ -1,4 +1,5 @@
 "use client"
+import Link from "next/link"
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 
@@ -46,7 +47,7 @@ export default function NouveauProjet() {
     <main style={{minHeight:'100vh',background:'#f8faff'}}>
       <div style={{background:'linear-gradient(160deg,#0A1628,#1a3a6e,#2B7FFF)',padding:'20px 18px 32px',position:'relative',overflow:'hidden'}}>
         <div style={{position:'absolute',top:'-40px',right:'-40px',width:'160px',height:'160px',borderRadius:'50%',background:'rgba(255,255,255,0.06)'}}></div>
-        <a href="/profile" style={{fontSize:'12px',color:'rgba(255,255,255,0.5)',display:'block',marginBottom:'12px',textDecoration:'none'}}>← Retour</a>
+        <Link href="/profile" transitionTypes={['nav-back']} style={{fontSize:'12px',color:'rgba(255,255,255,0.5)',display:'block',marginBottom:'12px',textDecoration:'none'}}>← Retour</Link>
         <div style={{fontSize:'22px',fontWeight:'600',color:'#fff',marginBottom:'4px'}}>Lance ton projet</div>
         <div style={{fontSize:'13px',color:'rgba(255,255,255,0.6)'}}>Partage ton ambition avec la communauté</div>
       </div>

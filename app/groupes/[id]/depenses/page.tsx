@@ -111,7 +111,7 @@ export default function DepensesPartageesPage() {
         backHref={`/groupes/${id}`}
         backLabel="← Retour au groupe"
         title="Dépenses partagées"
-        action={<Button variant="secondary" onClick={() => setShowForm(!showForm)}>+ Nouvelle</Button>}
+        action={<Button variant="onDark" onClick={() => setShowForm(!showForm)}>+ Nouvelle</Button>}
       />
 
       <div style={{ padding: "16px 14px" }}>

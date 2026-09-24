@@ -1,4 +1,5 @@
 "use client"
+import Link from "next/link"
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { authHeaders } from "@/lib/authFetch"
@@ -119,7 +120,7 @@ export default function Profile() {
   return (
     <main className="min-h-screen bg-white" style={{overflowY:"auto",WebkitOverflowScrolling:"touch"}}>
       <div style={{height:"160px",background:`linear-gradient(135deg,${couleurProfil},#87CEEB)`}}>
-        <a href="/" className="absolute top-3 left-4 text-white text-sm opacity-80">← Accueil</a>
+        <Link href="/" transitionTypes={['nav-back']} className="absolute top-3 left-4 text-white text-sm opacity-80">← Accueil</Link>
       </div>
 
       <div style={{padding:"0 18px 100px 18px"}}>

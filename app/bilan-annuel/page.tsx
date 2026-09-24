@@ -1,4 +1,5 @@
 "use client"
+import Link from "next/link"
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 
@@ -96,7 +97,7 @@ export default function BilanAnnuelPage() {
 
   return (
     <main style={{ minHeight: "100vh", background: "#0A1628" }}>
-      <a href="/profile" style={{ position: "fixed", top: "16px", left: "16px", zIndex: 10, fontSize: "13px", color: "rgba(255,255,255,0.6)", textDecoration: "none" }}>← Profil</a>
+      <Link href="/profile" transitionTypes={['nav-back']} style={{ position: "fixed", top: "16px", left: "16px", zIndex: 10, fontSize: "13px", color: "rgba(255,255,255,0.6)", textDecoration: "none" }}>← Profil</Link>
       <div style={{ display: "flex", flexDirection: "column", gap: "14px", padding: "60px 16px 40px", maxWidth: "440px", margin: "0 auto" }}>
         {cartes.map((c, i) => (
           <div key={i} style={{ background: COULEURS_CARTE[i % COULEURS_CARTE.length], borderRadius: "24px", padding: "36px 24px", textAlign: "center", color: "#fff", minHeight: "200px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "10px" }}>

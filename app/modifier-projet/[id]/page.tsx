@@ -1,4 +1,5 @@
 "use client"
+import Link from "next/link"
 import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
@@ -49,7 +50,7 @@ export default function ModifierProjet() {
   return (
     <main className="min-h-screen bg-white">
       <div className="bg-white border-b border-blue-50 px-5 py-3 flex items-center justify-between">
-        <a href="/profile" className="text-gray-400 text-sm">← Retour</a>
+        <Link href="/profile" transitionTypes={['nav-back']} className="text-gray-400 text-sm">← Retour</Link>
         <h1 className="text-base font-medium text-gray-900">Modifier le projet</h1>
         <button onClick={supprimer} className="text-xs text-red-400 font-medium">Supprimer</button>
       </div>

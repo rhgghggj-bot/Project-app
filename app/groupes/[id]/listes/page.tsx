@@ -1,4 +1,6 @@
 "use client"
+import Button from "@/app/components/ui/Button"
+import SectionHeader from "@/app/components/ui/SectionHeader"
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
@@ -57,16 +59,12 @@ export default function ListesPage() {
 
   return (
     <main className="min-h-screen bg-white">
-      <div style={{background:'linear-gradient(160deg,#0A1628,#1a3a6e)',padding:'20px 18px 28px'}}>
-        <a href={`/groupes/${id}`} style={{fontSize:'12px',color:'rgba(255,255,255,0.5)',display:'block',marginBottom:'8px'}}>← Retour au groupe</a>
-        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-          <div style={{fontSize:'20px',fontWeight:'500',color:'#fff'}}>Listes partagees</div>
-          <button onClick={() => setShowForm(!showForm)}
-            style={{background:'rgba(255,255,255,0.15)',border:'0.5px solid rgba(255,255,255,0.25)',borderRadius:'10px',padding:'8px 14px',color:'#fff',fontSize:'13px',cursor:'pointer'}}>
-            + Nouvelle liste
-          </button>
-        </div>
-      </div>
+      <SectionHeader
+        backHref={`/groupes/${id}`}
+        backLabel="← Retour au groupe"
+        title="Listes partagées"
+        action={<Button variant="onDark" onClick={() => setShowForm(!showForm)}>+ Nouvelle liste</Button>}
+      />
 
       <div style={{padding:'16px 14px'}}>
         {showForm && (

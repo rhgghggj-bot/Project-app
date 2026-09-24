@@ -37,6 +37,7 @@ export default function Navigation() {
     <>
       {/* display via className : un display inline écraserait md:hidden et la barre mobile s'afficherait sur ordinateur */}
       <nav className="flex md:hidden" style={{
+        viewTransitionName:'nx-nav-bas',
         position:'fixed',bottom:0,left:0,right:0,
         background:'rgba(255,255,255,0.95)',
         backdropFilter:'blur(20px)',
@@ -56,7 +57,7 @@ export default function Navigation() {
               <span style={{fontSize:'10px',fontWeight:'500'}}>{item.label}</span>
             </div>
           ) : (
-            <a key={item.href} href={item.href} style={{
+            <Link key={item.href} href={item.href} transitionTypes={['nav-tab']} style={{
               flex:1,display:'flex',flexDirection:'column',alignItems:'center',
               gap:'3px',textDecoration:'none',cursor:'pointer',
               color: isActive ? '#2B7FFF' : '#aaa'
@@ -64,12 +65,13 @@ export default function Navigation() {
               <item.Icon />
               <span style={{fontSize:'10px',fontWeight:'500'}}>{item.label}</span>
               {isActive && <div style={{width:'4px',height:'4px',borderRadius:'50%',background:'#2B7FFF'}}></div>}
-            </a>
+            </Link>
           )
         })}
       </nav>
 
       <nav className="hidden md:flex" style={{
+        viewTransitionName:'nx-nav-haut',
         background:'#fff',
         borderBottom:'0.5px solid #E8F1FF',
         padding:'0 18px',
@@ -77,26 +79,26 @@ export default function Navigation() {
         alignItems:'center',
         justifyContent:'space-between'
       }}>
-        <Link href="/" className="nx-display" style={{fontSize:'18px',fontWeight:'600',color:'#1a1a2e',textDecoration:'none',letterSpacing:'0.08em'}}>
+        <Link href="/" transitionTypes={['nav-tab']} className="nx-display" style={{fontSize:'18px',fontWeight:'600',color:'#1a1a2e',textDecoration:'none',letterSpacing:'0.08em'}}>
           NEXIA
         </Link>
         <div style={{display:'flex',alignItems:'center',gap:'16px'}}>
           {items.slice(1,-1).map(item => (
-            <a key={item.href} href={item.href} style={{
+            <Link key={item.href} href={item.href} transitionTypes={['nav-tab']} style={{
               fontSize:'13px',
               color: pathname === item.href ? '#2B7FFF' : '#aaa',
               textDecoration:'none',
               fontWeight: pathname === item.href ? '500' : '400'
             }}>
               {item.label}
-            </a>
+            </Link>
           ))}
-          <a href="/scanner" style={{fontSize:'13px',color: pathname === '/scanner' ? '#2B7FFF' : '#aaa',textDecoration:'none',display:'flex',alignItems:'center',gap:'4px'}}>
+          <Link href="/scanner" transitionTypes={['nav-tab']} style={{fontSize:'13px',color: pathname === '/scanner' ? '#2B7FFF' : '#aaa',textDecoration:'none',display:'flex',alignItems:'center',gap:'4px'}}>
             <IconScanner /> Scanner
-          </a>
+          </Link>
           <NotificationBell />
           {user ? (
-            <a href="/profile" style={{fontSize:'13px',fontWeight:'500',background:'#2B7FFF',color:'#fff',padding:'6px 14px',borderRadius:'99px',textDecoration:'none'}}>Mon profil</a>
+            <Link href="/profile" transitionTypes={['nav-tab']} style={{fontSize:'13px',fontWeight:'500',background:'#2B7FFF',color:'#fff',padding:'6px 14px',borderRadius:'99px',textDecoration:'none'}}>Mon profil</Link>
           ) : (
             <a href="/connexion" style={{fontSize:'13px',fontWeight:'500',background:'#2B7FFF',color:'#fff',padding:'6px 14px',borderRadius:'99px',textDecoration:'none'}}>Connexion</a>
           )}

@@ -1,4 +1,5 @@
 "use client"
+import Link from "next/link"
 import Tutorial from "../components/Tutorial"
 import dynamic from "next/dynamic"
 import { useEffect, useState } from "react"
@@ -189,7 +190,7 @@ export default function Semaine() {
       <div style={{background:'linear-gradient(160deg,#0A1628,#1a3a6e)',padding:'20px 18px 32px',position:'relative',overflow:'hidden'}}>
         <div style={{position:'absolute',top:'-40px',right:'-40px',width:'180px',height:'180px',borderRadius:'50%',background:'rgba(43,127,255,0.15)'}}></div>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'8px'}}>
-          <a href="/" style={{fontSize:'12px',color:'rgba(255,255,255,0.5)'}}>← Accueil</a>
+          <Link href="/" transitionTypes={['nav-back']} style={{fontSize:'12px',color:'rgba(255,255,255,0.5)'}}>← Accueil</Link>
           <label style={{fontSize:'11px',color:'rgba(255,255,255,0.7)',background:'rgba(255,255,255,0.1)',border:'0.5px solid rgba(255,255,255,0.2)',borderRadius:'99px',padding:'5px 12px',cursor:'pointer'}}>
             {importEnCours ? 'Import…' : '+ Importer .ics'}
             <input type="file" accept=".ics" style={{display:'none'}} onChange={e => { const f = e.target.files?.[0]; if (f) importerICS(f); e.target.value = '' }} />

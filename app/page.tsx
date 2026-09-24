@@ -28,32 +28,42 @@ export default function Home() {
         const vu = sessionStorage.getItem('onboardingVu')
         if (!vu) { sessionStorage.setItem('onboardingVu','1'); window.location.href='/onboarding'; return }
       }
-      const { data: p } = await supabase.from("projets").select("*").is("groupe_id", null).eq("prive", false).order("created_at", { ascending: false })
-      setProjets(p || [])
-      if (p && p.length > 0) {
-        const idsCreateurs = Array.from(new Set(p.map((pr: any) => pr.user_id)))
-        const { data: profs } = await supabase.from("profiles").select("id,nom").in("id", idsCreateurs)
-        const map: Record<string, string> = {}
-        profs?.forEach((pf: any) => { map[pf.id] = pf.nom || "Membre" })
-        setProfilsCreateurs(map)
+      // Deux branches indépendantes en parallèle : le fil "Découvrir" et le tableau de bord perso
+      const chargerDecouvrir = async () => {
+        const [{ data: p }, { data: lp }, { data: com }] = await Promise.all([
+          supabase.from("projets").select("*").is("groupe_id", null).eq("prive", false).order("created_at", { ascending: false }),
+          supabase.from("projets_likes").select("*"),
+          supabase.from("commentaires").select("projet_id"),
+        ])
+        setProjets(p || [])
+        setLikesProjets(lp || [])
+        if (com) {
+          const compte: Record<string, number> = {}
+          com.forEach((c: any) => { compte[c.projet_id] = (compte[c.projet_id] || 0) + 1 })
+          setCommentairesCount(compte)
+        }
+        if (p && p.length > 0) {
+          const idsCreateurs = Array.from(new Set(p.map((pr: any) => pr.user_id)))
+          const { data: profs } = await supabase.from("profiles").select("id,nom").in("id", idsCreateurs)
+          const map: Record<string, string> = {}
+          profs?.forEach((pf: any) => { map[pf.id] = pf.nom || "Membre" })
+          setProfilsCreateurs(map)
+        }
       }
-      const { data: lp } = await supabase.from("projets_likes").select("*")
-      setLikesProjets(lp || [])
-      const { data: com } = await supabase.from("commentaires").select("projet_id")
-      if (com) {
-        const compte: Record<string, number> = {}
-        com.forEach((c: any) => { compte[c.projet_id] = (compte[c.projet_id] || 0) + 1 })
-        setCommentairesCount(compte)
-      }
-      if (user) {
-        await syncActivitesGroupeVersCalendrier(user.id)
+      const chargerTableauDeBord = async () => {
+        if (!user) return
+        const [, { data: d }, { data: r }] = await Promise.all([
+          syncActivitesGroupeVersCalendrier(user.id),
+          supabase.from("depenses").select("*").eq("user_id", user.id),
+          supabase.from("revenus").select("*").eq("user_id", user.id),
+        ])
+        setDepenses(d || [])
+        setRevenus(r || [])
+        // Après la synchro, pour inclure les activités de groupe copiées dans le calendrier
         const { data: e } = await supabase.from("evenements_calendrier").select("*").eq("user_id", user.id)
         setEvenements(e || [])
-        const { data: d } = await supabase.from("depenses").select("*").eq("user_id", user.id)
-        setDepenses(d || [])
-        const { data: r } = await supabase.from("revenus").select("*").eq("user_id", user.id)
-        setRevenus(r || [])
       }
+      await Promise.all([chargerDecouvrir(), chargerTableauDeBord()])
     }
     charger()
   }, [])

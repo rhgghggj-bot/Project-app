@@ -1,4 +1,5 @@
 "use client"
+import Link from "next/link"
 import { useEffect, useState } from "react"
 import { useParams, useSearchParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
@@ -59,7 +60,7 @@ export default function ModifierDepense() {
     <main className="min-h-screen bg-white">
       <div style={{background:'linear-gradient(160deg,#0A1628,#1a3a6e)',padding:'20px 18px 28px'}}>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-          <a href="/finances" style={{fontSize:'12px',color:'rgba(255,255,255,0.5)'}}>← Retour</a>
+          <Link href="/finances" transitionTypes={['nav-back']} style={{fontSize:'12px',color:'rgba(255,255,255,0.5)'}}>← Retour</Link>
           <button onClick={supprimer} style={{fontSize:'12px',color:'#F43F5E',background:'rgba(244,63,94,0.15)',border:'none',padding:'5px 12px',borderRadius:'99px',cursor:'pointer'}}>
             Supprimer
           </button>

@@ -93,7 +93,7 @@ export default function ObjectifsGroupePage() {
         backHref={`/groupes/${id}`}
         backLabel="← Retour au groupe"
         title="Objectifs de groupe"
-        action={<Button variant="secondary" onClick={() => setShowForm(!showForm)}>+ Nouveau</Button>}
+        action={<Button variant="onDark" onClick={() => setShowForm(!showForm)}>+ Nouveau</Button>}
       />
 
       <div style={{ padding: "16px 14px" }}>

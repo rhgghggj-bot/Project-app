@@ -83,3 +83,15 @@ button:active, a:active, [role="button"]:active, [style*="cursor: pointer"]:acti
   .nexia-in { animation: none; }
 }
 
+
+/* --- Colonne centrée sur ordinateur --- */
+@media (min-width: 768px) {
+  body { background: #EEF3FA; }
+  .nx-colonne {
+    max-width: 760px;
+    margin: 0 auto;
+    min-height: calc(100vh - 52px);
+    background: #fff;
+    box-shadow: 0 0 0 1px #E3EBF7, 0 8px 40px rgba(10, 22, 40, 0.06);
+  }
+}

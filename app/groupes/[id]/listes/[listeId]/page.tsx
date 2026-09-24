@@ -1,4 +1,5 @@
 "use client"
+import Link from "next/link"
 import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
@@ -184,7 +185,7 @@ export default function ListeDetailPage() {
   return (
     <main className="min-h-screen bg-white">
       <div style={{background:'linear-gradient(160deg,#0A1628,#1a3a6e)',padding:'20px 18px 24px'}}>
-        <a href={`/groupes/${id}/listes`} style={{fontSize:'12px',color:'rgba(255,255,255,0.5)',display:'block',marginBottom:'8px'}}>← Listes</a>
+        <Link href={`/groupes/${id}/listes`} transitionTypes={['nav-back']} style={{fontSize:'12px',color:'rgba(255,255,255,0.5)',display:'block',marginBottom:'8px'}}>← Listes</Link>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'8px'}}>
           <div style={{fontSize:'18px',fontWeight:'500',color:'#fff'}}>{liste?.titre || 'Liste'}</div>
           <button onClick={() => setModeShopping(!modeShopping)}

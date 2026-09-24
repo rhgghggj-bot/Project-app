@@ -1,4 +1,5 @@
 "use client"
+import SectionHeader from "@/app/components/ui/SectionHeader"
 import { useState, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
@@ -70,10 +71,7 @@ function Formulaire() {
 
   return (
     <main className="min-h-screen bg-white">
-      <div style={{background:'linear-gradient(160deg,#0A1628,#1a3a6e)',padding:'20px 18px 28px'}}>
-        <a href="/semaine" style={{fontSize:'12px',color:'rgba(255,255,255,0.5)'}}>← Retour</a>
-        <div style={{fontSize:'20px',fontWeight:'500',color:'#fff',marginTop:'10px'}}>Nouvel événement</div>
-      </div>
+      <SectionHeader backHref="/semaine" title="Nouvel événement" />
 
       <div style={{padding:'20px 18px',display:'flex',flexDirection:'column',gap:'14px'}}>
         <div>

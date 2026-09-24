@@ -1,4 +1,5 @@
 "use client"
+import Link from "next/link"
 import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
@@ -85,7 +86,7 @@ export default function Projet() {
   return (
     <main style={{minHeight:'100vh',background:'#f8faff'}}>
       <div style={{padding:'16px 18px',background:'#fff',borderBottom:'0.5px solid #E8F1FF',display:'flex',alignItems:'center',gap:'12px'}}>
-        <a href="/" style={{fontSize:'12px',color:'#aaa',textDecoration:'none'}}>← Retour</a>
+        <Link href="/" transitionTypes={['nav-back']} style={{fontSize:'12px',color:'#aaa',textDecoration:'none'}}>← Retour</Link>
         <h1 style={{fontSize:'15px',fontWeight:'500',color:'#1a1a2e',margin:0}}>{projet.titre}</h1>
       </div>
       <div style={{padding:'16px 18px'}}>

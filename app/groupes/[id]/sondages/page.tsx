@@ -91,7 +91,7 @@ export default function SondagesGroupePage() {
         backHref={`/groupes/${id}`}
         backLabel="← Retour au groupe"
         title="Sondages"
-        action={<Button variant="secondary" onClick={() => setShowForm(!showForm)}>+ Nouveau</Button>}
+        action={<Button variant="onDark" onClick={() => setShowForm(!showForm)}>+ Nouveau</Button>}
       />
 
       <div style={{ padding: "16px 14px" }}>

@@ -1,4 +1,5 @@
 "use client"
+import Link from "next/link"
 import DeviseSelector from "../components/DeviseSelector"
 import Tutorial from "../components/Tutorial"
 import PlacementsSection from "../components/PlacementsSection"
@@ -271,7 +272,7 @@ function FinancesContent() {
       {showDevise && <DeviseSelector onClose={() => setShowDevise(false)} />}<Tutorial page="finances" />
       <div style={{background:'linear-gradient(160deg,#0A1628,#1a3a6e)',padding:'20px 18px 28px'}}>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'8px'}}>
-          <a href="/" style={{fontSize:'12px',color:'rgba(255,255,255,0.5)',textDecoration:'none'}}>← Accueil</a>
+          <Link href="/" transitionTypes={['nav-back']} style={{fontSize:'12px',color:'rgba(255,255,255,0.5)',textDecoration:'none'}}>← Accueil</Link>
           <button onClick={() => setShowDevise(true)}
             style={{background:'rgba(255,255,255,0.15)',border:'0.5px solid rgba(255,255,255,0.3)',borderRadius:'99px',padding:'5px 12px',color:'#fff',fontSize:'12px',cursor:'pointer'}}>
             {devise}
