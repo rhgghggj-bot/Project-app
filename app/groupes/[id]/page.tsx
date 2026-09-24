@@ -419,7 +419,7 @@ export default function GroupePage() {
                 <button key={n} onClick={() => setNoteAvis(n)} style={{background:'none',border:'none',cursor:'pointer',fontSize:'28px',padding:0,color: n <= noteAvis ? colors.gold : '#E8F1FF'}}>★</button>
               ))}
             </div>
-            <textarea value={commentaireAvis} onChange={e => setCommentaireAvis(e.target.value)} placeholder="Un commentaire (optionnel)"
+            <textarea aria-label="Un commentaire (optionnel)" value={commentaireAvis} onChange={e => setCommentaireAvis(e.target.value)} placeholder="Un commentaire (optionnel)"
               style={{width:'100%',border:`1px solid ${colors.border}`,borderRadius:'10px',padding:'10px 12px',fontSize:'14px',color:colors.text,marginBottom:'12px',boxSizing:'border-box',resize:'none',height:'60px'}}/>
             <div style={{display:'flex',gap:'8px'}}>
               <Button full disabled={noteAvis === 0} onClick={envoyerAvis}>Envoyer</Button>
@@ -517,7 +517,7 @@ export default function GroupePage() {
                   <div style={{maxWidth:'75%'}}>
                     {enEdition ? (
                       <div style={{background:'#fff',border:'1px solid #2B7FFF',borderRadius:'18px',padding:'8px 12px'}}>
-                        <input value={editionTexte} onChange={e => setEditionTexte(e.target.value)}
+                        <input aria-label="Modifier le message" value={editionTexte} onChange={e => setEditionTexte(e.target.value)}
                           onKeyDown={e => e.key === 'Enter' && sauverEdition()}
                           style={{width:'100%',border:'none',outline:'none',fontSize:'14px',color:'#1a1a2e'}} autoFocus/>
                         <div style={{display:'flex',gap:'8px',marginTop:'6px'}}>
@@ -557,7 +557,7 @@ export default function GroupePage() {
             <div ref={messagesEndRef}></div>
           </div>
           <div className="px-5 py-3 border-t border-blue-50 flex gap-3 items-center">
-            <input type="text" placeholder="Écrire un message…" value={contenu}
+            <input aria-label="Écrire un message" type="text" placeholder="Écrire un message…" value={contenu}
               onChange={e => setContenu(e.target.value)}
               onKeyDown={e => e.key === "Enter" && envoyer()}
               className="flex-1 border border-blue-100 rounded-full px-4 py-2 text-sm text-gray-900 bg-blue-50 focus:outline-none focus:border-blue-400"/>

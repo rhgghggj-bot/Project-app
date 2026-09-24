@@ -113,11 +113,11 @@ export default function FiscaliteSection() {
         <div style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'16px',padding:'14px',marginBottom:'12px'}}>
           <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',marginBottom:'12px'}}>Mes revenus</div>
           <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Salaire brut annuel (CHF)</label>
-          <input type="number" value={salaire} onChange={e=>setSalaire(Number(e.target.value))} style={{...inp,marginBottom:'10px'}}/>
+          <input aria-label="Salaire brut annuel (CHF)" type="number" value={salaire} onChange={e=>setSalaire(Number(e.target.value))} style={{...inp,marginBottom:'10px'}}/>
           <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Revenus accessoires (CHF)</label>
-          <input type="number" value={accessoires} onChange={e=>setAccessoires(Number(e.target.value))} style={{...inp,marginBottom:'10px'}}/>
+          <input aria-label="Revenus accessoires (CHF)" type="number" value={accessoires} onChange={e=>setAccessoires(Number(e.target.value))} style={{...inp,marginBottom:'10px'}}/>
           <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Rendements de fortune (CHF)</label>
-          <input type="number" value={fortune} onChange={e=>setFortune(Number(e.target.value))} style={inp}/>
+          <input aria-label="Rendements de fortune (CHF)" type="number" value={fortune} onChange={e=>setFortune(Number(e.target.value))} style={inp}/>
         </div>
       )}
 
@@ -126,25 +126,25 @@ export default function FiscaliteSection() {
           <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',marginBottom:'12px'}}>Mes déductions</div>
           <div style={{fontSize:'11px',color:'#2B7FFF',fontWeight:'600',marginBottom:'8px'}}>Prévoyance</div>
           <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>3e pilier 3a (max 7 258 CHF)</label>
-          <input type="number" value={pilier3} onChange={e=>setPilier3(Number(e.target.value))} style={{...inp,marginBottom:'10px'}}/>
+          <input aria-label="3e pilier 3a (max 7 258 CHF)" type="number" value={pilier3} onChange={e=>setPilier3(Number(e.target.value))} style={{...inp,marginBottom:'10px'}}/>
           <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Rachat 2e pilier (CHF)</label>
-          <input type="number" value={pilier2} onChange={e=>setPilier2(Number(e.target.value))} style={{...inp,marginBottom:'10px'}}/>
+          <input aria-label="Rachat 2e pilier (CHF)" type="number" value={pilier2} onChange={e=>setPilier2(Number(e.target.value))} style={{...inp,marginBottom:'10px'}}/>
           <div style={{fontSize:'11px',color:'#2B7FFF',fontWeight:'600',margin:'4px 0 8px'}}>Frais professionnels</div>
           <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Transport (max 3 200 CHF)</label>
-          <input type="number" value={transport} onChange={e=>setTransport(Number(e.target.value))} style={{...inp,marginBottom:'10px'}}/>
+          <input aria-label="Transport (max 3 200 CHF)" type="number" value={transport} onChange={e=>setTransport(Number(e.target.value))} style={{...inp,marginBottom:'10px'}}/>
           <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Frais de repas (max 3 200 CHF)</label>
-          <input type="number" value={repas} onChange={e=>setRepas(Number(e.target.value))} style={{...inp,marginBottom:'10px'}}/>
+          <input aria-label="Frais de repas (max 3 200 CHF)" type="number" value={repas} onChange={e=>setRepas(Number(e.target.value))} style={{...inp,marginBottom:'10px'}}/>
           <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Formation (max 12 700 CHF)</label>
-          <input type="number" value={formation} onChange={e=>setFormation(Number(e.target.value))} style={{...inp,marginBottom:'10px'}}/>
+          <input aria-label="Formation (max 12 700 CHF)" type="number" value={formation} onChange={e=>setFormation(Number(e.target.value))} style={{...inp,marginBottom:'10px'}}/>
           <div style={{fontSize:'11px',color:'#2B7FFF',fontWeight:'600',margin:'4px 0 8px'}}>Autres déductions</div>
           <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Intérêts hypothécaires (CHF)</label>
-          <input type="number" value={hypo} onChange={e=>setHypo(Number(e.target.value))} style={{...inp,marginBottom:'10px'}}/>
+          <input aria-label="Intérêts hypothécaires (CHF)" type="number" value={hypo} onChange={e=>setHypo(Number(e.target.value))} style={{...inp,marginBottom:'10px'}}/>
           <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Primes maladie déductibles (CHF)</label>
-          <input type="number" value={maladie} onChange={e=>setMaladie(Number(e.target.value))} style={{...inp,marginBottom:'10px'}}/>
+          <input aria-label="Primes maladie déductibles (CHF)" type="number" value={maladie} onChange={e=>setMaladie(Number(e.target.value))} style={{...inp,marginBottom:'10px'}}/>
           <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Dons à des associations (max 20%)</label>
-          <input type="number" value={dons} onChange={e=>setDons(Number(e.target.value))} style={{...inp,marginBottom:'10px'}}/>
+          <input aria-label="Dons à des associations (max 20%)" type="number" value={dons} onChange={e=>setDons(Number(e.target.value))} style={{...inp,marginBottom:'10px'}}/>
           <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Frais de garde d'enfants (CHF)</label>
-          <input type="number" value={garde} onChange={e=>setGarde(Number(e.target.value))} style={inp}/>
+          <input aria-label="Frais de garde d'enfants (CHF)" type="number" value={garde} onChange={e=>setGarde(Number(e.target.value))} style={inp}/>
         </div>
       )}
 
@@ -152,17 +152,17 @@ export default function FiscaliteSection() {
         <div style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'16px',padding:'14px',marginBottom:'12px'}}>
           <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',marginBottom:'12px'}}>Ma situation</div>
           <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Canton de résidence</label>
-          <select value={canton} onChange={e=>setCanton(e.target.value)} style={{...sel,marginBottom:'10px'}}>
+          <select aria-label="Canton de résidence" value={canton} onChange={e=>setCanton(e.target.value)} style={{...sel,marginBottom:'10px'}}>
             {Object.entries(CANTONS).map(([k,v]: any)=><option key={k} value={k}>{v.nom}</option>)}
           </select>
           <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Situation familiale</label>
-          <select value={situation} onChange={e=>setSituation(e.target.value)} style={{...sel,marginBottom:'10px'}}>
+          <select aria-label="Situation familiale" value={situation} onChange={e=>setSituation(e.target.value)} style={{...sel,marginBottom:'10px'}}>
             <option value="cel">Célibataire</option>
             <option value="mar">Marié(e)</option>
             <option value="mon">Famille monoparentale</option>
           </select>
           <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Nombre d'enfants</label>
-          <select value={enfants} onChange={e=>setEnfants(Number(e.target.value))} style={sel}>
+          <select aria-label="Nombre d'enfants" value={enfants} onChange={e=>setEnfants(Number(e.target.value))} style={sel}>
             {[0,1,2,3,4].map(n=><option key={n} value={n}>{n===4?'4+':n}</option>)}
           </select>
         </div>

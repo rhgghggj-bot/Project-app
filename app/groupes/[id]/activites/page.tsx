@@ -109,28 +109,28 @@ export default function ActivitesGroupe() {
         {showForm && (
           <div style={{background:'#EEF5FF',borderRadius:'14px',padding:'14px',marginBottom:'14px',border:'0.5px solid #DCE9FF'}}>
             <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',marginBottom:'10px'}}>Nouvelle activité</div>
-            <input value={titre} onChange={e => setTitre(e.target.value)} placeholder="Ex: Raclette chez Sam, Randonnée…" style={inp}/>
-            <input value={lieu} onChange={e => setLieu(e.target.value)} placeholder="Lieu (optionnel)" style={inp}/>
+            <input aria-label="Raclette chez Sam, Randonnée" value={titre} onChange={e => setTitre(e.target.value)} placeholder="Ex: Raclette chez Sam, Randonnée…" style={inp}/>
+            <input aria-label="Lieu (optionnel)" value={lieu} onChange={e => setLieu(e.target.value)} placeholder="Lieu (optionnel)" style={inp}/>
             <div style={{display:'flex',gap:'8px',marginBottom:'4px'}}>
               <div style={{flex:1,fontSize:'11px',color:'#666'}}>Date</div>
               <div style={{flex:1,fontSize:'11px',color:'#666'}}>Heure (optionnel)</div>
             </div>
             <div style={{display:'flex',gap:'8px',marginBottom:'12px'}}>
-              <input type="date" value={date} onChange={e => setDate(e.target.value)} style={{...inp,marginBottom:0,flex:1}}/>
-              <input type="time" value={heure} onChange={e => setHeure(e.target.value)} style={{...inp,marginBottom:0,flex:1}}/>
+              <input aria-label="Date" type="date" value={date} onChange={e => setDate(e.target.value)} style={{...inp,marginBottom:0,flex:1}}/>
+              <input aria-label="Heure" type="time" value={heure} onChange={e => setHeure(e.target.value)} style={{...inp,marginBottom:0,flex:1}}/>
             </div>
             <div style={{fontSize:'11px',color:'#666',marginBottom:'4px'}}>Durée</div>
             <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'12px'}}>
-              <select value={dureeH} onChange={e => setDureeH(Number(e.target.value))}
+              <select aria-label="Durée en heures" value={dureeH} onChange={e => setDureeH(Number(e.target.value))}
                 style={{flex:1,border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 12px',fontSize:'16px',color:'#1a1a2e',background:'#fff'}}>
                 {Array.from({length:13}, (_,i) => i).map(h => <option key={h} value={h}>{h} h</option>)}
               </select>
-              <select value={dureeM} onChange={e => setDureeM(Number(e.target.value))}
+              <select aria-label="Durée en minutes" value={dureeM} onChange={e => setDureeM(Number(e.target.value))}
                 style={{flex:1,border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 12px',fontSize:'16px',color:'#1a1a2e',background:'#fff'}}>
                 {[0,15,30,45].map(m => <option key={m} value={m}>{m} min</option>)}
               </select>
             </div>
-            <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Description (optionnel)" rows={2}
+            <textarea aria-label="Description (optionnel)" value={description} onChange={e => setDescription(e.target.value)} placeholder="Description (optionnel)" rows={2}
               style={{...inp,resize:'none' as const}}/>
             <div style={{fontSize:'11px',color:'#666',marginBottom:'6px'}}>Couleur</div>
             <div style={{display:'flex',gap:'8px',marginBottom:'12px'}}>

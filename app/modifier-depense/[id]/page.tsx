@@ -73,25 +73,25 @@ export default function ModifierDepense() {
       <div style={{padding:'20px 18px',display:'flex',flexDirection:'column',gap:'14px'}}>
         <div>
           <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Titre</label>
-          <input value={titre} onChange={e => setTitre(e.target.value)}
+          <input aria-label="Titre" value={titre} onChange={e => setTitre(e.target.value)}
             style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 14px',fontSize:'13px',color:'#1a1a2e',background:'#F8FBFF'}}/>
         </div>
 
         <div>
           <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Montant (CHF)</label>
-          <input value={montant} onChange={e => setMontant(e.target.value)} type="number"
+          <input aria-label="Montant (CHF)" value={montant} onChange={e => setMontant(e.target.value)} type="number"
             style={{width:'100%',border:`1px solid ${couleur}44`,borderRadius:'10px',padding:'10px 14px',fontSize:'16px',fontWeight:'500',color:couleur,background:'#F8FBFF'}}/>
         </div>
 
         <div>
           <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Date</label>
-          <input value={date} onChange={e => setDate(e.target.value)} type="date"
+          <input aria-label="Date" value={date} onChange={e => setDate(e.target.value)} type="date"
             style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 14px',fontSize:'13px',color:'#1a1a2e',background:'#F8FBFF'}}/>
         </div>
 
         <div>
           <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Catégorie</label>
-          <select value={categorie} onChange={e => setCategorie(e.target.value)}
+          <select aria-label="Catégorie" value={categorie} onChange={e => setCategorie(e.target.value)}
             style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 14px',fontSize:'13px',color:'#1a1a2e',background:'#F8FBFF'}}>
             <option value="">Choisir une catégorie</option>
             {categories.map(c => <option key={c} value={c}>{c}</option>)}

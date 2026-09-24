@@ -78,26 +78,26 @@ function Formulaire() {
       <div style={{padding:'20px 18px',display:'flex',flexDirection:'column',gap:'14px'}}>
         <div>
           <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Titre</label>
-          <input value={titre} onChange={e => setTitre(e.target.value)} placeholder="Titre de l'événement"
+          <input aria-label="Titre" value={titre} onChange={e => setTitre(e.target.value)} placeholder="Titre de l'événement"
             style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 14px',fontSize:'14px',color:'#1a1a2e',background:'#F8FBFF',boxSizing:'border-box'}}/>
         </div>
 
         <div style={{display:'flex',gap:'10px'}}>
           <div style={{flex:1}}>
             <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Date</label>
-            <input value={date} onChange={e => setDate(e.target.value)} type="date"
+            <input aria-label="Date" value={date} onChange={e => setDate(e.target.value)} type="date"
               style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 14px',fontSize:'13px',color:'#1a1a2e',background:'#F8FBFF',boxSizing:'border-box'}}/>
           </div>
           <div style={{flex:1}}>
             <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Heure</label>
-            <input value={heure} onChange={e => setHeure(e.target.value)} type="time"
+            <input aria-label="Heure" value={heure} onChange={e => setHeure(e.target.value)} type="time"
               style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 14px',fontSize:'13px',color:'#1a1a2e',background:'#F8FBFF',boxSizing:'border-box'}}/>
           </div>
         </div>
 
         <div>
           <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Durée (minutes)</label>
-          <input value={duree} onChange={e => setDuree(Number(e.target.value) || 0)} type="number" min="0" step="5"
+          <input aria-label="Durée (minutes)" value={duree} onChange={e => setDuree(Number(e.target.value) || 0)} type="number" min="0" step="5"
             style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 14px',fontSize:'13px',color:'#1a1a2e',background:'#F8FBFF',boxSizing:'border-box'}}/>
         </div>
 
@@ -124,7 +124,7 @@ function Formulaire() {
         {multiJours && (
           <div style={{background:'#F8FBFF',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 12px'}}>
             <label style={{fontSize:'11px',color:'#2B7FFF',fontWeight:'600',textTransform:'uppercase',letterSpacing:'.05em',display:'block',marginBottom:'6px'}}>Date de fin</label>
-            <input type="date" value={dateFin} onChange={e => setDateFin(e.target.value)}
+            <input aria-label="Date de fin" type="date" value={dateFin} onChange={e => setDateFin(e.target.value)}
               style={{width:'100%',border:'none',fontSize:'15px',color:'#1a1a2e',outline:'none',background:'transparent'}}/>
           </div>
         )}
@@ -157,7 +157,7 @@ function Formulaire() {
               ))}
             </div>
             <label style={{fontSize:'11px',color:'#2B7FFF',fontWeight:'600',textTransform:'uppercase',letterSpacing:'.05em',display:'block',marginBottom:'6px'}}>Jusqu'au (optionnel)</label>
-            <input type="date" value={recurrenceFin} onChange={e => setRecurrenceFin(e.target.value)}
+            <input aria-label="Jusqu'au (optionnel)" type="date" value={recurrenceFin} onChange={e => setRecurrenceFin(e.target.value)}
               style={{width:'100%',border:'none',fontSize:'15px',color:'#1a1a2e',outline:'none',background:'transparent'}}/>
             {!recurrenceFin && <div style={{fontSize:'11px',color:'#aaa',marginTop:'2px'}}>Se répète indéfiniment si laissé vide</div>}
           </div>
@@ -165,14 +165,14 @@ function Formulaire() {
 
         <div>
           <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Description</label>
-          <textarea value={description} onChange={e => setDescription(e.target.value)} rows={4}
+          <textarea aria-label="Description" value={description} onChange={e => setDescription(e.target.value)} rows={4}
             placeholder="Ajoute des détails sur cet événement…"
             style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 14px',fontSize:'13px',color:'#1a1a2e',background:'#F8FBFF',boxSizing:'border-box',resize:'vertical',fontFamily:'inherit'}}/>
         </div>
 
         <div>
           <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Lieu / Adresse</label>
-          <input value={lieu} onChange={e => setLieu(e.target.value)}
+          <input aria-label="Lieu / Adresse" value={lieu} onChange={e => setLieu(e.target.value)}
             placeholder="Ex: 12 rue du Rhône, Genève"
             style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 14px',fontSize:'13px',color:'#1a1a2e',background:'#F8FBFF',boxSizing:'border-box'}}/>
 

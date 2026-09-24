@@ -56,13 +56,13 @@ export default function NouveauProjet() {
 
         <div style={{background:'#fff',borderRadius:'16px',padding:'16px',marginBottom:'12px',boxShadow:'0 2px 8px rgba(43,127,255,0.06)',border:'0.5px solid #E8F1FF'}}>
           <div style={{fontSize:'11px',color:'#2B7FFF',fontWeight:'600',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:'8px'}}>Nom du projet</div>
-          <input type="text" placeholder="Ex: Restaurant le Coin, App fitness…" value={titre} onChange={e => setTitre(e.target.value)}
+          <input aria-label="Restaurant le Coin, App fitness" type="text" placeholder="Ex: Restaurant le Coin, App fitness…" value={titre} onChange={e => setTitre(e.target.value)}
             style={{width:'100%',border:'none',fontSize:'16px',color:'#1a1a2e',outline:'none',background:'transparent',boxSizing:'border-box'}}/>
         </div>
 
         <div style={{background:'#fff',borderRadius:'16px',padding:'16px',marginBottom:'12px',boxShadow:'0 2px 8px rgba(43,127,255,0.06)',border:'0.5px solid #E8F1FF'}}>
           <div style={{fontSize:'11px',color:'#2B7FFF',fontWeight:'600',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:'8px'}}>Description</div>
-          <textarea placeholder="Décris ton projet, tes objectifs, pourquoi tu as besoin de soutien…" value={description} onChange={e => setDescription(e.target.value)}
+          <textarea aria-label="Décris ton projet, tes objectifs, pourquoi tu as besoin de soutien" placeholder="Décris ton projet, tes objectifs, pourquoi tu as besoin de soutien…" value={description} onChange={e => setDescription(e.target.value)}
             style={{width:'100%',border:'none',fontSize:'14px',color:'#1a1a2e',outline:'none',background:'transparent',resize:'none',height:'80px',boxSizing:'border-box',lineHeight:'1.6'}}/>
         </div>
 
@@ -82,14 +82,14 @@ export default function NouveauProjet() {
           <div style={{flex:1,background:'#fff',borderRadius:'16px',padding:'14px',boxShadow:'0 2px 8px rgba(43,127,255,0.06)',border:'0.5px solid #E8F1FF'}}>
             <div style={{fontSize:'11px',color:'#D4A843',fontWeight:'600',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:'6px'}}>Cagnotte</div>
             <div style={{display:'flex',alignItems:'baseline',gap:'4px'}}>
-              <input placeholder="500" type="number" value={objectif} onChange={e => setObjectif(e.target.value)}
+              <input aria-label="500" placeholder="500" type="number" value={objectif} onChange={e => setObjectif(e.target.value)}
                 style={{width:'100%',border:'none',fontSize:'20px',fontWeight:'600',color:'#1a1a2e',outline:'none',background:'transparent'}}/>
               <span style={{fontSize:'13px',color:'#aaa'}}>CHF</span>
             </div>
           </div>
           <div style={{flex:1,background:'#fff',borderRadius:'16px',padding:'14px',boxShadow:'0 2px 8px rgba(43,127,255,0.06)',border:'0.5px solid #E8F1FF'}}>
             <div style={{fontSize:'11px',color:'#10B981',fontWeight:'600',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:'6px'}}>Date limite</div>
-            <input type="date" value={echeance} onChange={e => setEcheance(e.target.value)}
+            <input aria-label="Échéance" type="date" value={echeance} onChange={e => setEcheance(e.target.value)}
               style={{width:'100%',border:'none',fontSize:'13px',color:'#1a1a2e',outline:'none',background:'transparent'}}/>
           </div>
         </div>
@@ -98,7 +98,7 @@ export default function NouveauProjet() {
           <div style={{fontSize:'11px',color:'#666',fontWeight:'600',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:'6px'}}>Lien Revolut</div>
           <div style={{display:'flex',alignItems:'center',gap:'4px'}}>
             <span style={{fontSize:'13px',color:'#aaa'}}>revolut.me/</span>
-            <input type="text" placeholder="tonpseudo" value={revolut} onChange={e => setRevolut(e.target.value)}
+            <input aria-label="tonpseudo" type="text" placeholder="tonpseudo" value={revolut} onChange={e => setRevolut(e.target.value)}
               style={{flex:1,border:'none',fontSize:'16px',color:'#1a1a2e',outline:'none',background:'transparent'}}/>
           </div>
         </div>
@@ -106,7 +106,7 @@ export default function NouveauProjet() {
           <div style={{fontSize:'11px',color:'#10B981',fontWeight:'600',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:'6px'}}>Lien Wave</div>
           <div style={{display:'flex',alignItems:'center',gap:'4px'}}>
             <span style={{fontSize:'13px',color:'#aaa'}}>wave.com/</span>
-            <input type="text" placeholder="tonpseudo" value={wave} onChange={e => setWave(e.target.value)}
+            <input aria-label="tonpseudo" type="text" placeholder="tonpseudo" value={wave} onChange={e => setWave(e.target.value)}
               style={{flex:1,border:'none',fontSize:'16px',color:'#1a1a2e',outline:'none',background:'transparent'}}/>
           </div>
         </div>
@@ -125,7 +125,7 @@ export default function NouveauProjet() {
         {!prive && groupes.length > 0 && (
           <div style={{background:'#fff',borderRadius:'16px',padding:'14px',marginBottom:'16px',border:'0.5px solid #E8F1FF'}}>
             <div style={{fontSize:'11px',color:'#666',marginBottom:'8px'}}>Partager dans un groupe (optionnel)</div>
-            <select value={groupeId} onChange={e => setGroupeId(e.target.value)}
+            <select aria-label="Groupe" value={groupeId} onChange={e => setGroupeId(e.target.value)}
               style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'8px 12px',fontSize:'14px',color:'#1a1a2e',background:'#F8FBFF'}}>
               <option value="">Visible par tous (public)</option>
               {groupes.map((g: any) => <option key={g.id} value={g.id}>{g.nom}</option>)}

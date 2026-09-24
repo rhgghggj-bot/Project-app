@@ -261,17 +261,17 @@ export default function Profile() {
               <div style={{fontSize:'14px',fontWeight:'600',color:'#666',marginBottom:'12px'}}>Mon profil</div>
               <div style={{marginBottom:'10px'}}>
                 <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Prénom & Nom</label>
-                <input value={nom} onChange={e => setNom(e.target.value)} placeholder="Pierre Diatta"
+                <input aria-label="Prénom & Nom" value={nom} onChange={e => setNom(e.target.value)} placeholder="Pierre Diatta"
                   style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'8px 12px',fontSize:'13px',color:'#1a1a2e',background:'#F8FBFF'}}/>
               </div>
               <div style={{marginBottom:'10px'}}>
                 <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Ville</label>
-                <input value={ville} onChange={e => setVille(e.target.value)} placeholder="Genève"
+                <input aria-label="Ville" value={ville} onChange={e => setVille(e.target.value)} placeholder="Genève"
                   style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'8px 12px',fontSize:'13px',color:'#1a1a2e',background:'#F8FBFF'}}/>
               </div>
               <div style={{marginBottom:'12px'}}>
                 <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Bio</label>
-                <textarea value={bio} onChange={e => setBio(e.target.value)} placeholder="Passionné de projets…" rows={3}
+                <textarea aria-label="Bio" value={bio} onChange={e => setBio(e.target.value)} placeholder="Passionné de projets…" rows={3}
                   style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'8px 12px',fontSize:'13px',color:'#1a1a2e',background:'#F8FBFF',resize:'none'}}/>
               </div>
               <div style={{marginBottom:'12px'}}>

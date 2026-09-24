@@ -238,7 +238,7 @@ export default function ListeDetailPage() {
             <div style={{fontSize:'11px',color: modeShopping ? '#D4A843' : '#2B7FFF',fontWeight:'600',marginBottom:'10px',textTransform:'uppercase',letterSpacing:'.04em'}}>
               {modeShopping ? 'Ajout dans : À acheter' : 'Ajout dans : Ce que je possède'}
             </div>
-            <input value={nom} onChange={e => setNom(e.target.value)} placeholder="Nom de l'article" style={inp}/>
+            <input aria-label="Nom de l'article" value={nom} onChange={e => setNom(e.target.value)} placeholder="Nom de l'article" style={inp}/>
             <div style={{display:'flex',gap:'8px',marginBottom:'8px'}}>
             <div style={{flex:1}}>
               <div style={{fontSize:'11px',color:'#666',marginBottom:'4px'}}>Quantite</div>
@@ -250,14 +250,14 @@ export default function ListeDetailPage() {
             </div>
             <div style={{flex:1}}>
               <div style={{fontSize:'11px',color:'#666',marginBottom:'4px'}}>Unite</div>
-              <select value={unite} onChange={e => setUnite(e.target.value)} style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'8px 10px',fontSize:'16px',color:'#1a1a2e',background:'#fff'}}>
+              <select aria-label="Unité" value={unite} onChange={e => setUnite(e.target.value)} style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'8px 10px',fontSize:'16px',color:'#1a1a2e',background:'#fff'}}>
                 {['unite','kg','g','L','cl','paquet','bouteille','boite','sachet'].map(u => <option key={u} value={u}>{u}</option>)}
               </select>
             </div>
           </div>
           <div style={{marginBottom:'8px'}}>
             <div style={{fontSize:'11px',color:'#666',marginBottom:'4px'}}>Prix unitaire (CHF)</div>
-            <input type="number" value={prix} onChange={e => setPrix(e.target.value)} placeholder="Ex: 8.50"
+            <input aria-label="8.50" type="number" value={prix} onChange={e => setPrix(e.target.value)} placeholder="Ex: 8.50"
               style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'8px 10px',fontSize:'16px',color:'#1a1a2e',background:'#fff',boxSizing:'border-box'}}/>
           </div>
           <div style={{fontSize:'11px',color:'#666',marginBottom:'4px'}}>Categorie</div>

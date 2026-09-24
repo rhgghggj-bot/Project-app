@@ -117,7 +117,7 @@ export default function Projet() {
                   <p style={{fontSize:'11px',color:'#aaa',margin:'0 0 10px'}}>{soutiens.reduce((s,x)=>s+parseFloat(x.montant),0).toFixed(0)} CHF récoltés · {soutiens.length} soutien{soutiens.length>1?'s':''}</p>
                 )}
                 <div style={{display:'flex',gap:'8px'}}>
-                  <input value={montantSoutien} onChange={e => setMontantSoutien(e.target.value)} type="number" min="1" step="5" placeholder="Montant CHF"
+                  <input aria-label="Montant CHF" value={montantSoutien} onChange={e => setMontantSoutien(e.target.value)} type="number" min="1" step="5" placeholder="Montant CHF"
                     style={{flex:1,border:'1px solid #DCE9FF',borderRadius:'10px',padding:'8px 12px',fontSize:'16px',color:'#1a1a2e',background:'#fff',boxSizing:'border-box'}}/>
                   <button onClick={soutenirProjet} disabled={enCoursSoutien}
                     style={{background:'#2B7FFF',color:'#fff',border:'none',borderRadius:'10px',padding:'8px 18px',fontSize:'13px',fontWeight:'500',cursor:'pointer'}}>
@@ -154,7 +154,7 @@ export default function Projet() {
           </div>
         ))}
         <div style={{display:'flex',gap:'8px',marginTop:'14px',alignItems:'center'}}>
-          <input
+          <input aria-label="Laisser un conseil"
             type="text"
             placeholder="Laisser un conseil…"
             value={contenu}

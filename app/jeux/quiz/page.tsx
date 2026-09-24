@@ -164,12 +164,12 @@ export default function QuizPage() {
           <button onClick={() => setMode('liste')} style={{color:'rgba(255,255,255,0.6)',background:'none',border:'none',fontSize:'20px',cursor:'pointer'}}>←</button>
           <span style={{color:'#fff',fontWeight:'500',fontSize:'16px'}}>Créer un quiz</span>
         </div>
-        <input value={titre} onChange={e=>setTitre(e.target.value)} placeholder="Titre du quiz"
+        <input aria-label="Titre du quiz" value={titre} onChange={e=>setTitre(e.target.value)} placeholder="Titre du quiz"
           style={{width:'100%',background:'rgba(255,255,255,0.1)',border,borderRadius:'12px',padding:'12px 14px',fontSize:'14px',color:'#fff',marginBottom:'14px'}}/>
         {questions.map((q,qi) => (
           <div key={qi} style={{background:'rgba(255,255,255,0.06)',border,borderRadius:'16px',padding:'14px',marginBottom:'12px'}}>
             <div style={{color:'#87CEEB',fontSize:'12px',fontWeight:'500',marginBottom:'8px'}}>Question {qi+1}</div>
-            <input value={q.question} onChange={e=>{const nq=[...questions];nq[qi].question=e.target.value;setQuestions(nq)}}
+            <input aria-label="Question" value={q.question} onChange={e=>{const nq=[...questions];nq[qi].question=e.target.value;setQuestions(nq)}}
               placeholder="Question…"
               style={{width:'100%',background:'rgba(255,255,255,0.1)',border,borderRadius:'10px',padding:'8px 12px',fontSize:'13px',color:'#fff',marginBottom:'8px'}}/>
             {q.options.map((opt,oi) => (
@@ -178,7 +178,7 @@ export default function QuizPage() {
                   style={{width:'32px',height:'32px',borderRadius:'8px',border:'none',background:q.reponse===oi?COULEURS[oi]:'rgba(255,255,255,0.15)',color:'#fff',cursor:'pointer',flexShrink:0,fontSize:'14px'}}>
                   {FORMES[oi]}
                 </button>
-                <input value={opt} onChange={e=>{const nq=[...questions];nq[qi].options[oi]=e.target.value;setQuestions(nq)}}
+                <input aria-label="Option" value={opt} onChange={e=>{const nq=[...questions];nq[qi].options[oi]=e.target.value;setQuestions(nq)}}
                   placeholder={'Option '+['A','B','C','D'][oi]}
                   style={{flex:1,background:'rgba(255,255,255,0.1)',border,borderRadius:'8px',padding:'6px 10px',fontSize:'13px',color:'#fff'}}/>
               </div>

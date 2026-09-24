@@ -651,10 +651,10 @@ function FinancesContent() {
 
           <div style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'16px',padding:'14px',marginBottom:'14px'}}>
             <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',marginBottom:'10px'}}>Mon objectif</div>
-            <input value={objectif} onChange={e => setObjectif(e.target.value)} placeholder="Ex: Voyage au Japon, Voiture…"
+            <input aria-label="Voyage au Japon, Voiture" value={objectif} onChange={e => setObjectif(e.target.value)} placeholder="Ex: Voyage au Japon, Voiture…"
               style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'8px 12px',fontSize:'16px',color:'#1a1a2e',background:'#F8FBFF',marginBottom:'8px'}}/>
             <div style={{fontSize:'11px',color:'#aaa',marginBottom:'4px'}}>Montant cible (CHF)</div>
-            <input value={montantEpargne} onChange={e => setMontantEpargne(e.target.value)} placeholder="Ex: 5000" type="number"
+            <input aria-label="5000" value={montantEpargne} onChange={e => setMontantEpargne(e.target.value)} placeholder="Ex: 5000" type="number"
               style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'8px 12px',fontSize:'16px',color:'#1a1a2e',background:'#F8FBFF'}}/>
           </div>
 
@@ -768,12 +768,12 @@ function FinancesContent() {
               <div style={{fontSize:'15px',fontWeight:'600',color:'#1a1a2e'}}>{typeForm === "depense" ? 'Nouvelle dépense' : 'Nouveau revenu'}</div>
               <button onClick={fermerForm} style={{background:'#F5F8FC',border:'none',borderRadius:'50%',width:'28px',height:'28px',fontSize:'15px',color:'#888',cursor:'pointer'}}>×</button>
             </div>
-            <input value={titre} onChange={e => setTitre(e.target.value)} placeholder={typeForm === "depense" ? "Ex: Loyer…" : "Ex: Salaire…"}
+            <input aria-label="typeForm ===" value={titre} onChange={e => setTitre(e.target.value)} placeholder={typeForm === "depense" ? "Ex: Loyer…" : "Ex: Salaire…"}
               style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 12px',fontSize:'14px',color:'#1a1a2e',background:'#F8FBFF',marginBottom:'10px',boxSizing:'border-box'}}/>
             <div style={{display:'flex',gap:'8px',marginBottom:'10px'}}>
-              <input value={montant} onChange={e => setMontant(e.target.value)} placeholder="Montant" type="number"
+              <input aria-label="Montant" value={montant} onChange={e => setMontant(e.target.value)} placeholder="Montant" type="number"
                 style={{flex:1,border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 12px',fontSize:'14px',color:'#1a1a2e',background:'#F8FBFF'}}/>
-              <input value={date} onChange={e => setDate(e.target.value)} type="date"
+              <input aria-label="Date" value={date} onChange={e => setDate(e.target.value)} type="date"
                 style={{flex:1,border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 12px',fontSize:'14px',color:'#1a1a2e',background:'#F8FBFF'}}/>
             </div>
             <div style={{marginBottom:'12px'}}>
@@ -798,7 +798,7 @@ function FinancesContent() {
             {recurrent && typeForm === 'depense' && (
               <div style={{marginBottom:'14px'}}>
                 <div style={{fontSize:'11px',color:'#aaa',marginBottom:'4px'}}>Jour du mois (pour te le rappeler 3 jours avant)</div>
-                <input type="number" min="1" max="31" value={jourDuMois} onChange={e => setJourDuMois(e.target.value)} placeholder="Ex: 1 pour le 1er du mois"
+                <input aria-label="1 pour le 1er du mois" type="number" min="1" max="31" value={jourDuMois} onChange={e => setJourDuMois(e.target.value)} placeholder="Ex: 1 pour le 1er du mois"
                   style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'8px 12px',fontSize:'16px',color:'#1a1a2e',background:'#F8FBFF',boxSizing:'border-box'}}/>
               </div>
             )}

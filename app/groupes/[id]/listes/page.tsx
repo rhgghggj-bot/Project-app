@@ -72,10 +72,10 @@ export default function ListesPage() {
         {showForm && (
           <div style={{background:'#EEF5FF',borderRadius:'14px',padding:'14px',marginBottom:'14px',border:'0.5px solid #DCE9FF'}}>
             <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',marginBottom:'10px'}}>Nouvelle liste</div>
-            <input value={titre} onChange={e => setTitre(e.target.value)} placeholder="Ex: Courses juillet, Fournitures…"
+            <input aria-label="Courses juillet, Fournitures" value={titre} onChange={e => setTitre(e.target.value)} placeholder="Ex: Courses juillet, Fournitures…"
               style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 12px',fontSize:'16px',color:'#1a1a2e',background:'#fff',marginBottom:'10px',boxSizing:'border-box'}}/>
             <div style={{fontSize:'12px',color:'#666',marginBottom:'6px'}}>Categorie budget (depuis tes depenses recurrentes)</div>
-            <select value={categorieBudget} onChange={e => setCategorieBudget(e.target.value)}
+            <select aria-label="Catégorie de budget" value={categorieBudget} onChange={e => setCategorieBudget(e.target.value)}
               style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 12px',fontSize:'16px',color:'#1a1a2e',background:'#fff',marginBottom:'10px'}}>
               {["Logement","Assurance maladie","Assurance voiture","Transport","Alimentation","Santé","Téléphone","Énergie","Loisirs","Autres"].map(c => (
                 <option key={c} value={c}>{c}</option>

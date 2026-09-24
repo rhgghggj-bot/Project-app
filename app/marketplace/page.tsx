@@ -403,10 +403,10 @@ export default function Marketplace() {
 
           {showForm && (
             <div style={{background:"#EEF5FF",borderRadius:"14px",padding:"14px",marginBottom:"14px",border:"0.5px solid #DCE9FF"}}>
-              <input value={nom} onChange={e => setNom(e.target.value)} placeholder="Nom de l'article" style={inp}/>
+              <input aria-label="Nom de l'article" value={nom} onChange={e => setNom(e.target.value)} placeholder="Nom de l'article" style={inp}/>
               <div style={{display:"flex",gap:"8px",marginBottom:"8px"}}>
-                <input type="text" value={prix} onChange={e => setPrix(e.target.value)} placeholder="Prix (CHF)" style={{...inp,flex:1,marginBottom:0}}/>
-                <select value={categorie} onChange={e => setCategorie(e.target.value)} style={{flex:1,border:"1px solid #E8F1FF",borderRadius:"10px",padding:"10px 8px",fontSize:"14px",color:"#1a1a2e",background:"#fff"}}>
+                <input aria-label="Prix (CHF)" type="text" value={prix} onChange={e => setPrix(e.target.value)} placeholder="Prix (CHF)" style={{...inp,flex:1,marginBottom:0}}/>
+                <select aria-label="Catégorie" value={categorie} onChange={e => setCategorie(e.target.value)} style={{flex:1,border:"1px solid #E8F1FF",borderRadius:"10px",padding:"10px 8px",fontSize:"14px",color:"#1a1a2e",background:"#fff"}}>
                   {["Mode","Électronique","Maison","Sport","Alimentation","Autre"].map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
@@ -471,8 +471,8 @@ export default function Marketplace() {
 
           {showFormAnnonce && (
             <div style={{background:"#EEF5FF",borderRadius:"14px",padding:"14px",marginBottom:"14px",border:"0.5px solid #DCE9FF"}}>
-              <input value={titreAnnonce} onChange={e => setTitreAnnonce(e.target.value)} placeholder="Titre de l'annonce" style={inp}/>
-              <textarea value={descAnnonce} onChange={e => setDescAnnonce(e.target.value)} placeholder="Description…" style={{...inp,height:"60px",resize:"none"} as any}/>
+              <input aria-label="Titre de l'annonce" value={titreAnnonce} onChange={e => setTitreAnnonce(e.target.value)} placeholder="Titre de l'annonce" style={inp}/>
+              <textarea aria-label="Description" value={descAnnonce} onChange={e => setDescAnnonce(e.target.value)} placeholder="Description…" style={{...inp,height:"60px",resize:"none"} as any}/>
               <div style={{marginBottom:"8px"}}>
                 <label style={{fontSize:"12px",color:"#666",display:"block",marginBottom:"6px"}}>Photo</label>
                 <label style={{display:"block",background:"#fff",border:"1px dashed #2B7FFF",borderRadius:"10px",padding:"16px",textAlign:"center",cursor:"pointer",color:"#2B7FFF",fontSize:"13px",fontWeight:"500"}}>
@@ -484,15 +484,15 @@ export default function Marketplace() {
                 </label>
                 {imagePreview && <img src={imagePreview} alt="preview" style={{width:"100%",height:"140px",objectFit:"cover",borderRadius:"10px",marginTop:"8px"}}/>}
               </div>
-              <select value={etatAnnonce} onChange={e => setEtatAnnonce(e.target.value)} style={{...inp} as any}>
+              <select aria-label="État" value={etatAnnonce} onChange={e => setEtatAnnonce(e.target.value)} style={{...inp} as any}>
                 <option>Neuf</option>
                 <option>Bon état</option>
                 <option>État correct</option>
                 <option>Urgent</option>
               </select>
               <div style={{display:"flex",gap:"8px",marginBottom:"8px"}}>
-                <input type="text" value={prixAnnonce} onChange={e => setPrixAnnonce(e.target.value)} placeholder="Prix CHF" style={{...inp,flex:1,marginBottom:0}}/>
-                <select value={catAnnonce} onChange={e => setCatAnnonce(e.target.value)} style={{flex:1,border:"1px solid #E8F1FF",borderRadius:"10px",padding:"10px 8px",fontSize:"14px",color:"#1a1a2e",background:"#fff"}}>
+                <input aria-label="Prix CHF" type="text" value={prixAnnonce} onChange={e => setPrixAnnonce(e.target.value)} placeholder="Prix CHF" style={{...inp,flex:1,marginBottom:0}}/>
+                <select aria-label="Catégorie" value={catAnnonce} onChange={e => setCatAnnonce(e.target.value)} style={{flex:1,border:"1px solid #E8F1FF",borderRadius:"10px",padding:"10px 8px",fontSize:"14px",color:"#1a1a2e",background:"#fff"}}>
                   {["Mode","Électronique","Maison","Sport","Alimentation","Autre"].map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
@@ -506,10 +506,10 @@ export default function Marketplace() {
           <div style={{display:"flex",gap:"8px",marginBottom:"10px"}}>
             <div style={{flex:1,position:"relative"}}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2" style={{position:"absolute",left:"12px",top:"50%",transform:"translateY(-50%)"}}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              <input value={recherche} onChange={e => setRecherche(e.target.value)} placeholder="Rechercher…"
+              <input aria-label="Rechercher" value={recherche} onChange={e => setRecherche(e.target.value)} placeholder="Rechercher…"
                 style={{width:"100%",border:"1px solid #E8F1FF",borderRadius:"10px",padding:"9px 12px 9px 34px",fontSize:"14px",color:"#1a1a2e",background:"#fff",boxSizing:"border-box"}}/>
             </div>
-            <input value={prixMax} onChange={e => setPrixMax(e.target.value)} type="number" min="0" placeholder="Prix max"
+            <input aria-label="Prix max" value={prixMax} onChange={e => setPrixMax(e.target.value)} type="number" min="0" placeholder="Prix max"
               style={{width:"100px",border:"1px solid #E8F1FF",borderRadius:"10px",padding:"9px 10px",fontSize:"14px",color:"#1a1a2e",background:"#fff",boxSizing:"border-box"}}/>
           </div>
 
@@ -606,7 +606,7 @@ export default function Marketplace() {
                     ))}
                     {user ? (
                       <div style={{display:"flex",gap:"8px",marginTop:"10px"}}>
-                        <input value={nouveauCommentaire} onChange={e => setNouveauCommentaire(e.target.value)}
+                        <input aria-label="Écrire un commentaire" value={nouveauCommentaire} onChange={e => setNouveauCommentaire(e.target.value)}
                           onKeyDown={e => e.key === "Enter" && ajouterCommentaire()}
                           placeholder="Écrire un commentaire…"
                           style={{flex:1,border:"1px solid #E8F1FF",borderRadius:"99px",padding:"10px 14px",fontSize:"14px",color:"#1a1a2e",background:"#F8FBFF"}}/>

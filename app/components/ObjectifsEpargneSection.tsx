@@ -57,9 +57,9 @@ export default function ObjectifsEpargneSection() {
 
       {showForm && (
         <Card style={{ background: colors.blueLight, border: `0.5px solid ${colors.blueBorder}`, marginBottom: "12px" }}>
-          <input value={titre} onChange={e => setTitre(e.target.value)} placeholder="Ex: Voyage au Japon, Voiture…"
+          <input aria-label="Voyage au Japon, Voiture" value={titre} onChange={e => setTitre(e.target.value)} placeholder="Ex: Voyage au Japon, Voiture…"
             style={{ width: "100%", border: `1px solid ${colors.border}`, borderRadius: "10px", padding: "8px 12px", fontSize: "16px", color: colors.text, background: "#fff", marginBottom: "8px", boxSizing: "border-box" }} />
-          <input value={montantCible} onChange={e => setMontantCible(e.target.value)} type="number" min="0" step="10" placeholder="Montant cible (CHF)"
+          <input aria-label="Montant cible (CHF)" value={montantCible} onChange={e => setMontantCible(e.target.value)} type="number" min="0" step="10" placeholder="Montant cible (CHF)"
             style={{ width: "100%", border: `1px solid ${colors.border}`, borderRadius: "10px", padding: "8px 12px", fontSize: "16px", color: colors.text, background: "#fff", marginBottom: "10px", boxSizing: "border-box" }} />
           <div style={{ display: "flex", gap: "8px" }}>
             <Button full onClick={creerObjectif}>Créer</Button>
@@ -90,7 +90,7 @@ export default function ObjectifsEpargneSection() {
 
             {contribuerA === o.id ? (
               <div style={{ display: "flex", gap: "8px" }}>
-                <input value={montantContrib} onChange={e => setMontantContrib(e.target.value)} type="number" min="0" step="5" autoFocus placeholder="Montant CHF"
+                <input aria-label="Montant CHF" value={montantContrib} onChange={e => setMontantContrib(e.target.value)} type="number" min="0" step="5" autoFocus placeholder="Montant CHF"
                   style={{ flex: 1, border: `1px solid ${colors.border}`, borderRadius: "10px", padding: "8px 12px", fontSize: "16px", color: colors.text, boxSizing: "border-box" }} />
                 <Button onClick={() => ajouterContribution(o.id)}>OK</Button>
                 <Button variant="ghost" onClick={() => { setContribuerA(null); setMontantContrib("") }}>✕</Button>

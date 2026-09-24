@@ -98,10 +98,10 @@ export default function SondagesGroupePage() {
         {showForm && (
           <Card style={{ background: colors.blueLight, border: `0.5px solid ${colors.blueBorder}`, marginBottom: "14px" }}>
             <div style={{ fontSize: "13px", fontWeight: 500, color: colors.text, marginBottom: "10px" }}>Nouveau sondage</div>
-            <input value={question} onChange={e => setQuestion(e.target.value)} placeholder="Ex: On mange où ce soir ?"
+            <input aria-label="On mange où ce soir ?" value={question} onChange={e => setQuestion(e.target.value)} placeholder="Ex: On mange où ce soir ?"
               style={{ width: "100%", border: `1px solid ${colors.border}`, borderRadius: "10px", padding: "10px 12px", fontSize: "16px", color: colors.text, background: "#fff", marginBottom: "10px", boxSizing: "border-box" }} />
             {choix.map((c, i) => (
-              <input key={i} value={c} onChange={e => updateChoix(i, e.target.value)} placeholder={`Option ${i + 1}`}
+              <input aria-label="Option ${i + 1" key={i} value={c} onChange={e => updateChoix(i, e.target.value)} placeholder={`Option ${i + 1}`}
                 style={{ width: "100%", border: `1px solid ${colors.border}`, borderRadius: "10px", padding: "10px 12px", fontSize: "16px", color: colors.text, background: "#fff", marginBottom: "8px", boxSizing: "border-box" }} />
             ))}
             {choix.length < 5 && (

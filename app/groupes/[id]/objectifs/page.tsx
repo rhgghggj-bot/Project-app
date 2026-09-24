@@ -100,12 +100,12 @@ export default function ObjectifsGroupePage() {
         {showForm && (
           <Card style={{ background: colors.goldLight, border: `0.5px solid ${colors.goldBorder}`, marginBottom: "14px" }}>
             <div style={{ fontSize: "13px", fontWeight: 500, color: colors.text, marginBottom: "10px" }}>Nouvel objectif</div>
-            <input value={titre} onChange={e => setTitre(e.target.value)} placeholder="Ex: Voyage à Barcelone, Cadeau…"
+            <input aria-label="Voyage à Barcelone, Cadeau" value={titre} onChange={e => setTitre(e.target.value)} placeholder="Ex: Voyage à Barcelone, Cadeau…"
               style={{ width: "100%", border: `1px solid ${colors.goldBorder}`, borderRadius: "10px", padding: "10px 12px", fontSize: "16px", color: colors.text, background: "#fff", marginBottom: "10px", boxSizing: "border-box" }} />
-            <input value={montantCible} onChange={e => setMontantCible(e.target.value)} type="number" min="0" step="10" placeholder="Montant visé (CHF)"
+            <input aria-label="Montant visé (CHF)" value={montantCible} onChange={e => setMontantCible(e.target.value)} type="number" min="0" step="10" placeholder="Montant visé (CHF)"
               style={{ width: "100%", border: `1px solid ${colors.goldBorder}`, borderRadius: "10px", padding: "10px 12px", fontSize: "16px", color: colors.text, background: "#fff", marginBottom: "10px", boxSizing: "border-box" }} />
             <div style={{ fontSize: "12px", color: "#8a6d1a", marginBottom: "6px" }}>Date limite (optionnel)</div>
-            <input value={dateLimite} onChange={e => setDateLimite(e.target.value)} type="date"
+            <input aria-label="Date limite" value={dateLimite} onChange={e => setDateLimite(e.target.value)} type="date"
               style={{ width: "100%", border: `1px solid ${colors.goldBorder}`, borderRadius: "10px", padding: "10px 12px", fontSize: "16px", color: colors.text, background: "#fff", marginBottom: "12px", boxSizing: "border-box" }} />
             <div style={{ display: "flex", gap: "8px" }}>
               <Button variant="gold" full onClick={creerObjectif}>Créer</Button>
@@ -153,7 +153,7 @@ export default function ObjectifsGroupePage() {
 
               {contribuerA === o.id ? (
                 <div style={{ display: "flex", gap: "8px" }}>
-                  <input value={montantContrib} onChange={e => setMontantContrib(e.target.value)} type="number" min="0" step="5" autoFocus placeholder="Montant CHF"
+                  <input aria-label="Montant CHF" value={montantContrib} onChange={e => setMontantContrib(e.target.value)} type="number" min="0" step="5" autoFocus placeholder="Montant CHF"
                     style={{ flex: 1, border: `1px solid ${colors.goldBorder}`, borderRadius: "10px", padding: "8px 12px", fontSize: "16px", color: colors.text, boxSizing: "border-box" }} />
                   <Button variant="gold" onClick={() => ajouterContribution(o.id)}>OK</Button>
                   <Button variant="ghost" onClick={() => { setContribuerA(null); setMontantContrib("") }}>✕</Button>

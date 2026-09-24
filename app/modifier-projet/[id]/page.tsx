@@ -75,19 +75,19 @@ export default function ModifierProjet() {
 
         <div>
           <label className="text-sm font-medium text-gray-700 mb-1 block">Nom du projet</label>
-          <input type="text" value={titre} onChange={e => setTitre(e.target.value)}
+          <input aria-label="Nom du projet" type="text" value={titre} onChange={e => setTitre(e.target.value)}
             className="w-full border border-blue-100 rounded-xl px-4 py-3 text-sm text-gray-900 bg-blue-50 focus:outline-none focus:border-blue-400"/>
         </div>
 
         <div>
           <label className="text-sm font-medium text-gray-700 mb-1 block">Description</label>
-          <textarea value={description} onChange={e => setDescription(e.target.value)} rows={4}
+          <textarea aria-label="Description" value={description} onChange={e => setDescription(e.target.value)} rows={4}
             className="w-full border border-blue-100 rounded-xl px-4 py-3 text-sm text-gray-900 bg-blue-50 focus:outline-none focus:border-blue-400 resize-none"/>
         </div>
 
         <div>
           <label className="text-sm font-medium text-gray-700 mb-1 block">Catégorie</label>
-          <select value={categorie} onChange={e => setCategorie(e.target.value)}
+          <select aria-label="Catégorie" value={categorie} onChange={e => setCategorie(e.target.value)}
             className="w-full border border-blue-100 rounded-xl px-4 py-3 text-sm text-gray-900 bg-blue-50 focus:outline-none focus:border-blue-400">
             <option value="">Choisir une catégorie</option>
             <option value="restauration">Restauration</option>
@@ -105,7 +105,7 @@ export default function ModifierProjet() {
           <label className="text-sm font-medium text-gray-700 mb-1 block">Lien Revolut</label>
           <div className="flex items-center border border-blue-100 rounded-xl bg-blue-50 overflow-hidden focus-within:border-blue-400">
             <span className="text-sm text-gray-400 pl-4">revolut.me/</span>
-            <input type="text" value={revolut} onChange={e => setRevolut(e.target.value)}
+            <input aria-label="Lien Revolut" type="text" value={revolut} onChange={e => setRevolut(e.target.value)}
               className="flex-1 py-3 pr-4 text-sm text-gray-900 bg-transparent focus:outline-none"/>
           </div>
           <p className="text-xs text-gray-400 mt-1">Trouve ton pseudo dans l'appli Revolut → Profil → @pseudo</p>

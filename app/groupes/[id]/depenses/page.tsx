@@ -136,9 +136,9 @@ export default function DepensesPartageesPage() {
         {showForm && (
           <Card style={{ background: colors.blueLight, border: `0.5px solid ${colors.blueBorder}`, marginBottom: "14px" }}>
             <div style={{ fontSize: "13px", fontWeight: 500, color: colors.text, marginBottom: "10px" }}>Nouvelle dépense partagée</div>
-            <input value={titre} onChange={e => setTitre(e.target.value)} placeholder="Ex: Courses, Resto, Essence…"
+            <input aria-label="Courses, Resto, Essence" value={titre} onChange={e => setTitre(e.target.value)} placeholder="Ex: Courses, Resto, Essence…"
               style={{ width: "100%", border: `1px solid ${colors.border}`, borderRadius: "10px", padding: "10px 12px", fontSize: "16px", color: colors.text, background: "#fff", marginBottom: "10px", boxSizing: "border-box" }} />
-            <input value={montant} onChange={e => setMontant(e.target.value)} type="number" min="0" step="0.05" placeholder="Montant total (CHF)"
+            <input aria-label="Montant total (CHF)" value={montant} onChange={e => setMontant(e.target.value)} type="number" min="0" step="0.05" placeholder="Montant total (CHF)"
               style={{ width: "100%", border: `1px solid ${colors.border}`, borderRadius: "10px", padding: "10px 12px", fontSize: "16px", color: colors.text, background: "#fff", marginBottom: "10px", boxSizing: "border-box" }} />
             <div style={{ fontSize: "12px", color: colors.textMuted, marginBottom: "6px" }}>Partagée entre (montant divisé également)</div>
             <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginBottom: "12px" }}>

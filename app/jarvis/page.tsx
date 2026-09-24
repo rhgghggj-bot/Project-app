@@ -784,7 +784,7 @@ export default function Jarvis() {
           )}
         </button>
         {voixDisponibles.length > 0 && (
-          <select
+          <select aria-label="Voix"
             value={voixChoisie}
             onChange={e => { setVoixChoisie(e.target.value); localStorage.setItem("jarvis_voix", e.target.value) }}
             style={{ background: "rgba(255,255,255,0.08)", border: "0.5px solid rgba(43,127,255,0.3)", borderRadius: "8px", color: "#E8F1FF", fontSize: "11px", padding: "3px 6px", maxWidth: "110px" }}>
@@ -797,7 +797,7 @@ export default function Jarvis() {
 
       {montrerConfigCloud && (
         <div style={{ padding: "12px 18px", borderBottom: "0.5px solid rgba(43,127,255,0.2)", background: "rgba(10,22,40,0.4)", display: "flex", gap: "8px", alignItems: "center" }}>
-          <input
+          <input aria-label="sk-ant-... (ta clé API Claude)"
             type="password"
             defaultValue={claudeKey}
             placeholder="sk-ant-... (ta clé API Claude)"
@@ -857,7 +857,7 @@ export default function Jarvis() {
             style={{ background: "rgba(255,255,255,0.08)", border: "0.5px solid rgba(43,127,255,0.3)", borderRadius: "12px", width: "44px", height: "44px", flexShrink: 0, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
           </button>
-          <textarea
+          <textarea aria-label="Écris à Jarvis"
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); envoyer() } }}

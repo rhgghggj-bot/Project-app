@@ -211,7 +211,7 @@ export default function Groupes() {
                   <button onClick={() => retirerSelection(p.id)} style={{background:'rgba(255,255,255,0.25)',border:'none',color:'#fff',cursor:'pointer',fontSize:'13px',lineHeight:1,padding:0,width:'18px',height:'18px',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center'}}>×</button>
                 </span>
               ))}
-              <input value={recherche} onChange={e => setRecherche(e.target.value)} placeholder={selectionnes.length ? "Ajouter…" : "À :"}
+              <input aria-label="selectionnes.length ?" value={recherche} onChange={e => setRecherche(e.target.value)} placeholder={selectionnes.length ? "Ajouter…" : "À :"}
                 style={{flex:1,minWidth:'100px',border:'none',outline:'none',fontSize:'16px',padding:'6px 0'}}/>
             </div>
           </div>
@@ -236,7 +236,7 @@ export default function Groupes() {
 
           {selectionnes.length > 1 && (
             <div style={{padding:'12px 18px',borderTop:'0.5px solid #E8F1FF'}}>
-              <input value={nomGroupe} onChange={e => setNomGroupe(e.target.value)} placeholder="Nom du groupe"
+              <input aria-label="Nom du groupe" value={nomGroupe} onChange={e => setNomGroupe(e.target.value)} placeholder="Nom du groupe"
                 style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 12px',fontSize:'14px',boxSizing:'border-box'}}/>
             </div>
           )}

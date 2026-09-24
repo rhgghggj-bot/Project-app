@@ -498,7 +498,7 @@ export default function Constellation({ evenements, periodeLabel = "cette semain
           {COULEURS_CONNUES.map(couleur => (
             <div key={couleur} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <span style={{ width: "12px", height: "12px", borderRadius: "50%", background: couleur, flexShrink: 0 }}></span>
-              <input
+              <input aria-label="Nom du domaine"
                 value={noms[couleur] || ""}
                 onChange={e => {
                   const valeur = e.target.value
@@ -559,9 +559,9 @@ export default function Constellation({ evenements, periodeLabel = "cette semain
                               ))}
                             </div>
                             <div style={{ display: "flex", gap: "5px", marginTop: "6px" }}>
-                              <input value={modePersoNom} onChange={e => setModePersoNom(e.target.value)} placeholder="Nom (ex: Train)"
+                              <input aria-label="Nom (ex: Train)" value={modePersoNom} onChange={e => setModePersoNom(e.target.value)} placeholder="Nom (ex: Train)"
                                 style={{ flex: 1, background: "rgba(255,255,255,0.08)", border: "0.5px solid rgba(255,255,255,0.2)", borderRadius: "6px", padding: "4px 7px", fontSize: "10px", color: "#fff", outline: "none" }} />
-                              <input value={modePersoKmh} onChange={e => setModePersoKmh(e.target.value)} placeholder="km/h" type="number"
+                              <input aria-label="km/h" value={modePersoKmh} onChange={e => setModePersoKmh(e.target.value)} placeholder="km/h" type="number"
                                 style={{ width: "45px", background: "rgba(255,255,255,0.08)", border: "0.5px solid rgba(255,255,255,0.2)", borderRadius: "6px", padding: "4px 7px", fontSize: "10px", color: "#fff", outline: "none" }} />
                               <button onClick={() => {
                                 const kmh = parseFloat(modePersoKmh)

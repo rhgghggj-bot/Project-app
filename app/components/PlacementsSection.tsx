@@ -416,22 +416,22 @@ export default function PlacementsSection() {
 
           <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'8px'}}>
             <label style={{fontSize:'11px',color:'#666',minWidth:'110px'}}>Capital initial</label>
-            <input type="range" min="0" max="100000" step="500" value={capital} onChange={e => setCapital(Number(e.target.value))} style={{flex:1}}/>
+            <input aria-label="Capital initial" type="range" min="0" max="100000" step="500" value={capital} onChange={e => setCapital(Number(e.target.value))} style={{flex:1}}/>
             <span style={{fontSize:'11px',fontWeight:'500',minWidth:'70px',textAlign:'right',color:p.couleur}}>{capital.toLocaleString('fr-FR')} CHF</span>
           </div>
           <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'8px'}}>
             <label style={{fontSize:'11px',color:'#666',minWidth:'110px'}}>Versement/mois</label>
-            <input type="range" min="0" max="5000" step="50" value={versementMois} onChange={e => setVersementMois(Number(e.target.value))} style={{flex:1}}/>
+            <input aria-label="Versement/mois" type="range" min="0" max="5000" step="50" value={versementMois} onChange={e => setVersementMois(Number(e.target.value))} style={{flex:1}}/>
             <span style={{fontSize:'11px',fontWeight:'500',minWidth:'70px',textAlign:'right',color:p.couleur}}>{versementMois.toLocaleString('fr-FR')} CHF</span>
           </div>
           <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'8px'}}>
             <label style={{fontSize:'11px',color:'#666',minWidth:'110px'}}>Rendement/an</label>
-            <input type="range" min="0.5" max="15" step="0.5" value={rendementCustom} onChange={e => setRendementCustom(Number(e.target.value))} style={{flex:1}}/>
+            <input aria-label="Rendement/an" type="range" min="0.5" max="15" step="0.5" value={rendementCustom} onChange={e => setRendementCustom(Number(e.target.value))} style={{flex:1}}/>
             <span style={{fontSize:'11px',fontWeight:'500',minWidth:'70px',textAlign:'right',color:p.couleur}}>{rendementCustom}%</span>
           </div>
           <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'14px'}}>
             <label style={{fontSize:'11px',color:'#666',minWidth:'110px'}}>Duree</label>
-            <input type="range" min="1" max="30" step="1" value={duree} onChange={e => setDuree(Number(e.target.value))} style={{flex:1}}/>
+            <input aria-label="Duree" type="range" min="1" max="30" step="1" value={duree} onChange={e => setDuree(Number(e.target.value))} style={{flex:1}}/>
             <span style={{fontSize:'11px',fontWeight:'500',minWidth:'70px',textAlign:'right',color:p.couleur}}>{duree} an{duree>1?'s':''}</span>
           </div>
 
