@@ -1,4 +1,5 @@
 "use client"
+import { Depense, EvenementCalendrier, Profil, Projet, ProjetLike, Revenu, User } from "@/lib/types"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
@@ -8,15 +9,15 @@ import { useDeviseConversion } from "./hooks/useDevise"
 const JOURS = ["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"]
 
 export default function Home() {
-  const [projets, setProjets] = useState<any[]>([])
+  const [projets, setProjets] = useState<Projet[]>([])
   const [categorie, setCategorie] = useState("Tous")
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
   const [authChecked, setAuthChecked] = useState(false)
   const { format } = useDeviseConversion()
-  const [evenements, setEvenements] = useState<any[]>([])
-  const [depenses, setDepenses] = useState<any[]>([])
-  const [revenus, setRevenus] = useState<any[]>([])
-  const [likesProjets, setLikesProjets] = useState<any[]>([])
+  const [evenements, setEvenements] = useState<EvenementCalendrier[]>([])
+  const [depenses, setDepenses] = useState<Depense[]>([])
+  const [revenus, setRevenus] = useState<Revenu[]>([])
+  const [likesProjets, setLikesProjets] = useState<ProjetLike[]>([])
   const [profilsCreateurs, setProfilsCreateurs] = useState<Record<string, string>>({})
   const [commentairesCount, setCommentairesCount] = useState<Record<string, number>>({})
 
@@ -40,14 +41,16 @@ export default function Home() {
         setLikesProjets(lp || [])
         if (com) {
           const compte: Record<string, number> = {}
-          com.forEach((c: any) => { compte[c.projet_id] = (compte[c.projet_id] || 0) + 1 })
+          for (const c of com as { projet_id: string }[]) {
+            compte[c.projet_id] = (compte[c.projet_id] || 0) + 1
+          }
           setCommentairesCount(compte)
         }
         if (p && p.length > 0) {
-          const idsCreateurs = Array.from(new Set(p.map((pr: any) => pr.user_id)))
+          const idsCreateurs = Array.from(new Set((p as Projet[]).map(pr => pr.user_id)))
           const { data: profs } = await supabase.from("profiles").select("id,nom").in("id", idsCreateurs)
           const map: Record<string, string> = {}
-          profs?.forEach((pf: any) => { map[pf.id] = pf.nom || "Membre" })
+          for (const pf of (profs || []) as Pick<Profil, 'id' | 'nom'>[]) map[pf.id] = pf.nom || "Membre"
           setProfilsCreateurs(map)
         }
       }
@@ -100,8 +103,8 @@ export default function Home() {
 
   const moisActuel = today.getMonth()
   const anneeActuelle = today.getFullYear()
-  const totalDep = depenses.filter(d => { const dt = new Date(d.date); return dt.getMonth() === moisActuel && dt.getFullYear() === anneeActuelle }).reduce((s,d) => s + parseFloat(d.montant), 0)
-  const totalRev = revenus.filter(r => { const dt = new Date(r.date); return dt.getMonth() === moisActuel && dt.getFullYear() === anneeActuelle }).reduce((s,r) => s + parseFloat(r.montant), 0)
+  const totalDep = depenses.filter(d => { const dt = new Date(d.date); return dt.getMonth() === moisActuel && dt.getFullYear() === anneeActuelle }).reduce((s,d) => s + Number(d.montant), 0)
+  const totalRev = revenus.filter(r => { const dt = new Date(r.date); return dt.getMonth() === moisActuel && dt.getFullYear() === anneeActuelle }).reduce((s,r) => s + Number(r.montant), 0)
   const solde = totalRev - totalDep
   const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`
   const nowMin = today.getHours() * 60 + today.getMinutes()
@@ -217,7 +220,7 @@ export default function Home() {
                       </span>
                       {hasEvts && (
                         <div style={{display:'flex',gap:'2px',alignItems:'center'}}>
-                          {evts.slice(0,3).map((e:any,j:number) => (
+                          {evts.slice(0,3).map((e, j) => (
                             <div key={j} style={{width:'4px',height:'4px',borderRadius:'50%',background:e.couleur}}></div>
                           ))}
                           {evts.length > 3 && (
@@ -305,7 +308,7 @@ export default function Home() {
           )}
 
           {projets.length > 0 && (() => {
-            const projetsFiltres = projets.filter((p: any) => categorie === 'Tous' || p.categorie === categorie)
+            const projetsFiltres = projets.filter(p => categorie === 'Tous' || p.categorie === categorie)
             const vedette = projetsFiltres[0]
             if (!vedette) return (
               <div className="text-center py-12">
@@ -342,9 +345,9 @@ export default function Home() {
           })()}
 
           {projets
-            .filter((p: any) => categorie === 'Tous' || p.categorie === categorie)
-            .filter((p: any) => p.id !== (projets.filter((pr: any) => categorie === 'Tous' || pr.categorie === categorie)[0]?.id))
-            .map((projet: any) => {
+            .filter(p => categorie === 'Tous' || p.categorie === categorie)
+            .filter(p => p.id !== (projets.filter(pr => categorie === 'Tous' || pr.categorie === categorie)[0]?.id))
+            .map(projet => {
               const nbLikes = likesProjets.filter(l => l.projet_id === projet.id).length
               const jaimeMoi = likesProjets.some(l => l.projet_id === projet.id && l.user_id === user?.id)
               const nbCommentaires = commentairesCount[projet.id] || 0

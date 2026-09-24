@@ -287,3 +287,40 @@ export type CommentaireAnnonce = {
   contenu: string
   created_at: DateISO
 }
+
+// Partie d'un jeu de groupe (table jeux_groupe) ; "etat" dépend du jeu
+export type PartieJeu<Etat = unknown> = {
+  id: Uuid
+  groupe_id: Uuid
+  type: string
+  etat: Etat
+  joueur1_id: Uuid
+  joueur2_id: Uuid
+  tour: Uuid
+  gagnant: Uuid | null
+  created_at: DateISO
+  updated_at?: DateISO
+}
+
+export type ProjetLike = {
+  id: Uuid
+  projet_id: Uuid
+  user_id: Uuid
+}
+
+export type SuiviVendeur = {
+  id: Uuid
+  suiveur_id: Uuid
+  suivi_id: Uuid
+  created_at?: DateISO
+}
+
+export type AvisVendeur = {
+  id: Uuid
+  annonce_id: Uuid
+  auteur_id: Uuid
+  cible_id: Uuid
+  note: number
+  commentaire: string | null
+  created_at: DateISO
+}

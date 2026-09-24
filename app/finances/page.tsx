@@ -1,4 +1,5 @@
 "use client"
+import { Depense, Revenu, User } from "@/lib/types"
 import { SkeletonPage } from "@/app/components/ui/Skeleton"
 import { useEscape } from "@/lib/a11y"
 import Link from "next/link"
@@ -36,11 +37,11 @@ function IconeCategorie({ cat, size = 15 }: { cat: string; size?: number }) {
 }
 
 function FinancesContent() {
-  const [depenses, setDepenses] = useState<any[]>([])
-  const [revenus, setRevenus] = useState<any[]>([])
-  const [user, setUser] = useState<any>(null)
+  const [depenses, setDepenses] = useState<Depense[]>([])
+  const [revenus, setRevenus] = useState<Revenu[]>([])
+  const [user, setUser] = useState<User | null>(null)
   const [devise, setDevise] = useState("CHF")
-  const [tauxChange, setTauxChange] = useState<any>(null)
+  const [tauxChange, setTauxChange] = useState<Record<string, number> | null>(null)
   const [showDevise, setShowDevise] = useState(false)
   const searchParams = useSearchParams()
   const [onglet, setOnglet] = useState("vue")
@@ -53,7 +54,7 @@ function FinancesContent() {
   const [date, setDate] = useState(new Date().toISOString().split("T")[0])
   const [recurrent, setRecurrent] = useState(false)
   const [jourDuMois, setJourDuMois] = useState("")
-  const [moisSelectionne, setMoisSelectionne] = useState<any>(null)
+  const [moisSelectionne, setMoisSelectionne] = useState<{ mois: number; annee: number; label: string; depenses: number; revenus: number } | null>(null)
   const chartRef = useRef<HTMLDivElement>(null)
   const [chartW, setChartW] = useState(300)
   const [moisOuverts, setMoisOuverts] = useState<Set<string>>(() => {
@@ -153,8 +154,8 @@ function FinancesContent() {
     const totalRev = conv(moisActuelData.revenus).toFixed(0)
     const totalDep = conv(moisActuelData.depenses).toFixed(0)
     const solde = conv(moisActuelData.revenus - moisActuelData.depenses).toFixed(0)
-    const revList = revenusMoisAff.map(r => `<tr><td style="padding:8px;border-bottom:1px solid #E8F1FF">${r.titre}</td><td style="padding:8px;border-bottom:1px solid #E8F1FF;color:#10B981;text-align:right">+${conv(parseFloat(r.montant)).toFixed(0)} ${devise}</td></tr>`).join('')
-    const depList = depensesMoisAff.map(d => `<tr><td style="padding:8px;border-bottom:1px solid #E8F1FF">${d.titre}</td><td style="padding:8px;border-bottom:1px solid #E8F1FF;color:#F43F5E;text-align:right">-${conv(parseFloat(d.montant)).toFixed(0)} ${devise}</td></tr>`).join('')
+    const revList = revenusMoisAff.map(r => `<tr><td style="padding:8px;border-bottom:1px solid #E8F1FF">${r.titre}</td><td style="padding:8px;border-bottom:1px solid #E8F1FF;color:#10B981;text-align:right">+${conv(Number(r.montant)).toFixed(0)} ${devise}</td></tr>`).join('')
+    const depList = depensesMoisAff.map(d => `<tr><td style="padding:8px;border-bottom:1px solid #E8F1FF">${d.titre}</td><td style="padding:8px;border-bottom:1px solid #E8F1FF;color:#F43F5E;text-align:right">-${conv(Number(d.montant)).toFixed(0)} ${devise}</td></tr>`).join('')
 
     const html = `<!DOCTYPE html>
 <html>
@@ -216,11 +217,11 @@ function FinancesContent() {
   const moisActuel = today.getMonth()
   const anneeActuelle = today.getFullYear()
 
-  const filtrerMois = (items: any[], mois: number, annee: number) =>
+  const filtrerMois = <T extends { date: string }>(items: T[], mois: number, annee: number) =>
     items.filter(d => { const dt = new Date(d.date); return dt.getMonth() === mois && dt.getFullYear() === annee })
 
-  const totalMois = (items: any[], mois: number, annee: number) =>
-    filtrerMois(items, mois, annee).reduce((s, d) => s + parseFloat(d.montant), 0)
+  const totalMois = (items: (Depense | Revenu)[], mois: number, annee: number) =>
+    filtrerMois(items, mois, annee).reduce((s, d) => s + Number(d.montant), 0)
 
   const donneesGraphique = Array.from({length: 6}, (_, i) => {
     const m = (moisActuel - 5 + i + 12) % 12
@@ -241,14 +242,14 @@ function FinancesContent() {
 
   const depensesMoisAff = moisSelectionne ? filtrerMois(depenses, moisSelectionne.mois, moisSelectionne.annee) : filtrerMois(depenses, moisActuel, anneeActuelle)
   const revenusMoisAff = moisSelectionne ? filtrerMois(revenus, moisSelectionne.mois, moisSelectionne.annee) : filtrerMois(revenus, moisActuel, anneeActuelle)
-  const totalDep = depensesMoisAff.reduce((s, d) => s + parseFloat(d.montant), 0)
+  const totalDep = depensesMoisAff.reduce((s, d) => s + Number(d.montant), 0)
 
   const depensesParCat = CAT_DEPENSES.map(cat => ({
     cat, total: filtrerMois(depenses, moisSelectionne?.mois ?? moisActuel, moisSelectionne?.annee ?? anneeActuelle)
-      .filter(d => d.categorie === cat).reduce((s, d) => s + parseFloat(d.montant), 0)
+      .filter(d => d.categorie === cat).reduce((s, d) => s + Number(d.montant), 0)
   })).filter(c => c.total > 0).sort((a, b) => b.total - a.total)
 
-  const ItemDepense = ({ d, type }: { d: any, type: "depense"|"revenu" }) => (
+  const ItemDepense = ({ d, type }: { d: Depense | Revenu, type: "depense"|"revenu" }) => (
     <div style={{background: type === "revenu" ? '#F0FFF8' : '#fff', border:`0.5px solid ${type === "revenu" ? '#A7F3D0' : '#E8F1FF'}`,borderRadius:'14px',padding:'12px 14px',marginBottom:'8px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
       <div style={{display:'flex',alignItems:'center',gap:'10px',flex:1,minWidth:0}}>
         <div style={{width:'36px',height:'36px',background: type === "revenu" ? '#E1F5EE' : '#EEF5FF',color: type === "revenu" ? '#10B981' : '#2B7FFF',borderRadius:'10px',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
@@ -261,7 +262,7 @@ function FinancesContent() {
       </div>
       <div style={{display:'flex',alignItems:'center',gap:'6px',flexShrink:0}}>
         <div style={{fontSize:'14px',fontWeight:'500',color: type === "revenu" ? '#10B981' : '#F43F5E'}}>
-          {type === "revenu" ? '+' : '-'}{conv(parseFloat(d.montant)).toFixed(0)} {devise}
+          {type === "revenu" ? '+' : '-'}{conv(Number(d.montant)).toFixed(0)} {devise}
         </div>
         <Link href={`/modifier-depense/${d.id}?type=${type}`} style={{textDecoration:'none',background:'#F0F8FF',border:'none',borderRadius:'8px',width:'28px',height:'28px',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',fontSize:'12px'}}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></Link>
         <button onClick={() => supprimer(d.id, type)} style={{background:'none',border:'none',color:'#ddd',cursor:'pointer',fontSize:'16px'}}>×</button>
@@ -545,8 +546,8 @@ function FinancesContent() {
             {moisSelectionne ? `${moisSelectionne.label} ${moisSelectionne.annee}` : 'Ce mois'}
           </div>
 
-          {revenusMoisAff.map((r: any) => <ItemDepense key={r.id} d={r} type="revenu" />)}
-          {depensesMoisAff.map((d: any) => <ItemDepense key={d.id} d={d} type="depense" />)}
+          {revenusMoisAff.map(r => <ItemDepense key={r.id} d={r} type="revenu" />)}
+          {depensesMoisAff.map(d => <ItemDepense key={d.id} d={d} type="depense" />)}
 
           {depensesMoisAff.length === 0 && revenusMoisAff.length === 0 && (
             <div style={{textAlign:'center',padding:'32px 0',color:'#aaa'}}>
@@ -574,14 +575,14 @@ function FinancesContent() {
           )}
           {(() => {
             const cleMois = (dStr: string) => { const d = new Date(dStr); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}` }
-            const groupes = new Map<string, any[]>()
+            const groupes = new Map<string, Revenu[]>()
             revenus.forEach(r => { const cle = cleMois(r.date); if (!groupes.has(cle)) groupes.set(cle, []); groupes.get(cle)!.push(r) })
             const clesTriees = Array.from(groupes.keys()).sort().reverse()
             return clesTriees.map(cle => {
               const items = groupes.get(cle)!
               const [an, m] = cle.split('-')
               const label = new Date(parseInt(an), parseInt(m)-1, 1).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })
-              const total = items.reduce((s, r) => s + parseFloat(r.montant), 0)
+              const total = items.reduce((s, r) => s + Number(r.montant), 0)
               const ouvert = moisOuverts.has(cle)
               return (
                 <div key={cle} style={{marginBottom:'10px'}}>
@@ -593,7 +594,7 @@ function FinancesContent() {
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2" style={{transform: ouvert ? 'rotate(180deg)' : 'none',transition:'transform 0.2s'}}><polyline points="6 9 12 15 18 9"/></svg>
                     </span>
                   </button>
-                  {ouvert && <div style={{marginTop:'8px'}}>{items.map((r: any) => <ItemDepense key={r.id} d={r} type="revenu" />)}</div>}
+                  {ouvert && <div style={{marginTop:'8px'}}>{items.map(r => <ItemDepense key={r.id} d={r} type="revenu" />)}</div>}
                 </div>
               )
             })
@@ -610,23 +611,23 @@ function FinancesContent() {
               <div style={{fontSize:'13px'}}>Coche “Récurrent” en ajoutant une dépense</div>
             </div>
           )}
-          {revenus.filter(r => r.recurrent).map((r: any) => <ItemDepense key={r.id} d={r} type="revenu" />)}
-          {depenses.filter(d => d.recurrent).map((d: any) => <ItemDepense key={d.id} d={d} type="depense" />)}
+          {revenus.filter(r => r.recurrent).map(r => <ItemDepense key={r.id} d={r} type="revenu" />)}
+          {depenses.filter(d => d.recurrent).map(d => <ItemDepense key={d.id} d={d} type="depense" />)}
           {(depenses.filter(d => d.recurrent).length > 0 || revenus.filter(r => r.recurrent).length > 0) && (
             <div style={{background:'#EEF5FF',borderRadius:'14px',padding:'14px',marginTop:'8px'}}>
               <div style={{display:'flex',justifyContent:'space-between',marginBottom:'6px'}}>
                 <span style={{fontSize:'13px',color:'#10B981',fontWeight:'500'}}>Revenus fixes</span>
-                <span style={{fontSize:'14px',fontWeight:'500',color:'#10B981'}}>+{conv(revenus.filter(r=>r.recurrent).reduce((s,r)=>s+parseFloat(r.montant),0)).toFixed(0)} {devise}</span>
+                <span style={{fontSize:'14px',fontWeight:'500',color:'#10B981'}}>+{conv(revenus.filter(r=>r.recurrent).reduce((s,r)=>s+Number(r.montant),0)).toFixed(0)} {devise}</span>
               </div>
               <div style={{display:'flex',justifyContent:'space-between',marginBottom:'6px'}}>
                 <span style={{fontSize:'13px',color:'#F43F5E',fontWeight:'500'}}>Charges fixes</span>
-                <span style={{fontSize:'14px',fontWeight:'500',color:'#F43F5E'}}>-{conv(depenses.filter(d=>d.recurrent).reduce((s,d)=>s+parseFloat(d.montant),0)).toFixed(0)} {devise}</span>
+                <span style={{fontSize:'14px',fontWeight:'500',color:'#F43F5E'}}>-{conv(depenses.filter(d=>d.recurrent).reduce((s,d)=>s+Number(d.montant),0)).toFixed(0)} {devise}</span>
               </div>
               <div style={{height:'0.5px',background:'#DCE9FF',margin:'8px 0'}}></div>
               <div style={{display:'flex',justifyContent:'space-between'}}>
                 <span style={{fontSize:'13px',fontWeight:'500',color:'#2B7FFF'}}>Reste après charges</span>
-                <span style={{fontSize:'15px',fontWeight:'500',color:(revenus.filter(r=>r.recurrent).reduce((s,r)=>s+parseFloat(r.montant),0)-depenses.filter(d=>d.recurrent).reduce((s,d)=>s+parseFloat(d.montant),0))>=0?'#10B981':'#F43F5E'}}>
-                  {conv(revenus.filter(r=>r.recurrent).reduce((s,r)=>s+parseFloat(r.montant),0)-depenses.filter(d=>d.recurrent).reduce((s,d)=>s+parseFloat(d.montant),0)).toFixed(0)} {devise}
+                <span style={{fontSize:'15px',fontWeight:'500',color:(revenus.filter(r=>r.recurrent).reduce((s,r)=>s+Number(r.montant),0)-depenses.filter(d=>d.recurrent).reduce((s,d)=>s+Number(d.montant),0))>=0?'#10B981':'#F43F5E'}}>
+                  {conv(revenus.filter(r=>r.recurrent).reduce((s,r)=>s+Number(r.montant),0)-depenses.filter(d=>d.recurrent).reduce((s,d)=>s+Number(d.montant),0)).toFixed(0)} {devise}
                 </span>
               </div>
             </div>
@@ -662,7 +663,7 @@ function FinancesContent() {
           {montantEpargne && parseFloat(montantEpargne) > 0 && (() => {
             const cible = parseFloat(montantEpargne)
             const parMois = cible / dureeObjectif
-            const resteApresCharges = revenus.filter(r=>r.recurrent).reduce((sum,r)=>sum+parseFloat(r.montant),0) - depenses.filter(d=>d.recurrent).reduce((sum,d)=>sum+parseFloat(d.montant),0)
+            const resteApresCharges = revenus.filter(r=>r.recurrent).reduce((sum,r)=>sum+Number(r.montant),0) - depenses.filter(d=>d.recurrent).reduce((sum,d)=>sum+Number(d.montant),0)
             const faisable = parMois <= resteApresCharges
             const label = dureeObjectif < 12 ? dureeObjectif+' mois' : dureeObjectif === 12 ? '1 an' : Math.floor(dureeObjectif/12)+'ans '+(dureeObjectif%12 > 0 ? (dureeObjectif%12)+'mois' : '')
             return (

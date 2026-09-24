@@ -1,4 +1,5 @@
 "use client"
+import { Groupe, MembreGroupe, MessageGroupe, Profil, User } from "@/lib/types"
 import Image from "next/image"
 import { onActivate } from "@/lib/a11y"
 import Link from "next/link"
@@ -20,15 +21,24 @@ function formaterHeure(dateStr: string) {
   return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
 }
 
+// Une ligne de la liste : groupe ou message privé, avec son dernier message
+type ElementDiscussion = Groupe & {
+  type: 'dm' | 'groupe'
+  autreId?: string
+  profil: Profil | null
+  dernierMessage: string | null
+  dernierTemps: string
+}
+
 export default function Groupes() {
-  const [items, setItems] = useState<any[]>([])
-  const [user, setUser] = useState<any>(null)
+  const [items, setItems] = useState<ElementDiscussion[]>([])
+  const [user, setUser] = useState<User | null>(null)
   const [message, setMessage] = useState("")
 
   const [composeOuvert, setComposeOuvert] = useState(false)
   const [recherche, setRecherche] = useState("")
-  const [resultats, setResultats] = useState<any[]>([])
-  const [selectionnes, setSelectionnes] = useState<any[]>([])
+  const [resultats, setResultats] = useState<Pick<Profil, 'id' | 'nom' | 'avatar_url'>[]>([])
+  const [selectionnes, setSelectionnes] = useState<Pick<Profil, 'id' | 'nom' | 'avatar_url'>[]>([])
   const [nomGroupe, setNomGroupe] = useState("")
   const [enCreation, setEnCreation] = useState(false)
 
@@ -39,7 +49,7 @@ export default function Groupes() {
       if (!user) { setItems([]); return }
 
       const { data: membres } = await supabase.from("membres_groupe").select("groupe_id").eq("user_id", user.id)
-      const idsGroupes = membres?.map((m: any) => m.groupe_id) || []
+      const idsGroupes = (membres as Pick<MembreGroupe, 'groupe_id'>[] | null)?.map(m => m.groupe_id) || []
       if (idsGroupes.length === 0) { setItems([]); return }
 
       const [{ data }, { data: tousMessages }, { data: membresDesGroupes }] = await Promise.all([
@@ -48,14 +58,14 @@ export default function Groupes() {
         supabase.from("membres_groupe").select("groupe_id,user_id").in("groupe_id", idsGroupes),
       ])
       const tousGroupes = data || []
-      const dernierMessageParGroupe: Record<string, any> = {}
-      tousMessages?.forEach((m: any) => { if (!dernierMessageParGroupe[m.groupe_id]) dernierMessageParGroupe[m.groupe_id] = m })
+      const dernierMessageParGroupe: Record<string, MessageGroupe> = {}
+      ;(tousMessages as MessageGroupe[] | null)?.forEach(m => { if (!dernierMessageParGroupe[m.groupe_id]) dernierMessageParGroupe[m.groupe_id] = m })
 
       const idsAutresDM: string[] = []
-      const itemsBruts: any[] = []
-      for (const g of tousGroupes) {
+      const itemsBruts: (Groupe & { type: 'dm' | 'groupe'; autreId?: string })[] = []
+      for (const g of tousGroupes as Groupe[]) {
         if (g.est_dm) {
-          const autre = (membresDesGroupes || []).find((m: any) => m.groupe_id === g.id && m.user_id !== user.id)
+          const autre = ((membresDesGroupes || []) as MembreGroupe[]).find(m => m.groupe_id === g.id && m.user_id !== user.id)
           if (autre) idsAutresDM.push(autre.user_id)
           itemsBruts.push({ ...g, type: 'dm', autreId: autre?.user_id })
         } else {
@@ -63,10 +73,10 @@ export default function Groupes() {
         }
       }
 
-      const profilsMap: any = {}
+      const profilsMap: Record<string, Profil> = {}
       if (idsAutresDM.length > 0) {
         const { data: profs } = await supabase.from("profiles").select("id,nom,avatar_url").in("id", idsAutresDM)
-        profs?.forEach((p: any) => { profilsMap[p.id] = p })
+        for (const p of (profs || []) as Profil[]) profilsMap[p.id] = p
       }
 
       const itemsFinal = itemsBruts.map(it => {
@@ -88,13 +98,13 @@ export default function Groupes() {
     async function rechercher() {
       if (!recherche.trim() || !user) { setResultats([]); return }
       const { data } = await supabase.from("profiles").select("id,nom,avatar_url").ilike("nom", `%${recherche.trim()}%`).neq("id", user.id).limit(15)
-      setResultats((data || []).filter((p: any) => !selectionnes.some(s => s.id === p.id)))
+      setResultats(((data || []) as Pick<Profil, 'id' | 'nom' | 'avatar_url'>[]).filter(p => !selectionnes.some(s => s.id === p.id)))
     }
     const t = setTimeout(rechercher, 250)
     return () => clearTimeout(t)
   }, [recherche, selectionnes, user])
 
-  function ajouterSelection(p: any) {
+  function ajouterSelection(p: Pick<Profil, 'id' | 'nom' | 'avatar_url'>) {
     setSelectionnes(prev => [...prev, p])
     setRecherche("")
     setResultats([])

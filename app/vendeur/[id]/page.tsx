@@ -1,4 +1,5 @@
 "use client"
+import { Annonce, AvisVendeur, Profil, SuiviVendeur, User } from "@/lib/types"
 import Image from "next/image"
 import { SkeletonProfil } from "@/app/components/ui/Skeleton"
 import { useEscape } from "@/lib/a11y"
@@ -13,17 +14,17 @@ import { colors } from "@/app/components/ui/tokens"
 export default function FicheVendeur() {
   const { id } = useParams()
   const vendeurId = String(id)
-  const [user, setUser] = useState<any>(null)
-  const [profil, setProfil] = useState<any>(null)
-  const [annonces, setAnnonces] = useState<any[]>([])
-  const [followers, setFollowers] = useState<any[]>([])
-  const [abonnements, setAbonnements] = useState<any[]>([])
+  const [user, setUser] = useState<User | null>(null)
+  const [profil, setProfil] = useState<Profil | null>(null)
+  const [annonces, setAnnonces] = useState<Annonce[]>([])
+  const [followers, setFollowers] = useState<SuiviVendeur[]>([])
+  const [abonnements, setAbonnements] = useState<SuiviVendeur[]>([])
   const [chargement, setChargement] = useState(true)
   const [listeOuverte, setListeOuverte] = useState<"followers" | "abonnements" | null>(null)
   useEscape(!!listeOuverte, () => setListeOuverte(null))
-  const [profilsListe, setProfilsListe] = useState<any[]>([])
-  const [avis, setAvis] = useState<any[]>([])
-  const [profilsAvis, setProfilsAvis] = useState<Record<string, any>>({})
+  const [profilsListe, setProfilsListe] = useState<Profil[]>([])
+  const [avis, setAvis] = useState<AvisVendeur[]>([])
+  const [profilsAvis, setProfilsAvis] = useState<Record<string, Pick<Profil, 'id' | 'nom'>>>({})
 
   useEffect(() => {
     async function charger() {
@@ -40,9 +41,9 @@ export default function FicheVendeur() {
       const { data: av } = await supabase.from("marketplace_avis").select("*").eq("cible_id", vendeurId).order("created_at", { ascending: false })
       setAvis(av || [])
       if (av && av.length > 0) {
-        const { data: profs } = await supabase.from("profiles").select("id,nom").in("id", av.map((a: any) => a.auteur_id))
-        const map: Record<string, any> = {}
-        profs?.forEach((pr: any) => { map[pr.id] = pr })
+        const { data: profs } = await supabase.from("profiles").select("id,nom").in("id", (av as AvisVendeur[]).map(a => a.auteur_id))
+        const map: Record<string, Pick<Profil, 'id' | 'nom'>> = {}
+        for (const pr of (profs || []) as Pick<Profil, 'id' | 'nom'>[]) map[pr.id] = pr
         setProfilsAvis(map)
       }
       setChargement(false)
@@ -151,7 +152,7 @@ export default function FicheVendeur() {
                 </div>
                 <div style={{padding:'8px 10px'}}>
                   <div style={{fontSize:'12px',fontWeight:'500',color:'#1a1a2e',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{a.titre}</div>
-                  <div style={{fontSize:'13px',fontWeight:'700',color:'#2B7FFF'}}>{parseFloat(a.prix).toFixed(0)} CHF</div>
+                  <div style={{fontSize:'13px',fontWeight:'700',color:'#2B7FFF'}}>{Number(a.prix).toFixed(0)} CHF</div>
                 </div>
               </div>
             </Link>
@@ -180,7 +181,7 @@ export default function FicheVendeur() {
             <div style={{width:'36px',height:'4px',background:'#E8F1FF',borderRadius:'99px',margin:'6px auto 14px'}}></div>
             <div style={{fontSize:'15px',fontWeight:'600',color:'#1a1a2e',marginBottom:'12px'}}>{listeOuverte === "followers" ? "Followers" : "Abonnements"}</div>
             {profilsListe.length === 0 && <div style={{textAlign:'center',padding:'24px 0',color:'#aaa',fontSize:'13px'}}>Personne pour l’instant</div>}
-            {profilsListe.map((p: any) => (
+            {profilsListe.map(p => (
               <Link key={p.id} href={'/vendeur/'+p.id} style={{textDecoration:'none',display:'flex',alignItems:'center',gap:'12px',padding:'10px 0',borderBottom:'0.5px solid #F5F8FC'}}>
                 {p.avatar_url ? (
                   <Image unoptimized width={40} height={40} src={p.avatar_url} alt={p.nom} style={{width:'40px',height:'40px',borderRadius:'50%',objectFit:'cover'}} />
