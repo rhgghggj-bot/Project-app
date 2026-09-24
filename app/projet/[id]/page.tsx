@@ -1,5 +1,5 @@
 "use client"
-import { User } from "@/lib/types"
+import type { CommentaireProjet, Profil, Projet as LigneProjet, ProjetLike, SoutienProjet, User } from "@/lib/types"
 import { SkeletonPage } from "@/app/components/ui/Skeleton"
 import { toast } from "@/lib/toast"
 import Link from "next/link"
@@ -11,13 +11,13 @@ import { authHeaders } from "@/lib/authFetch"
 
 export default function Projet() {
   const { id } = useParams()
-  const [projet, setProjet] = useState<any>(null)
-  const [commentaires, setCommentaires] = useState<any[]>([])
+  const [projet, setProjet] = useState<LigneProjet | null>(null)
+  const [commentaires, setCommentaires] = useState<CommentaireProjet[]>([])
   const [contenu, setContenu] = useState("")
   const [user, setUser] = useState<User | null>(null)
-  const [likes, setLikes] = useState<any[]>([])
-  const [createur, setCreateur] = useState<any>(null)
-  const [soutiens, setSoutiens] = useState<any[]>([])
+  const [likes, setLikes] = useState<ProjetLike[]>([])
+  const [createur, setCreateur] = useState<Pick<Profil, 'id' | 'nom' | 'stripe_account_id' | 'stripe_onboarding_complete'> | null>(null)
+  const [soutiens, setSoutiens] = useState<SoutienProjet[]>([])
   const [montantSoutien, setMontantSoutien] = useState("")
   const [enCoursSoutien, setEnCoursSoutien] = useState(false)
 
@@ -115,7 +115,7 @@ export default function Projet() {
               <div style={{background:'#EEF5FF',border:'0.5px solid #DCE9FF',borderRadius:'14px',padding:'14px',marginBottom: projet.image_url ? '10px' : 0}}>
                 <p style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',margin:'0 0 2px'}}>Soutenir ce projet</p>
                 {soutiens.length > 0 && (
-                  <p style={{fontSize:'11px',color:'#aaa',margin:'0 0 10px'}}>{soutiens.reduce((s,x)=>s+parseFloat(x.montant),0).toFixed(0)} CHF récoltés · {soutiens.length} soutien{soutiens.length>1?'s':''}</p>
+                  <p style={{fontSize:'11px',color:'#aaa',margin:'0 0 10px'}}>{soutiens.reduce((s,x)=>s+Number(x.montant),0).toFixed(0)} CHF récoltés · {soutiens.length} soutien{soutiens.length>1?'s':''}</p>
                 )}
                 <div style={{display:'flex',gap:'8px'}}>
                   <input aria-label="Montant CHF" value={montantSoutien} onChange={e => setMontantSoutien(e.target.value)} type="number" min="1" step="5" placeholder="Montant CHF"
@@ -144,7 +144,7 @@ export default function Projet() {
         {commentaires.length === 0 && (
           <p style={{fontSize:'13px',color:'#aaa',textAlign:'center',padding:'16px 0'}}>Sois le premier à laisser un conseil !</p>
         )}
-        {commentaires.map((c: any) => (
+        {commentaires.map(c => (
           <div key={c.id} style={{display:'flex',gap:'10px',marginBottom:'10px'}}>
             <div style={{width:'30px',height:'30px',borderRadius:'50%',background:'#2B7FFF',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:'11px',fontWeight:'500',flexShrink:0}}>
               {c.user_id.slice(0, 2).toUpperCase()}

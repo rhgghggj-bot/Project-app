@@ -1,5 +1,5 @@
 "use client"
-import { Profil, Projet, User } from "@/lib/types"
+import { LienSuivi, Profil, Projet, User } from "@/lib/types"
 import Image from "next/image"
 import { SkeletonProfil } from "@/app/components/ui/Skeleton"
 import { useEscape } from "@/lib/a11y"
@@ -15,12 +15,12 @@ export default function ProfilPublic() {
   const [user, setUser] = useState<User | null>(null)
   const [profil, setProfil] = useState<Profil | null>(null)
   const [projets, setProjets] = useState<Projet[]>([])
-  const [followers, setFollowers] = useState<any[]>([])
-  const [abonnements, setAbonnements] = useState<any[]>([])
+  const [followers, setFollowers] = useState<LienSuivi[]>([])
+  const [abonnements, setAbonnements] = useState<LienSuivi[]>([])
   const [chargement, setChargement] = useState(true)
   const [listeOuverte, setListeOuverte] = useState<"followers" | "abonnements" | null>(null)
   useEscape(!!listeOuverte, () => setListeOuverte(null))
-  const [profilsListe, setProfilsListe] = useState<any[]>([])
+  const [profilsListe, setProfilsListe] = useState<Profil[]>([])
 
   useEffect(() => {
     async function charger() {
@@ -138,7 +138,7 @@ export default function ProfilPublic() {
             <div style={{width:'36px',height:'4px',background:'#E8F1FF',borderRadius:'99px',margin:'6px auto 14px'}}></div>
             <div style={{fontSize:'15px',fontWeight:'600',color:'#1a1a2e',marginBottom:'12px'}}>{listeOuverte === "followers" ? "Followers" : "Abonnements"}</div>
             {profilsListe.length === 0 && <div style={{textAlign:'center',padding:'24px 0',color:'#aaa',fontSize:'13px'}}>Personne pour l’instant</div>}
-            {profilsListe.map((p: any) => (
+            {profilsListe.map(p => (
               <Link key={p.id} href={'/profil/'+p.id} style={{textDecoration:'none',display:'flex',alignItems:'center',gap:'12px',padding:'10px 0',borderBottom:'0.5px solid #F5F8FC'}}>
                 {p.avatar_url ? (
                   <Image unoptimized width={40} height={40} src={p.avatar_url} alt={p.nom} style={{width:'40px',height:'40px',borderRadius:'50%',objectFit:'cover'}} />

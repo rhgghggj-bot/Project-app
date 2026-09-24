@@ -19,7 +19,7 @@ const DEVISES = [
 
 export default function DeviseSelector({ onClose }: { onClose: () => void }) {
   const [devise, setDevise] = useState('CHF')
-  const [taux, setTaux] = useState<any>(null)
+  const [taux, setTaux] = useState<Record<string, number> | null>(null)
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {

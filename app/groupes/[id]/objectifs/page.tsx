@@ -1,5 +1,5 @@
 "use client"
-import { ContributionObjectif, MembreGroupe, Profil, User } from "@/lib/types"
+import { ContributionObjectif, MembreGroupe, ObjectifGroupe, Profil, User } from "@/lib/types"
 import { useChargement } from "@/lib/useChargement"
 import { useState } from "react"
 import { useParams } from "next/navigation"
@@ -20,7 +20,7 @@ export default function ObjectifsGroupePage() {
 
   const [user, setUser] = useState<User | null>(null)
   const [profils, setProfils] = useState<Record<string, Pick<Profil, 'id' | 'nom'>>>({})
-  const [objectifs, setObjectifs] = useState<any[]>([])
+  const [objectifs, setObjectifs] = useState<ObjectifGroupe[]>([])
   const [contributions, setContributions] = useState<ContributionObjectif[]>([])
   const [showForm, setShowForm] = useState(false)
   const [titre, setTitre] = useState("")
@@ -45,7 +45,7 @@ export default function ObjectifsGroupePage() {
     const { data: obj } = await supabase.from("objectifs_groupe").select("*").eq("groupe_id", id).order("created_at", { ascending: false })
     setObjectifs(obj || [])
     if (obj && obj.length > 0) {
-      const { data: contribs } = await supabase.from("objectifs_groupe_contributions").select("*").in("objectif_id", obj.map((o: any) => o.id))
+      const { data: contribs } = await supabase.from("objectifs_groupe_contributions").select("*").in("objectif_id", (obj as ObjectifGroupe[]).map(o => o.id))
       setContributions(contribs || [])
     } else {
       setContributions([])
@@ -124,7 +124,7 @@ export default function ObjectifsGroupePage() {
         {objectifs.map(o => {
           const contribsObjectif = contributions.filter(c => c.objectif_id === o.id)
           const total = contribsObjectif.reduce((s, c) => s + Number(c.montant), 0)
-          const pct = Math.min(100, (total / parseFloat(o.montant_cible)) * 100)
+          const pct = Math.min(100, (total / Number(o.montant_cible)) * 100)
           const parPersonne: Record<string, number> = {}
           contribsObjectif.forEach(c => { parPersonne[c.user_id] = (parPersonne[c.user_id] || 0) + Number(c.montant) })
 
@@ -143,7 +143,7 @@ export default function ObjectifsGroupePage() {
               </div>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "12px" }}>
                 <span style={{ fontSize: "13px", fontWeight: 500, color: colors.text }}>{total.toFixed(0)} CHF</span>
-                <span style={{ fontSize: "12px", color: colors.textFaint }}>sur {parseFloat(o.montant_cible).toFixed(0)} CHF</span>
+                <span style={{ fontSize: "12px", color: colors.textFaint }}>sur {Number(o.montant_cible).toFixed(0)} CHF</span>
               </div>
 
               {Object.keys(parPersonne).length > 0 && (

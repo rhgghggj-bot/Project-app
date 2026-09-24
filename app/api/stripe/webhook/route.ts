@@ -1,3 +1,4 @@
+import type Stripe from "stripe"
 import { NextRequest, NextResponse } from 'next/server'
 import { getStripe } from '@/lib/stripe'
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin'
@@ -9,19 +10,19 @@ export async function POST(request: NextRequest) {
   let event
   try {
     event = getStripe().webhooks.constructEvent(body, signature, process.env.STRIPE_WEBHOOK_SECRET!)
-  } catch (err: any) {
+  } catch (err) {
     return NextResponse.json({ error: 'Signature invalide : ' + err.message }, { status: 400 })
   }
 
   if (event.type === 'account.updated') {
-    const account: any = event.data.object
+    const account = event.data.object as Stripe.Account
     if (account.details_submitted && account.charges_enabled) {
       await getSupabaseAdmin().from('profiles').update({ stripe_onboarding_complete: true }).eq('stripe_account_id', account.id)
     }
   }
 
   if (event.type === 'checkout.session.completed') {
-    const session: any = event.data.object
+    const session = event.data.object as Stripe.Checkout.Session
 
     if (session.metadata?.type === 'depense_partagee') {
       const partId = session.metadata.part_id

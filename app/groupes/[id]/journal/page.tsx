@@ -1,4 +1,5 @@
 "use client"
+import { ContributionObjectif, MembreGroupe, Profil } from "@/lib/types"
 import { useChargement } from "@/lib/useChargement"
 import { useState } from "react"
 import { useParams } from "next/navigation"
@@ -31,9 +32,9 @@ export default function JournalGroupePage() {
 
   async function chargerJournal() {
     const { data: mb } = await supabase.from("membres_groupe").select("user_id").eq("groupe_id", id)
-    const { data: profs } = await supabase.from("profiles").select("id,nom").in("id", (mb || []).map((m: any) => m.user_id))
+    const { data: profs } = await supabase.from("profiles").select("id,nom").in("id", ((mb || []) as MembreGroupe[]).map(m => m.user_id))
     const profils: Record<string, string> = {}
-    profs?.forEach((p: any) => { profils[p.id] = p.nom || "Membre" })
+    for (const p of (profs || []) as Pick<Profil, 'id' | 'nom'>[]) profils[p.id] = p.nom || "Membre"
     const nom = (uid: string) => profils[uid] || "Quelqu'un"
 
     const [depenses, objectifs, sondages, activites] = await Promise.all([
@@ -61,9 +62,9 @@ export default function JournalGroupePage() {
         texte: `${nom(o.created_by)} a lancé l'objectif "${o.titre}" — ${parseFloat(o.montant_cible).toFixed(0)} CHF`,
         date: o.created_at, auteur: nom(o.created_by),
       })),
-      ...(contributions.data || []).map((c: any) => ({
+      ...((contributions.data || []) as ContributionObjectif[]).map(c => ({
         id: `contrib-${c.id}`, icone: "🪙", couleur: colors.gold,
-        texte: `${nom(c.user_id)} a contribué ${parseFloat(c.montant).toFixed(0)} CHF à "${titreObjectif[c.objectif_id] || 'un objectif'}"`,
+        texte: `${nom(c.user_id)} a contribué ${Number(c.montant).toFixed(0)} CHF à "${titreObjectif[c.objectif_id] || 'un objectif'}"`,
         date: c.created_at, auteur: nom(c.user_id),
       })),
       ...(sondages.data || []).map(s => ({

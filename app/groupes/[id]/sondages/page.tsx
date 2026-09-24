@@ -41,7 +41,7 @@ export default function SondagesGroupePage() {
     const { data: snd } = await supabase.from("sondages_groupe").select("*").eq("groupe_id", id).order("created_at", { ascending: false })
     setSondages(snd || [])
     if (snd && snd.length > 0) {
-      const sondageIds = snd.map((s: any) => s.id)
+      const sondageIds = (snd as Sondage[]).map(s => s.id)
       const { data: opts } = await supabase.from("sondages_groupe_options").select("*").in("sondage_id", sondageIds).order("ordre")
       setOptions(opts || [])
       const { data: vts } = await supabase.from("sondages_groupe_votes").select("*").in("sondage_id", sondageIds)

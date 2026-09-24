@@ -194,7 +194,7 @@ const ETF_INDICES = [
 
 export default function PlacementsSection() {
   const [actif, setActif] = useState('livretA')
-  const [etfActif, setEtfActif] = useState<any>(null)
+  const [etfActif, setEtfActif] = useState<(typeof ETF_INDICES)[number] | null>(null)
   const [ongletEpargne, setOngletEpargne] = useState('placements')
   const [capital, setCapital] = useState(5000)
   const [versementMois, setVersementMois] = useState(200)
@@ -320,7 +320,7 @@ export default function PlacementsSection() {
             </div>
           </div>
 
-          {etfActif.etfs.map((e: any, i: number) => (
+          {etfActif.etfs.map((e, i) => (
             <div key={i} style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'14px',padding:'14px',marginBottom:'10px'}}>
               <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'8px'}}>
                 <span style={{fontSize:'18px'}}>{e.pays==='CH'?'🇨🇭':'🇫🇷'}</span>

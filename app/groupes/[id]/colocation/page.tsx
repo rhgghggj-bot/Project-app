@@ -1,5 +1,5 @@
 "use client"
-import { ChargeColocation, MembreGroupe, Profil, User } from "@/lib/types"
+import { ChargeColocation, MembreGroupe, PartChargeColocation, Profil, User } from "@/lib/types"
 import { useChargement } from "@/lib/useChargement"
 import { useState } from "react"
 import { useParams } from "next/navigation"
@@ -20,7 +20,7 @@ export default function ColocationPage() {
   const [membres, setMembres] = useState<Pick<MembreGroupe, "user_id">[]>([])
   const [profils, setProfils] = useState<Record<string, Pick<Profil, 'id' | 'nom'>>>({})
   const [charges, setCharges] = useState<ChargeColocation[]>([])
-  const [parts, setParts] = useState<any[]>([])
+  const [parts, setParts] = useState<PartChargeColocation[]>([])
   const [showForm, setShowForm] = useState(false)
   const [titre, setTitre] = useState("")
   const [payeurId, setPayeurId] = useState("")
@@ -45,7 +45,7 @@ export default function ColocationPage() {
     const { data: ch } = await supabase.from("colocation_charges").select("*").eq("groupe_id", id).order("created_at", { ascending: false })
     setCharges(ch || [])
     if (ch && ch.length > 0) {
-      const { data: pt } = await supabase.from("colocation_charges_parts").select("*").in("charge_id", ch.map((c: any) => c.id))
+      const { data: pt } = await supabase.from("colocation_charges_parts").select("*").in("charge_id", (ch as ChargeColocation[]).map(c => c.id))
       setParts(pt || [])
     } else {
       setParts([])
@@ -135,7 +135,7 @@ export default function ColocationPage() {
 
         {charges.map(c => {
           const partsCharge = parts.filter(p => p.charge_id === c.id)
-          const total = partsCharge.reduce((s, p) => s + parseFloat(p.montant), 0)
+          const total = partsCharge.reduce((s, p) => s + Number(p.montant), 0)
           return (
             <Card key={c.id} style={{ marginBottom: "10px" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px" }}>
@@ -148,7 +148,7 @@ export default function ColocationPage() {
               {partsCharge.map(p => (
                 <div key={p.id} style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", color: colors.textMuted, padding: "3px 0" }}>
                   <span>{profils[p.user_id]?.nom || 'Membre'}</span>
-                  <span>{parseFloat(p.montant).toFixed(0)} CHF</span>
+                  <span>{Number(p.montant).toFixed(0)} CHF</span>
                 </div>
               ))}
               {c.created_by === user?.id && (

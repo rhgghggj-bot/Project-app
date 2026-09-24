@@ -377,7 +377,7 @@ function StarProductSection() {
           background: 'conic-gradient(from 0deg, #2B7FFF, #D4A843, #86efac, #EC4899, #2B7FFF)',
           WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
           WebkitMaskComposite: 'xor',
-          maskComposite: 'exclude' as any,
+          maskComposite: 'exclude',
           filter: 'saturate(1.3)'
         }} />
         <div style={{

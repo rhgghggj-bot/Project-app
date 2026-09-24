@@ -1,5 +1,5 @@
 "use client"
-import { User } from "@/lib/types"
+import { ObjectifPersonnel, User } from "@/lib/types"
 import { useChargement } from "@/lib/useChargement"
 import { useState } from "react"
 import { supabase } from "@/lib/supabase"
@@ -14,7 +14,7 @@ const IconTarget = () => <svg width="40" height="40" viewBox="0 0 24 24" fill="n
 
 export default function ObjectifsEpargneSection() {
   const [user, setUser] = useState<User | null>(null)
-  const [objectifs, setObjectifs] = useState<any[]>([])
+  const [objectifs, setObjectifs] = useState<ObjectifPersonnel[]>([])
   const [showForm, setShowForm] = useState(false)
   const [titre, setTitre] = useState("")
   const [montantCible, setMontantCible] = useState("")
@@ -44,7 +44,7 @@ export default function ObjectifsEpargneSection() {
     const montant = parseFloat(montantContrib)
     const objectif = objectifs.find(o => o.id === objectifId)
     if (!montant || montant <= 0 || !objectif) return
-    await supabase.from("objectifs_personnels").update({ montant_actuel: parseFloat(objectif.montant_actuel) + montant }).eq("id", objectifId)
+    await supabase.from("objectifs_personnels").update({ montant_actuel: Number(objectif.montant_actuel) + montant }).eq("id", objectifId)
     setMontantContrib(""); setContribuerA(null)
     charger()
   }
@@ -76,8 +76,8 @@ export default function ObjectifsEpargneSection() {
       )}
 
       {objectifs.map(o => {
-        const cible = parseFloat(o.montant_cible)
-        const actuel = parseFloat(o.montant_actuel)
+        const cible = Number(o.montant_cible)
+        const actuel = Number(o.montant_actuel)
         const pct = Math.min(100, (actuel / cible) * 100)
         return (
           <Card key={o.id} elevated style={{ marginBottom: "10px", padding: "16px" }}>

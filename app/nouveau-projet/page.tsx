@@ -14,7 +14,7 @@ export default function NouveauProjet() {
   const [echeance, setEcheance] = useState("")
   const [groupeId, setGroupeId] = useState("")
   const [prive, setPrive] = useState(false)
-  const [groupes, setGroupes] = useState<Groupe[]>([])
+  const [groupes, setGroupes] = useState<Pick<Groupe, 'id' | 'nom'>[]>([])
   const [message, setMessage] = useState("")
 
   useEffect(() => {
@@ -25,7 +25,7 @@ export default function NouveauProjet() {
           .from("membres_groupe")
           .select("groupe_id, groupes(id, nom)")
           .eq("user_id", user.id)
-        setGroupes(membres?.map((m: any) => m.groupes) || [])
+        setGroupes(((membres || []) as unknown as { groupes: Pick<Groupe, 'id' | 'nom'> }[]).map(m => m.groupes))
       }
     }
     charger()

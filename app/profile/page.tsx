@@ -1,5 +1,5 @@
 "use client"
-import { Profil, Projet, User } from "@/lib/types"
+import { LienSuivi, Profil, Projet, User } from "@/lib/types"
 import Image from "next/image"
 import { toast } from "@/lib/toast"
 import { onActivate, useEscape } from "@/lib/a11y"
@@ -20,7 +20,7 @@ export default function Profile() {
   const [chargementStripe, setChargementStripe] = useState(false)
   const [listeOuverte, setListeOuverte] = useState<"followers" | "abonnements" | null>(null)
   useEscape(!!listeOuverte, () => setListeOuverte(null))
-  const [profilsListe, setProfilsListe] = useState<any[]>([])
+  const [profilsListe, setProfilsListe] = useState<Profil[]>([])
   const [user, setUser] = useState<User | null>(null)
   const [profil, setProfil] = useState<Profil | null>(null)
   const [onglet, setOnglet] = useState("projets")
@@ -64,7 +64,7 @@ export default function Profile() {
         body: JSON.stringify({ retourUrl: window.location.href }),
       })
       const texte = await res.text()
-      let data: any = {}
+      let data: { url?: string; error?: string } = {}
       try { data = JSON.parse(texte) } catch { data = { error: "Réponse invalide du serveur : " + texte.slice(0, 200) } }
       if (data.url) { window.location.assign(data.url); return }
       toast(data.error || "Connexion à Stripe impossible. Réessaie dans un instant.", "error")
@@ -79,7 +79,7 @@ export default function Profile() {
     if (!user) return
     const champ = type === "followers" ? "suivi_id" : "follower_id"
     const { data: liens } = await supabase.from("app_followers").select("*").eq(champ, user.id)
-    const ids = (liens || []).map((l: any) => type === "followers" ? l.follower_id : l.suivi_id)
+    const ids = ((liens || []) as LienSuivi[]).map(l => type === "followers" ? l.follower_id : l.suivi_id)
     if (ids.length === 0) { setProfilsListe([]); setListeOuverte(type); return }
     const { data } = await supabase.from("profiles").select("id,nom,avatar_url").in("id", ids)
     setProfilsListe(data || [])
@@ -363,7 +363,7 @@ export default function Profile() {
             <div style={{width:'36px',height:'4px',background:'#E8F1FF',borderRadius:'99px',margin:'6px auto 14px'}}></div>
             <div style={{fontSize:'15px',fontWeight:'600',color:'#1a1a2e',marginBottom:'12px'}}>{listeOuverte === "followers" ? "Followers" : "Abonnements"}</div>
             {profilsListe.length === 0 && <div style={{textAlign:'center',padding:'24px 0',color:'#aaa',fontSize:'13px'}}>Personne pour l’instant</div>}
-            {profilsListe.map((p: any) => (
+            {profilsListe.map(p => (
               <Link key={p.id} href={'/profil/'+p.id} style={{textDecoration:'none',display:'flex',alignItems:'center',gap:'12px',padding:'10px 0',borderBottom:'0.5px solid #F5F8FC'}}>
                 {p.avatar_url ? (
                   <Image unoptimized width={40} height={40} src={p.avatar_url} alt={p.nom} style={{width:'40px',height:'40px',borderRadius:'50%',objectFit:'cover'}} />

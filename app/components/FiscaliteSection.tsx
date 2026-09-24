@@ -2,7 +2,8 @@
 import { useState } from "react"
 import Tutorial from "./Tutorial"
 
-const CANTONS: any = {
+// Barème cantonal simplifié : t = tranches (m = plafond, r = taux), ef/em = déductions
+const CANTONS: Record<string, { nom: string; t: { m: number; r: number }[]; ef: number; em: number }> = {
   GE:{nom:'Genève',t:[{m:20000,r:.053},{m:40000,r:.072},{m:60000,r:.091},{m:80000,r:.107},{m:100000,r:.114},{m:150000,r:.120},{m:1e9,r:.130}],ef:13000,em:8000},
   VD:{nom:'Vaud',t:[{m:20000,r:.048},{m:40000,r:.068},{m:60000,r:.088},{m:80000,r:.105},{m:100000,r:.118},{m:150000,r:.128},{m:1e9,r:.138}],ef:9000,em:6700},
   VS:{nom:'Valais',t:[{m:20000,r:.038},{m:40000,r:.055},{m:60000,r:.072},{m:80000,r:.085},{m:100000,r:.095},{m:150000,r:.105},{m:1e9,r:.115}],ef:8500,em:6000},
@@ -27,8 +28,8 @@ function calcCant(rev: number, code: string) {
   return Math.round(rev * tr[tr.length-1].r)
 }
 
-const inp: any = {width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'8px 12px',fontSize:'16px',color:'#1a1a2e',background:'#F8FBFF',boxSizing:'border-box'}
-const sel: any = {width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'8px 12px',fontSize:'16px',color:'#1a1a2e',background:'#F8FBFF'}
+const inp: React.CSSProperties = {width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'8px 12px',fontSize:'16px',color:'#1a1a2e',background:'#F8FBFF',boxSizing:'border-box'}
+const sel: React.CSSProperties = {width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'8px 12px',fontSize:'16px',color:'#1a1a2e',background:'#F8FBFF'}
 
 export default function FiscaliteSection() {
   const [pays, setPays] = useState('ch')
@@ -153,7 +154,7 @@ export default function FiscaliteSection() {
           <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',marginBottom:'12px'}}>Ma situation</div>
           <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Canton de résidence</label>
           <select aria-label="Canton de résidence" value={canton} onChange={e=>setCanton(e.target.value)} style={{...sel,marginBottom:'10px'}}>
-            {Object.entries(CANTONS).map(([k,v]: any)=><option key={k} value={k}>{v.nom}</option>)}
+            {Object.entries(CANTONS).map(([k,v])=><option key={k} value={k}>{v.nom}</option>)}
           </select>
           <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Situation familiale</label>
           <select aria-label="Situation familiale" value={situation} onChange={e=>setSituation(e.target.value)} style={{...sel,marginBottom:'10px'}}>

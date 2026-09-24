@@ -91,6 +91,8 @@ type Star = { x: number; y: number; z: number }
 
 export default function Constellation({ evenements, periodeLabel = "cette semaine" }: { evenements: Evt[]; periodeLabel?: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  // Écart entre deux doigts au dernier mouvement (zoom au pincement)
+  const pinchRef = useRef<number | null>(null)
   const [selected, setSelected] = useState<Evt | null>(null)
   const [domaineActif, setDomaineActif] = useState<string | null>(null)
   const [modeEdition, setModeEdition] = useState(false)
@@ -114,7 +116,7 @@ export default function Constellation({ evenements, periodeLabel = "cette semain
       const { data } = await supabase.from("domaines_couleur").select("*").eq("user_id", user.id)
       if (data && data.length > 0) {
         const surcharge: Record<string, string> = {}
-        data.forEach((d: any) => { surcharge[d.couleur.toUpperCase()] = d.nom })
+        for (const d of data as { couleur: string; nom: string }[]) surcharge[d.couleur.toUpperCase()] = d.nom
         setNoms({ ...NOMS_PAR_DEFAUT, ...surcharge })
       }
     }
@@ -133,7 +135,7 @@ export default function Constellation({ evenements, periodeLabel = "cette semain
       const { data } = await supabase.from("trajets_historique").select("jour,evenement_de,evenement_a,mode,vitesse_kmh").eq("user_id", user.id)
       if (data) {
         const m: Record<string, { nom: string; kmh: number }> = {}
-        data.forEach((d: any) => { m[cleSegment(d.jour, d.evenement_de, d.evenement_a)] = { nom: d.mode, kmh: d.vitesse_kmh } })
+        for (const d of data as { jour: string; evenement_de: string; evenement_a: string; mode: string; vitesse_kmh: number }[]) m[cleSegment(d.jour, d.evenement_de, d.evenement_a)] = { nom: d.mode, kmh: d.vitesse_kmh }
         setModesSegments(m)
       }
     }
@@ -368,12 +370,12 @@ export default function Constellation({ evenements, periodeLabel = "cette semain
         const dx = e.touches[0].clientX - e.touches[1].clientX
         const dy = e.touches[0].clientY - e.touches[1].clientY
         const d = Math.hypot(dx, dy)
-        const prev = (canvas as any)._pinchDist
+        const prev = pinchRef.current
         if (prev != null) st.cibleVitesse = Math.max(1, Math.min(14, st.cibleVitesse + (d - prev) * 0.05))
-        ;(canvas as any)._pinchDist = d
+        pinchRef.current = d
       }
     }
-    const onTouchEnd = () => { pointerUp(); (canvas as any)._pinchDist = null }
+    const onTouchEnd = () => { pointerUp(); pinchRef.current = null }
     const onWheel = (e: WheelEvent) => { e.preventDefault(); st.cibleVitesse = Math.max(1, Math.min(14, st.cibleVitesse - e.deltaY * 0.03)) }
 
     canvas.addEventListener("mousedown", onDown)

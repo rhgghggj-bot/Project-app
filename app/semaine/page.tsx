@@ -51,7 +51,7 @@ function parseICS(texte: string) {
 export default function Semaine() {
   const [evenements, setEvenements] = useState<EvenementCalendrier[]>([])
   const [user, setUser] = useState<User | null>(null)
-  const [selectedDay, setSelectedDay] = useState<any>(null)
+  const [selectedDay, setSelectedDay] = useState<Date | null>(null)
   const [importEnCours, setImportEnCours] = useState(false)
   const [importMessage, setImportMessage] = useState("")
   const [semaineOffset, setSemaineOffset] = useState(0)
@@ -141,7 +141,7 @@ export default function Semaine() {
   const debutSemaine = jours[0].toLocaleDateString('fr-FR', {day:'numeric', month:'long'})
   const finSemaine = jours[6].toLocaleDateString('fr-FR', {day:'numeric', month:'long', year:'numeric'})
 
-  const renderEvt = (e: any) => (
+  const renderEvt = (e: EvenementCalendrier & { _occId?: string }) => (
     <Link key={e.id} href={`/evenement/${e.id}`} style={{textDecoration:'none',display:'block'}}>
       <div style={{background:'#fff',border:`0.5px solid ${e.couleur}44`,borderLeft:`3px solid ${e.couleur}`,borderRadius:'10px',padding:'10px 12px',marginBottom:'6px',display:'flex',alignItems:'center',justifyContent:'space-between',cursor:'pointer'}}>
         <div style={{minWidth:0}}>
@@ -183,7 +183,7 @@ export default function Semaine() {
       dates = []
       for (let d = new Date(debut); d <= fin; d.setDate(d.getDate() + 1)) dates.push(new Date(d))
     }
-    return dates.flatMap(d => evtDuJour(d).map((e: any) => ({ ...e, _occId: `${e.id}-${d.toISOString().slice(0,10)}` })))
+    return dates.flatMap(d => evtDuJour(d).map(e => ({ ...e, _occId: `${e.id}-${d.toISOString().slice(0,10)}` })))
   })()
   const jourFiltreEstAujourdhui = jourFiltre.toDateString() === today.toDateString()
 

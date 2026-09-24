@@ -1,5 +1,5 @@
 'use client'
-import { Groupe } from "@/lib/types"
+import { Groupe, MembreGroupe } from "@/lib/types"
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
@@ -97,7 +97,7 @@ function Controls({ onLeave }: { onLeave: () => void }) {
   return (
     <div style={{padding:'16px 24px 20px',background:'rgba(10,22,40,0.85)',borderTop:'0.5px solid rgba(255,255,255,0.15)',display:'flex',justifyContent:'center',alignItems:'center',gap:'20px'}}>
       <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:'6px'}}>
-        <button onClick={toggleMic} style={btnStyle(micOn) as any}>
+        <button onClick={toggleMic} style={btnStyle(micOn)}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8">
             {micOn ? <><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></> : <><line x1="1" y1="1" x2="23" y2="23"/><path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"/><path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></>}
           </svg>
@@ -113,7 +113,7 @@ function Controls({ onLeave }: { onLeave: () => void }) {
       </div>
 
       <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:'6px'}}>
-        <button onClick={toggleCam} style={btnStyle(camOn) as any}>
+        <button onClick={toggleCam} style={btnStyle(camOn)}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8">
             {camOn ? <><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></> : <><line x1="1" y1="1" x2="23" y2="23"/><path d="M21 21H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3m3-3h6l2 3h3a2 2 0 0 1 2 2v9.34m-7.72-2.06a4 4 0 1 1-5.56-5.56"/></>}
           </svg>
@@ -122,7 +122,7 @@ function Controls({ onLeave }: { onLeave: () => void }) {
       </div>
 
       <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:'6px'}}>
-        <button style={btnStyle(true, true) as any}>
+        <button style={btnStyle(true, true)}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="1.8"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
         </button>
         <span style={{color:'#D4A843',fontSize:'10px'}}>Retourner</span>
@@ -158,7 +158,7 @@ export default function AppelGroupe() {
       })
       const { data: mbs } = await supabase.from('membres_groupe').select('user_id').eq('groupe_id', params.id)
       if (mbs) {
-        for (const mb of mbs.filter((m: any) => m.user_id !== user.id)) {
+        for (const mb of (mbs as MembreGroupe[]).filter(m => m.user_id !== user.id)) {
           await supabase.from('notifications').insert({
             user_id: mb.user_id,
             type: 'appel',

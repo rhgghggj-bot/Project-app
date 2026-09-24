@@ -1,5 +1,5 @@
 "use client"
-import { Depense, MembreGroupe, Profil, User, DepensePartagee, PartDepense } from "@/lib/types"
+import { DepensePartagee, MembreGroupe, PartDepense, Profil, User } from "@/lib/types"
 import { useChargement } from "@/lib/useChargement"
 import { toast } from "@/lib/toast"
 import { useState } from "react"
@@ -52,7 +52,7 @@ export default function DepensesPartageesPage() {
     const { data: dep } = await supabase.from("depenses_partagees").select("*").eq("groupe_id", id).order("created_at", { ascending: false })
     setDepenses(dep || [])
     if (dep && dep.length > 0) {
-      const { data: prt } = await supabase.from("depenses_partagees_parts").select("*").in("depense_id", dep.map((d: any) => d.id))
+      const { data: prt } = await supabase.from("depenses_partagees_parts").select("*").in("depense_id", (dep as DepensePartagee[]).map(d => d.id))
       setParts(prt || [])
     } else {
       setParts([])

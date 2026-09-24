@@ -332,3 +332,27 @@ export type AvisVendeur = {
   commentaire: string | null
   created_at: DateISO
 }
+
+export type LienSuivi = {
+  id: Uuid
+  follower_id: Uuid
+  suivi_id: Uuid
+  created_at?: DateISO
+}
+
+export type CommentaireProjet = {
+  id: Uuid
+  projet_id: Uuid
+  user_id: Uuid
+  contenu: string
+  created_at: DateISO
+}
+
+export type SoutienProjet = {
+  id: Uuid
+  projet_id: Uuid
+  soutien_id: Uuid
+  montant: number
+  stripe_payment_intent_id: string | null
+  created_at: DateISO
+}

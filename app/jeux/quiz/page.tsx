@@ -1,5 +1,5 @@
 'use client'
-import { Groupe, User } from "@/lib/types"
+import { Groupe, MembreGroupe, User } from "@/lib/types"
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
@@ -7,14 +7,17 @@ import { supabase } from '@/lib/supabase'
 const COULEURS = ['#F97316','#2B7FFF','#10B981','#D4A843']
 const FORMES = ['▲','◆','●','■']
 
+type QuestionQuiz = { question: string; options: string[]; reponse: number }
+type Quiz = { id: string; titre: string; groupe_id: string; createur_id: string; questions: QuestionQuiz[]; created_at: string }
+
 export default function QuizPage() {
   const router = useRouter()
   const [user, setUser] = useState<User | null>(null)
   const [groupes, setGroupes] = useState<Groupe[]>([])
   const [groupeId, setGroupeId] = useState<string|null>(null)
-  const [quizList, setQuizList] = useState<any[]>([])
+  const [quizList, setQuizList] = useState<Quiz[]>([])
   const [mode, setMode] = useState<'liste'|'creer'|'jouer'|'resultats'>('liste')
-  const [quizActif, setQuizActif] = useState<any>(null)
+  const [quizActif, setQuizActif] = useState<Quiz | null>(null)
   const [questionIndex, setQuestionIndex] = useState(0)
   const [reponses, setReponses] = useState<number[]>([])
   const [score, setScore] = useState<number|null>(null)
@@ -31,7 +34,7 @@ export default function QuizPage() {
       setUser(user)
       if (user) {
         const { data: mb } = await supabase.from('membres_groupe').select('groupe_id').eq('user_id', user.id)
-        const ids = mb?.map((m: any) => m.groupe_id) || []
+        const ids = (mb as MembreGroupe[] | null)?.map(m => m.groupe_id) || []
         if (ids.length > 0) {
           const { data: g } = await supabase.from('groupes').select('*').in('id', ids)
           setGroupes(g || [])
@@ -61,7 +64,7 @@ export default function QuizPage() {
     setLoading(false)
   }
 
-  function commencerQuiz(quiz: any) {
+  function commencerQuiz(quiz: Quiz) {
     setQuizActif(quiz); setQuestionIndex(0); setReponses([]); setScore(null); setMode('jouer')
   }
 
@@ -78,7 +81,7 @@ export default function QuizPage() {
     }
   }
 
-  const s = { main: { minHeight:'100vh', background: bg, padding:'20px 18px' } as any }
+  const s: { main: React.CSSProperties } = { main: { minHeight:'100vh', background: bg, padding:'20px 18px' } }
 
   if (!groupeId) return (
     <main style={s.main}>
@@ -141,7 +144,7 @@ export default function QuizPage() {
         <div style={{color:'#fff',fontSize:'28px',fontWeight:'500',marginBottom:'4px'}}>{score}/{total}</div>
         <div style={{color:'#87CEEB',fontSize:'15px',marginBottom:'32px'}}>{pct}% de bonnes reponses</div>
         <div style={{width:'100%',background:'rgba(255,255,255,0.08)',border,borderRadius:'20px',padding:'20px',marginBottom:'24px'}}>
-          {quizActif.questions.map((q: any, i: number) => (
+          {quizActif.questions.map((q, i) => (
             <div key={i} style={{display:'flex',gap:'10px',marginBottom:'12px',alignItems:'flex-start'}}>
               <span style={{flexShrink:0,color:reponses[i]===q.reponse?'#4ade80':'#F43F5E',fontWeight:'500'}}>{reponses[i]===q.reponse?'✓':'✗'}</span>
               <div>
@@ -218,7 +221,7 @@ export default function QuizPage() {
           </button>
         </div>
       )}
-      {quizList.map((quiz:any,idx:number) => (
+      {quizList.map((quiz, idx) => (
         <div key={quiz.id} style={{background:'rgba(255,255,255,0.06)',border,borderRadius:'20px',overflow:'hidden',marginBottom:'12px'}}>
           <div style={{padding:'18px'}}>
             <div style={{display:'flex',alignItems:'center',gap:'12px',marginBottom:'14px'}}>

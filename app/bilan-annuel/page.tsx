@@ -13,9 +13,24 @@ const COULEURS_CARTE = [
   "linear-gradient(135deg,#1a3a6e,#87CEEB)",
 ]
 
+type StatsAnnee = {
+  annee: number
+  totalDepense: number
+  totalRevenu: number
+  solde: number
+  nbTransactions: number
+  nbGroupes: number
+  categoriePrefere: string | null
+  moisActif: string | null
+  objectifsAtteints: number
+  totalContribGroupe: number
+  nbVentes: number
+  nbProjets: number
+}
+
 export default function BilanAnnuelPage() {
   const [chargement, setChargement] = useState(true)
-  const [stats, setStats] = useState<any>(null)
+  const [stats, setStats] = useState<StatsAnnee | null>(null)
 
 
   async function charger() {
@@ -45,7 +60,7 @@ export default function BilanAnnuelPage() {
       const categoriePrefere = Object.entries(parCategorie).sort((a, b) => b[1] - a[1])[0]
 
       const parMois: Record<number, number> = {}
-      ;[...(depenses.data || []), ...(revenus.data || [])].forEach((t: any) => {
+      ;[...(depenses.data || []), ...(revenus.data || [])].forEach((t: { date: string }) => {
         const mois = new Date(t.date).getMonth()
         parMois[mois] = (parMois[mois] || 0) + 1
       })

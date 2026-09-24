@@ -1,5 +1,5 @@
 "use client"
-import { ActiviteGroupe, Groupe, User } from "@/lib/types"
+import { ActiviteGroupe, Groupe, MembreGroupe, User } from "@/lib/types"
 import { useChargement } from "@/lib/useChargement"
 import { confirmer } from "@/lib/toast"
 import Button from "@/app/components/ui/Button"
@@ -16,7 +16,7 @@ export default function ActivitesGroupe() {
   const id = Array.isArray(params.id) ? params.id[0] : params.id
   const [groupe, setGroupe] = useState<Groupe | null>(null)
   const [activites, setActivites] = useState<ActiviteGroupe[]>([])
-  const [profils, setProfils] = useState<any>({})
+  const [profils, setProfils] = useState<Record<string, string>>({})
   const [user, setUser] = useState<User | null>(null)
   const [showForm, setShowForm] = useState(false)
   const [titre, setTitre] = useState("")
@@ -48,8 +48,8 @@ export default function ActivitesGroupe() {
     setActivites(a || [])
 
     const { data: membres } = await supabase.from("membres_groupe").select("user_id, profiles(prenom, nom)").eq("groupe_id", id)
-    const p: any = {}
-    membres?.forEach((m: any) => { p[m.user_id] = m.profiles?.prenom || "Membre" })
+    const p: Record<string, string> = {}
+    ;(membres as { user_id: string; profiles?: { prenom?: string } }[] | null)?.forEach(m => { p[m.user_id] = m.profiles?.prenom || "Membre" })
     setProfils(p)
   }
 
@@ -69,7 +69,7 @@ export default function ActivitesGroupe() {
     if (membres) {
       const { data: profil } = await supabase.from("profiles").select("nom, prenom").eq("id", user.id).single()
       const nomAffiche = profil?.prenom || profil?.nom || "Un membre"
-      for (const mb of membres.filter((m: any) => m.user_id !== user.id)) {
+      for (const mb of (membres as MembreGroupe[]).filter(m => m.user_id !== user.id)) {
         await supabase.from("notifications").insert({
           user_id: mb.user_id,
           type: "activite",
