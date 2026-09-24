@@ -47,7 +47,7 @@ function Formulaire() {
     setEnregistrement(true)
     let lat: number | null = null, lng: number | null = null
     if (lieu.trim()) {
-      setMessage("Localisation du lieu...")
+      setMessage("Localisation du lieu…")
       const geo = await geocoder(lieu.trim())
       if (geo) { lat = geo.lat; lng = geo.lng }
     }
@@ -166,7 +166,7 @@ function Formulaire() {
         <div>
           <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Description</label>
           <textarea value={description} onChange={e => setDescription(e.target.value)} rows={4}
-            placeholder="Ajoute des détails sur cet événement..."
+            placeholder="Ajoute des détails sur cet événement…"
             style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 14px',fontSize:'13px',color:'#1a1a2e',background:'#F8FBFF',boxSizing:'border-box',resize:'vertical',fontFamily:'inherit'}}/>
         </div>
 
@@ -202,7 +202,7 @@ function Formulaire() {
         )}
 
         <button onClick={creer} disabled={enregistrement} style={{background:'#2B7FFF',color:'#fff',fontSize:'14px',fontWeight:'500',padding:'12px',borderRadius:'12px',border:'none',cursor: enregistrement ? 'default' : 'pointer',opacity: enregistrement ? 0.6 : 1}}>
-          {enregistrement ? "Enregistrement..." : "Créer l'événement"}
+          {enregistrement ? "Enregistrement…" : "Créer l'événement"}
         </button>
       </div>
     </main>
@@ -211,7 +211,7 @@ function Formulaire() {
 
 export default function NouvelEvenement() {
   return (
-    <Suspense fallback={<main className="min-h-screen bg-white flex items-center justify-center"><p className="text-gray-400 text-sm">Chargement...</p></main>}>
+    <Suspense fallback={<main className="min-h-screen bg-white flex items-center justify-center"><p className="text-gray-400 text-sm">Chargement…</p></main>}>
       <Formulaire />
     </Suspense>
   )

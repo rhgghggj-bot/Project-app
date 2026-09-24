@@ -49,7 +49,7 @@ export default function DetailEvenement() {
   async function sauvegarder() {
     let lat: number | null = null, lng: number | null = null
     if (lieu.trim()) {
-      setMessage("Localisation du lieu...")
+      setMessage("Localisation du lieu…")
       const geo = await geocoder(lieu.trim())
       if (geo) { lat = geo.lat; lng = geo.lng }
     }
@@ -70,7 +70,7 @@ export default function DetailEvenement() {
   }
 
   if (loading) {
-    return <main className="min-h-screen bg-white flex items-center justify-center"><p className="text-gray-400 text-sm">Chargement...</p></main>
+    return <main className="min-h-screen bg-white flex items-center justify-center"><p className="text-gray-400 text-sm">Chargement…</p></main>
   }
 
   if (introuvable) {
@@ -143,7 +143,7 @@ export default function DetailEvenement() {
         <div>
           <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Description</label>
           <textarea value={description} onChange={e => setDescription(e.target.value)} rows={4}
-            placeholder="Ajoute des détails sur cet événement..."
+            placeholder="Ajoute des détails sur cet événement…"
             style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 14px',fontSize:'13px',color:'#1a1a2e',background:'#F8FBFF',boxSizing:'border-box',resize:'vertical',fontFamily:'inherit'}}/>
         </div>
 

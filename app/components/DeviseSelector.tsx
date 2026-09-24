@@ -85,7 +85,7 @@ export default function DeviseSelector({ onClose }: { onClose: () => void }) {
 
         <button onClick={sauvegarder} disabled={loading}
           style={{width:'100%',background:'linear-gradient(135deg,#1a3a6e,#2B7FFF)',color:'#fff',border:'none',borderRadius:'14px',padding:'14px',fontSize:'14px',fontWeight:'600',cursor:'pointer'}}>
-          {loading ? 'Sauvegarde...' : 'Confirmer ma devise'}
+          {loading ? 'Sauvegarde…' : 'Confirmer ma devise'}
         </button>
       </div>
     </div>

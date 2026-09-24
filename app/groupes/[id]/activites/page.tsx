@@ -110,7 +110,7 @@ export default function ActivitesGroupe() {
         {showForm && (
           <div style={{background:'#EEF5FF',borderRadius:'14px',padding:'14px',marginBottom:'14px',border:'0.5px solid #DCE9FF'}}>
             <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',marginBottom:'10px'}}>Nouvelle activité</div>
-            <input value={titre} onChange={e => setTitre(e.target.value)} placeholder="Ex: Raclette chez Sam, Randonnée..." style={inp}/>
+            <input value={titre} onChange={e => setTitre(e.target.value)} placeholder="Ex: Raclette chez Sam, Randonnée…" style={inp}/>
             <input value={lieu} onChange={e => setLieu(e.target.value)} placeholder="Lieu (optionnel)" style={inp}/>
             <div style={{display:'flex',gap:'8px',marginBottom:'4px'}}>
               <div style={{flex:1,fontSize:'11px',color:'#666'}}>Date</div>

@@ -55,13 +55,13 @@ export default function NouveauProjet() {
 
         <div style={{background:'#fff',borderRadius:'16px',padding:'16px',marginBottom:'12px',boxShadow:'0 2px 8px rgba(43,127,255,0.06)',border:'0.5px solid #E8F1FF'}}>
           <div style={{fontSize:'11px',color:'#2B7FFF',fontWeight:'600',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:'8px'}}>Nom du projet</div>
-          <input type="text" placeholder="Ex: Restaurant le Coin, App fitness..." value={titre} onChange={e => setTitre(e.target.value)}
+          <input type="text" placeholder="Ex: Restaurant le Coin, App fitness…" value={titre} onChange={e => setTitre(e.target.value)}
             style={{width:'100%',border:'none',fontSize:'16px',color:'#1a1a2e',outline:'none',background:'transparent',boxSizing:'border-box'}}/>
         </div>
 
         <div style={{background:'#fff',borderRadius:'16px',padding:'16px',marginBottom:'12px',boxShadow:'0 2px 8px rgba(43,127,255,0.06)',border:'0.5px solid #E8F1FF'}}>
           <div style={{fontSize:'11px',color:'#2B7FFF',fontWeight:'600',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:'8px'}}>Description</div>
-          <textarea placeholder="Décris ton projet, tes objectifs, pourquoi tu as besoin de soutien..." value={description} onChange={e => setDescription(e.target.value)}
+          <textarea placeholder="Décris ton projet, tes objectifs, pourquoi tu as besoin de soutien…" value={description} onChange={e => setDescription(e.target.value)}
             style={{width:'100%',border:'none',fontSize:'14px',color:'#1a1a2e',outline:'none',background:'transparent',resize:'none',height:'80px',boxSizing:'border-box',lineHeight:'1.6'}}/>
         </div>
 

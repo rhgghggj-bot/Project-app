@@ -72,7 +72,7 @@ export default function FicheVendeur() {
     setListeOuverte(type)
   }
 
-  if (chargement) return <div style={{padding:'32px',textAlign:'center',color:'#aaa',fontSize:'14px'}}>Chargement...</div>
+  if (chargement) return <div style={{padding:'32px',textAlign:'center',color:'#aaa',fontSize:'14px'}}>Chargement…</div>
   if (!profil) return <div style={{padding:'32px',textAlign:'center',color:'#aaa',fontSize:'14px'}}>Vendeur introuvable</div>
 
   const jeSuis = followers.some(f => f.suiveur_id === user?.id)

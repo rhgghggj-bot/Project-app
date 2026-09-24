@@ -144,7 +144,7 @@ export default function Jarvis() {
   const [claudeKey, setClaudeKey] = useState("")
   const [montrerConfigCloud, setMontrerConfigCloud] = useState(false)
   const [historiqueCloud, setHistoriqueCloud] = useState<any[]>([])
-  const [statut, setStatut] = useState<{ texte: string; ok: boolean | null }>({ texte: "Connexion à Ollama...", ok: null })
+  const [statut, setStatut] = useState<{ texte: string; ok: boolean | null }>({ texte: "Connexion à Ollama…", ok: null })
   const chatRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const fondCanvasRef = useRef<HTMLCanvasElement>(null)
@@ -563,7 +563,7 @@ export default function Jarvis() {
       : texte
     let messagesActuels: any[] = [...historiqueCloud, { role: "user", content: texteEnvoye }]
     setHistoriqueCloud(messagesActuels)
-    setMessages(prev => [...prev, { role: "user", texte }, { role: "assistant", texte: "Jarvis (cloud) réfléchit..." }])
+    setMessages(prev => [...prev, { role: "user", texte }, { role: "assistant", texte: "Jarvis (cloud) réfléchit…" }])
 
     try {
       let reponseFinaleTexte = ""
@@ -599,7 +599,7 @@ export default function Jarvis() {
           messagesActuels = [...messagesActuels, { role: "assistant", content: contenu }]
           setMessages(prev => {
             const copie = [...prev]
-            copie[copie.length - 1] = { role: "assistant", texte: "Jarvis consulte tes données..." }
+            copie[copie.length - 1] = { role: "assistant", texte: "Jarvis consulte tes données…" }
             return copie
           })
           const resultats = []
@@ -660,7 +660,7 @@ export default function Jarvis() {
       : texte
     const nouvelHistorique: any[] = [...historique, { role: "user" as const, content: texteEnvoye }]
     setHistorique(nouvelHistorique)
-    setMessages(prev => [...prev, { role: "user", texte }, { role: "assistant", texte: "Jarvis réfléchit..." }])
+    setMessages(prev => [...prev, { role: "user", texte }, { role: "assistant", texte: "Jarvis réfléchit…" }])
 
     try {
       let historiquePourFinal = nouvelHistorique
@@ -676,7 +676,7 @@ export default function Jarvis() {
       if (data1.message?.tool_calls?.length) {
         setMessages(prev => {
           const copie = [...prev]
-          copie[copie.length - 1] = { role: "assistant", texte: "Jarvis consulte tes données..." }
+          copie[copie.length - 1] = { role: "assistant", texte: "Jarvis consulte tes données…" }
           return copie
         })
         historiquePourFinal = [...nouvelHistorique, data1.message]
@@ -861,7 +861,7 @@ export default function Jarvis() {
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); envoyer() } }}
             rows={1}
-            placeholder="Écris à Jarvis..."
+            placeholder="Écris à Jarvis…"
             style={{ flex: 1, resize: "none", background: "rgba(255,255,255,0.06)", border: "0.5px solid rgba(43,127,255,0.3)", borderRadius: "12px", padding: "12px 14px", color: "#fff", fontSize: "14px", fontFamily: "inherit", outline: "none", maxHeight: "140px" }}
           />
           <button

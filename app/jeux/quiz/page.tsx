@@ -170,7 +170,7 @@ export default function QuizPage() {
           <div key={qi} style={{background:'rgba(255,255,255,0.06)',border,borderRadius:'16px',padding:'14px',marginBottom:'12px'}}>
             <div style={{color:'#87CEEB',fontSize:'12px',fontWeight:'500',marginBottom:'8px'}}>Question {qi+1}</div>
             <input value={q.question} onChange={e=>{const nq=[...questions];nq[qi].question=e.target.value;setQuestions(nq)}}
-              placeholder="Question..."
+              placeholder="Question…"
               style={{width:'100%',background:'rgba(255,255,255,0.1)',border,borderRadius:'10px',padding:'8px 12px',fontSize:'13px',color:'#fff',marginBottom:'8px'}}/>
             {q.options.map((opt,oi) => (
               <div key={oi} style={{display:'flex',gap:'6px',marginBottom:'6px',alignItems:'center'}}>
@@ -191,7 +191,7 @@ export default function QuizPage() {
         </button>
         <button onClick={sauvegarderQuiz} disabled={loading}
           style={{width:'100%',background:'#10B981',color:'#fff',border:'none',borderRadius:'14px',padding:'14px',fontSize:'14px',fontWeight:'500',cursor:'pointer',marginBottom:'24px'}}>
-          {loading?'Sauvegarde...':'Publier le quiz'}
+          {loading?'Sauvegarde…':'Publier le quiz'}
         </button>
       </main>
     )

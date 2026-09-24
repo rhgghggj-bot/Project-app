@@ -57,7 +57,7 @@ export default function ObjectifsEpargneSection() {
 
       {showForm && (
         <Card style={{ background: colors.blueLight, border: `0.5px solid ${colors.blueBorder}`, marginBottom: "12px" }}>
-          <input value={titre} onChange={e => setTitre(e.target.value)} placeholder="Ex: Voyage au Japon, Voiture..."
+          <input value={titre} onChange={e => setTitre(e.target.value)} placeholder="Ex: Voyage au Japon, Voiture…"
             style={{ width: "100%", border: `1px solid ${colors.border}`, borderRadius: "10px", padding: "8px 12px", fontSize: "16px", color: colors.text, background: "#fff", marginBottom: "8px", boxSizing: "border-box" }} />
           <input value={montantCible} onChange={e => setMontantCible(e.target.value)} type="number" min="0" step="10" placeholder="Montant cible (CHF)"
             style={{ width: "100%", border: `1px solid ${colors.border}`, borderRadius: "10px", padding: "8px 12px", fontSize: "16px", color: colors.text, background: "#fff", marginBottom: "10px", boxSizing: "border-box" }} />

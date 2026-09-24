@@ -156,7 +156,7 @@ const ETF_INDICES = [
   {
     id: 'smi',
     nom: 'SMI Suisse',
-    description: '20 plus grandes entreprises suisses — Nestlé, Novartis, Roche, UBS, Richemont...',
+    description: '20 plus grandes entreprises suisses — Nestlé, Novartis, Roche, UBS, Richemont…',
     rendement: 7.8,
     duree: '30 ans',
     valeur1000: 28000,
@@ -174,7 +174,7 @@ const ETF_INDICES = [
   {
     id: 'nasdaq',
     nom: 'NASDAQ 100',
-    description: '100 plus grandes entreprises technologiques américaines — Apple, NVIDIA, Meta, Tesla...',
+    description: '100 plus grandes entreprises technologiques américaines — Apple, NVIDIA, Meta, Tesla…',
     rendement: 13.5,
     duree: '40 ans',
     valeur1000: 320000,

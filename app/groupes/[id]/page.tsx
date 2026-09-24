@@ -299,7 +299,7 @@ export default function GroupePage() {
     return true
   })
 
-  if (!groupe) return <div className="p-8 text-center text-gray-400">Chargement...</div>
+  if (!groupe) return <div className="p-8 text-center text-gray-400">Chargement…</div>
 
   if (!estMembre) {
     return (
@@ -324,11 +324,11 @@ export default function GroupePage() {
   }
 
   return (
-    <main className="h-screen bg-white flex flex-col overflow-hidden">
+    <main className="bg-white flex flex-col overflow-hidden h-[calc(100dvh-90px-env(safe-area-inset-top))] md:h-[calc(100dvh-52px)]">
       <div className="bg-white border-b border-blue-50 px-5 py-4 flex items-center justify-between">
         <a href="/groupes" className="text-gray-400 text-sm">← Retour</a>
         <div className="text-center">
-          <p className="text-base font-medium text-gray-900">{groupe.est_dm ? (autreProfilDM?.nom || "Conversation") : groupe.nom}</p>
+          <h1 className="nx-display text-[17px] font-semibold text-gray-900 m-0">{groupe.est_dm ? (autreProfilDM?.nom || "Conversation") : groupe.nom}</h1>
           <p className="text-xs text-gray-400">{groupe.est_dm ? "Message privé" : `${membres.length} membres`}</p>
         </div>
         {!groupe.est_dm && (
@@ -389,7 +389,7 @@ export default function GroupePage() {
             <button onClick={payerAnnonce} disabled={paiementEnCours}
               style={{width:'100%',display:'flex',alignItems:'center',justifyContent:'center',gap:'8px',background:'#1a1a2e',color:'#fff',border:'none',borderRadius:'14px',padding:'14px',fontSize:'14px',fontWeight:'700',cursor: paiementEnCours ? 'default' : 'pointer',opacity: paiementEnCours ? 0.6 : 1}}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-              {paiementEnCours ? 'Redirection...' : `Payer ${parseFloat(annonceLiee.prix).toFixed(0)} CHF en sécurité`}
+              {paiementEnCours ? 'Redirection…' : `Payer ${parseFloat(annonceLiee.prix).toFixed(0)} CHF en sécurité`}
             </button>
           )}
           {user && annonceLiee.user_id === user.id && annonceLiee.statut === 'disponible' && (
@@ -554,11 +554,11 @@ export default function GroupePage() {
             <div ref={messagesEndRef}></div>
           </div>
           <div className="px-5 py-3 border-t border-blue-50 flex gap-3 items-center">
-            <input type="text" placeholder="Écrire un message..." value={contenu}
+            <input type="text" placeholder="Écrire un message…" value={contenu}
               onChange={e => setContenu(e.target.value)}
               onKeyDown={e => e.key === "Enter" && envoyer()}
               className="flex-1 border border-blue-100 rounded-full px-4 py-2 text-sm text-gray-900 bg-blue-50 focus:outline-none focus:border-blue-400"/>
-            <button onClick={envoyer} className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white text-lg">↑</button>
+            <button onClick={envoyer} aria-label="Envoyer" className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white text-lg">↑</button>
           </div>
         </div>
       )}

@@ -11,7 +11,20 @@
 body {
   background: #ffffff;
   color: #1a1a2e;
-  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, sans-serif;
+  /* Chiffres de même largeur : les montants s'alignent dans les listes */
+  font-variant-numeric: tabular-nums;
+  touch-action: manipulation;
+}
+
+h1, h2, h3, .nx-display {
+  font-family: var(--font-display), var(--font-geist-sans), sans-serif;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
 }
 
 /* Fix zoom iOS sur les inputs */

@@ -170,7 +170,7 @@ export default function TestReflexes() {
             </div>
           ) : (
             <div style={{fontSize:'18px',fontWeight:'600',color:'#fff',textAlign:'center',padding:'0 20px'}}>
-              {etat === 'sequence' ? 'Attends le vert...' : etat === 'pret' ? 'TAPE MAINTENANT !' : 'Trop tôt ! Retouche pour réessayer'}
+              {etat === 'sequence' ? 'Attends le vert…' : etat === 'pret' ? 'TAPE MAINTENANT !' : 'Trop tôt ! Retouche pour réessayer'}
             </div>
           )}
         </button>

@@ -61,7 +61,7 @@ export default function ProfilPublic() {
     setListeOuverte(type)
   }
 
-  if (chargement) return <div style={{padding:'32px',textAlign:'center',color:'#aaa',fontSize:'14px'}}>Chargement...</div>
+  if (chargement) return <div style={{padding:'32px',textAlign:'center',color:'#aaa',fontSize:'14px'}}>Chargement…</div>
   if (!profil) return <div style={{padding:'32px',textAlign:'center',color:'#aaa',fontSize:'14px'}}>Profil introuvable</div>
 
   const jeSuis = followers.some(f => f.follower_id === user?.id)

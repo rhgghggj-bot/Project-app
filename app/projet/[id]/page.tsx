@@ -78,7 +78,7 @@ export default function Projet() {
     }
   }
 
-  if (!projet) return <div style={{padding:'32px',textAlign:'center',color:'#aaa',fontSize:'14px'}}>Chargement...</div>
+  if (!projet) return <div style={{padding:'32px',textAlign:'center',color:'#aaa',fontSize:'14px'}}>Chargement…</div>
 
   const jaimeMoi = likes.some(l => l.user_id === user?.id)
 
@@ -153,7 +153,7 @@ export default function Projet() {
         <div style={{display:'flex',gap:'8px',marginTop:'14px',alignItems:'center'}}>
           <input
             type="text"
-            placeholder="Laisser un conseil..."
+            placeholder="Laisser un conseil…"
             value={contenu}
             onChange={e => setContenu(e.target.value)}
             onKeyDown={e => e.key === "Enter" && commenter()}

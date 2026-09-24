@@ -191,7 +191,7 @@ export default function Semaine() {
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'8px'}}>
           <a href="/" style={{fontSize:'12px',color:'rgba(255,255,255,0.5)'}}>← Accueil</a>
           <label style={{fontSize:'11px',color:'rgba(255,255,255,0.7)',background:'rgba(255,255,255,0.1)',border:'0.5px solid rgba(255,255,255,0.2)',borderRadius:'99px',padding:'5px 12px',cursor:'pointer'}}>
-            {importEnCours ? 'Import...' : '+ Importer .ics'}
+            {importEnCours ? 'Import…' : '+ Importer .ics'}
             <input type="file" accept=".ics" style={{display:'none'}} onChange={e => { const f = e.target.files?.[0]; if (f) importerICS(f); e.target.value = '' }} />
           </label>
         </div>

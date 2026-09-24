@@ -138,7 +138,7 @@ export default function Groupes() {
     <main className="min-h-screen bg-white">
       <div style={{background:'linear-gradient(160deg,#0A1628,#1a3a6e,#2B7FFF)',padding:'20px 18px 24px'}}>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-          <div style={{fontSize:'22px',fontWeight:'600',color:'#fff'}}>Discussions</div>
+          <h1 style={{fontSize:'28px',fontWeight:'600',color:'#fff',margin:0}}>Discussions</h1>
           <button onClick={() => setComposeOuvert(true)}
             style={{background:'#fff',border:'none',color:'#1a3a6e',borderRadius:'99px',width:'48px',height:'48px',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',boxShadow:'0 4px 14px rgba(0,0,0,0.25)'}}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1a3a6e" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>
@@ -208,7 +208,7 @@ export default function Groupes() {
                   <button onClick={() => retirerSelection(p.id)} style={{background:'rgba(255,255,255,0.25)',border:'none',color:'#fff',cursor:'pointer',fontSize:'13px',lineHeight:1,padding:0,width:'18px',height:'18px',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center'}}>×</button>
                 </span>
               ))}
-              <input value={recherche} onChange={e => setRecherche(e.target.value)} placeholder={selectionnes.length ? "Ajouter..." : "À :"}
+              <input value={recherche} onChange={e => setRecherche(e.target.value)} placeholder={selectionnes.length ? "Ajouter…" : "À :"}
                 style={{flex:1,minWidth:'100px',border:'none',outline:'none',fontSize:'16px',padding:'6px 0'}}/>
             </div>
           </div>
@@ -251,7 +251,7 @@ export default function Groupes() {
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                   )
                 )}
-                {enCreation ? 'Création...' : selectionnes.length === 1 ? 'Discuter avec ' + (selectionnes[0].nom || 'ce membre') : 'Créer le groupe'}
+                {enCreation ? 'Création…' : selectionnes.length === 1 ? 'Discuter avec ' + (selectionnes[0].nom || 'ce membre') : 'Créer le groupe'}
               </button>
             </div>
           )}

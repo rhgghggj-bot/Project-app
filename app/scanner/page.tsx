@@ -140,7 +140,7 @@ export default function Scanner() {
               style={{border:'2px dashed #DCE9FF',borderRadius:'20px',padding:'48px 20px',textAlign:'center',cursor:'pointer',background:'#F8FBFF',marginBottom:'16px'}}>
               <div style={{fontSize:'48px',marginBottom:'12px'}}>📷</div>
               <div style={{fontSize:'15px',fontWeight:'500',color:'#1a1a2e',marginBottom:'6px'}}>Prendre une photo ou choisir un fichier</div>
-              <div style={{fontSize:'13px',color:'#aaa',marginBottom:'16px'}}>Facture, relevé bancaire, contrat, assurance...</div>
+              <div style={{fontSize:'13px',color:'#aaa',marginBottom:'16px'}}>Facture, relevé bancaire, contrat, assurance…</div>
               <button style={{background:'#2B7FFF',color:'#fff',fontSize:'13px',fontWeight:'500',padding:'10px 24px',borderRadius:'99px',border:'none',cursor:'pointer'}}>
                 Choisir un document
               </button>
@@ -160,7 +160,7 @@ export default function Scanner() {
         {etape === "analyse" && (
           <div style={{textAlign:'center',padding:'48px 0'}}>
             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="1.5" style={{marginBottom:"16px"}}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <div style={{fontSize:'16px',fontWeight:'500',color:'#1a1a2e',marginBottom:'8px'}}>Lecture du document...</div>
+            <div style={{fontSize:'16px',fontWeight:'500',color:'#1a1a2e',marginBottom:'8px'}}>Lecture du document…</div>
             <div style={{fontSize:'13px',color:'#aaa',marginBottom:'8px'}}>Extraction du texte en cours</div>
             <div style={{fontSize:'12px',color:'#2B7FFF'}}>Cela peut prendre 10-30 secondes</div>
           </div>

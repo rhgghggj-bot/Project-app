@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabase"
 
 export default function Rejoindre() {
   const { code } = useParams()
-  const [message, setMessage] = useState("Vérification de l'invitation...")
+  const [message, setMessage] = useState("Vérification de l'invitation…")
   const [groupe, setGroupe] = useState<any>(null)
 
   useEffect(() => {
@@ -33,7 +33,7 @@ export default function Rejoindre() {
         user_id: user.id
       })
       if (!error) {
-        setMessage("Tu as rejoint le groupe ! Redirection...")
+        setMessage("Tu as rejoint le groupe ! Redirection…")
         setTimeout(() => window.location.href = `/groupes/${inv.groupe_id}`, 1500)
       }
     }

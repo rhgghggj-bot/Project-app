@@ -97,7 +97,7 @@ export default function ColocationPage() {
         {showForm && (
           <Card style={{ background: colors.blueLight, border: `0.5px solid ${colors.blueBorder}`, marginBottom: "14px" }}>
             <div style={{ fontSize: "13px", fontWeight: 500, color: colors.text, marginBottom: "10px" }}>Nouvelle charge récurrente</div>
-            <input value={titre} onChange={e => setTitre(e.target.value)} placeholder="Ex: Loyer, Internet, Électricité..."
+            <input value={titre} onChange={e => setTitre(e.target.value)} placeholder="Ex: Loyer, Internet, Électricité…"
               style={{ width: "100%", border: `1px solid ${colors.border}`, borderRadius: "10px", padding: "10px 12px", fontSize: "16px", color: colors.text, background: "#fff", marginBottom: "10px", boxSizing: "border-box" }} />
 
             <div style={{ fontSize: "12px", color: colors.textMuted, marginBottom: "6px" }}>Qui collecte et paie le bailleur/fournisseur ?</div>

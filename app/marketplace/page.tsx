@@ -468,7 +468,7 @@ export default function Marketplace() {
           {showFormAnnonce && (
             <div style={{background:"#EEF5FF",borderRadius:"14px",padding:"14px",marginBottom:"14px",border:"0.5px solid #DCE9FF"}}>
               <input value={titreAnnonce} onChange={e => setTitreAnnonce(e.target.value)} placeholder="Titre de l'annonce" style={inp}/>
-              <textarea value={descAnnonce} onChange={e => setDescAnnonce(e.target.value)} placeholder="Description..." style={{...inp,height:"60px",resize:"none"} as any}/>
+              <textarea value={descAnnonce} onChange={e => setDescAnnonce(e.target.value)} placeholder="Description…" style={{...inp,height:"60px",resize:"none"} as any}/>
               <div style={{marginBottom:"8px"}}>
                 <label style={{fontSize:"12px",color:"#666",display:"block",marginBottom:"6px"}}>Photo</label>
                 <label style={{display:"block",background:"#fff",border:"1px dashed #2B7FFF",borderRadius:"10px",padding:"16px",textAlign:"center",cursor:"pointer",color:"#2B7FFF",fontSize:"13px",fontWeight:"500"}}>
@@ -502,7 +502,7 @@ export default function Marketplace() {
           <div style={{display:"flex",gap:"8px",marginBottom:"10px"}}>
             <div style={{flex:1,position:"relative"}}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2" style={{position:"absolute",left:"12px",top:"50%",transform:"translateY(-50%)"}}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              <input value={recherche} onChange={e => setRecherche(e.target.value)} placeholder="Rechercher..."
+              <input value={recherche} onChange={e => setRecherche(e.target.value)} placeholder="Rechercher…"
                 style={{width:"100%",border:"1px solid #E8F1FF",borderRadius:"10px",padding:"9px 12px 9px 34px",fontSize:"14px",color:"#1a1a2e",background:"#fff",boxSizing:"border-box"}}/>
             </div>
             <input value={prixMax} onChange={e => setPrixMax(e.target.value)} type="number" min="0" placeholder="Prix max"
@@ -604,7 +604,7 @@ export default function Marketplace() {
                       <div style={{display:"flex",gap:"8px",marginTop:"10px"}}>
                         <input value={nouveauCommentaire} onChange={e => setNouveauCommentaire(e.target.value)}
                           onKeyDown={e => e.key === "Enter" && ajouterCommentaire()}
-                          placeholder="Écrire un commentaire..."
+                          placeholder="Écrire un commentaire…"
                           style={{flex:1,border:"1px solid #E8F1FF",borderRadius:"99px",padding:"10px 14px",fontSize:"14px",color:"#1a1a2e",background:"#F8FBFF"}}/>
                         <button onClick={ajouterCommentaire} style={{width:"40px",height:"40px",borderRadius:"50%",background:"#2B7FFF",color:"#fff",border:"none",cursor:"pointer",fontSize:"16px",flexShrink:0}}>↑</button>
                       </div>

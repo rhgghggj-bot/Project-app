@@ -97,7 +97,7 @@ export default function Onboarding() {
               title="Appels vidéo & jeux" sub="Quiz, Puissance 4, appels en groupe" />
             <CardRow
               icon={<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#EC4899" strokeWidth="1.5" style={{flexShrink:0}}><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>}
-              title="Simulation d'épargne" sub="Livret A, PEA, 3e pilier, ETF..." />
+              title="Simulation d'épargne" sub="Livret A, PEA, 3e pilier, ETF…" />
           </div>
           <button onClick={() => setSlide(3)} style={btn}>Suivant →</button>
         </>

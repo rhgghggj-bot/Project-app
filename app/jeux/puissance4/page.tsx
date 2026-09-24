@@ -143,7 +143,7 @@ export default function Puissance4() {
 
   if (loading) return (
     <main style={{minHeight:'100vh',background:'linear-gradient(160deg,#0A1628,#1a3a6e)',display:'flex',alignItems:'center',justifyContent:'center'}}>
-      <div style={{color:'#fff'}}>Chargement...</div>
+      <div style={{color:'#fff'}}>Chargement…</div>
     </main>
   )
 

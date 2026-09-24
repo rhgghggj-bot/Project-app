@@ -271,7 +271,7 @@ export default function Profile() {
               </div>
               <div style={{marginBottom:'12px'}}>
                 <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'4px'}}>Bio</label>
-                <textarea value={bio} onChange={e => setBio(e.target.value)} placeholder="Passionné de projets..." rows={3}
+                <textarea value={bio} onChange={e => setBio(e.target.value)} placeholder="Passionné de projets…" rows={3}
                   style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'8px 12px',fontSize:'13px',color:'#1a1a2e',background:'#F8FBFF',resize:'none'}}/>
               </div>
               <div style={{marginBottom:'12px'}}>
@@ -303,7 +303,7 @@ export default function Profile() {
               {!stripeActif && (
                 <button onClick={demarrerStripe} disabled={chargementStripe}
                   style={{width:'100%',background:'#1a1a2e',color:'#fff',border:'none',borderRadius:'10px',padding:'10px',fontSize:'13px',fontWeight:'500',cursor: chargementStripe ? 'default' : 'pointer',opacity: chargementStripe ? 0.6 : 1}}>
-                  {chargementStripe ? 'Connexion...' : 'Activer les paiements'}
+                  {chargementStripe ? 'Connexion…' : 'Activer les paiements'}
                 </button>
               )}
             </div>

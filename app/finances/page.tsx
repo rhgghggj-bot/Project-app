@@ -293,7 +293,7 @@ function FinancesContent() {
             </div>
             <div style={{flex:1,minWidth:0}}>
               <div style={{fontSize:'13px',fontWeight:'500',color:couleurSolde,marginBottom:'2px'}}>{texteSolde}</div>
-              <div style={{fontSize:'28px',fontWeight:'600',color:'#fff',marginBottom:'6px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+              <div className="nx-display" style={{fontSize:'32px',fontWeight:'600',color:'#fff',marginBottom:'6px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',letterSpacing:'-0.03em'}}>
                 {solde >= 0 ? '+' : ''}{conv(solde).toFixed(0)} {devise}
               </div>
               <div style={{fontSize:'11px',color: pctEpargne < 10 ? '#F43F5E' : pctEpargne < 30 ? '#D4A843' : '#10B981',fontWeight:'500',background: pctEpargne < 10 ? 'rgba(244,63,94,0.15)' : pctEpargne < 30 ? 'rgba(212,168,67,0.15)' : 'rgba(16,185,129,0.15)',display:'inline-block',padding:'3px 9px',borderRadius:'99px'}}>
@@ -649,7 +649,7 @@ function FinancesContent() {
 
           <div style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'16px',padding:'14px',marginBottom:'14px'}}>
             <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',marginBottom:'10px'}}>Mon objectif</div>
-            <input value={objectif} onChange={e => setObjectif(e.target.value)} placeholder="Ex: Voyage au Japon, Voiture..."
+            <input value={objectif} onChange={e => setObjectif(e.target.value)} placeholder="Ex: Voyage au Japon, Voiture…"
               style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'8px 12px',fontSize:'16px',color:'#1a1a2e',background:'#F8FBFF',marginBottom:'8px'}}/>
             <div style={{fontSize:'11px',color:'#aaa',marginBottom:'4px'}}>Montant cible (CHF)</div>
             <input value={montantEpargne} onChange={e => setMontantEpargne(e.target.value)} placeholder="Ex: 5000" type="number"
@@ -766,7 +766,7 @@ function FinancesContent() {
               <div style={{fontSize:'15px',fontWeight:'600',color:'#1a1a2e'}}>{typeForm === "depense" ? 'Nouvelle dépense' : 'Nouveau revenu'}</div>
               <button onClick={fermerForm} style={{background:'#F5F8FC',border:'none',borderRadius:'50%',width:'28px',height:'28px',fontSize:'15px',color:'#888',cursor:'pointer'}}>×</button>
             </div>
-            <input value={titre} onChange={e => setTitre(e.target.value)} placeholder={typeForm === "depense" ? "Ex: Loyer..." : "Ex: Salaire..."}
+            <input value={titre} onChange={e => setTitre(e.target.value)} placeholder={typeForm === "depense" ? "Ex: Loyer…" : "Ex: Salaire…"}
               style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'10px 12px',fontSize:'14px',color:'#1a1a2e',background:'#F8FBFF',marginBottom:'10px',boxSizing:'border-box'}}/>
             <div style={{display:'flex',gap:'8px',marginBottom:'10px'}}>
               <input value={montant} onChange={e => setMontant(e.target.value)} placeholder="Montant" type="number"
@@ -815,7 +815,7 @@ function FinancesContent() {
 
 export default function Finances() {
   return (
-    <Suspense fallback={<div className="p-8 text-center text-gray-400">Chargement...</div>}>
+    <Suspense fallback={<div className="p-8 text-center text-gray-400">Chargement…</div>}>
       <FinancesContent />
     </Suspense>
   )

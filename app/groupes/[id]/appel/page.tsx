@@ -179,7 +179,7 @@ export default function AppelGroupe() {
 
   if (loading) return (
     <main style={{position:'fixed',inset:0,display:'flex',alignItems:'center',justifyContent:'center',height:'100dvh',background:'linear-gradient(135deg,#1a3a6e,#2B7FFF,#87CEEB)',zIndex:2000}}>
-      <div style={{color:'#fff',fontSize:'16px',fontWeight:'500'}}>Connexion en cours...</div>
+      <div style={{color:'#fff',fontSize:'16px',fontWeight:'500'}}>Connexion en cours…</div>
     </main>
   )
 
