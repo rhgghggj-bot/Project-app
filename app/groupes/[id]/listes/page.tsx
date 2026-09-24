@@ -1,4 +1,5 @@
 "use client"
+import { confirmer } from "@/lib/toast"
 import { onActivate } from "@/lib/a11y"
 import Button from "@/app/components/ui/Button"
 import SectionHeader from "@/app/components/ui/SectionHeader"
@@ -106,7 +107,7 @@ export default function ListesPage() {
               <div style={{fontSize:'11px',color:'#aaa'}}>{new Date(l.created_at).toLocaleDateString('fr-FR',{day:'numeric',month:'long'})}</div>
             </div>
             <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
-              <button onClick={e => { e.stopPropagation(); e.preventDefault(); if(confirm('Supprimer cette liste ?')) supprimerListe(l.id) }}
+              <button onClick={e => { e.stopPropagation(); e.preventDefault(); confirmer('Supprimer cette liste et tous ses articles ?', 'Supprimer').then(ok => { if (ok) supprimerListe(l.id) }) }}
                 style={{width:'28px',height:'28px',borderRadius:'50%',background:'#FFE4E6',border:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#F43F5E" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>

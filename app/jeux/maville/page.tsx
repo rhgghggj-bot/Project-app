@@ -1,4 +1,5 @@
 'use client'
+import { confirmer } from "@/lib/toast"
 import { onActivate } from "@/lib/a11y"
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -228,8 +229,8 @@ export default function SimCityLite() {
     sauvegarder()
   }
 
-  function nouvelleVille() {
-    if (!confirm('Recommencer une nouvelle ville ? Ta ville actuelle sera perdue.')) return
+  async function nouvelleVille() {
+    if (!(await confirmer('Recommencer une nouvelle ville ? Ta ville actuelle sera perdue.', 'Recommencer'))) return
     const g = grilleVide()
     etatRef.current = { grille: g, argent: 20000, jour: 1, mois: 1, tauxTaxe: 0.12 }
     setGrilleAff(g); setArgent(20000); setJour(1); setMois(1); setTauxTaxe(0.12)

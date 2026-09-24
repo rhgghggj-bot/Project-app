@@ -1,4 +1,5 @@
 'use client'
+import { toast } from "@/lib/toast"
 import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
@@ -90,7 +91,7 @@ export default function Puissance4() {
       tour: user.id
     }).select().single()
     if (error) {
-      alert('Erreur en créant la partie : ' + error.message)
+      toast('Impossible de créer la partie : ' + error.message + '. Réessaie dans un instant.', 'error')
       return
     }
     setPartie(data)
@@ -125,7 +126,7 @@ export default function Puissance4() {
       updated_at: new Date().toISOString()
     }).eq('id', partie.id).select().single()
     if (error) {
-      alert('Erreur en jouant le coup : ' + error.message)
+      toast('Coup non enregistré : ' + error.message + '. Rejoue ton coup.', 'error')
       return
     }
     if (data) setPartie(data)

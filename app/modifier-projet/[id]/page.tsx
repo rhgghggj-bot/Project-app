@@ -1,4 +1,5 @@
 "use client"
+import { confirmer } from "@/lib/toast"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
@@ -42,7 +43,7 @@ export default function ModifierProjet() {
   }
 
   async function supprimer() {
-    if (!confirm("Tu veux vraiment supprimer ce projet ?")) return
+    if (!(await confirmer("Supprimer ce projet ? Cette action est définitive.", "Supprimer"))) return
     await supabase.from("projets").delete().eq("id", id)
     window.location.href = "/profile"
   }

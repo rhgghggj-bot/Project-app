@@ -1,4 +1,5 @@
 "use client"
+import { toast } from "@/lib/toast"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
@@ -50,7 +51,7 @@ export default function Projet() {
     const data = await res.json()
     setEnCoursSoutien(false)
     if (data.url) window.location.href = data.url
-    else alert(data.error || "Erreur lors du paiement")
+    else toast(data.error || "Paiement impossible. Réessaie ou utilise une autre carte.", "error")
   }
 
   async function commenter() {

@@ -1,4 +1,5 @@
 "use client"
+import { toast } from "@/lib/toast"
 import { onActivate, useEscape } from "@/lib/a11y"
 import Link from "next/link"
 import { useEffect, useState } from "react"
@@ -64,9 +65,9 @@ export default function Profile() {
       let data: any = {}
       try { data = JSON.parse(texte) } catch { data = { error: "Réponse invalide du serveur : " + texte.slice(0, 200) } }
       if (data.url) { window.location.href = data.url; return }
-      alert(data.error || "Erreur lors de la connexion à Stripe")
+      toast(data.error || "Connexion à Stripe impossible. Réessaie dans un instant.", "error")
     } catch (e: any) {
-      alert("Erreur réseau : " + e.message)
+      toast("Pas de connexion réseau (" + e.message + "). Vérifie ta connexion et réessaie.", "error")
     } finally {
       setChargementStripe(false)
     }

@@ -7,6 +7,7 @@ import JarvisButton from "./components/JarvisButton";
 import PushNotifSetup from "./components/PushNotifSetup";
 import SplashWrapper from "./components/SplashWrapper";
 import PageFrame from "./components/PageFrame";
+import Toaster from "./components/Toaster";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -75,6 +76,7 @@ export default function RootLayout({
           <JarvisButton />
           <PushNotifSetup />
           <PageFrame>{children}</PageFrame>
+          <Toaster />
         </SplashWrapper>
       </body>
     </html>

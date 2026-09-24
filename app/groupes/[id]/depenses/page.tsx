@@ -1,4 +1,5 @@
 "use client"
+import { toast } from "@/lib/toast"
 import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
@@ -96,7 +97,7 @@ export default function DepensesPartageesPage() {
     const data = await res.json()
     setEnCours(false)
     if (data.url) window.location.href = data.url
-    else alert(data.error || "Erreur lors du règlement")
+    else toast(data.error || "Règlement impossible. Réessaie dans un instant.", "error")
   }
 
   const mesPartsDues = parts.filter(p => p.user_id === user?.id && p.statut === "du")

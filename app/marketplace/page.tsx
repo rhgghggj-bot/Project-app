@@ -1,4 +1,5 @@
 "use client"
+import { toast } from "@/lib/toast"
 import { onActivate, useEscape } from "@/lib/a11y"
 import { useEffect, useState, useRef } from "react"
 import { supabase } from "@/lib/supabase"
@@ -73,7 +74,7 @@ export default function Marketplace() {
   }
 
   async function toggleFavori(annonceId: string) {
-    if (!user) { alert("Connecte-toi pour enregistrer une annonce"); return }
+    if (!user) { toast("Connecte-toi pour enregistrer une annonce"); return }
     const dejaFavori = favoris.find(f => f.annonce_id === annonceId && f.user_id === user.id)
     if (dejaFavori) {
       await supabase.from("marketplace_favoris").delete().eq("id", dejaFavori.id)
@@ -96,7 +97,7 @@ export default function Marketplace() {
   }
 
   async function signalerAnnonce(annonceId: string) {
-    if (!user) { alert("Connecte-toi pour signaler une annonce"); return }
+    if (!user) { toast("Connecte-toi pour signaler une annonce"); return }
     await supabase.from("marketplace_signalements").insert({ annonce_id: annonceId, user_id: user.id })
     setSignales(prev => [...prev, annonceId])
     setMenuOuvertId(null)
@@ -120,7 +121,7 @@ export default function Marketplace() {
   }
 
   async function toggleLike(annonceId: string) {
-    if (!user) { alert("Connecte-toi pour aimer une annonce"); return }
+    if (!user) { toast("Connecte-toi pour aimer une annonce"); return }
     const dejaLike = likes.find(l => l.annonce_id === annonceId && l.user_id === user.id)
     if (dejaLike) {
       await supabase.from("marketplace_likes").delete().eq("id", dejaLike.id)
@@ -182,7 +183,7 @@ export default function Marketplace() {
   }
 
   function doubleTapLike(annonceId: string) {
-    if (!user) { alert("Connecte-toi pour aimer une annonce"); return }
+    if (!user) { toast("Connecte-toi pour aimer une annonce"); return }
     const dejaLike = likes.find(l => l.annonce_id === annonceId && l.user_id === user.id)
     if (!dejaLike) toggleLike(annonceId)
     const coeurs = Array.from({ length: 14 }, (_, i) => ({
@@ -230,7 +231,7 @@ export default function Marketplace() {
   async function ajouterAnnonce() {
     if (!titreAnnonce.trim()) return
     const { data: { user: u } } = await supabase.auth.getUser()
-    if (!u) { alert("Connecte-toi pour publier"); return }
+    if (!u) { toast("Connecte-toi pour publier une annonce"); return }
     let imageUrl = ""
     if (imageAnnonce) {
       const ext = imageAnnonce.name.split(".").pop()
@@ -246,7 +247,7 @@ export default function Marketplace() {
       prix: parseFloat(prixAnnonce.replace(",",".")) || 0,
       categorie: catAnnonce, image_url: imageUrl, etat: etatAnnonce
     })
-    if (error) { alert("Erreur: " + error.message); return }
+    if (error) { toast("Publication impossible : " + error.message + ". Vérifie les champs et réessaie.", "error"); return }
     setTitreAnnonce(""); setDescAnnonce(""); setPrixAnnonce("")
     setImageAnnonce(null); setImagePreview(""); setShowFormAnnonce(false)
     chargerAnnonces()

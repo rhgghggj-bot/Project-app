@@ -1,4 +1,5 @@
 "use client"
+import { confirmer } from "@/lib/toast"
 import Button from "@/app/components/ui/Button"
 import SectionHeader from "@/app/components/ui/SectionHeader"
 import { useEffect, useState } from "react"
@@ -83,7 +84,7 @@ export default function ActivitesGroupe() {
   }
 
   async function supprimerActivite(activiteId: string) {
-    if (!confirm("Supprimer cette activité ? Elle sera aussi retirée des calendriers.")) return
+    if (!(await confirmer("Supprimer cette activité ? Elle sera aussi retirée des calendriers.", "Supprimer"))) return
     await supabase.from("activites_groupe").delete().eq("id", activiteId)
     charger()
   }

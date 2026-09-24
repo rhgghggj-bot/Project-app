@@ -1,4 +1,5 @@
 "use client"
+import { toast } from "@/lib/toast"
 import { useEscape } from "@/lib/a11y"
 import Link from "next/link"
 import { useEffect, useState, useRef } from "react"
@@ -217,7 +218,7 @@ export default function GroupePage() {
     const data = await res.json()
     setPaiementEnCours(false)
     if (data.url) window.location.href = data.url
-    else alert(data.error || "Erreur lors du paiement")
+    else toast(data.error || "Paiement impossible. Réessaie ou utilise une autre carte.", "error")
   }
 
   async function libererPaiement() {
@@ -228,7 +229,7 @@ export default function GroupePage() {
       body: JSON.stringify({ annonceId: annonceLiee.id }),
     })
     const data = await res.json()
-    if (!data.success) { alert(data.error || "Erreur lors de la libération du paiement"); return }
+    if (!data.success) { toast(data.error || "Le paiement n'a pas pu être libéré. Réessaie dans un instant.", "error"); return }
     setAnnonceLiee((prev: any) => ({ ...prev, statut: "vendu" }))
     await supabase.from("messages_groupe").insert({ groupe_id: id, user_id: user.id, contenu: `✅ Réception confirmée pour "${annonceLiee.titre}" — paiement transféré au vendeur, reçus ajoutés dans les Finances de chacun.` })
     setMontrerAvis(true)
