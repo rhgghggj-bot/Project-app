@@ -1,4 +1,5 @@
 "use client"
+import { Profil, Projet, User } from "@/lib/types"
 import Image from "next/image"
 import { SkeletonProfil } from "@/app/components/ui/Skeleton"
 import { useEscape } from "@/lib/a11y"
@@ -11,9 +12,9 @@ import { ouvrirConversationPrivee } from "@/lib/dm"
 export default function ProfilPublic() {
   const { id } = useParams()
   const profilId = String(id)
-  const [user, setUser] = useState<any>(null)
-  const [profil, setProfil] = useState<any>(null)
-  const [projets, setProjets] = useState<any[]>([])
+  const [user, setUser] = useState<User | null>(null)
+  const [profil, setProfil] = useState<Profil | null>(null)
+  const [projets, setProjets] = useState<Projet[]>([])
   const [followers, setFollowers] = useState<any[]>([])
   const [abonnements, setAbonnements] = useState<any[]>([])
   const [chargement, setChargement] = useState(true)

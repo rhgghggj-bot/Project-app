@@ -1,4 +1,5 @@
 "use client"
+import { MembreGroupe, OptionSondage, Profil, Sondage, User, VoteSondage } from "@/lib/types"
 import { useChargement } from "@/lib/useChargement"
 import { useState } from "react"
 import { useParams } from "next/navigation"
@@ -15,11 +16,11 @@ export default function SondagesGroupePage() {
   const params = useParams()
   const id = Array.isArray(params.id) ? params.id[0] : params.id
 
-  const [user, setUser] = useState<any>(null)
-  const [profils, setProfils] = useState<Record<string, any>>({})
-  const [sondages, setSondages] = useState<any[]>([])
-  const [options, setOptions] = useState<any[]>([])
-  const [votes, setVotes] = useState<any[]>([])
+  const [user, setUser] = useState<User | null>(null)
+  const [profils, setProfils] = useState<Record<string, Pick<Profil, 'id' | 'nom'>>>({})
+  const [sondages, setSondages] = useState<Sondage[]>([])
+  const [options, setOptions] = useState<OptionSondage[]>([])
+  const [votes, setVotes] = useState<VoteSondage[]>([])
   const [showForm, setShowForm] = useState(false)
   const [question, setQuestion] = useState("")
   const [choix, setChoix] = useState(["", ""])
@@ -31,9 +32,9 @@ export default function SondagesGroupePage() {
 
     const { data: mb } = await supabase.from("membres_groupe").select("user_id").eq("groupe_id", id)
     if (mb && mb.length > 0) {
-      const { data: profs } = await supabase.from("profiles").select("id,nom").in("id", mb.map((m: any) => m.user_id))
-      const map: Record<string, any> = {}
-      profs?.forEach((p: any) => { map[p.id] = p })
+      const { data: profs } = await supabase.from("profiles").select("id,nom").in("id", (mb as MembreGroupe[]).map(m => m.user_id))
+      const map: Record<string, Pick<Profil, 'id' | 'nom'>> = {}
+      for (const p of (profs || []) as Pick<Profil, 'id' | 'nom'>[]) map[p.id] = p
       setProfils(map)
     }
 

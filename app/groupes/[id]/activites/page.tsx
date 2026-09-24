@@ -1,4 +1,5 @@
 "use client"
+import { ActiviteGroupe, Groupe, User } from "@/lib/types"
 import { useChargement } from "@/lib/useChargement"
 import { confirmer } from "@/lib/toast"
 import Button from "@/app/components/ui/Button"
@@ -13,10 +14,10 @@ const COULEURS = ["#8B5CF6", "#2B7FFF", "#10B981", "#F43F5E", "#D4A843", "#EC489
 export default function ActivitesGroupe() {
   const params = useParams()
   const id = Array.isArray(params.id) ? params.id[0] : params.id
-  const [groupe, setGroupe] = useState<any>(null)
-  const [activites, setActivites] = useState<any[]>([])
+  const [groupe, setGroupe] = useState<Groupe | null>(null)
+  const [activites, setActivites] = useState<ActiviteGroupe[]>([])
   const [profils, setProfils] = useState<any>({})
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
   const [showForm, setShowForm] = useState(false)
   const [titre, setTitre] = useState("")
   const [description, setDescription] = useState("")

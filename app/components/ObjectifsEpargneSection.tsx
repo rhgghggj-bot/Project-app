@@ -1,4 +1,5 @@
 "use client"
+import { User } from "@/lib/types"
 import { useChargement } from "@/lib/useChargement"
 import { useState } from "react"
 import { supabase } from "@/lib/supabase"
@@ -12,7 +13,7 @@ import { colors, gradients } from "./ui/tokens"
 const IconTarget = () => <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
 
 export default function ObjectifsEpargneSection() {
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
   const [objectifs, setObjectifs] = useState<any[]>([])
   const [showForm, setShowForm] = useState(false)
   const [titre, setTitre] = useState("")

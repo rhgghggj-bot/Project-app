@@ -628,7 +628,7 @@ export default function Jarvis() {
       })
       setHistoriqueCloud(messagesActuels)
       parler(reponseFinaleTexte)
-    } catch (e: any) {
+    } catch (e) {
       console.error("Erreur Jarvis Cloud:", e)
       let detail = e?.message || "raison inconnue"
       try {

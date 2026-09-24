@@ -11,6 +11,7 @@ export type Profil = {
   nom: string | null
   avatar_url: string | null
   bio?: string | null
+  ville?: string | null
   couleur?: string | null
   devise?: string | null
   email?: string | null
@@ -92,7 +93,13 @@ export type EvenementCalendrier = {
   categorie: string | null
   couleur: string | null
   description?: string | null
-  [colonne: string]: unknown
+  lieu?: string | null
+  lat?: number | null
+  lng?: number | null
+  // Événement répété : jours de la semaine (0-6) jusqu'à la date de fin
+  recurrence_jours?: number[] | null
+  recurrence_fin?: DateISO | null
+  activite_groupe_id?: Uuid | null
 }
 
 export type Notification = {
@@ -154,7 +161,8 @@ export type ActiviteGroupe = {
   lieu: string | null
   description: string | null
   couleur: string | null
-  [colonne: string]: unknown
+  duree: number | null
+  created_by: Uuid
 }
 
 export type DepensePartagee = {

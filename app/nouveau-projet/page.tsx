@@ -1,4 +1,5 @@
 "use client"
+import { Groupe } from "@/lib/types"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
@@ -13,7 +14,7 @@ export default function NouveauProjet() {
   const [echeance, setEcheance] = useState("")
   const [groupeId, setGroupeId] = useState("")
   const [prive, setPrive] = useState(false)
-  const [groupes, setGroupes] = useState<any[]>([])
+  const [groupes, setGroupes] = useState<Groupe[]>([])
   const [message, setMessage] = useState("")
 
   useEffect(() => {
@@ -128,7 +129,7 @@ export default function NouveauProjet() {
             <select aria-label="Groupe" value={groupeId} onChange={e => setGroupeId(e.target.value)}
               style={{width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'8px 12px',fontSize:'14px',color:'#1a1a2e',background:'#F8FBFF'}}>
               <option value="">Visible par tous (public)</option>
-              {groupes.map((g: any) => <option key={g.id} value={g.id}>{g.nom}</option>)}
+              {groupes.map(g => <option key={g.id} value={g.id}>{g.nom}</option>)}
             </select>
           </div>
         )}

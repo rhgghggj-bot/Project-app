@@ -1,4 +1,5 @@
 'use client'
+import { Groupe } from "@/lib/types"
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
@@ -134,7 +135,7 @@ export default function AppelGroupe() {
   const params = useParams() as { id: string }
   const router = useRouter()
   const [token, setToken] = useState('')
-  const [groupe, setGroupe] = useState<any>(null)
+  const [groupe, setGroupe] = useState<Groupe | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {

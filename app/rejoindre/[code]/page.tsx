@@ -1,4 +1,5 @@
 "use client"
+import { Groupe } from "@/lib/types"
 import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
@@ -6,7 +7,7 @@ import { supabase } from "@/lib/supabase"
 export default function Rejoindre() {
   const { code } = useParams()
   const [message, setMessage] = useState("Vérification de l'invitation…")
-  const [groupe, setGroupe] = useState<any>(null)
+  const [groupe, setGroupe] = useState<Groupe | null>(null)
 
   useEffect(() => {
     async function rejoindre() {

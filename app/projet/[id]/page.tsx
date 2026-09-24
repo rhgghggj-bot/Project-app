@@ -1,4 +1,5 @@
 "use client"
+import { User } from "@/lib/types"
 import { SkeletonPage } from "@/app/components/ui/Skeleton"
 import { toast } from "@/lib/toast"
 import Link from "next/link"
@@ -13,7 +14,7 @@ export default function Projet() {
   const [projet, setProjet] = useState<any>(null)
   const [commentaires, setCommentaires] = useState<any[]>([])
   const [contenu, setContenu] = useState("")
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
   const [likes, setLikes] = useState<any[]>([])
   const [createur, setCreateur] = useState<any>(null)
   const [soutiens, setSoutiens] = useState<any[]>([])

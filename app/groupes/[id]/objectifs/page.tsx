@@ -1,4 +1,5 @@
 "use client"
+import { ContributionObjectif, MembreGroupe, Profil, User } from "@/lib/types"
 import { useChargement } from "@/lib/useChargement"
 import { useState } from "react"
 import { useParams } from "next/navigation"
@@ -17,10 +18,10 @@ export default function ObjectifsGroupePage() {
   const params = useParams()
   const id = Array.isArray(params.id) ? params.id[0] : params.id
 
-  const [user, setUser] = useState<any>(null)
-  const [profils, setProfils] = useState<Record<string, any>>({})
+  const [user, setUser] = useState<User | null>(null)
+  const [profils, setProfils] = useState<Record<string, Pick<Profil, 'id' | 'nom'>>>({})
   const [objectifs, setObjectifs] = useState<any[]>([])
-  const [contributions, setContributions] = useState<any[]>([])
+  const [contributions, setContributions] = useState<ContributionObjectif[]>([])
   const [showForm, setShowForm] = useState(false)
   const [titre, setTitre] = useState("")
   const [montantCible, setMontantCible] = useState("")
@@ -35,9 +36,9 @@ export default function ObjectifsGroupePage() {
 
     const { data: mb } = await supabase.from("membres_groupe").select("user_id").eq("groupe_id", id)
     if (mb && mb.length > 0) {
-      const { data: profs } = await supabase.from("profiles").select("id,nom").in("id", mb.map((m: any) => m.user_id))
-      const map: Record<string, any> = {}
-      profs?.forEach((p: any) => { map[p.id] = p })
+      const { data: profs } = await supabase.from("profiles").select("id,nom").in("id", (mb as MembreGroupe[]).map(m => m.user_id))
+      const map: Record<string, Pick<Profil, 'id' | 'nom'>> = {}
+      for (const p of (profs || []) as Pick<Profil, 'id' | 'nom'>[]) map[p.id] = p
       setProfils(map)
     }
 
@@ -122,10 +123,10 @@ export default function ObjectifsGroupePage() {
 
         {objectifs.map(o => {
           const contribsObjectif = contributions.filter(c => c.objectif_id === o.id)
-          const total = contribsObjectif.reduce((s, c) => s + parseFloat(c.montant), 0)
+          const total = contribsObjectif.reduce((s, c) => s + Number(c.montant), 0)
           const pct = Math.min(100, (total / parseFloat(o.montant_cible)) * 100)
           const parPersonne: Record<string, number> = {}
-          contribsObjectif.forEach(c => { parPersonne[c.user_id] = (parPersonne[c.user_id] || 0) + parseFloat(c.montant) })
+          contribsObjectif.forEach(c => { parPersonne[c.user_id] = (parPersonne[c.user_id] || 0) + Number(c.montant) })
 
           return (
             <Card key={o.id} elevated style={{ marginBottom: "12px", padding: "16px" }}>

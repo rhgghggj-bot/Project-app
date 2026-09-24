@@ -1,4 +1,5 @@
 "use client"
+import { Profil, Projet, User } from "@/lib/types"
 import Image from "next/image"
 import { toast } from "@/lib/toast"
 import { onActivate, useEscape } from "@/lib/a11y"
@@ -12,7 +13,7 @@ import BadgesSection from "../components/BadgesSection"
 const COULEURS = ["#2B7FFF","#F43F5E","#10B981","#D4A843","#8B5CF6","#F59E0B","#EC4899","#1a1a2e"]
 
 export default function Profile() {
-  const [projets, setProjets] = useState<any[]>([])
+  const [projets, setProjets] = useState<Projet[]>([])
   const [nbFollowers, setNbFollowers] = useState(0)
   const [nbAbonnements, setNbAbonnements] = useState(0)
   const [stripeActif, setStripeActif] = useState(false)
@@ -20,8 +21,8 @@ export default function Profile() {
   const [listeOuverte, setListeOuverte] = useState<"followers" | "abonnements" | null>(null)
   useEscape(!!listeOuverte, () => setListeOuverte(null))
   const [profilsListe, setProfilsListe] = useState<any[]>([])
-  const [user, setUser] = useState<any>(null)
-  const [profil, setProfil] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
+  const [profil, setProfil] = useState<Profil | null>(null)
   const [onglet, setOnglet] = useState("projets")
   const [nom, setNom] = useState("")
   const [bio, setBio] = useState("")
@@ -67,7 +68,7 @@ export default function Profile() {
       try { data = JSON.parse(texte) } catch { data = { error: "Réponse invalide du serveur : " + texte.slice(0, 200) } }
       if (data.url) { window.location.assign(data.url); return }
       toast(data.error || "Connexion à Stripe impossible. Réessaie dans un instant.", "error")
-    } catch (e: any) {
+    } catch (e) {
       toast("Pas de connexion réseau (" + e.message + "). Vérifie ta connexion et réessaie.", "error")
     } finally {
       setChargementStripe(false)
@@ -222,7 +223,7 @@ export default function Profile() {
                 <Link href="/nouveau-projet" style={{color:couleurProfil,fontSize:'13px',fontWeight:'500'}}>Publier mon premier projet →</Link>
               </div>
             )}
-            {projets.map((projet: any) => (
+            {projets.map(projet => (
               <div key={projet.id} style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'16px',overflow:'hidden',marginBottom:'12px'}}>
                 <div style={{height:'100px',background:`linear-gradient(135deg,${couleurProfil}22,${couleurProfil}44)`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:'36px',position:'relative'}}>
                   <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="1.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>

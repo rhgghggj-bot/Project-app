@@ -1,4 +1,5 @@
 "use client"
+import { User } from "@/lib/types"
 import { useEffect, useState } from "react"
 import { usePathname } from "next/navigation"
 import Link from "next/link"
@@ -16,7 +17,7 @@ const IconScanner = () => <svg aria-hidden="true" width="13" height="13" viewBox
 
 export default function Navigation() {
   const pathname = usePathname()
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => setUser(user))

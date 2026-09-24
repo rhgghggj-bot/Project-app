@@ -1,4 +1,5 @@
 'use client'
+import { Groupe, User } from "@/lib/types"
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
@@ -8,8 +9,8 @@ const FORMES = ['▲','◆','●','■']
 
 export default function QuizPage() {
   const router = useRouter()
-  const [user, setUser] = useState<any>(null)
-  const [groupes, setGroupes] = useState<any[]>([])
+  const [user, setUser] = useState<User | null>(null)
+  const [groupes, setGroupes] = useState<Groupe[]>([])
   const [groupeId, setGroupeId] = useState<string|null>(null)
   const [quizList, setQuizList] = useState<any[]>([])
   const [mode, setMode] = useState<'liste'|'creer'|'jouer'|'resultats'>('liste')

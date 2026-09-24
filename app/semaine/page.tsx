@@ -1,4 +1,5 @@
 "use client"
+import { EvenementCalendrier, User } from "@/lib/types"
 import { onActivate } from "@/lib/a11y"
 import Link from "next/link"
 import Tutorial from "../components/Tutorial"
@@ -48,8 +49,8 @@ function parseICS(texte: string) {
 }
 
 export default function Semaine() {
-  const [evenements, setEvenements] = useState<any[]>([])
-  const [user, setUser] = useState<any>(null)
+  const [evenements, setEvenements] = useState<EvenementCalendrier[]>([])
+  const [user, setUser] = useState<User | null>(null)
   const [selectedDay, setSelectedDay] = useState<any>(null)
   const [importEnCours, setImportEnCours] = useState(false)
   const [importMessage, setImportMessage] = useState("")

@@ -1,4 +1,5 @@
 "use client"
+import { Disponibilite, User } from "@/lib/types"
 import { useChargement } from "@/lib/useChargement"
 import { Fragment, useState } from "react"
 import { useParams } from "next/navigation"
@@ -30,9 +31,9 @@ export default function DisponibilitesGroupePage() {
   const params = useParams()
   const id = Array.isArray(params.id) ? params.id[0] : params.id
 
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
   const [nbMembres, setNbMembres] = useState(0)
-  const [dispos, setDispos] = useState<any[]>([])
+  const [dispos, setDispos] = useState<Disponibilite[]>([])
   const jours = joursSuivants(14)
 
 

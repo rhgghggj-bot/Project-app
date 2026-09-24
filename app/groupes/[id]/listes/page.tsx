@@ -1,4 +1,5 @@
 "use client"
+import { Liste } from "@/lib/types"
 import { useChargement } from "@/lib/useChargement"
 import { confirmer } from "@/lib/toast"
 import { onActivate } from "@/lib/a11y"
@@ -12,7 +13,7 @@ export default function ListesPage() {
   const params = useParams()
   const id = Array.isArray(params.id) ? params.id[0] : params.id
   const router = useRouter()
-  const [listes, setListes] = useState<any[]>([])
+  const [listes, setListes] = useState<Liste[]>([])
   const [showForm, setShowForm] = useState(false)
   const [titre, setTitre] = useState("")
   const [categorieBudget, setCategorieBudget] = useState("Alimentation")

@@ -1,4 +1,5 @@
 "use client"
+import { Depense, MembreGroupe, Profil, User, DepensePartagee, PartDepense } from "@/lib/types"
 import { useChargement } from "@/lib/useChargement"
 import { toast } from "@/lib/toast"
 import { useState } from "react"
@@ -17,11 +18,11 @@ export default function DepensesPartageesPage() {
   const params = useParams()
   const id = Array.isArray(params.id) ? params.id[0] : params.id
 
-  const [user, setUser] = useState<any>(null)
-  const [membres, setMembres] = useState<any[]>([])
-  const [profils, setProfils] = useState<Record<string, any>>({})
-  const [depenses, setDepenses] = useState<any[]>([])
-  const [parts, setParts] = useState<any[]>([])
+  const [user, setUser] = useState<User | null>(null)
+  const [membres, setMembres] = useState<MembreGroupe[]>([])
+  const [profils, setProfils] = useState<Record<string, Pick<Profil, 'id' | 'nom'>>>({})
+  const [depenses, setDepenses] = useState<DepensePartagee[]>([])
+  const [parts, setParts] = useState<PartDepense[]>([])
   const [showForm, setShowForm] = useState(false)
   const [titre, setTitre] = useState("")
   const [montant, setMontant] = useState("")
@@ -36,10 +37,10 @@ export default function DepensesPartageesPage() {
     const { data: mb } = await supabase.from("membres_groupe").select("*").eq("groupe_id", id)
     setMembres(mb || [])
     if (mb && mb.length > 0) {
-      const ids = mb.map((m: any) => m.user_id)
+      const ids = (mb as MembreGroupe[]).map(m => m.user_id)
       const { data: profs } = await supabase.from("profiles").select("id,nom").in("id", ids)
-      const map: Record<string, any> = {}
-      profs?.forEach((p: any) => { map[p.id] = p })
+      const map: Record<string, Pick<Profil, 'id' | 'nom'>> = {}
+      for (const p of (profs || []) as Pick<Profil, 'id' | 'nom'>[]) map[p.id] = p
       setProfils(map)
       setParticipants(prev => {
         const next = { ...prev }
@@ -103,10 +104,10 @@ export default function DepensesPartageesPage() {
   }
 
   const mesPartsDues = parts.filter(p => p.user_id === user?.id && p.statut === "du")
-  const totalJeDoit = mesPartsDues.reduce((s, p) => s + parseFloat(p.montant), 0)
+  const totalJeDoit = mesPartsDues.reduce((s, p) => s + Number(p.montant), 0)
   const mesDepenses = depenses.filter(d => d.payeur_id === user?.id)
   const partsOnMeDoit = parts.filter(p => mesDepenses.some(d => d.id === p.depense_id) && p.statut === "du")
-  const totalOnMeDoit = partsOnMeDoit.reduce((s, p) => s + parseFloat(p.montant), 0)
+  const totalOnMeDoit = partsOnMeDoit.reduce((s, p) => s + Number(p.montant), 0)
 
   return (
     <main className="min-h-screen bg-white">
@@ -144,7 +145,7 @@ export default function DepensesPartageesPage() {
               style={{ width: "100%", border: `1px solid ${colors.border}`, borderRadius: "10px", padding: "10px 12px", fontSize: "16px", color: colors.text, background: "#fff", marginBottom: "10px", boxSizing: "border-box" }} />
             <div style={{ fontSize: "12px", color: colors.textMuted, marginBottom: "6px" }}>Partagée entre (montant divisé également)</div>
             <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginBottom: "12px" }}>
-              {membres.map((m: any) => (
+              {membres.map(m => (
                 <label key={m.user_id} style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", color: colors.text }}>
                   <input type="checkbox" checked={!!participants[m.user_id]}
                     onChange={e => setParticipants(prev => ({ ...prev, [m.user_id]: e.target.checked }))} />
@@ -174,19 +175,19 @@ export default function DepensesPartageesPage() {
                   <div style={{ fontSize: "14px", fontWeight: 500, color: colors.text }}>{d.titre}</div>
                   <div style={{ fontSize: "11px", color: colors.textFaint }}>Payé par {profils[d.payeur_id]?.nom || 'Membre'} · {new Date(d.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}</div>
                 </div>
-                <div style={{ fontSize: "16px", fontWeight: 600, color: colors.text }}>{parseFloat(d.montant_total).toFixed(2)} CHF</div>
+                <div style={{ fontSize: "16px", fontWeight: 600, color: colors.text }}>{Number(d.montant_total).toFixed(2)} CHF</div>
               </div>
 
               {jeSuisPayeur && partsDepense.map(p => (
                 <div key={p.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", fontSize: "12px", color: colors.textMuted }}>
-                  <span>{profils[p.user_id]?.nom || 'Membre'} doit {parseFloat(p.montant).toFixed(2)} CHF</span>
+                  <span>{profils[p.user_id]?.nom || 'Membre'} doit {Number(p.montant).toFixed(2)} CHF</span>
                   <span style={{ color: p.statut === 'regle' ? colors.green : colors.textFaint, fontWeight: 500 }}>{p.statut === 'regle' ? '✓ Réglé' : 'En attente'}</span>
                 </div>
               ))}
 
               {!jeSuisPayeur && maPart && (
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "6px" }}>
-                  <span style={{ fontSize: "12px", color: colors.textMuted }}>Ta part : {parseFloat(maPart.montant).toFixed(2)} CHF</span>
+                  <span style={{ fontSize: "12px", color: colors.textMuted }}>Ta part : {Number(maPart.montant).toFixed(2)} CHF</span>
                   {maPart.statut === 'regle' ? (
                     <span style={{ fontSize: "12px", color: colors.green, fontWeight: 500 }}>✓ Réglé</span>
                   ) : (

@@ -1,4 +1,5 @@
 "use client"
+import { User } from "@/lib/types"
 import { useMaintenant } from "@/lib/useMaintenant"
 import { onActivate, useEscape } from "@/lib/a11y"
 import { useEffect, useState, useRef } from "react"
@@ -10,7 +11,7 @@ export default function NotificationBell() {
   const [ouvert, setOuvert] = useState(false)
   const maintenant = useMaintenant()
   useEscape(!!ouvert, () => setOuvert(false))
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
   const router = useRouter()
   const channelRef = useRef<any>(null)
 
