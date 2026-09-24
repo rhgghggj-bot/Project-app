@@ -1,4 +1,5 @@
 "use client"
+import { SkeletonPage } from "@/app/components/ui/Skeleton"
 import { onActivate } from "@/lib/a11y"
 import SectionHeader from "@/app/components/ui/SectionHeader"
 import { useState, Suspense } from "react"
@@ -210,7 +211,7 @@ function Formulaire() {
 
 export default function NouvelEvenement() {
   return (
-    <Suspense fallback={<main className="min-h-screen bg-white flex items-center justify-center"><p className="text-gray-400 text-sm">Chargement…</p></main>}>
+    <Suspense fallback={<SkeletonPage />}>
       <Formulaire />
     </Suspense>
   )

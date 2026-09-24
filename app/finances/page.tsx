@@ -1,4 +1,5 @@
 "use client"
+import { SkeletonPage } from "@/app/components/ui/Skeleton"
 import { useEscape } from "@/lib/a11y"
 import Link from "next/link"
 import DeviseSelector from "../components/DeviseSelector"
@@ -816,7 +817,7 @@ function FinancesContent() {
 
 export default function Finances() {
   return (
-    <Suspense fallback={<div className="p-8 text-center text-gray-400">Chargement…</div>}>
+    <Suspense fallback={<SkeletonPage />}>
       <FinancesContent />
     </Suspense>
   )

@@ -1,4 +1,5 @@
 "use client"
+import { SkeletonPage } from "@/app/components/ui/Skeleton"
 import { onActivate } from "@/lib/a11y"
 import Link from "next/link"
 import { useEffect, useState } from "react"
@@ -72,7 +73,7 @@ export default function DetailEvenement() {
   }
 
   if (loading) {
-    return <main className="min-h-screen bg-white flex items-center justify-center"><p className="text-gray-400 text-sm">Chargement…</p></main>
+    return <SkeletonPage />
   }
 
   if (introuvable) {

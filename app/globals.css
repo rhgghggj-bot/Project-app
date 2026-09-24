@@ -95,3 +95,21 @@ button:active, a:active, [role="button"]:active, [style*="cursor: pointer"]:acti
     box-shadow: 0 0 0 1px #E3EBF7, 0 8px 40px rgba(10, 22, 40, 0.06);
   }
 }
+
+/* --- Squelettes de chargement --- */
+.nx-skel {
+  background: linear-gradient(90deg, #EEF3FA 25%, #F7FAFD 50%, #EEF3FA 75%);
+  background-size: 200% 100%;
+  animation: nx-shimmer 1.4s ease-in-out infinite;
+}
+.nx-skel-dark {
+  background: linear-gradient(90deg, rgba(255,255,255,0.08) 25%, rgba(255,255,255,0.16) 50%, rgba(255,255,255,0.08) 75%);
+  background-size: 200% 100%;
+}
+@keyframes nx-shimmer {
+  from { background-position: 100% 0; }
+  to { background-position: -100% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nx-skel { animation: none; }
+}

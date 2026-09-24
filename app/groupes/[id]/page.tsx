@@ -1,4 +1,5 @@
 "use client"
+import { SkeletonChat } from "@/app/components/ui/Skeleton"
 import { toast } from "@/lib/toast"
 import { useEscape } from "@/lib/a11y"
 import Link from "next/link"
@@ -305,7 +306,7 @@ export default function GroupePage() {
     return true
   })
 
-  if (!groupe) return <div className="p-8 text-center text-gray-400">Chargement…</div>
+  if (!groupe) return <SkeletonChat />
 
   if (!estMembre) {
     return (

@@ -1,4 +1,5 @@
 "use client"
+import { SkeletonPage } from "@/app/components/ui/Skeleton"
 import { toast } from "@/lib/toast"
 import Link from "next/link"
 import { useEffect, useState } from "react"
@@ -80,7 +81,7 @@ export default function Projet() {
     }
   }
 
-  if (!projet) return <div style={{padding:'32px',textAlign:'center',color:'#aaa',fontSize:'14px'}}>Chargement…</div>
+  if (!projet) return <SkeletonPage />
 
   const jaimeMoi = likes.some(l => l.user_id === user?.id)
 
