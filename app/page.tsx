@@ -265,6 +265,19 @@ export default function Home() {
             </div>
           </Link>
 
+          <Link href="/etudes" style={{textDecoration:'none',display:'block',marginTop:'10px'}}>
+            <div style={{background:'rgba(15,45,92,0.85)',borderRadius:'14px',padding:'12px',display:'flex',alignItems:'center',gap:'12px',border:'1px solid rgba(255,255,255,0.15)'}}>
+              <div style={{width:'38px',height:'38px',borderRadius:'10px',background:'rgba(255,255,255,0.1)',border:'1px solid rgba(255,255,255,0.2)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a8d8f0" strokeWidth="1.8"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c3 2 9 2 12 0v-5"/></svg>
+              </div>
+              <div>
+                <div style={{fontSize:'13px',fontWeight:'500',color:'#fff'}}>Espace étudiant</div>
+                <div style={{fontSize:'11px',color:'rgba(255,255,255,0.6)',marginTop:'2px'}}>Notes, corrections par l&apos;IA, révisions</div>
+              </div>
+              <div style={{marginLeft:'auto',color:'rgba(255,255,255,0.5)',fontSize:'18px'}}>›</div>
+            </div>
+          </Link>
+
           <Link href="/jeux" style={{textDecoration:'none',display:'block',marginTop:'10px'}}>
             <div style={{background:'linear-gradient(135deg,rgba(212,168,67,0.32),rgba(249,115,22,0.22)),#1a3a6e',borderRadius:'14px',padding:'12px',display:'flex',alignItems:'center',gap:'12px',border:'1px solid rgba(212,168,67,0.45)'}}>
               <div style={{width:'38px',height:'38px',borderRadius:'10px',background:'rgba(255,255,255,0.12)',border:'1px solid rgba(255,255,255,0.2)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
