@@ -16,15 +16,17 @@ import NotesSection from "./NotesSection"
 import CorrectionSection from "./CorrectionSection"
 import RevisionSection from "./RevisionSection"
 import Donnees from "./Donnees"
+import ArtefactsSection from "./ArtefactsSection"
 import { CURSUS, descriptionNiveau, matieresProposees, trouverNiveau } from "@/lib/cursus"
 
-type Onglet = "notes" | "corriger" | "reviser"
+type Onglet = "notes" | "corriger" | "reviser" | "artefacts"
 type Profil = { pays: Pays; niveau: string | null; filiere: string | null; specialites: string[]; entreprise_id: string; entreprise_perso: EntreprisePerso | null }
 
 const ONGLETS: { id: Onglet; label: string }[] = [
   { id: "notes", label: "Mes notes" },
   { id: "corriger", label: "Corriger" },
   { id: "reviser", label: "Réviser" },
+  { id: "artefacts", label: "Artefacts" },
 ]
 
 // Le choix de l'IA dépend de l'appareil (Ollama tourne en local) : il est
@@ -170,7 +172,7 @@ export default function EspaceEtudiant() {
         <div role="tablist" aria-label="Sections de l'espace étudiant" style={{ display: "flex", gap: "4px", background: colors.blueLight, borderRadius: radius.pill, padding: "4px", marginBottom: "14px" }}>
           {ONGLETS.map(o => (
             <button key={o.id} role="tab" aria-selected={onglet === o.id} onClick={() => setOnglet(o.id)}
-              style={{ flex: 1, border: "none", borderRadius: radius.pill, padding: "8px 4px", fontSize: "13px", fontWeight: 500, cursor: "pointer",
+              style={{ flex: 1, border: "none", borderRadius: radius.pill, padding: "8px 2px", fontSize: "12px", fontWeight: 500, cursor: "pointer",
                 background: onglet === o.id ? "#fff" : "transparent", color: onglet === o.id ? colors.blue : colors.textMuted,
                 boxShadow: onglet === o.id ? "0 1px 4px rgba(43,127,255,0.15)" : "none" }}>
               {o.label}
@@ -186,6 +188,7 @@ export default function EspaceEtudiant() {
               entrepriseId={p.entreprise_id} entreprisePerso={p.entreprise_perso}
               onChangerEntreprise={(id, perso) => majProfil({ entreprise_id: id, entreprise_perso: perso })} />
           )}
+          {onglet === "artefacts" && <ArtefactsSection userId={userId} />}
         </div>
       </div>
     </main>
