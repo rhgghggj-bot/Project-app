@@ -90,6 +90,7 @@ export async function analyserDocument<T>(opts: {
   fichier: File | null
   texteColle: string
   pays: Pays
+  niveau: string
   matiere: string
   consigneLocale: string
   schema: z.ZodType<T>
@@ -112,7 +113,7 @@ export async function analyserDocument<T>(opts: {
     method: "POST",
     headers: { "Content-Type": "application/json", ...(await authHeaders()) },
     body: JSON.stringify({
-      mode: opts.mode, pays: opts.pays, matiere: opts.matiere, ...doc,
+      mode: opts.mode, pays: opts.pays, niveau: opts.niveau || undefined, matiere: opts.matiere, ...doc,
       entrepriseId: opts.entrepriseId, entreprisePerso: opts.entreprisePerso,
     }),
   })

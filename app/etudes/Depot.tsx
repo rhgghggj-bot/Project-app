@@ -9,8 +9,9 @@ export const titreCarte: React.CSSProperties = { fontSize: "13px", fontWeight: 5
 
 // Zone de dépôt commune (copie à corriger, cours à réviser) : photo, PDF ou
 // texte collé, plus la matière.
-export default function Depot({ titre, aide, ia, enCours, libelleAction, onEnvoyer }: {
+export default function Depot({ titre, aide, ia, enCours, libelleAction, matieres, onEnvoyer }: {
   titre: string
+  matieres: string[]
   aide: string
   ia: ChoixIA
   enCours: boolean
@@ -33,7 +34,8 @@ export default function Depot({ titre, aide, ia, enCours, libelleAction, onEnvoy
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginBottom: "10px" }}>
         <label><span style={{ fontSize: "11px", color: colors.textMuted, display: "block", marginBottom: "4px" }}>Matière</span>
-          <input value={matiere} onChange={e => setMatiere(e.target.value)} style={champ} placeholder="Comptabilité" />
+          <input list={`matieres-${titre}`} value={matiere} onChange={e => setMatiere(e.target.value)} style={champ} placeholder={matieres[0] || "Mathématiques"} />
+          <datalist id={`matieres-${titre}`}>{matieres.map(m => <option key={m} value={m} />)}</datalist>
         </label>
         <label><span style={{ fontSize: "11px", color: colors.textMuted, display: "block", marginBottom: "4px" }}>Titre (facultatif)</span>
           <input value={nom} onChange={e => setNom(e.target.value)} style={champ} placeholder="Chapitre 3" />

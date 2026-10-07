@@ -13,7 +13,7 @@ import Quiz from "./Quiz"
 type CorrectionEnregistree = Correction & { echelle: Echelle }
 type EvaluationCorrigee = { id: string; matiere: string; titre: string; fichier_path: string | null; correction: CorrectionEnregistree; created_at: string }
 
-export default function CorrectionSection({ userId, pays, reglages }: { userId: string; pays: Pays; reglages: ReglagesIA }) {
+export default function CorrectionSection({ userId, pays, niveau, matieres, reglages }: { userId: string; pays: Pays; niveau: string; matieres: string[]; reglages: ReglagesIA }) {
   const [liste, setListe] = useState<EvaluationCorrigee[] | null>(null)
   const [ouverte, setOuverte] = useState<string | null>(null)
   const [enCours, setEnCours] = useState(false)
@@ -30,8 +30,8 @@ export default function CorrectionSection({ userId, pays, reglages }: { userId: 
     try {
       const [correction, chemin] = await Promise.all([
         analyserDocument({
-          mode: "correction", reglages, fichier: d.fichier, texteColle: d.texte, pays, matiere: d.matiere,
-          consigneLocale: consigneCorrection({ pays, matiere: d.matiere }), schema: CorrectionSchema,
+          mode: "correction", reglages, fichier: d.fichier, texteColle: d.texte, pays, niveau, matiere: d.matiere,
+          consigneLocale: consigneCorrection({ pays, matiere: d.matiere, niveau }), schema: CorrectionSchema,
         }),
         d.fichier ? deposerFichier(userId, d.fichier, "evaluations") : Promise.resolve(null),
       ])
@@ -60,7 +60,7 @@ export default function CorrectionSection({ userId, pays, reglages }: { userId: 
 
   return (
     <div>
-      <Depot titre="Scanner une évaluation" ia={reglages.ia} enCours={enCours} libelleAction="Corriger mon évaluation" onEnvoyer={corriger}
+      <Depot titre="Scanner une évaluation" matieres={matieres} ia={reglages.ia} enCours={enCours} libelleAction="Corriger mon évaluation" onEnvoyer={corriger}
         aide="Photographie ta copie (ou ton test corrigé par le prof). L'IA repère les erreurs, explique la bonne réponse et te prépare des exercices et un quiz sur tes points faibles." />
 
       {liste === null && <div className="nx-skel" style={{ height: 80, borderRadius: radius.md }} />}

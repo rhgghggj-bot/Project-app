@@ -17,6 +17,7 @@ const CorpsSchema = z.object({
   mode: z.enum(["correction", "fiches"]),
   matiere: z.string().max(120).default(""),
   pays: z.enum(["CH", "FR"]),
+  niveau: z.string().max(300).optional(),
   base64: z.string().max(6_000_000).optional(),
   mediaType: z.string().optional(),
   texte: z.string().max(100_000).optional(),
@@ -41,7 +42,7 @@ export async function POST(req: NextRequest) {
 
   const corps = CorpsSchema.safeParse(await req.json().catch(() => null))
   if (!corps.success) return NextResponse.json({ error: "Requête invalide" }, { status: 400 })
-  const { mode, matiere, pays, base64, mediaType, texte, entrepriseId, entreprisePerso } = corps.data
+  const { mode, matiere, pays, niveau, base64, mediaType, texte, entrepriseId, entreprisePerso } = corps.data
 
   // Le document : PDF ou image en base64, sinon du texte collé.
   const contenu: Anthropic.Beta.BetaContentBlockParam[] = []
@@ -56,8 +57,8 @@ export async function POST(req: NextRequest) {
   }
 
   const consigne = mode === "correction"
-    ? consigneCorrection({ pays, matiere })
-    : consigneFiches({ pays, matiere, entreprise: entrepriseChoisie(entrepriseId, entreprisePerso) })
+    ? consigneCorrection({ pays, matiere, niveau })
+    : consigneFiches({ pays, matiere, niveau, entreprise: entrepriseChoisie(entrepriseId, entreprisePerso) })
   contenu.push({ type: "text", text: consigne })
 
   try {

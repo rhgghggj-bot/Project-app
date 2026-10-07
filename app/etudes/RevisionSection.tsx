@@ -12,9 +12,11 @@ import Quiz from "./Quiz"
 
 type CoursEtudiant = { id: string; matiere: string; titre: string; fichier_path: string | null; entreprise_id: string; fiches: Fiches; created_at: string }
 
-export default function RevisionSection({ userId, pays, reglages, entrepriseId, entreprisePerso, onChangerEntreprise }: {
+export default function RevisionSection({ userId, pays, niveau, matieres, reglages, entrepriseId, entreprisePerso, onChangerEntreprise }: {
   userId: string
   pays: Pays
+  niveau: string
+  matieres: string[]
   reglages: ReglagesIA
   entrepriseId: string
   entreprisePerso: EntreprisePerso | null
@@ -38,8 +40,8 @@ export default function RevisionSection({ userId, pays, reglages, entrepriseId, 
     try {
       const [fiches, chemin] = await Promise.all([
         analyserDocument({
-          mode: "fiches", reglages, fichier: d.fichier, texteColle: d.texte, pays, matiere: d.matiere,
-          consigneLocale: consigneFiches({ pays, matiere: d.matiere, entreprise }), schema: FichesSchema,
+          mode: "fiches", reglages, fichier: d.fichier, texteColle: d.texte, pays, niveau, matiere: d.matiere,
+          consigneLocale: consigneFiches({ pays, matiere: d.matiere, entreprise, niveau }), schema: FichesSchema,
           entrepriseId, entreprisePerso,
         }),
         d.fichier ? deposerFichier(userId, d.fichier, "cours") : Promise.resolve(null),
@@ -96,7 +98,7 @@ export default function RevisionSection({ userId, pays, reglages, entrepriseId, 
         )}
       </div>
 
-      <Depot titre="Déposer un cours" ia={reglages.ia} enCours={enCours} libelleAction={`Créer mes fiches avec ${entreprise.nom}`} onEnvoyer={creerFiches}
+      <Depot titre="Déposer un cours" matieres={matieres} ia={reglages.ia} enCours={enCours} libelleAction={`Créer mes fiches avec ${entreprise.nom}`} onEnvoyer={creerFiches}
         aide={`Envoie tes slides ou ton polycopié. Chaque notion devient une fiche avec un résumé, le vocabulaire expliqué, un exemple chez ${entreprise.nom}, un exercice corrigé et un quiz. Tes documents restent privés.`} />
 
       {cours === null && <div className="nx-skel" style={{ height: 80, borderRadius: radius.md }} />}
@@ -197,7 +199,7 @@ function DetailCours({ cours, userId, onSupprimer }: { cours: CoursEtudiant; use
       ) : (
         <div>
           <div style={{ fontSize: "15px", fontWeight: 600, color: colors.text, marginBottom: "6px" }}>{n.titre}</div>
-          <p style={{ fontSize: "13px", color: colors.textMuted, lineHeight: 1.55, margin: "0 0 8px" }}>{n.resume}</p>
+          <p style={{ fontSize: "13px", color: colors.textMuted, lineHeight: 1.55, margin: "0 0 8px", whiteSpace: "pre-line" }}>{n.resume}</p>
           {n.points.length > 0 && (
             <ul style={{ margin: "0 0 10px", paddingLeft: "18px" }}>
               {n.points.map((p, i) => <li key={i} style={{ fontSize: "13px", color: colors.text, lineHeight: 1.5, marginBottom: "3px" }}>{p}</li>)}
@@ -209,11 +211,13 @@ function DetailCours({ cours, userId, onSupprimer }: { cours: CoursEtudiant; use
               {n.vocabulaire.map((v, i) => <div key={i} style={{ fontSize: "12px", color: colors.text, lineHeight: 1.5 }}><b>{v.mot}</b> : {v.definition}</div>)}
             </div>
           )}
-          <div style={{ background: colors.goldLight, borderRadius: radius.sm, padding: "10px 12px", marginBottom: "10px" }}>
-            <div style={{ fontSize: "12px", fontWeight: 500, color: "#92400E", marginBottom: "4px" }}>Dans ton entreprise</div>
-            <div style={{ fontSize: "12px", color: colors.text, lineHeight: 1.5 }}>{n.exemple_entreprise}</div>
-          </div>
-          <Exercice numero={1} enonce={n.exercice.enonce} solution={n.exercice.solution} />
+          {n.exemple_entreprise && (
+            <div style={{ background: colors.goldLight, borderRadius: radius.sm, padding: "10px 12px", marginBottom: "10px" }}>
+              <div style={{ fontSize: "12px", fontWeight: 500, color: "#92400E", marginBottom: "4px" }}>Dans ton entreprise</div>
+              <div style={{ fontSize: "12px", color: colors.text, lineHeight: 1.5 }}>{n.exemple_entreprise}</div>
+            </div>
+          )}
+          {n.exercice.enonce && <Exercice numero={1} enonce={n.exercice.enonce} solution={n.exercice.solution} />}
           {quizValide(n.quiz).length > 0 && (
             <div style={{ background: "#F8FBFF", borderRadius: radius.sm, padding: "12px", marginTop: "6px" }}>
               <div style={titreCarte}>Teste-toi</div>

@@ -26,7 +26,7 @@ function aujourdhuiISO() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
 }
 
-export default function NotesSection({ userId, pays }: { userId: string; pays: Pays }) {
+export default function NotesSection({ userId, pays, matieresProposees }: { userId: string; pays: Pays; matieresProposees: string[] }) {
   const systeme = SYSTEMES[pays]
   const [notes, setNotes] = useState<NoteEtudiant[] | null>(null)
   const [filtre, setFiltre] = useState<string>("Toutes")
@@ -117,7 +117,17 @@ export default function NotesSection({ userId, pays }: { userId: string; pays: P
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
             <label style={{ gridColumn: "1 / -1" }}><span style={etiquette}>Matière</span>
               <input list="matieres-etudes" value={form.matiere} onChange={e => setForm({ ...form, matiere: e.target.value })} style={champ} placeholder="Mathématiques" required />
-              <datalist id="matieres-etudes">{matieres.map(m => <option key={m} value={m} />)}</datalist>
+              <datalist id="matieres-etudes">{[...new Set([...matieres, ...matieresProposees])].map(m => <option key={m} value={m} />)}</datalist>
+              {matieresProposees.length > 0 && !form.matiere && (
+                <div style={{ display: "flex", gap: "4px", flexWrap: "wrap", marginTop: "6px" }}>
+                  {matieresProposees.slice(0, 12).map(m => (
+                    <button key={m} type="button" onClick={() => setForm({ ...form, matiere: m })}
+                      style={{ fontSize: "11px", padding: "4px 9px", borderRadius: radius.pill, border: `0.5px solid ${colors.blueBorder}`, background: "#fff", color: colors.blue, cursor: "pointer" }}>
+                      {m}
+                    </button>
+                  ))}
+                </div>
+              )}
             </label>
             <label style={{ gridColumn: "1 / -1" }}><span style={etiquette}>Évaluation (facultatif)</span>
               <input value={form.titre} onChange={e => setForm({ ...form, titre: e.target.value })} style={champ} placeholder="Test chapitre 2" />

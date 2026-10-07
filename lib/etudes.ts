@@ -114,10 +114,14 @@ export const FichesSchema = z.object({
 export type Fiches = z.infer<typeof FichesSchema>
 
 // ─── Consignes communes aux deux IA ────────────────────────────────────────
-export function consigneCorrection(opts: { pays: Pays; matiere: string }) {
+function ligneNiveau(niveau?: string) {
+  return niveau ? `\nNiveau d'études : ${niveau}. Adapte le vocabulaire et la difficulté à ce niveau.` : ""
+}
+
+export function consigneCorrection(opts: { pays: Pays; matiere: string; niveau?: string }) {
   const s = SYSTEMES[opts.pays]
   return `Tu es un professeur bienveillant qui corrige l'évaluation d'un élève ou étudiant (${opts.pays === "CH" ? "Suisse" : "France"}).
-Matière indiquée : ${opts.matiere || "à déduire du document"}.
+Matière indiquée : ${opts.matiere || "à déduire du document"}.${ligneNiveau(opts.niveau)}
 Barème : ${s.label} (suffisant = ${s.suffisant}). Donne note_estimee dans cette échelle.
 - Lis toute la copie. Pour chaque réponse fausse ou incomplète, donne la bonne réponse et explique simplement le raisonnement.
 - Si la copie est déjà corrigée par le professeur, appuie-toi sur ses annotations.
@@ -126,10 +130,10 @@ Barème : ${s.label} (suffisant = ${s.suffisant}). Donne note_estimee dans cette
 - Réponds en français, sans markdown, sans jargon non expliqué.`
 }
 
-export function consigneFiches(opts: { pays: Pays; matiere: string; entreprise: EntrepriseFictive }) {
+export function consigneFiches(opts: { pays: Pays; matiere: string; entreprise: EntrepriseFictive; niveau?: string }) {
   const e = opts.entreprise
   return `Tu aides un étudiant (${opts.pays === "CH" ? "Suisse" : "France"}, devise ${SYSTEMES[opts.pays].devise}) à réviser un cours.
-Matière : ${opts.matiere || "à déduire du document"}.
+Matière : ${opts.matiere || "à déduire du document"}.${ligneNiveau(opts.niveau)}
 Il révise à travers une entreprise fictive : ${e.nom} (${e.secteur}). ${e.description}
 - Découpe le document en notions (une fiche par notion importante, 3 à 10 notions).
 - Reste fidèle au cours : définitions, listes, formules et exemples du professeur.
