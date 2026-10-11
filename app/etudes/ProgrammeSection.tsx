@@ -15,11 +15,12 @@ import FicheNotion from "./FicheNotion"
 
 type NoteLiee = { id: string; note: number; echelle: Echelle; titre: string | null; date: string }
 
-export default function ProgrammeSection({ userId, pays, niveauId, filiere, annee, onChangerAnnee, chapitreOuvert, onOuvrirChapitre }: {
+export default function ProgrammeSection({ userId, pays, niveauId, filiere, specialites, annee, onChangerAnnee, chapitreOuvert, onOuvrirChapitre }: {
   userId: string
   pays: Pays
   niveauId: string | null
   filiere: string | null
+  specialites: string[]
   annee: string | null
   onChangerAnnee: (annee: string) => void
   chapitreOuvert: string | null
@@ -47,7 +48,7 @@ export default function ProgrammeSection({ userId, pays, niveauId, filiere, anne
   const chapitre = chapitreOuvert ? programme.chapitres.find(c => c.id === chapitreOuvert) : undefined
   if (chapitre) return <VueChapitre chapitre={chapitre} userId={userId} onRetour={() => onOuvrirChapitre(null)} />
 
-  const chapitres = chapitresPour(programme, anneeChoisie, filiere)
+  const chapitres = chapitresPour(programme, anneeChoisie, filiere, specialites)
   const matieres = [...new Set(chapitres.map(c => c.matiere))]
   const filiereLabel = niveau.filieres?.find(f => f.id === filiere)?.label
 
@@ -70,7 +71,7 @@ export default function ProgrammeSection({ userId, pays, niveauId, filiere, anne
       )}
       {matieres.length === 0 && (
         <div style={{ fontSize: "12px", color: colors.textMuted }}>
-          {niveau.filieres && !filiere ? "Choisis ta filière dans Réglages pour voir tes chapitres." : "Pas encore de chapitres pour cette année."}
+          {niveau.filieres && !filiere ? "Choisis ta filière dans Réglages pour voir tes chapitres." : niveau.specialites && specialites.length === 0 ? "Choisis tes spécialités dans Réglages pour voir leurs chapitres." : "Pas encore de chapitres pour cette année."}
         </div>
       )}
       {matieres.map(m => {

@@ -6,7 +6,7 @@ import { useChargement } from "@/lib/useChargement"
 import { useMaintenant } from "@/lib/useMaintenant"
 import { colors, radius } from "@/app/components/ui/tokens"
 import { SYSTEMES, formaterNote, moyennePonderee, type Echelle, type Pays } from "@/lib/etudes"
-import { chapitresDeMatiere, chargerProgramme, type Programme } from "@/lib/programmes"
+import { chapitreVisible, chapitresDeMatiere, chargerProgramme, type Programme } from "@/lib/programmes"
 
 export type NoteEtudiant = {
   id: string
@@ -29,12 +29,13 @@ function aujourdhuiISO() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
 }
 
-export default function NotesSection({ userId, pays, matieresProposees, niveauId, filiere, onOuvrirChapitre }: {
+export default function NotesSection({ userId, pays, matieresProposees, niveauId, filiere, specialites, onOuvrirChapitre }: {
   userId: string
   pays: Pays
   matieresProposees: string[]
   niveauId: string | null
   filiere: string | null
+  specialites: string[]
   onOuvrirChapitre: (id: string) => void
 }) {
   const systeme = SYSTEMES[pays]
@@ -63,10 +64,10 @@ export default function NotesSection({ userId, pays, matieresProposees, niveauId
   const visibles = filtre === "Toutes" ? notesEchelle : notesEchelle.filter(n => n.matiere === filtre)
   const moyenneGenerale = moyennePonderee(visibles)
   const titreChapitre = (id: string | null) => (id && programme?.chapitres.find(c => c.id === id)?.titre) || null
-  const chapitresForm = programme && form.matiere ? chapitresDeMatiere(programme, form.matiere.trim(), filiere) : []
+  const chapitresForm = programme && form.matiere ? chapitresDeMatiere(programme, form.matiere.trim(), filiere, specialites) : []
   // Matières du programme (toutes années) en plus de celles du niveau
   const propositions = [...new Set([
-    ...(programme ? programme.chapitres.filter(c => c.filiere === null || c.filiere === filiere).map(c => c.matiere) : []),
+    ...(programme ? programme.chapitres.filter(c => chapitreVisible(c, filiere, specialites)).map(c => c.matiere) : []),
     ...matieresProposees,
   ])]
 

@@ -198,12 +198,12 @@ export default function EspaceEtudiant() {
         </div>
 
         <div role="tabpanel" key={version}>
-          {onglet === "notes" && <NotesSection userId={userId} pays={p.pays} matieresProposees={matieres} niveauId={p.niveau} filiere={p.filiere}
+          {onglet === "notes" && <NotesSection userId={userId} pays={p.pays} matieresProposees={matieres} niveauId={p.niveau} filiere={p.filiere} specialites={p.specialites}
             onOuvrirChapitre={id => { setChapitreOuvert(id); setOnglet("reviser") }} />}
           {onglet === "corriger" && <CorrectionSection userId={userId} pays={p.pays} niveau={texteNiveau} matieres={matieres} reglages={reglages} />}
           {onglet === "reviser" && (
             <RevisionSection userId={userId} pays={p.pays} niveau={texteNiveau} matieres={matieres} reglages={reglages}
-              niveauId={p.niveau} filiere={p.filiere} annee={p.annee} onChangerAnnee={a => majProfil({ annee: a })}
+              niveauId={p.niveau} filiere={p.filiere} specialites={p.specialites} annee={p.annee} onChangerAnnee={a => majProfil({ annee: a })}
               chapitreOuvert={chapitreOuvert} onOuvrirChapitre={setChapitreOuvert}
               entrepriseId={p.entreprise_id} entreprisePerso={p.entreprise_perso}
               onChangerEntreprise={(id, perso) => majProfil({ entreprise_id: id, entreprise_perso: perso })} />

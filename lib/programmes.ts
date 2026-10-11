@@ -54,11 +54,18 @@ export function chargerProgramme(pays: Pays, niveau: string): Promise<Programme 
   return cache.get(cle)!
 }
 
-export function chapitresPour(programme: Programme, annee: string, filiere: string | null): Chapitre[] {
-  return programme.chapitres.filter(c => c.annee === annee && (c.filiere === null || c.filiere === filiere))
+// Un chapitre est visible s'il est commun, de la filière de l'élève, ou d'une
+// de ses spécialités (voie générale française : la « filière » du chapitre
+// porte alors le nom de la spécialité).
+export function chapitreVisible(c: Chapitre, filiere: string | null, specialites: string[] = []): boolean {
+  return c.filiere === null || c.filiere === filiere || specialites.includes(c.filiere)
+}
+
+export function chapitresPour(programme: Programme, annee: string, filiere: string | null, specialites: string[] = []): Chapitre[] {
+  return programme.chapitres.filter(c => c.annee === annee && chapitreVisible(c, filiere, specialites))
 }
 
 // Les chapitres d'une matière, toutes années confondues (pour relier une note)
-export function chapitresDeMatiere(programme: Programme, matiere: string, filiere: string | null): Chapitre[] {
-  return programme.chapitres.filter(c => c.matiere === matiere && (c.filiere === null || c.filiere === filiere))
+export function chapitresDeMatiere(programme: Programme, matiere: string, filiere: string | null, specialites: string[] = []): Chapitre[] {
+  return programme.chapitres.filter(c => c.matiere === matiere && chapitreVisible(c, filiere, specialites))
 }

@@ -14,7 +14,7 @@ import ProgrammeSection from "./ProgrammeSection"
 
 type CoursEtudiant = { id: string; matiere: string; titre: string; fichier_path: string | null; entreprise_id: string; fiches: Fiches; created_at: string }
 
-export default function RevisionSection({ userId, pays, niveau, matieres, reglages, entrepriseId, entreprisePerso, onChangerEntreprise, niveauId, filiere, annee, onChangerAnnee, chapitreOuvert, onOuvrirChapitre }: {
+export default function RevisionSection({ userId, pays, niveau, matieres, reglages, entrepriseId, entreprisePerso, onChangerEntreprise, niveauId, filiere, specialites, annee, onChangerAnnee, chapitreOuvert, onOuvrirChapitre }: {
   userId: string
   pays: Pays
   niveau: string
@@ -25,6 +25,7 @@ export default function RevisionSection({ userId, pays, niveau, matieres, reglag
   onChangerEntreprise: (id: string, perso: EntreprisePerso | null) => void
   niveauId: string | null
   filiere: string | null
+  specialites: string[]
   annee: string | null
   onChangerAnnee: (annee: string) => void
   chapitreOuvert: string | null
@@ -86,7 +87,7 @@ export default function RevisionSection({ userId, pays, niveau, matieres, reglag
 
   return (
     <div>
-      <ProgrammeSection userId={userId} pays={pays} niveauId={niveauId} filiere={filiere} annee={annee}
+      <ProgrammeSection userId={userId} pays={pays} niveauId={niveauId} filiere={filiere} specialites={specialites} annee={annee}
         onChangerAnnee={onChangerAnnee} chapitreOuvert={chapitreOuvert} onOuvrirChapitre={onOuvrirChapitre} />
 
       {!chapitreOuvert && (
