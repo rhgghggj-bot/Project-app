@@ -3,8 +3,9 @@ import { useMemo, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { toast, confirmer } from "@/lib/toast"
 import { useChargement } from "@/lib/useChargement"
+import { useMaintenant } from "@/lib/useMaintenant"
 import { colors, radius } from "@/app/components/ui/tokens"
-import { SYSTEMES, debutAnneeScolaire, formaterNote, moyennePonderee, type Echelle, type Pays } from "@/lib/etudes"
+import { SYSTEMES, formaterNote, moyennePonderee, type Echelle, type Pays } from "@/lib/etudes"
 
 export type NoteEtudiant = {
   id: string
@@ -103,7 +104,7 @@ export default function NotesSection({ userId, pays, matieresProposees }: { user
         </div>
       )}
 
-      <Graphique notes={visibles} pays={pays} couleurDe={couleurDe} />
+      <Graphique key={filtre} notes={visibles} pays={pays} titre={filtre === "Toutes" ? "Ta moyenne générale" : `Ta moyenne en ${filtre}`} />
 
       {/* Ajout */}
       {!ouvert ? (
@@ -210,58 +211,156 @@ function Stat({ label, valeur, couleur }: { label: string; valeur: string; coule
   )
 }
 
-// Évolution sur l'année scolaire : chaque note est un point, la ligne suit la
-// moyenne (pondérée) cumulée au fil des évaluations.
-function Graphique({ notes, pays, couleurDe }: { notes: NoteEtudiant[]; pays: Pays; couleurDe: (m: string) => string }) {
+// Évolution de la moyenne : une seule ligne (ta moyenne, recalculée après
+// chaque note), les notes elles-mêmes en points gris, et le seuil
+// « suffisant » en repère. Une phrase au-dessus dit l'essentiel en clair ;
+// toucher un point affiche le détail de la note.
+const GRIS = "#898781"
+const GRILLE = "#e1e0d9"
+
+function dateNote(n: NoteEtudiant) {
+  return new Date(n.date + "T12:00").getTime()
+}
+
+function arrondi(v: number) {
+  return Math.round(v * 100) / 100
+}
+
+function Graphique({ notes, pays, titre }: { notes: NoteEtudiant[]; pays: Pays; titre: string }) {
   const s = SYSTEMES[pays]
-  const L = 340, H = 180, G = 30, D = 10, HAUT = 12, BAS = 24
-  const debut = debutAnneeScolaire(pays)
-  const fin = new Date(debut.getFullYear() + 1, debut.getMonth() - 1, 31)
-  const t0 = debut.getTime(), t1 = fin.getTime()
-  const enCours = notes.filter(n => { const t = new Date(n.date + "T12:00").getTime(); return t >= t0 && t <= t1 })
+  const [choisie, setChoisie] = useState<string | null>(null)
+  const [aideOuverte, setAideOuverte] = useState(false)
+  const maintenant = useMaintenant(60 * 60_000)
 
-  const x = (t: number) => G + ((t - t0) / (t1 - t0)) * (L - G - D)
-  const y = (v: number) => HAUT + (1 - (v - s.min) / (s.max - s.min)) * (H - HAUT - BAS)
-
-  const graduations = pays === "CH" ? [1, 2, 3, 4, 5, 6] : [0, 5, 10, 15, 20]
-  const mois: { t: number; label: string }[] = []
-  for (let i = 0; i < 12; i += 2) {
-    const d = new Date(debut.getFullYear(), debut.getMonth() + i, 1)
-    mois.push({ t: d.getTime(), label: d.toLocaleDateString("fr-FR", { month: "short" }).replace(".", "") })
+  const triees = [...notes].sort((a, b) => dateNote(a) - dateNote(b))
+  if (triees.length === 0) {
+    return (
+      <div style={{ background: "#fff", border: `0.5px solid ${colors.border}`, borderRadius: radius.md, padding: "20px 14px", textAlign: "center", fontSize: "12px", color: colors.textFaint }}>
+        Ajoute ta première note : le graphique montrera comment ta moyenne évolue.
+      </div>
+    )
   }
 
-  const cumul: { t: number; v: number }[] = []
-  enCours.forEach((n, i) => {
-    const m = moyennePonderee(enCours.slice(0, i + 1))!
-    cumul.push({ t: new Date(n.date + "T12:00").getTime(), v: m })
-  })
+  // Moyenne après chaque note (pondérée par les coefficients)
+  const points = triees.map((n, i) => ({ note: n, moyenne: moyennePonderee(triees.slice(0, i + 1))! }))
+  const finale = points[points.length - 1].moyenne
+  const premiere = points[0].moyenne
+  const ecart = finale - premiere
+  const suffisant = finale >= s.suffisant
+  const meilleure = triees.reduce((a, b) => (b.note > a.note ? b : a))
+
+  // Axe du temps : de la première note à aujourd'hui (au moins 3 semaines)
+  const L = 340, H = 190, G = 34, D = 40, HAUT = 14, BAS = 26
+  const t0 = dateNote(triees[0])
+  const t1 = Math.max(maintenant, dateNote(triees[triees.length - 1]), t0 + 21 * 864e5)
+  const x = (t: number) => G + ((t - t0) / (t1 - t0)) * (L - G - D)
+  const y = (v: number) => HAUT + (1 - (v - s.min) / (s.max - s.min)) * (H - HAUT - BAS)
+  const graduations = pays === "CH" ? [1, 2, 3, 4, 5, 6] : [0, 5, 10, 15, 20]
+  const nbReperes = 4
+  const reperes = Array.from({ length: nbReperes }, (_, i) => t0 + (i / (nbReperes - 1)) * (t1 - t0))
+  const court = (t: number) => new Date(t).toLocaleDateString("fr-FR", { day: "numeric", month: "short" }).replace(".", "")
+
+  const detail = triees.find(n => n.id === choisie)
+  const moyenneApres = detail ? points.find(p => p.note.id === detail.id)!.moyenne : null
+  const evolution = Math.abs(ecart) < 0.05
+    ? "Elle est stable depuis ta première note"
+    : `Elle a ${ecart > 0 ? "monté" : "baissé"} de ${formaterNote(arrondi(Math.abs(ecart)), "CH6")} point${Math.abs(ecart) >= 2 ? "s" : ""} depuis ta première note`
 
   return (
-    <figure style={{ margin: 0, background: "#fff", border: `0.5px solid ${colors.border}`, borderRadius: radius.md, padding: "12px 8px 6px" }}>
-      <figcaption style={{ fontSize: "13px", fontWeight: 500, color: colors.text, padding: "0 6px 6px" }}>
-        Évolution {debut.getFullYear()}–{debut.getFullYear() + 1}
+    <figure style={{ margin: 0, background: "#fff", border: `0.5px solid ${colors.border}`, borderRadius: radius.md, padding: "14px 12px 10px" }}>
+      <figcaption style={{ padding: "0 4px 10px" }}>
+        <div style={{ fontSize: "13px", fontWeight: 500, color: colors.text, marginBottom: "6px" }}>{titre} au fil de l&apos;année</div>
+        <div style={{ fontSize: "13px", color: colors.text, lineHeight: 1.5 }}>
+          Ta moyenne est de <b>{formaterNote(arrondi(finale), s.echelle)}</b>{" "}
+          <span style={{ color: suffisant ? "#006300" : "#b42323", fontWeight: 600 }}>{suffisant ? "✓ suffisante" : "✗ insuffisante"}</span>
+          {" "}(il faut {s.suffisant}{s.echelle === "FR20" ? "/20" : ""}). {triees.length > 1 && <>{evolution}.</>}
+        </div>
+        {triees.length > 1 && (
+          <div style={{ fontSize: "12px", color: colors.textMuted, marginTop: "4px" }}>
+            Ta meilleure note : {formaterNote(meilleure.note, meilleure.echelle)} en {meilleure.matiere}.
+          </div>
+        )}
       </figcaption>
-      <svg viewBox={`0 0 ${L} ${H}`} width="100%" role="img" aria-label={`Graphique de ${enCours.length} notes sur l'année scolaire`}>
+
+      <svg viewBox={`0 0 ${L} ${H}`} width="100%" role="img"
+        aria-label={`Ta moyenne passe de ${formaterNote(arrondi(premiere), s.echelle)} à ${formaterNote(arrondi(finale), s.echelle)} sur ${triees.length} notes. Seuil suffisant : ${s.suffisant}.`}>
+        {/* Zone sous le seuil, très légère */}
+        <rect x={G} y={y(s.suffisant)} width={L - G - D} height={y(s.min) - y(s.suffisant)} fill="#d03b3b" opacity={0.05} />
         {graduations.map(v => (
           <g key={v}>
-            <line x1={G} x2={L - D} y1={y(v)} y2={y(v)} stroke={colors.border} strokeWidth={1} />
-            <text x={G - 6} y={y(v) + 3} fontSize="9" textAnchor="end" fill={colors.textFaint}>{v}</text>
+            <line x1={G} x2={L - D} y1={y(v)} y2={y(v)} stroke={GRILLE} strokeWidth={1} />
+            <text x={G - 6} y={y(v) + 3} fontSize="9" textAnchor="end" fill={GRIS}>{v}</text>
           </g>
         ))}
-        <line x1={G} x2={L - D} y1={y(s.suffisant)} y2={y(s.suffisant)} stroke={colors.red} strokeWidth={1} strokeDasharray="4 3" opacity={0.6} />
-        <text x={L - D} y={y(s.suffisant) - 3} fontSize="8" textAnchor="end" fill={colors.red} opacity={0.8}>suffisant</text>
-        {mois.map(m => <text key={m.t} x={x(m.t)} y={H - 8} fontSize="9" textAnchor="middle" fill={colors.textFaint}>{m.label}</text>)}
-        {cumul.length > 1 && (
-          <polyline fill="none" stroke={colors.blue} strokeWidth={2} strokeLinejoin="round" points={cumul.map(c => `${x(c.t)},${y(c.v)}`).join(" ")} />
+        {/* Seuil « suffisant » */}
+        <line x1={G} x2={L - D} y1={y(s.suffisant)} y2={y(s.suffisant)} stroke="#d03b3b" strokeWidth={1.2} opacity={0.7} />
+        <text x={L - D} y={y(s.min) - 4} fontSize="8.5" textAnchor="end" fill="#b42323">zone insuffisante</text>
+        {reperes.map((t, i) => (
+          <text key={i} x={x(t)} y={H - 8} fontSize="9" textAnchor={i === 0 ? "start" : i === nbReperes - 1 ? "end" : "middle"} fill={GRIS}>{court(t)}</text>
+        ))}
+
+        {/* Tes notes : points gris */}
+        {triees.map(n => (
+          <circle key={n.id} cx={x(dateNote(n))} cy={y(n.note)} r={choisie === n.id ? 5 : 3.5}
+            fill={choisie === n.id ? colors.text : "#fff"} stroke={choisie === n.id ? colors.text : GRIS} strokeWidth={1.5} />
+        ))}
+
+        {/* Ta moyenne : ligne bleue */}
+        {points.length > 1 && (
+          <polyline fill="none" stroke="#2a78d6" strokeWidth={2} strokeLinejoin="round" strokeLinecap="round"
+            points={points.map(p => `${x(dateNote(p.note))},${y(p.moyenne)}`).join(" ")} />
         )}
-        {enCours.map(n => (
-          <circle key={n.id} cx={x(new Date(n.date + "T12:00").getTime())} cy={y(n.note)} r={4} fill={couleurDe(n.matiere)} stroke="#fff" strokeWidth={1.5}>
-            <title>{`${n.matiere}${n.titre ? " · " + n.titre : ""} : ${formaterNote(n.note, n.echelle)}`}</title>
+        <circle cx={x(dateNote(points[points.length - 1].note))} cy={y(finale)} r={4} fill="#2a78d6" stroke="#fff" strokeWidth={2} />
+        <text x={x(dateNote(points[points.length - 1].note)) + 7} y={y(finale) + 3} fontSize="10" fontWeight={600} fill={colors.text}>
+          {formaterNote(arrondi(finale), s.echelle)}
+        </text>
+
+        {/* Zones de toucher plus grandes que les points */}
+        {triees.map(n => (
+          <circle key={`zone-${n.id}`} cx={x(dateNote(n))} cy={y(n.note)} r={12} fill="transparent" style={{ cursor: "pointer" }}
+            onClick={() => setChoisie(choisie === n.id ? null : n.id)}>
+            <title>{`${n.matiere} : ${formaterNote(n.note, n.echelle)}`}</title>
           </circle>
         ))}
-        {enCours.length === 0 && <text x={L / 2} y={H / 2} fontSize="11" textAnchor="middle" fill={colors.textFaint}>Pas encore de note cette année</text>}
       </svg>
-      <div style={{ fontSize: "10px", color: colors.textFaint, padding: "0 6px" }}>Points : chaque note · Ligne bleue : ta moyenne au fil de l&apos;année</div>
+
+      {/* Légende */}
+      <div style={{ display: "flex", gap: "14px", flexWrap: "wrap", fontSize: "11px", color: colors.textMuted, padding: "2px 4px 0" }}>
+        <span style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
+          <svg width="18" height="8" aria-hidden="true"><line x1="1" x2="17" y1="4" y2="4" stroke="#2a78d6" strokeWidth="2" strokeLinecap="round" /></svg>
+          Ta moyenne
+        </span>
+        <span style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
+          <svg width="10" height="10" aria-hidden="true"><circle cx="5" cy="5" r="3.5" fill="#fff" stroke={GRIS} strokeWidth="1.5" /></svg>
+          Une note
+        </span>
+        <span style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
+          <svg width="18" height="8" aria-hidden="true"><line x1="1" x2="17" y1="4" y2="4" stroke="#d03b3b" strokeWidth="1.2" /></svg>
+          Limite suffisant ({s.suffisant})
+        </span>
+      </div>
+
+      {detail ? (
+        <div style={{ margin: "10px 4px 0", background: colors.blueLight, borderRadius: radius.sm, padding: "8px 10px", fontSize: "12px", color: colors.text, lineHeight: 1.5 }}>
+          <b>{detail.matiere}{detail.titre ? ` · ${detail.titre}` : ""}</b> le {new Date(detail.date + "T12:00").toLocaleDateString("fr-FR", { day: "numeric", month: "long" })} :{" "}
+          {formaterNote(detail.note, detail.echelle)}{detail.coefficient !== 1 ? ` (coef. ${detail.coefficient})` : ""}. Après cette note, ta moyenne était de {formaterNote(arrondi(moyenneApres!), s.echelle)}.
+        </div>
+      ) : (
+        <div style={{ fontSize: "11px", color: colors.textFaint, padding: "8px 4px 0" }}>Touche un point pour voir le détail de la note.</div>
+      )}
+
+      <button onClick={() => setAideOuverte(!aideOuverte)} aria-expanded={aideOuverte}
+        style={{ background: "none", border: "none", color: colors.blue, fontSize: "12px", cursor: "pointer", padding: "8px 4px 0" }}>
+        {aideOuverte ? "Masquer l'explication" : "Comment lire ce graphique ?"}
+      </button>
+      {aideOuverte && (
+        <div style={{ fontSize: "12px", color: colors.textMuted, lineHeight: 1.55, padding: "6px 4px 0" }}>
+          <p style={{ margin: "0 0 6px" }}><b>De gauche à droite</b>, le temps : ta première note à gauche, aujourd&apos;hui à droite. <b>De bas en haut</b>, la note : plus c&apos;est haut, meilleur c&apos;est.</p>
+          <p style={{ margin: "0 0 6px" }}><b>Chaque rond gris</b> est une note que tu as ajoutée.</p>
+          <p style={{ margin: "0 0 6px" }}><b>La ligne bleue</b> est ta moyenne, recalculée après chaque note. Si elle monte, tu progresses ; si elle descend, tes dernières notes sont plus basses que ta moyenne.</p>
+          <p style={{ margin: 0 }}><b>La ligne rouge</b> est la limite du suffisant ({s.suffisant}{s.echelle === "FR20" ? "/20" : ""}). Tant que la ligne bleue reste au-dessus, ta moyenne est suffisante. Choisis une matière au-dessus du graphique pour ne voir qu&apos;elle.</p>
+        </div>
+      )}
     </figure>
   )
 }

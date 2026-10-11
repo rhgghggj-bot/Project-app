@@ -30,13 +30,6 @@ export function moyennePonderee(notes: { note: number; coefficient: number }[]):
   return notes.reduce((s, n) => s + n.note * n.coefficient, 0) / poids
 }
 
-// Début de l'année scolaire en cours (août en Suisse romande, septembre en France).
-export function debutAnneeScolaire(pays: Pays, aujourdhui = new Date()): Date {
-  const moisDebut = pays === "CH" ? 7 : 8
-  const annee = aujourdhui.getMonth() >= moisDebut ? aujourdhui.getFullYear() : aujourdhui.getFullYear() - 1
-  return new Date(annee, moisDebut, 1)
-}
-
 // ─── Entreprises fictives pour réviser ─────────────────────────────────────
 // Chaque cours déposé est illustré à travers l'entreprise choisie par
 // l'étudiant : les exemples, exercices et quiz parlent de "son" entreprise.
