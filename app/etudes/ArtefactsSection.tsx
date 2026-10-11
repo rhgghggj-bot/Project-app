@@ -6,6 +6,10 @@ import { useChargement } from "@/lib/useChargement"
 import { colors, radius } from "@/app/components/ui/tokens"
 import { carte, titreCarte } from "./Depot"
 import { PetitBouton } from "./CorrectionSection"
+import { ChoixEntreprise } from "./RevisionSection"
+import { trouverNiveau } from "@/lib/cursus"
+import { chapitreVisible, chargerProgramme } from "@/lib/programmes"
+import type { EntrepriseFictive, EntreprisePerso, Pays } from "@/lib/etudes"
 
 // Pages HTML personnelles (ex. un artefact Claude téléchargé) rangées dans
 // l'espace privé de l'élève et affichées dans l'app.
@@ -43,11 +47,47 @@ function injecter(html: string, script: string) {
   return script + html
 }
 
-export default function ArtefactsSection({ userId }: { userId: string }) {
+// Page de révision par défaut : le modèle public/artefacts/modele-revision.html
+// rempli avec les chapitres du programme de l'élève et son entreprise fictive.
+async function pageParDefaut(p: ParDefaut): Promise<string | null> {
+  const niveau = trouverNiveau(p.pays, p.niveauId)
+  if (!niveau) return null
+  const [modele, programme] = await Promise.all([
+    fetch("/artefacts/modele-revision.html").then(r => (r.ok ? r.text() : null)).catch(() => null),
+    chargerProgramme(p.pays, niveau.id),
+  ])
+  if (!modele || !programme) return null
+  const chapitres = programme.chapitres.filter(c => chapitreVisible(c, p.filiere, p.specialites))
+  const donnees = {
+    niveau: niveau.label,
+    filiere: niveau.filieres?.find(f => f.id === p.filiere)?.label ?? null,
+    annees: niveau.annees.filter(a => chapitres.some(c => c.annee === a)),
+    anneeActuelle: p.annee,
+    entreprise: { nom: p.entreprise.nom, secteur: p.entreprise.secteur, description: p.entreprise.description },
+    chapitres,
+  }
+  const json = JSON.stringify(donnees).replace(/</g, "\\u003c")
+  return modele.replace("window.DONNEES = null;", () => `window.DONNEES = ${json};`)
+}
+
+type ParDefaut = {
+  pays: Pays
+  niveauId: string | null
+  filiere: string | null
+  specialites: string[]
+  annee: string | null
+  entreprise: EntrepriseFictive
+  entrepriseId: string
+  entreprisePerso: EntreprisePerso | null
+  onChangerEntreprise: (id: string, perso: EntreprisePerso | null) => void
+}
+
+export default function ArtefactsSection({ userId, parDefaut }: { userId: string; parDefaut: ParDefaut }) {
   const fileRef = useRef<HTMLInputElement>(null)
   const [liste, setListe] = useState<Artefact[] | null>(null)
   const [envoi, setEnvoi] = useState(false)
-  const [ouvert, setOuvert] = useState<Artefact | null>(null)
+  const [ouvert, setOuvert] = useState<Source | null>(null)
+  const [choixEntreprise, setChoixEntreprise] = useState(false)
 
   async function charger() {
     const { data, error } = await supabase.storage.from("etudes").list(`${userId}/${DOSSIER}`, { sortBy: { column: "updated_at", order: "desc" } })
@@ -78,10 +118,43 @@ export default function ArtefactsSection({ userId }: { userId: string }) {
     setListe(l => (l || []).filter(x => x.chemin !== a.chemin))
   }
 
-  if (ouvert) return <Lecteur artefact={ouvert} onFermer={() => setOuvert(null)} />
+  if (ouvert) return <Lecteur source={ouvert} onFermer={() => setOuvert(null)} />
+
+  const niveau = trouverNiveau(parDefaut.pays, parDefaut.niveauId)
+  const cleDefaut = `${parDefaut.pays}-${parDefaut.niveauId}-${parDefaut.filiere ?? "tous"}`
+  const ouvrirDefaut = () => setOuvert({
+    titre: `Révision · ${parDefaut.entreprise.nom}`,
+    // L'état (progression) est rangé à part des pages personnelles (.html)
+    cheminEtat: `${userId}/${DOSSIER}/defaut-${cleDefaut}.etat.json`,
+    charger: () => pageParDefaut(parDefaut),
+  })
 
   return (
     <div>
+      <div style={{ ...carte, background: `linear-gradient(135deg, ${parDefaut.entreprise.couleur}1f, #fff)`, borderColor: `${parDefaut.entreprise.couleur}55` }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <div aria-hidden="true" style={{ width: 40, height: 40, borderRadius: 10, background: parDefaut.entreprise.couleur, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, flexShrink: 0 }}>
+            {parDefaut.entreprise.nom[0]}
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: "11px", color: colors.textFaint }}>Page de révision par défaut</div>
+            <div style={{ fontSize: "14px", fontWeight: 600, color: colors.text }}>{parDefaut.entreprise.nom}</div>
+            <div style={{ fontSize: "11px", color: colors.textMuted }}>{niveau ? niveau.label : "Choisis ton niveau dans Réglages"}</div>
+          </div>
+          <PetitBouton onClick={ouvrirDefaut}>Ouvrir</PetitBouton>
+        </div>
+        <p style={{ fontSize: "12px", color: colors.textMuted, margin: "8px 0 0", lineHeight: 1.5 }}>
+          Ton programme sous forme d&apos;entreprise : chaque matière est un service, avec fiches, quiz, révision du jour et progression.
+        </p>
+        <button onClick={() => setChoixEntreprise(!choixEntreprise)} style={{ background: "none", border: "none", color: colors.blue, fontSize: "12px", cursor: "pointer", padding: "8px 0 0" }}>
+          {choixEntreprise ? "Fermer" : "Changer d'entreprise"}
+        </button>
+        {choixEntreprise && (
+          <ChoixEntreprise actuelle={parDefaut.entrepriseId} perso={parDefaut.entreprisePerso}
+            onChoisir={(id, perso) => { parDefaut.onChangerEntreprise(id, perso); setChoixEntreprise(false) }} />
+        )}
+      </div>
+
       <div style={carte}>
         <div style={titreCarte}>Mes pages de révision</div>
         <p style={{ fontSize: "12px", color: colors.textMuted, margin: "0 0 10px", lineHeight: 1.5 }}>
@@ -103,7 +176,10 @@ export default function ArtefactsSection({ userId }: { userId: string }) {
             <div style={{ fontSize: "14px", fontWeight: 500, color: colors.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{nomAffiche(a.nom)}</div>
             <div style={{ fontSize: "11px", color: colors.textFaint }}>{(a.taille / 1024 / 1024).toFixed(1)} Mo{a.maj ? ` · ${new Date(a.maj).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}` : ""}</div>
           </div>
-          <PetitBouton onClick={() => setOuvert(a)}>Ouvrir</PetitBouton>
+          <PetitBouton onClick={() => setOuvert({ titre: nomAffiche(a.nom), cheminEtat: a.chemin + ".etat.json", charger: async () => {
+            const { data, error } = await supabase.storage.from("etudes").download(a.chemin)
+            return error || !data ? null : data.text()
+          } })}>Ouvrir</PetitBouton>
           <PetitBouton onClick={() => supprimer(a)} danger>×</PetitBouton>
         </div>
       ))}
@@ -111,21 +187,20 @@ export default function ArtefactsSection({ userId }: { userId: string }) {
   )
 }
 
-function Lecteur({ artefact, onFermer }: { artefact: Artefact; onFermer: () => void }) {
+type Source = { titre: string; cheminEtat: string; charger: () => Promise<string | null> }
+
+function Lecteur({ source, onFermer }: { source: Source; onFermer: () => void }) {
   const [doc, setDoc] = useState<string | null>(null)
   const frameRef = useRef<HTMLIFrameElement>(null)
-  const cheminEtat = artefact.chemin + ".etat.json"
+  const cheminEtat = source.cheminEtat
 
   useChargement(async () => {
-    const [page, etat] = await Promise.all([
-      supabase.storage.from("etudes").download(artefact.chemin),
-      supabase.storage.from("etudes").download(cheminEtat),
-    ])
-    if (page.error || !page.data) { toast("Impossible d'ouvrir la page", "error"); onFermer(); return }
+    const [html, etat] = await Promise.all([source.charger(), supabase.storage.from("etudes").download(cheminEtat)])
+    if (!html) { toast("Impossible d'ouvrir la page", "error"); onFermer(); return }
     let sauvegarde: Record<string, string> = {}
     try { if (etat.data) sauvegarde = JSON.parse(await etat.data.text()) } catch { sauvegarde = {} }
-    setDoc(injecter(await page.data.text(), scriptStockage(sauvegarde)))
-  }, artefact.chemin)
+    setDoc(injecter(html, scriptStockage(sauvegarde)))
+  }, cheminEtat)
 
   // Sauvegarde la progression envoyée par la page (au plus toutes les 3 s).
   useEffect(() => {
@@ -153,12 +228,12 @@ function Lecteur({ artefact, onFermer }: { artefact: Artefact; onFermer: () => v
     <div style={{ position: "fixed", inset: 0, zIndex: 100, background: "#fff", display: "flex", flexDirection: "column" }}>
       <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 14px", background: colors.navy, color: "#fff" }}>
         <button onClick={onFermer} style={{ background: "rgba(255,255,255,0.15)", color: "#fff", border: "none", borderRadius: radius.pill, padding: "6px 14px", fontSize: "13px", cursor: "pointer" }}>← Fermer</button>
-        <span style={{ fontSize: "13px", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{nomAffiche(artefact.nom)}</span>
+        <span style={{ fontSize: "13px", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{source.titre}</span>
       </div>
       {doc === null ? (
         <div className="nx-skel" style={{ flex: 1 }} />
       ) : (
-        <iframe ref={frameRef} srcDoc={doc} title={nomAffiche(artefact.nom)}
+        <iframe ref={frameRef} srcDoc={doc} title={source.titre}
           sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox allow-forms allow-modals allow-downloads"
           style={{ flex: 1, border: "none", width: "100%" }} />
       )}
