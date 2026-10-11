@@ -234,14 +234,14 @@ body.f-expedition{--fond:#FFF7ED;--mur:#7C2D12;--accent:#EA580C;--accent-pale:#F
       h += '<div class="carte-terr">' + mats.map(function (x) {
         var n = x.total ? Math.round(x.ok / x.total * 3) : 0, fini = x.total && x.ok === x.total;
         return '<button class="terr' + (fini ? ' fini' : '') + '" data-action="matiere" data-v="' + esc(x.m) + '"><span class="em">' + emoji(x.m) + '</span><h3>' + esc(x.m) + '</h3>' +
-          '<span class="etoiles">' + '★★★'.slice(0, n) + '<span style="opacity:.3">' + '★★★'.slice(n) + '</span></span><span class="meta">' + x.ok + ' / ' + x.cs.length + ' étapes' + (fini ? ' · 🏅' : '') + '</span></button>';
+          '<span class="etoiles">' + '★★★'.slice(0, n) + '<span style="opacity:.3">' + '★★★'.slice(n) + '</span></span><span class="meta">' + x.ok + ' / ' + x.cs.length + (x.cs.length > 1 ? ' étapes' : ' étape') + (fini ? ' · 🏅' : '') + '</span></button>';
       }).join("") + '</div>';
     } else if (F === "examen") {
       var faibles = chs.filter(function (c) { return c.doc && etat.maitrise[c.id] !== undefined && etat.maitrise[c.id] < 1 })
         .sort(function (a, b) { return etat.maitrise[a.id] - etat.maitrise[b.id] }).slice(0, 5);
       h += '<div class="carte prepa">' + mats.slice().sort(function (a, b) { return (a.total ? a.ok / a.total : 1) - (b.total ? b.ok / b.total : 1) }).map(function (x) {
         var pc = x.total ? Math.round(x.ok / x.total * 100) : 0;
-        return '<button class="ligne" data-action="matiere" data-v="' + esc(x.m) + '"><span><span class="t">' + esc(x.m) + '</span><small>' + x.ok + ' / ' + x.cs.length + ' chapitres prêts</small></span><div class="barre"><i style="width:' + pc + '%"></i></div><span class="pc">' + (x.total ? pc + '%' : '–') + '</span></button>';
+        return '<button class="ligne" data-action="matiere" data-v="' + esc(x.m) + '"><span><span class="t">' + esc(x.m) + '</span><small>' + x.ok + ' / ' + x.cs.length + (x.cs.length > 1 ? ' chapitres prêts' : ' chapitre prêt') + '</small></span><div class="barre"><i style="width:' + pc + '%"></i></div><span class="pc">' + (x.total ? pc + '%' : '–') + '</span></button>';
       }).join("") + '</div></div>';
       h += '<div><div class="sur" style="margin-bottom:8px">Points à retravailler</div><div class="carte">' + (faibles.length ? '<ul class="liste">' + faibles.map(function (c) {
         return '<li><button class="ligne" data-action="chapitre" data-v="' + esc(c.id) + '"><span class="pastille">!</span><span><span class="t">' + esc(c.titre) + '</span><br><span class="meta">' + esc(c.matiere) + '</span></span><span class="meta">' + Math.round(etat.maitrise[c.id] * 100) + '%</span></button></li>';
