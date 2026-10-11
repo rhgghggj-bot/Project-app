@@ -20,7 +20,7 @@ import ArtefactsSection from "./ArtefactsSection"
 import { CURSUS, descriptionNiveau, matieresProposees, trouverNiveau } from "@/lib/cursus"
 
 type Onglet = "notes" | "corriger" | "reviser" | "artefacts"
-type Profil = { pays: Pays; niveau: string | null; filiere: string | null; specialites: string[]; entreprise_id: string; entreprise_perso: EntreprisePerso | null }
+type Profil = { pays: Pays; niveau: string | null; filiere: string | null; annee: string | null; specialites: string[]; entreprise_id: string; entreprise_perso: EntreprisePerso | null }
 
 const TOUS_ONGLETS: { id: Onglet; label: string }[] = [
   { id: "notes", label: "Mes notes" },
@@ -39,6 +39,8 @@ export default function EspaceEtudiant() {
   const [userId, setUserId] = useState<string | null | undefined>(undefined)
   const [profil, setProfil] = useState<Profil | null>(null)
   const [onglet, setOnglet] = useState<Onglet>("notes")
+  // Chapitre du programme ouvert dans « Réviser » (depuis une note par exemple)
+  const [chapitreOuvert, setChapitreOuvert] = useState<string | null>(null)
   const [reglagesOuverts, setReglagesOuverts] = useState(false)
   // Change après un import pour recharger les onglets
   const [version, setVersion] = useState(0)
@@ -53,7 +55,7 @@ export default function EspaceEtudiant() {
     const { data: { user } } = await supabase.auth.getUser()
     setUserId(user?.id ?? null)
     if (!user) return
-    const { data } = await supabase.from("profils_etudiant").select("pays,niveau,filiere,specialites,entreprise_id,entreprise_perso").eq("user_id", user.id).maybeSingle()
+    const { data } = await supabase.from("profils_etudiant").select("pays,niveau,filiere,annee,specialites,entreprise_id,entreprise_perso").eq("user_id", user.id).maybeSingle()
     if (data) {
       setProfil({ ...data, specialites: data.specialites ?? [] } as Profil)
       if (!data.niveau) setReglagesOuverts(true)
@@ -61,7 +63,7 @@ export default function EspaceEtudiant() {
     else {
       // Premier passage : pays deviné depuis la langue du navigateur, modifiable ensuite.
       const pays: Pays = navigator.language.toLowerCase().endsWith("-fr") ? "FR" : "CH"
-      const nouveau: Profil = { pays, niveau: null, filiere: null, specialites: [], entreprise_id: "cafe", entreprise_perso: null }
+      const nouveau: Profil = { pays, niveau: null, filiere: null, annee: null, specialites: [], entreprise_id: "cafe", entreprise_perso: null }
       await supabase.from("profils_etudiant").insert({ user_id: user.id, ...nouveau })
       setProfil(nouveau)
       setReglagesOuverts(true)
@@ -113,12 +115,12 @@ export default function EspaceEtudiant() {
             <div style={{ fontSize: "13px", fontWeight: 500, color: colors.text, marginBottom: "8px" }}>Pays et notation</div>
             <div style={{ display: "flex", gap: "6px", marginBottom: "14px" }}>
               {(Object.keys(SYSTEMES) as Pays[]).map(k => (
-                <Choix key={k} actif={p.pays === k} onClick={() => p.pays !== k && majProfil({ pays: k, niveau: null, filiere: null, specialites: [] })}>{SYSTEMES[k].label}</Choix>
+                <Choix key={k} actif={p.pays === k} onClick={() => p.pays !== k && majProfil({ pays: k, niveau: null, filiere: null, annee: null, specialites: [] })}>{SYSTEMES[k].label}</Choix>
               ))}
             </div>
             <div style={{ fontSize: "13px", fontWeight: 500, color: colors.text, marginBottom: "6px" }}>Mon niveau d&apos;études</div>
             {!niveau && <p style={{ fontSize: "11px", color: colors.textMuted, margin: "0 0 6px" }}>Choisis ton niveau : les matières de ton niveau te seront proposées.</p>}
-            <select value={p.niveau ?? ""} onChange={e => majProfil({ niveau: e.target.value || null, filiere: null, specialites: [] })} style={{ ...champ, marginBottom: "8px" }} aria-label="Niveau d'études">
+            <select value={p.niveau ?? ""} onChange={e => majProfil({ niveau: e.target.value || null, filiere: null, annee: null, specialites: [] })} style={{ ...champ, marginBottom: "8px" }} aria-label="Niveau d'études">
               <option value="">Choisir…</option>
               {CURSUS[p.pays].map(n => <option key={n.id} value={n.id}>{n.label}</option>)}
             </select>
@@ -127,6 +129,12 @@ export default function EspaceEtudiant() {
               <select value={p.filiere ?? ""} onChange={e => majProfil({ filiere: e.target.value || null })} style={{ ...champ, marginBottom: "8px" }} aria-label={niveau.libelleFiliere || "Filière"}>
                 <option value="">{niveau.libelleFiliere || "Filière"} : choisir…</option>
                 {niveau.filieres.map(f => <option key={f.id} value={f.id}>{f.label}</option>)}
+              </select>
+            )}
+            {niveau && niveau.annees.length > 1 && (
+              <select value={p.annee ?? ""} onChange={e => majProfil({ annee: e.target.value || null })} style={{ ...champ, marginBottom: "8px" }} aria-label="Année">
+                <option value="">Année : choisir…</option>
+                {niveau.annees.map(a => <option key={a} value={a}>{a}</option>)}
               </select>
             )}
             {niveau?.specialites && (
@@ -190,10 +198,13 @@ export default function EspaceEtudiant() {
         </div>
 
         <div role="tabpanel" key={version}>
-          {onglet === "notes" && <NotesSection userId={userId} pays={p.pays} matieresProposees={matieres} />}
+          {onglet === "notes" && <NotesSection userId={userId} pays={p.pays} matieresProposees={matieres} niveauId={p.niveau} filiere={p.filiere}
+            onOuvrirChapitre={id => { setChapitreOuvert(id); setOnglet("reviser") }} />}
           {onglet === "corriger" && <CorrectionSection userId={userId} pays={p.pays} niveau={texteNiveau} matieres={matieres} reglages={reglages} />}
           {onglet === "reviser" && (
             <RevisionSection userId={userId} pays={p.pays} niveau={texteNiveau} matieres={matieres} reglages={reglages}
+              niveauId={p.niveau} filiere={p.filiere} annee={p.annee} onChangerAnnee={a => majProfil({ annee: a })}
+              chapitreOuvert={chapitreOuvert} onOuvrirChapitre={setChapitreOuvert}
               entrepriseId={p.entreprise_id} entreprisePerso={p.entreprise_perso}
               onChangerEntreprise={(id, perso) => majProfil({ entreprise_id: id, entreprise_perso: perso })} />
           )}

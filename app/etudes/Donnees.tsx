@@ -13,8 +13,8 @@ export default function Donnees({ userId, onImporte }: { userId: string; onImpor
   async function exporter() {
     setOccupe(true)
     const [profil, notes, cours, evaluations] = await Promise.all([
-      supabase.from("profils_etudiant").select("pays,niveau,filiere,specialites,entreprise_id,entreprise_perso").eq("user_id", userId).maybeSingle(),
-      supabase.from("notes_etudiant").select("matiere,titre,note,echelle,coefficient,date").eq("user_id", userId).order("date"),
+      supabase.from("profils_etudiant").select("pays,niveau,filiere,annee,specialites,entreprise_id,entreprise_perso").eq("user_id", userId).maybeSingle(),
+      supabase.from("notes_etudiant").select("matiere,titre,note,echelle,coefficient,date,chapitre_id").eq("user_id", userId).order("date"),
       supabase.from("cours_etudiant").select("matiere,titre,entreprise_id,fiches").eq("user_id", userId).order("created_at"),
       supabase.from("evaluations_corrigees").select("matiere,titre,correction").eq("user_id", userId).order("created_at"),
     ])

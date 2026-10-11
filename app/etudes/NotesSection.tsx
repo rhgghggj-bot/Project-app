@@ -6,6 +6,7 @@ import { useChargement } from "@/lib/useChargement"
 import { useMaintenant } from "@/lib/useMaintenant"
 import { colors, radius } from "@/app/components/ui/tokens"
 import { SYSTEMES, formaterNote, moyennePonderee, type Echelle, type Pays } from "@/lib/etudes"
+import { chapitresDeMatiere, chargerProgramme, type Programme } from "@/lib/programmes"
 
 export type NoteEtudiant = {
   id: string
@@ -15,6 +16,7 @@ export type NoteEtudiant = {
   echelle: Echelle
   coefficient: number
   date: string
+  chapitre_id: string | null
 }
 
 const PALETTE = ["#2B7FFF", "#D97706", "#16A34A", "#DB2777", "#7C3AED", "#0D9488", "#E11D48", "#CA8A04", "#0EA5E9", "#64748B"]
@@ -27,20 +29,31 @@ function aujourdhuiISO() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
 }
 
-export default function NotesSection({ userId, pays, matieresProposees }: { userId: string; pays: Pays; matieresProposees: string[] }) {
+export default function NotesSection({ userId, pays, matieresProposees, niveauId, filiere, onOuvrirChapitre }: {
+  userId: string
+  pays: Pays
+  matieresProposees: string[]
+  niveauId: string | null
+  filiere: string | null
+  onOuvrirChapitre: (id: string) => void
+}) {
   const systeme = SYSTEMES[pays]
   const [notes, setNotes] = useState<NoteEtudiant[] | null>(null)
+  const [programme, setProgramme] = useState<Programme | null>(null)
   const [filtre, setFiltre] = useState<string>("Toutes")
+  const [vue, setVue] = useState<"graphique" | "tableau">("graphique")
   const [ouvert, setOuvert] = useState(false)
-  const [form, setForm] = useState({ matiere: "", titre: "", note: "", coefficient: "1", date: aujourdhuiISO() })
+  const [historiqueComplet, setHistoriqueComplet] = useState(false)
+  const [form, setForm] = useState({ matiere: "", chapitre: "", titre: "", note: "", coefficient: "1", date: aujourdhuiISO() })
   const [envoi, setEnvoi] = useState(false)
 
   async function charger() {
-    const { data } = await supabase.from("notes_etudiant").select("id,matiere,titre,note,echelle,coefficient,date")
+    const { data } = await supabase.from("notes_etudiant").select("id,matiere,titre,note,echelle,coefficient,date,chapitre_id")
       .eq("user_id", userId).order("date", { ascending: true })
     setNotes((data || []).map(n => ({ ...n, note: Number(n.note), coefficient: Number(n.coefficient) })))
   }
   useChargement(charger, userId)
+  useChargement(async () => { setProgramme(niveauId ? await chargerProgramme(pays, niveauId) : null) }, `${pays}-${niveauId}`)
 
   // Seules les notes de l'échelle du pays choisi sont comparables entre elles.
   const notesEchelle = useMemo(() => (notes || []).filter(n => n.echelle === systeme.echelle), [notes, systeme.echelle])
@@ -48,9 +61,14 @@ export default function NotesSection({ userId, pays, matieresProposees }: { user
   const matieres = useMemo(() => [...new Set(notesEchelle.map(n => n.matiere))].sort((a, b) => a.localeCompare(b, "fr")), [notesEchelle])
   const couleurDe = (m: string) => PALETTE[Math.max(0, matieres.indexOf(m)) % PALETTE.length]
   const visibles = filtre === "Toutes" ? notesEchelle : notesEchelle.filter(n => n.matiere === filtre)
-
   const moyenneGenerale = moyennePonderee(visibles)
-  const parMatiere = matieres.map(m => ({ matiere: m, moyenne: moyennePonderee(notesEchelle.filter(n => n.matiere === m))!, nb: notesEchelle.filter(n => n.matiere === m).length }))
+  const titreChapitre = (id: string | null) => (id && programme?.chapitres.find(c => c.id === id)?.titre) || null
+  const chapitresForm = programme && form.matiere ? chapitresDeMatiere(programme, form.matiere.trim(), filiere) : []
+  // Matières du programme (toutes années) en plus de celles du niveau
+  const propositions = [...new Set([
+    ...(programme ? programme.chapitres.filter(c => c.filiere === null || c.filiere === filiere).map(c => c.matiere) : []),
+    ...matieresProposees,
+  ])]
 
   async function ajouter(e: React.FormEvent) {
     e.preventDefault()
@@ -61,13 +79,13 @@ export default function NotesSection({ userId, pays, matieresProposees }: { user
     if (!Number.isFinite(coef) || coef <= 0) return toast("Le coefficient doit être positif", "error")
     setEnvoi(true)
     const { error } = await supabase.from("notes_etudiant").insert({
-      user_id: userId, matiere: form.matiere.trim(), titre: form.titre.trim() || null,
+      user_id: userId, matiere: form.matiere.trim(), titre: form.titre.trim() || null, chapitre_id: form.chapitre || null,
       note: valeur, echelle: systeme.echelle, coefficient: coef, date: form.date,
     })
     setEnvoi(false)
     if (error) return toast("Impossible d'enregistrer la note", "error")
     toast("Note ajoutée", "success")
-    setForm(f => ({ ...f, titre: "", note: "" }))
+    setForm(f => ({ ...f, chapitre: "", titre: "", note: "" }))
     setOuvert(false)
     charger()
   }
@@ -81,19 +99,22 @@ export default function NotesSection({ userId, pays, matieresProposees }: { user
 
   if (notes === null) return <div className="nx-skel" style={{ height: 220, borderRadius: radius.md }} />
 
+  const historique = [...visibles].reverse()
+  const historiqueAffiche = historiqueComplet ? historique : historique.slice(0, 3)
+
   return (
     <div>
       {/* Résumé */}
-      <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
+      <div style={{ display: "flex", gap: "8px", marginBottom: "10px" }}>
         <Stat label={filtre === "Toutes" ? "Moyenne générale" : `Moyenne · ${filtre}`}
-          valeur={moyenneGenerale === null ? "–" : formaterNote(Math.round(moyenneGenerale * 100) / 100, systeme.echelle)}
+          valeur={moyenneGenerale === null ? "–" : formaterNote(arrondi(moyenneGenerale), systeme.echelle)}
           couleur={moyenneGenerale === null ? colors.textFaint : moyenneGenerale >= systeme.suffisant ? colors.green : colors.red} />
         <Stat label="Notes" valeur={String(visibles.length)} couleur={colors.blue} />
         <Stat label="Insuffisantes" valeur={String(visibles.filter(n => n.note < systeme.suffisant).length)} couleur={colors.red} />
       </div>
 
       {matieres.length > 0 && (
-        <div style={{ display: "flex", gap: "6px", overflowX: "auto", paddingBottom: "4px", marginBottom: "10px" }}>
+        <div style={{ display: "flex", gap: "6px", overflowX: "auto", paddingBottom: "4px", marginBottom: "8px" }}>
           {["Toutes", ...matieres].map(m => (
             <button key={m} onClick={() => setFiltre(m)} aria-pressed={filtre === m}
               style={{ whiteSpace: "nowrap", padding: "6px 12px", borderRadius: radius.pill, border: "none", cursor: "pointer", fontSize: "12px", fontWeight: 500,
@@ -104,100 +125,201 @@ export default function NotesSection({ userId, pays, matieresProposees }: { user
         </div>
       )}
 
-      <Graphique key={filtre} notes={visibles} pays={pays} titre={filtre === "Toutes" ? "Ta moyenne générale" : `Ta moyenne en ${filtre}`} />
-
-      {/* Ajout */}
-      {!ouvert ? (
-        <button onClick={() => setOuvert(true)}
-          style={{ width: "100%", background: colors.blue, color: "#fff", border: "none", borderRadius: radius.md, padding: "12px", fontSize: "13px", fontWeight: 500, cursor: "pointer", margin: "12px 0" }}>
-          + Ajouter une note
-        </button>
-      ) : (
-        <form onSubmit={ajouter} style={{ background: "#F8FBFF", border: `0.5px solid ${colors.border}`, borderRadius: radius.md, padding: "14px", margin: "12px 0" }}>
-          <div style={{ fontSize: "13px", fontWeight: 500, color: colors.text, marginBottom: "10px" }}>Nouvelle note · {systeme.label}</div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
-            <label style={{ gridColumn: "1 / -1" }}><span style={etiquette}>Matière</span>
-              <input list="matieres-etudes" value={form.matiere} onChange={e => setForm({ ...form, matiere: e.target.value })} style={champ} placeholder="Mathématiques" required />
-              <datalist id="matieres-etudes">{[...new Set([...matieres, ...matieresProposees])].map(m => <option key={m} value={m} />)}</datalist>
-              {matieresProposees.length > 0 && !form.matiere && (
-                <div style={{ display: "flex", gap: "4px", flexWrap: "wrap", marginTop: "6px" }}>
-                  {matieresProposees.slice(0, 12).map(m => (
-                    <button key={m} type="button" onClick={() => setForm({ ...form, matiere: m })}
-                      style={{ fontSize: "11px", padding: "4px 9px", borderRadius: radius.pill, border: `0.5px solid ${colors.blueBorder}`, background: "#fff", color: colors.blue, cursor: "pointer" }}>
-                      {m}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </label>
-            <label style={{ gridColumn: "1 / -1" }}><span style={etiquette}>Évaluation (facultatif)</span>
-              <input value={form.titre} onChange={e => setForm({ ...form, titre: e.target.value })} style={champ} placeholder="Test chapitre 2" />
-            </label>
-            <label><span style={etiquette}>Note ({systeme.min} à {systeme.max})</span>
-              <input inputMode="decimal" value={form.note} onChange={e => setForm({ ...form, note: e.target.value })} style={champ} placeholder={pays === "CH" ? "4.5" : "13"} required />
-            </label>
-            <label><span style={etiquette}>Coefficient</span>
-              <input inputMode="decimal" value={form.coefficient} onChange={e => setForm({ ...form, coefficient: e.target.value })} style={champ} />
-            </label>
-            <label style={{ gridColumn: "1 / -1" }}><span style={etiquette}>Date</span>
-              <input type="date" value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} style={champ} required />
-            </label>
-          </div>
-          <div style={{ display: "flex", gap: "8px", marginTop: "12px" }}>
-            <button type="button" onClick={() => setOuvert(false)} style={{ flex: 1, background: "#fff", color: colors.textMuted, border: `0.5px solid ${colors.border}`, borderRadius: radius.sm, padding: "10px", fontSize: "13px", cursor: "pointer" }}>Annuler</button>
-            <button type="submit" disabled={envoi} style={{ flex: 2, background: colors.blue, color: "#fff", border: "none", borderRadius: radius.sm, padding: "10px", fontSize: "13px", fontWeight: 500, cursor: "pointer", opacity: envoi ? 0.6 : 1 }}>Enregistrer</button>
-          </div>
-        </form>
-      )}
-
-      {/* Moyennes par matière */}
-      {filtre === "Toutes" && parMatiere.length > 0 && (
-        <div style={{ background: "#fff", border: `0.5px solid ${colors.border}`, borderRadius: radius.md, padding: "14px", marginBottom: "12px" }}>
-          <div style={{ fontSize: "13px", fontWeight: 500, color: colors.text, marginBottom: "10px" }}>Moyennes par matière</div>
-          {parMatiere.map(m => {
-            const part = (m.moyenne - systeme.min) / (systeme.max - systeme.min)
-            const seuil = (systeme.suffisant - systeme.min) / (systeme.max - systeme.min)
-            return (
-              <div key={m.matiere} style={{ marginBottom: "10px" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", marginBottom: "4px" }}>
-                  <span style={{ color: colors.text }}><span style={{ display: "inline-block", width: 8, height: 8, borderRadius: 4, background: couleurDe(m.matiere), marginRight: 6 }} />{m.matiere} <span style={{ color: colors.textFaint }}>· {m.nb} note{m.nb > 1 ? "s" : ""}</span></span>
-                  <b style={{ color: m.moyenne >= systeme.suffisant ? colors.green : colors.red }}>{formaterNote(Math.round(m.moyenne * 100) / 100, systeme.echelle)}</b>
-                </div>
-                <div style={{ position: "relative", height: 6, background: colors.blueLight, borderRadius: 3 }}>
-                  <div style={{ width: `${Math.max(2, part * 100)}%`, height: "100%", borderRadius: 3, background: m.moyenne >= systeme.suffisant ? colors.green : colors.red }} />
-                  <div title="Seuil suffisant" style={{ position: "absolute", left: `${seuil * 100}%`, top: -3, width: 2, height: 12, background: colors.text, opacity: 0.35 }} />
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      )}
-
-      {/* Liste */}
-      {visibles.length > 0 && (
-        <div style={{ background: "#fff", border: `0.5px solid ${colors.border}`, borderRadius: radius.md, padding: "6px 14px" }}>
-          {[...visibles].reverse().map((n, i, arr) => (
-            <div key={n.id} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 0", borderBottom: i < arr.length - 1 ? `0.5px solid ${colors.border}` : "none" }}>
-              <span style={{ width: 8, height: 8, borderRadius: 4, background: couleurDe(n.matiere), flexShrink: 0 }} />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: "13px", color: colors.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{n.matiere}{n.titre ? ` · ${n.titre}` : ""}</div>
-                <div style={{ fontSize: "11px", color: colors.textFaint }}>{new Date(n.date + "T12:00").toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}{n.coefficient !== 1 ? ` · coef. ${n.coefficient}` : ""}</div>
-              </div>
-              <b style={{ fontSize: "15px", color: n.note >= systeme.suffisant ? colors.green : colors.red }}>{formaterNote(n.note, n.echelle)}</b>
-              <button onClick={() => supprimer(n.id)} aria-label={`Supprimer la note de ${n.matiere}`} style={{ background: "none", border: "none", color: colors.textFaint, cursor: "pointer", fontSize: "16px", padding: "0 2px" }}>×</button>
-            </div>
+      {/* Graphique ou tableau, au même endroit */}
+      {notesEchelle.length > 0 && (
+        <div role="tablist" aria-label="Affichage" style={{ display: "flex", gap: "2px", background: colors.blueLight, borderRadius: radius.pill, padding: "3px", marginBottom: "8px", width: "fit-content" }}>
+          {(["graphique", "tableau"] as const).map(v => (
+            <button key={v} role="tab" aria-selected={vue === v} onClick={() => setVue(v)}
+              style={{ border: "none", borderRadius: radius.pill, padding: "5px 14px", fontSize: "12px", fontWeight: 500, cursor: "pointer",
+                background: vue === v ? "#fff" : "transparent", color: vue === v ? colors.blue : colors.textMuted }}>
+              {v === "graphique" ? "Graphique" : "Tableau"}
+            </button>
           ))}
         </div>
       )}
-
-      {notesEchelle.length === 0 && !ouvert && (
-        <p style={{ fontSize: "12px", color: colors.textFaint, textAlign: "center", margin: "8px 0" }}>Ajoute ta première note pour voir ton évolution sur l&apos;année.</p>
+      {vue === "graphique" || notesEchelle.length === 0 ? (
+        <Graphique key={filtre} notes={visibles} pays={pays} titre={filtre === "Toutes" ? "Ta moyenne générale" : `Ta moyenne en ${filtre}`} />
+      ) : (
+        <TableauNotes notes={visibles} pays={pays} parMatiere={filtre === "Toutes"} couleurDe={couleurDe}
+          titreChapitre={titreChapitre} onChoisirMatiere={setFiltre} />
       )}
+
+      {/* Historique replié + ajout */}
+      <div style={{ background: "#fff", border: `0.5px solid ${colors.border}`, borderRadius: radius.md, padding: "10px 12px", marginTop: "10px" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px" }}>
+          <div style={{ fontSize: "13px", fontWeight: 500, color: colors.text }}>Historique</div>
+          {!ouvert && (
+            <button onClick={() => setOuvert(true)}
+              style={{ background: colors.blue, color: "#fff", border: "none", borderRadius: radius.pill, padding: "6px 14px", fontSize: "12px", fontWeight: 500, cursor: "pointer" }}>
+              + Ajouter une note
+            </button>
+          )}
+        </div>
+
+        {ouvert && (
+          <form onSubmit={ajouter} style={{ background: "#F8FBFF", border: `0.5px solid ${colors.border}`, borderRadius: radius.sm, padding: "12px", margin: "10px 0 4px" }}>
+            <div style={{ fontSize: "12px", fontWeight: 500, color: colors.text, marginBottom: "8px" }}>Nouvelle note · {systeme.label}</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+              <label style={{ gridColumn: "1 / -1" }}><span style={etiquette}>Matière</span>
+                <input list="matieres-etudes" value={form.matiere} onChange={e => setForm({ ...form, matiere: e.target.value, chapitre: "" })} style={champ} placeholder="Mathématiques" required />
+                <datalist id="matieres-etudes">{[...new Set([...matieres, ...propositions])].map(m => <option key={m} value={m} />)}</datalist>
+                {propositions.length > 0 && !form.matiere && (
+                  <div style={{ display: "flex", gap: "4px", flexWrap: "wrap", marginTop: "6px" }}>
+                    {propositions.slice(0, 14).map(m => (
+                      <button key={m} type="button" onClick={() => setForm({ ...form, matiere: m, chapitre: "" })}
+                        style={{ fontSize: "11px", padding: "4px 9px", borderRadius: radius.pill, border: `0.5px solid ${colors.blueBorder}`, background: "#fff", color: colors.blue, cursor: "pointer" }}>
+                        {m}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </label>
+              {chapitresForm.length > 0 && (
+                <label style={{ gridColumn: "1 / -1" }}><span style={etiquette}>Chapitre (pour retrouver le cours en un clic)</span>
+                  <select value={form.chapitre} onChange={e => setForm({ ...form, chapitre: e.target.value })} style={champ}>
+                    <option value="">Aucun chapitre</option>
+                    {[...new Set(chapitresForm.map(c => c.annee))].map(a => (
+                      <optgroup key={a} label={a}>
+                        {chapitresForm.filter(c => c.annee === a).map(c => <option key={c.id} value={c.id}>{c.titre}</option>)}
+                      </optgroup>
+                    ))}
+                  </select>
+                </label>
+              )}
+              <label style={{ gridColumn: "1 / -1" }}><span style={etiquette}>Évaluation (facultatif)</span>
+                <input value={form.titre} onChange={e => setForm({ ...form, titre: e.target.value })} style={champ} placeholder="Test chapitre 2" />
+              </label>
+              <label><span style={etiquette}>Note ({systeme.min} à {systeme.max})</span>
+                <input inputMode="decimal" value={form.note} onChange={e => setForm({ ...form, note: e.target.value })} style={champ} placeholder={pays === "CH" ? "4.5" : "13"} required />
+              </label>
+              <label><span style={etiquette}>Coefficient</span>
+                <input inputMode="decimal" value={form.coefficient} onChange={e => setForm({ ...form, coefficient: e.target.value })} style={champ} />
+              </label>
+              <label style={{ gridColumn: "1 / -1" }}><span style={etiquette}>Date</span>
+                <input type="date" value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} style={champ} required />
+              </label>
+            </div>
+            <div style={{ display: "flex", gap: "8px", marginTop: "10px" }}>
+              <button type="button" onClick={() => setOuvert(false)} style={{ flex: 1, background: "#fff", color: colors.textMuted, border: `0.5px solid ${colors.border}`, borderRadius: radius.sm, padding: "9px", fontSize: "13px", cursor: "pointer" }}>Annuler</button>
+              <button type="submit" disabled={envoi} style={{ flex: 2, background: colors.blue, color: "#fff", border: "none", borderRadius: radius.sm, padding: "9px", fontSize: "13px", fontWeight: 500, cursor: "pointer", opacity: envoi ? 0.6 : 1 }}>Enregistrer</button>
+            </div>
+          </form>
+        )}
+
+        {historique.length === 0 && !ouvert && (
+          <p style={{ fontSize: "12px", color: colors.textFaint, margin: "8px 0 2px" }}>Ajoute ta première note pour voir ton évolution sur l&apos;année.</p>
+        )}
+        {historiqueAffiche.map(n => {
+          const chap = titreChapitre(n.chapitre_id)
+          const lien = !!(n.chapitre_id && chap)
+          return (
+            <div key={n.id} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "7px 0", borderTop: `0.5px solid ${colors.border}` }}>
+              <span aria-hidden="true" style={{ width: 7, height: 7, borderRadius: 4, background: couleurDe(n.matiere), flexShrink: 0 }} />
+              <button onClick={() => lien && onOuvrirChapitre(n.chapitre_id!)} disabled={!lien}
+                aria-label={lien ? `Ouvrir le chapitre ${chap}` : undefined}
+                style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "baseline", gap: "6px", background: "none", border: "none", padding: 0, textAlign: "left", cursor: lien ? "pointer" : "default" }}>
+                <span style={{ fontSize: "12px", color: colors.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {n.matiere}{(n.titre || chap) ? ` · ${n.titre || chap}` : ""}
+                </span>
+                {lien && <span style={{ fontSize: "11px", color: colors.blue, flexShrink: 0 }}>cours ›</span>}
+              </button>
+              <span style={{ fontSize: "11px", color: colors.textFaint, flexShrink: 0 }}>{new Date(n.date + "T12:00").toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}</span>
+              <b style={{ fontSize: "13px", width: "34px", textAlign: "right", flexShrink: 0, color: n.note >= systeme.suffisant ? colors.green : colors.red }}>{formaterNote(n.note, n.echelle)}</b>
+              <button onClick={() => supprimer(n.id)} aria-label={`Supprimer la note de ${n.matiere}`} style={{ background: "none", border: "none", color: colors.textFaint, cursor: "pointer", fontSize: "15px", padding: "0 2px" }}>×</button>
+            </div>
+          )
+        })}
+        {historique.length > 3 && (
+          <button onClick={() => setHistoriqueComplet(!historiqueComplet)}
+            style={{ width: "100%", background: "none", border: "none", borderTop: `0.5px solid ${colors.border}`, color: colors.blue, fontSize: "12px", padding: "8px 0 2px", cursor: "pointer" }}>
+            {historiqueComplet ? "Réduire" : `Voir tout l'historique (${historique.length})`}
+          </button>
+        )}
+      </div>
+
       {autresEchelles > 0 && (
         <p style={{ fontSize: "11px", color: colors.textFaint, textAlign: "center", marginTop: "10px" }}>
           {autresEchelles} note{autresEchelles > 1 ? "s" : ""} dans l&apos;autre système de notation {autresEchelles > 1 ? "sont masquées" : "est masquée"}.
         </p>
       )}
+    </div>
+  )
+}
+
+// Tableau des notes. « Toutes » : une ligne par matière, de la plus faible à
+// la plus forte, pour voir tout de suite où travailler. Une matière : une
+// ligne par note.
+function TableauNotes({ notes, pays, parMatiere, couleurDe, titreChapitre, onChoisirMatiere }: {
+  notes: NoteEtudiant[]
+  pays: Pays
+  parMatiere: boolean
+  couleurDe: (m: string) => string
+  titreChapitre: (id: string | null) => string | null
+  onChoisirMatiere: (m: string) => void
+}) {
+  const s = SYSTEMES[pays]
+  const cellule: React.CSSProperties = { padding: "8px 6px", fontSize: "12px", color: colors.text, borderTop: `0.5px solid ${colors.border}`, verticalAlign: "top" }
+  const entete: React.CSSProperties = { padding: "0 6px 6px", fontSize: "10px", fontWeight: 500, color: colors.textFaint, textAlign: "left" }
+  const couleurNote = (v: number) => (v >= s.suffisant ? "#006300" : "#b42323")
+  const generale = moyennePonderee(notes)
+
+  if (parMatiere) {
+    const lignes = [...new Set(notes.map(n => n.matiere))]
+      .map(m => { const ns = notes.filter(n => n.matiere === m); return { matiere: m, notes: ns, moyenne: moyennePonderee(ns)! } })
+      .sort((a, b) => a.moyenne - b.moyenne)
+    return (
+      <div style={{ background: "#fff", border: `0.5px solid ${colors.border}`, borderRadius: radius.md, padding: "12px 8px 6px" }}>
+        <div style={{ fontSize: "13px", fontWeight: 500, color: colors.text, padding: "0 6px 2px" }}>Moyenne par matière</div>
+        <div style={{ fontSize: "11px", color: colors.textMuted, padding: "0 6px 8px" }}>De la plus faible à la plus forte : commence par réviser celles du haut.</div>
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <thead><tr><th style={entete}>Matière</th><th style={entete}>Notes</th><th style={{ ...entete, textAlign: "right" }}>Moyenne</th></tr></thead>
+          <tbody>
+            {lignes.map(l => (
+              <tr key={l.matiere}>
+                <td style={cellule}>
+                  <button onClick={() => onChoisirMatiere(l.matiere)} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", textAlign: "left", fontSize: "12px", color: colors.text, display: "flex", alignItems: "center", gap: "6px" }}>
+                    <span aria-hidden="true" style={{ width: 7, height: 7, borderRadius: 4, background: couleurDe(l.matiere), flexShrink: 0 }} />{l.matiere}
+                  </button>
+                  {l.moyenne < s.suffisant && <div style={{ fontSize: "10px", color: "#b42323", marginTop: "2px" }}>✗ à travailler</div>}
+                </td>
+                <td style={{ ...cellule, color: colors.textMuted }}>{l.notes.map(n => formaterNote(n.note, n.echelle)).join(" · ")}</td>
+                <td style={{ ...cellule, textAlign: "right", fontWeight: 600, color: couleurNote(l.moyenne) }}>{formaterNote(arrondi(l.moyenne), s.echelle)}</td>
+              </tr>
+            ))}
+            {generale !== null && (
+              <tr>
+                <td style={{ ...cellule, fontWeight: 600, borderTop: `1px solid ${colors.text}` }} colSpan={2}>Moyenne générale</td>
+                <td style={{ ...cellule, textAlign: "right", fontWeight: 700, borderTop: `1px solid ${colors.text}`, color: couleurNote(generale) }}>{formaterNote(arrondi(generale), s.echelle)}</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    )
+  }
+
+  const lignes = [...notes].sort((a, b) => dateNote(b) - dateNote(a))
+  return (
+    <div style={{ background: "#fff", border: `0.5px solid ${colors.border}`, borderRadius: radius.md, padding: "12px 8px 6px" }}>
+      <table style={{ width: "100%", borderCollapse: "collapse" }}>
+        <thead><tr><th style={entete}>Date</th><th style={entete}>Évaluation</th><th style={{ ...entete, textAlign: "right" }}>Coef.</th><th style={{ ...entete, textAlign: "right" }}>Note</th></tr></thead>
+        <tbody>
+          {lignes.map(n => (
+            <tr key={n.id}>
+              <td style={{ ...cellule, color: colors.textMuted, whiteSpace: "nowrap" }}>{new Date(n.date + "T12:00").toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}</td>
+              <td style={cellule}>{n.titre || titreChapitre(n.chapitre_id) || "–"}</td>
+              <td style={{ ...cellule, textAlign: "right", color: colors.textMuted }}>{n.coefficient}</td>
+              <td style={{ ...cellule, textAlign: "right", fontWeight: 600, color: couleurNote(n.note) }}>{formaterNote(n.note, n.echelle)}</td>
+            </tr>
+          ))}
+          {generale !== null && (
+            <tr>
+              <td style={{ ...cellule, fontWeight: 600, borderTop: `1px solid ${colors.text}` }} colSpan={3}>Moyenne</td>
+              <td style={{ ...cellule, textAlign: "right", fontWeight: 700, borderTop: `1px solid ${colors.text}`, color: couleurNote(generale) }}>{formaterNote(arrondi(generale), s.echelle)}</td>
+            </tr>
+          )}
+        </tbody>
+      </table>
     </div>
   )
 }
