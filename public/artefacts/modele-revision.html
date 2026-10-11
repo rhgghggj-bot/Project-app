@@ -6,8 +6,10 @@
 <title>Ma page de révision</title>
 <!--
   Page de révision par défaut de l'Espace étudiant (dans l'esprit de Bise
-  Cycles) : l'entreprise fictive de l'élève sert de bâtiment, chaque matière
-  est un service, chaque chapitre une fiche. L'appli remplace la ligne
+  Cycles). Son habillage (D.univers, voir lib/univers.ts) dépend du type
+  d'études : entreprise fictive ou lieu de stage (chaque matière est une pièce
+  du bâtiment), expédition pour l'école obligatoire (territoires, étapes,
+  badges), ou tableau de préparation à l'examen (compte à rebours). L'appli remplace la ligne
   « window.DONNEES = null » par les chapitres du programme de l'élève avant
   d'afficher la page ; la progression passe par localStorage (sauvegardé par
   l'appli).
@@ -81,6 +83,32 @@ details.exo p{white-space:pre-line}
 .score{font-size:48px;font-weight:800;text-align:center}
 .vide{border:1px dashed var(--ligne);padding:14px;color:var(--doux);border-radius:4px;background:var(--carte)}
 .resultats .ligne .m{font-size:12px;color:var(--doux)}
+.registre input{font:inherit;font-size:14px;border:1px solid var(--ligne);border-radius:4px;padding:3px 6px}
+.rebours{font-size:30px;font-weight:800;color:var(--accent)}
+.prepa{display:flex;flex-direction:column}
+.prepa .ligne{grid-template-columns:minmax(0,1fr) 120px 46px;border-top:1px solid var(--ligne);padding:12px 4px}
+.prepa .ligne:first-child{border-top:0}
+.prepa .pc{font:700 14px ui-monospace,Menlo,monospace;text-align:right}
+.prepa .t{font-weight:600}.prepa small{display:block;color:var(--doux);font-size:12px}
+@media (max-width:560px){.prepa .ligne{grid-template-columns:minmax(0,1fr) 70px 40px}}
+/* Expédition (école obligatoire) : plus ludique */
+body.f-expedition{--fond:#FFF7ED;--mur:#7C2D12;--accent:#EA580C;--accent-pale:#FFEDD5;background-image:radial-gradient(rgba(234,88,12,.10) 1.5px,transparent 1.5px);background-size:22px 22px}
+.f-expedition .carte,.f-expedition .action,.f-expedition .recherche input{border-radius:16px}
+.f-expedition .stat{border-radius:14px}
+.carte-terr{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.terr{border:2px solid var(--mur);border-radius:18px;background:var(--carte);padding:14px 12px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:4px;box-shadow:0 4px 0 var(--mur)}
+.terr:hover{transform:translateY(-2px)}
+.terr .em{font-size:34px;line-height:1}.terr h3{font-size:15px}
+.terr .etoiles{font-size:13px;letter-spacing:2px;color:var(--or)}
+.terr.fini{background:#FEF3C7}
+.chemin{list-style:none;margin:0;padding:0 0 0 8px;position:relative}
+.chemin:before{content:"";position:absolute;left:26px;top:20px;bottom:20px;border-left:3px dashed var(--accent)}
+.chemin li{position:relative}
+.chemin .ligne{grid-template-columns:40px 1fr auto;padding:8px 0}
+.chemin .pastille{width:38px;height:38px;font-size:15px;font-weight:800;background:var(--carte);border:3px solid var(--accent);color:var(--accent);position:relative}
+.chemin .pastille.ok{background:var(--ok);border-color:var(--ok);color:#fff}
+.badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.badge{background:#FEF3C7;border:1px solid #F59E0B;border-radius:999px;padding:2px 9px;font-size:12px}
 </style>
 </head>
 <body>
@@ -91,6 +119,10 @@ details.exo p{white-space:pre-line}
   "use strict";
   var D = window.DONNEES;
   var app = document.getElementById("app");
+  var U = (D && D.univers) || { forme: "entreprise", titre: "Mon entreprise", sousTitre: "", intro: "", piece: "Service", plan: "Plan de l'entreprise", fiche: { titre: "Registre", lignes: [] } };
+  var F = U.forme;
+  document.body.className = "f-" + F;
+  if (U.couleur && F !== "expedition") { document.documentElement.style.setProperty("--accent", U.couleur); document.documentElement.style.setProperty("--accent-pale", U.couleur + "1a") }
   if (!D || !D.chapitres || !D.chapitres.length) {
     app.innerHTML = '<div class="vide">Aucun chapitre pour ton niveau pour l\'instant. Choisis ton niveau, ta filière et ton année dans les Réglages de l\'Espace étudiant.</div>';
     return;
@@ -103,6 +135,8 @@ details.exo p{white-space:pre-line}
   etat.maitrise = etat.maitrise || {};   // chapitre → meilleur score (0-1)
   etat.boites = etat.boites || {};       // question → { b: boîte 1-5, p: prochaine révision (jour) }
   etat.jours = etat.jours || [];         // jours où l'élève a révisé
+  etat.xp = etat.xp || 0;                // bonnes réponses (points d'expédition)
+  etat.dateExamen = etat.dateExamen || ""; // forme examen : date choisie par l'élève
   function sauver() { try { localStorage.setItem(CLE, JSON.stringify(etat)) } catch (e) {} }
   function jour(d) { d = d || new Date(); return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate() }
   function dansJours(n) { var d = new Date(); d.setDate(d.getDate() + n); return jour(d) }
@@ -148,40 +182,88 @@ details.exo p{white-space:pre-line}
     window.scrollTo(0, 0);
   }
 
+  var EMOJIS = [[/éducation physique|sport/, "⚽"], [/fran|lettre|litt/, "📖"], [/math|algèbre|analyse/, "📐"], [/allemand|anglais|italien|espagnol|lv/, "🗣️"], [/latin|grec/, "🏛️"],
+    [/histoire/, "🏰"], [/géo/, "🗺️"], [/bio|svt|sciences|physique|chimie/, "🔬"], [/numérique|informatique/, "💻"], [/techno|travaux/, "🛠️"],
+    [/musique/, "🎵"], [/arts/, "🎨"], [/communication/, "💬"], [/emc|citoyen/, "⚖️"]];
+  function emoji(m) { m = m.toLowerCase(); for (var i = 0; i < EMOJIS.length; i++) if (EMOJIS[i][0].test(m)) return EMOJIS[i][1]; return "🧭" }
+  function joursAvantExamen() {
+    if (!etat.dateExamen) return null;
+    var d = new Date(etat.dateExamen + "T00:00:00"), a = new Date(); a.setHours(0, 0, 0, 0);
+    return Math.round((d - a) / 864e5);
+  }
+  function territoiresFinis() {
+    return uniques(D.chapitres.map(function (c) { return c.annee + "|" + c.matiere })).filter(function (k) {
+      var cs = D.chapitres.filter(function (c) { return c.annee + "|" + c.matiere === k && c.doc });
+      return cs.length && cs.every(maitrise);
+    }).map(function (k) { return k.split("|") });
+  }
+
   function ecranAccueil() {
     var chs = chapitresAnnee(), faits = chs.filter(maitrise).length, total = chs.filter(function (c) { return c.doc }).length;
-    var e = D.entreprise || { nom: "Mon entreprise", secteur: "", description: "" };
-    var h = '<header class="entete"><div><div class="sur">Plan de révision · ' + esc(D.niveau) + '</div>' +
-      '<h1>' + esc(e.nom).replace(/ ([^ ]+)$/, ' <span>$1</span>') + '</h1>' +
-      '<p>Chaque service du bâtiment correspond à une matière. Entre dans une pièce pour réviser ses chapitres, puis teste-toi : un chapitre est maîtrisé quand tu réussis tout son quiz.</p></div>' +
-      '<aside class="carte registre"><div class="sur">Extrait du registre (fictif)</div><dl>' +
-      '<dt>Raison sociale</dt><dd>' + esc(e.nom) + '</dd>' + (e.secteur ? '<dt>Secteur</dt><dd>' + esc(e.secteur) + '</dd>' : '') +
-      (e.description ? '<dt>Activité</dt><dd>' + esc(e.description) + '</dd>' : '') + '<dt>Formation</dt><dd>' + esc(D.filiere || D.niveau) + '</dd></dl></aside></header>';
+    var mot = F === "expedition" ? ["étape", "réussie"] : F === "examen" ? ["chapitre", "prêt"] : ["chapitre", "maîtrisé"];
+    var titre = esc(U.titre).replace(/ ([^ ]+)$/, ' <span>$1</span>');
+    var h = '<header class="entete"><div><div class="sur">' + esc(U.sousTitre ? U.sousTitre + ' · ' : '') + esc(D.niveau) + '</div><h1>' + titre + '</h1><p>' + esc(U.intro) + '</p></div>' +
+      '<aside class="carte registre"><div class="sur">' + esc(U.fiche.titre) + '</div><dl>' +
+      U.fiche.lignes.map(function (l) { return '<dt>' + esc(l[0]) + '</dt><dd>' + esc(l[1]) + '</dd>' }).join("");
+    if (F === "expedition") {
+      var badges = territoiresFinis();
+      h += '<dt>Points</dt><dd>' + etat.xp + ' ⚡</dd><dt>Badges</dt><dd>' + badges.length + ' 🏅</dd></dl>' +
+        (badges.length ? '<div class="badges">' + badges.slice(-6).map(function (b) { return '<span class="badge">' + emoji(b[1]) + ' ' + esc(b[1]) + ' ' + esc(b[0]) + '</span>' }).join("") + '</div>' : '');
+    } else if (F === "examen") {
+      var j = joursAvantExamen();
+      h += '<dt><label for="dexam">Date de l\'examen</label></dt><dd><input id="dexam" type="date" value="' + esc(etat.dateExamen) + '" data-action="date-examen"></dd></dl>' +
+        (j === null ? '<div class="meta" style="margin-top:6px">Ajoute la date pour voir le compte à rebours.</div>'
+          : j >= 0 ? '<div style="margin-top:6px"><span class="rebours">J-' + j + '</span> <span class="meta">avant ' + esc(U.examen) + '</span></div>'
+          : '<div class="meta" style="margin-top:6px">Date passée : choisis la prochaine.</div>');
+    } else h += '</dl>';
+    h += '</aside></header>';
     h += '<div class="recherche"><label class="sur" for="q">Rechercher une notion</label><input id="q" type="search" autocomplete="off" placeholder="ex. bilan, élasticité, Perfekt, Pythagore…" data-action="chercher"></div><div id="resultats"></div>';
     h += '<div class="annees" role="tablist">' + annees.map(function (a) { return '<button class="puce" role="tab" aria-pressed="' + (a === vue.annee) + '" data-action="annee" data-v="' + esc(a) + '">' + esc(a) + '</button>' }).join("") + '</div>';
     var due = aReviser().length;
     h += '<section class="actions">' +
-      '<button class="action principale" data-action="revision"><span class="ic">📅</span><div><b>Révision du jour</b><span>' + (due ? due + ' question' + (due > 1 ? 's' : '') + ' à revoir aujourd\'hui' : '10 questions pour commencer') + ' · série de ' + serie() + ' jour' + (serie() > 1 ? 's' : '') + '</span></div></button>' +
-      '<button class="action" data-action="quiz-annee"><span class="ic">▶</span><div><b>Mode quiz</b><span>10 questions au hasard de ton année</span></div></button></section>';
-    h += '<section class="progression"><div class="stat"><b>' + faits + ' / ' + total + '</b><span>chapitres maîtrisés (' + esc(vue.annee) + ')</span><div class="barre"><i style="width:' + (total ? Math.round(faits / total * 100) : 0) + '%"></i></div></div>' +
-      '<div class="stat"><b>' + serie() + '</b><span>jours de suite</span></div><div class="stat"><b>' + Object.keys(etat.boites).length + '</b><span>questions travaillées</span></div></section>';
-    h += '<div><div class="sur" style="margin-bottom:8px">Plan de l\'entreprise · ' + esc(vue.annee) + '</div><div class="batiment">' +
-      matieresAnnee().map(function (m) {
-        var cs = chs.filter(function (c) { return c.matiere === m }), ok = cs.filter(maitrise).length;
-        return '<button class="piece" data-action="matiere" data-v="' + esc(m) + '"><span class="tag">Service</span><h3>' + esc(m) + '</h3><div class="bas"><span>' + cs.length + ' chapitre' + (cs.length > 1 ? 's' : '') + ' · ' + ok + ' maîtrisé' + (ok > 1 ? 's' : '') + '</span><div class="barre"><i style="width:' + Math.round(ok / cs.length * 100) + '%"></i></div></div></button>';
+      '<button class="action principale" data-action="revision"><span class="ic">' + (F === "expedition" ? '🔥' : '📅') + '</span><div><b>' + (F === "expedition" ? 'Défi du jour' : 'Révision du jour') + '</b><span>' + (due ? due + ' question' + (due > 1 ? 's' : '') + ' à revoir aujourd\'hui' : '10 questions pour commencer') + ' · série de ' + serie() + ' jour' + (serie() > 1 ? 's' : '') + '</span></div></button>' +
+      '<button class="action" data-action="quiz-annee"><span class="ic">' + (F === "expedition" ? '🎲' : '▶') + '</span><div><b>' + (F === "examen" ? 'Examen blanc' : 'Mode quiz') + '</b><span>' + (F === "examen" ? '20 questions mélangées de ton année' : '10 questions au hasard de ton année') + '</span></div></button></section>';
+    h += '<section class="progression"><div class="stat"><b>' + faits + ' / ' + total + '</b><span>' + mot[0] + 's ' + mot[1] + 's (' + esc(vue.annee) + ')</span><div class="barre"><i style="width:' + (total ? Math.round(faits / total * 100) : 0) + '%"></i></div></div>' +
+      '<div class="stat"><b>' + serie() + '</b><span>jours de suite</span></div><div class="stat"><b>' + (F === "expedition" ? etat.xp : Object.keys(etat.boites).length) + '</b><span>' + (F === "expedition" ? 'points gagnés' : 'questions travaillées') + '</span></div></section>';
+    var mats = matieresAnnee().map(function (m) {
+      var cs = chs.filter(function (c) { return c.matiere === m }), avecDoc = cs.filter(function (c) { return c.doc });
+      return { m: m, cs: cs, ok: cs.filter(maitrise).length, total: avecDoc.length };
+    });
+    h += '<div><div class="sur" style="margin-bottom:8px">' + esc(U.plan) + ' · ' + esc(vue.annee) + '</div>';
+    if (F === "expedition") {
+      h += '<div class="carte-terr">' + mats.map(function (x) {
+        var n = x.total ? Math.round(x.ok / x.total * 3) : 0, fini = x.total && x.ok === x.total;
+        return '<button class="terr' + (fini ? ' fini' : '') + '" data-action="matiere" data-v="' + esc(x.m) + '"><span class="em">' + emoji(x.m) + '</span><h3>' + esc(x.m) + '</h3>' +
+          '<span class="etoiles">' + '★★★'.slice(0, n) + '<span style="opacity:.3">' + '★★★'.slice(n) + '</span></span><span class="meta">' + x.ok + ' / ' + x.cs.length + ' étapes' + (fini ? ' · 🏅' : '') + '</span></button>';
+      }).join("") + '</div>';
+    } else if (F === "examen") {
+      var faibles = chs.filter(function (c) { return c.doc && etat.maitrise[c.id] !== undefined && etat.maitrise[c.id] < 1 })
+        .sort(function (a, b) { return etat.maitrise[a.id] - etat.maitrise[b.id] }).slice(0, 5);
+      h += '<div class="carte prepa">' + mats.slice().sort(function (a, b) { return (a.total ? a.ok / a.total : 1) - (b.total ? b.ok / b.total : 1) }).map(function (x) {
+        var pc = x.total ? Math.round(x.ok / x.total * 100) : 0;
+        return '<button class="ligne" data-action="matiere" data-v="' + esc(x.m) + '"><span><span class="t">' + esc(x.m) + '</span><small>' + x.ok + ' / ' + x.cs.length + ' chapitres prêts</small></span><div class="barre"><i style="width:' + pc + '%"></i></div><span class="pc">' + (x.total ? pc + '%' : '–') + '</span></button>';
       }).join("") + '</div></div>';
-    return h;
+      h += '<div><div class="sur" style="margin-bottom:8px">Points à retravailler</div><div class="carte">' + (faibles.length ? '<ul class="liste">' + faibles.map(function (c) {
+        return '<li><button class="ligne" data-action="chapitre" data-v="' + esc(c.id) + '"><span class="pastille">!</span><span><span class="t">' + esc(c.titre) + '</span><br><span class="meta">' + esc(c.matiere) + '</span></span><span class="meta">' + Math.round(etat.maitrise[c.id] * 100) + '%</span></button></li>';
+      }).join("") + '</ul>' : '<span class="meta">Fais quelques quiz : les chapitres pas encore réussis apparaîtront ici.</span>') + '</div>';
+    } else {
+      h += '<div class="batiment">' + mats.map(function (x) {
+        return '<button class="piece" data-action="matiere" data-v="' + esc(x.m) + '"><span class="tag">' + esc(U.piece) + '</span><h3>' + esc(x.m) + '</h3><div class="bas"><span>' + x.cs.length + ' chapitre' + (x.cs.length > 1 ? 's' : '') + ' · ' + x.ok + ' maîtrisé' + (x.ok > 1 ? 's' : '') + '</span><div class="barre"><i style="width:' + Math.round(x.ok / x.cs.length * 100) + '%"></i></div></div></button>';
+      }).join("") + '</div>';
+    }
+    return h + '</div>';
   }
 
   function ecranMatiere() {
     var cs = chapitresAnnee().filter(function (c) { return c.matiere === vue.matiere });
     var nbQ = QUESTIONS.filter(function (x) { return x.chap.matiere === vue.matiere && x.chap.annee === vue.annee }).length;
-    return '<button class="retour" data-action="accueil">← Plan de l\'entreprise</button>' +
-      '<div class="carte"><div class="sur">Service · ' + esc(vue.annee) + '</div><h2 style="margin:4px 0 10px">' + esc(vue.matiere) + '</h2>' +
-      '<ul class="liste">' + cs.map(function (c, i) {
+    var exp = F === "expedition";
+    return '<button class="retour" data-action="accueil">← ' + esc(U.plan) + '</button>' +
+      '<div class="carte"><div class="sur">' + esc(U.piece) + ' · ' + esc(vue.annee) + '</div><h2 style="margin:4px 0 10px">' + (exp ? emoji(vue.matiere) + ' ' : '') + esc(vue.matiere) + '</h2>' +
+      '<ul class="' + (exp ? 'chemin' : 'liste') + '">' + cs.map(function (c, i) {
         return '<li><button class="ligne" data-action="chapitre" data-v="' + esc(c.id) + '"><span class="pastille' + (maitrise(c) ? ' ok' : '') + '">' + (maitrise(c) ? '✓' : (i + 1)) + '</span><span class="t">' + esc(c.titre) + '</span><span class="meta">' + (c.doc ? '' : 'bientôt') + '</span></button></li>';
       }).join("") + '</ul>' +
-      (nbQ ? '<div style="margin-top:12px"><button class="btn" data-action="quiz-matiere">Quiz de la matière (' + Math.min(10, nbQ) + ' questions)</button></div>' : '') + '</div>';
+      (nbQ ? '<div style="margin-top:12px"><button class="btn" data-action="quiz-matiere">' + (exp ? 'Défi du territoire' : 'Quiz de la matière') + ' (' + Math.min(10, nbQ) + ' questions)</button></div>' : '') + '</div>';
   }
 
   function ecranChapitre() {
@@ -196,7 +278,7 @@ details.exo p{white-space:pre-line}
     if (d.vocabulaire.length) h += '<div class="encadre"><h4>Vocabulaire</h4>' + d.vocabulaire.map(function (v) { return '<div><b>' + esc(v.mot) + '</b> : ' + esc(v.definition) + '</div>' }).join("") + '</div>';
     if (d.exemple) h += '<div class="encadre or"><h4>Exemple concret</h4>' + esc(d.exemple) + '</div>';
     if (d.exercice && d.exercice.enonce) h += '<details class="exo"><summary>Exercice · voir la solution</summary><p><b>Énoncé.</b> ' + esc(d.exercice.enonce) + '</p><p><b>Solution.</b> ' + esc(d.exercice.solution) + '</p></details>';
-    if (d.quiz.length) h += '<div><button class="btn" data-action="quiz-chapitre">Teste-toi (' + d.quiz.length + ' questions)</button></div>';
+    if (d.quiz.length) h += '<div><button class="btn" data-action="quiz-chapitre">' + (F === "expedition" ? 'Relever le défi' : 'Teste-toi') + ' (' + d.quiz.length + ' questions)</button></div>';
     return h + '</div>';
   }
 
@@ -210,7 +292,7 @@ details.exo p{white-space:pre-line}
     var z = vue.quiz;
     if (z.i >= z.qs.length) {
       return '<div class="carte quiz"><div class="sur">' + esc(z.titre) + '</div><div class="score">' + z.score + ' / ' + z.qs.length + '</div>' +
-        '<p style="text-align:center;margin:0">' + (z.score === z.qs.length ? 'Parfait, c\'est maîtrisé.' : z.score / z.qs.length >= .6 ? 'Bien joué. Relis les questions ratées.' : 'Relis la fiche puis recommence.') + '</p>' +
+        '<p style="text-align:center;margin:0">' + (z.score === z.qs.length ? (F === "expedition" ? 'Parfait, étape validée ! +' + z.score + ' ⚡' : 'Parfait, c\'est maîtrisé.') : z.score / z.qs.length >= .6 ? 'Bien joué. Relis les questions ratées.' : 'Relis la fiche puis recommence.') + '</p>' +
         (z.rates.length ? '<div><div class="sur" style="margin:8px 0">À revoir</div>' + z.rates.map(function (x) { return '<div class="retour-q ko" style="margin-bottom:6px"><b>' + esc(x.q.question) + '</b><br>' + esc(x.q.choix[x.q.bonne]) + ' — ' + esc(x.q.explication) + '</div>' }).join("") + '</div>' : '') +
         '<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="btn" data-action="quiz-encore">Recommencer</button><button class="btn clair" data-action="quiz-fin">Terminer</button></div></div>';
     }
@@ -231,7 +313,7 @@ details.exo p{white-space:pre-line}
   function repondre(i) {
     var z = vue.quiz, x = z.qs[z.i], juste = i === x.q.bonne;
     z.choisi = i;
-    if (juste) z.score++; else z.rates.push(x);
+    if (juste) { z.score++; etat.xp++ } else z.rates.push(x);
     // Répétition espacée (boîtes de Leitner) : juste → boîte suivante, faux → boîte 1
     var b = etat.boites[x.cle] || { b: 0, p: 0 };
     b.b = juste ? Math.min(5, b.b + 1) : 1;
@@ -260,6 +342,7 @@ details.exo p{white-space:pre-line}
 
   // ─── Actions ───
   app.addEventListener("input", function (e) { if (e.target.dataset.action === "chercher") chercher(e.target.value) });
+  app.addEventListener("change", function (e) { if (e.target.dataset.action === "date-examen") { etat.dateExamen = e.target.value; sauver(); rendre() } });
   app.addEventListener("click", function (e) {
     var el = e.target.closest("[data-action]"); if (!el) return;
     var a = el.dataset.action, v = el.dataset.v;
@@ -269,7 +352,7 @@ details.exo p{white-space:pre-line}
     else if (a === "chapitre") { vue.chapitre = v; vue.annee = parId[v].annee; vue.matiere = parId[v].matiere; vue.ecran = "chapitre"; rendre() }
     else if (a === "quiz-chapitre") { var c = parId[vue.chapitre]; lancerQuiz(QUESTIONS.filter(function (x) { return x.chap === c }), c.titre, "chapitre", c.id) }
     else if (a === "quiz-matiere") lancerQuiz(melanger(QUESTIONS.filter(function (x) { return x.chap.matiere === vue.matiere && x.chap.annee === vue.annee })).slice(0, 10), vue.matiere, "matiere")
-    else if (a === "quiz-annee") lancerQuiz(melanger(QUESTIONS.filter(function (x) { return x.chap.annee === vue.annee })).slice(0, 10), "Mode quiz · " + vue.annee, "accueil")
+    else if (a === "quiz-annee") lancerQuiz(melanger(QUESTIONS.filter(function (x) { return x.chap.annee === vue.annee })).slice(0, F === "examen" ? 20 : 10), (F === "examen" ? "Examen blanc · " : "Mode quiz · ") + vue.annee, "accueil")
     else if (a === "revision") {
       var due = melanger(aReviser());
       var qs = due.length ? due.slice(0, 15) : melanger(QUESTIONS.filter(function (x) { return x.chap.annee === vue.annee && !etat.boites[x.cle] })).slice(0, 10);

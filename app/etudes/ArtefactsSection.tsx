@@ -9,6 +9,7 @@ import { PetitBouton } from "./CorrectionSection"
 import { ChoixEntreprise } from "./RevisionSection"
 import { trouverNiveau } from "@/lib/cursus"
 import { chapitreVisible, chargerProgramme } from "@/lib/programmes"
+import { universPour } from "@/lib/univers"
 import type { EntrepriseFictive, EntreprisePerso, Pays } from "@/lib/etudes"
 
 // Pages HTML personnelles (ex. un artefact Claude téléchargé) rangées dans
@@ -48,7 +49,8 @@ function injecter(html: string, script: string) {
 }
 
 // Page de révision par défaut : le modèle public/artefacts/modele-revision.html
-// rempli avec les chapitres du programme de l'élève et son entreprise fictive.
+// rempli avec les chapitres du programme de l'élève et l'habillage adapté à
+// son type d'études (entreprise, lieu de stage, expédition ou examen).
 async function pageParDefaut(p: ParDefaut): Promise<string | null> {
   const niveau = trouverNiveau(p.pays, p.niveauId)
   if (!niveau) return null
@@ -58,16 +60,24 @@ async function pageParDefaut(p: ParDefaut): Promise<string | null> {
   ])
   if (!modele || !programme) return null
   const chapitres = programme.chapitres.filter(c => chapitreVisible(c, p.filiere, p.specialites))
+  const filiere = niveau.filieres?.find(f => f.id === p.filiere)?.label ?? null
   const donnees = {
     niveau: niveau.label,
-    filiere: niveau.filieres?.find(f => f.id === p.filiere)?.label ?? null,
+    filiere,
     annees: niveau.annees.filter(a => chapitres.some(c => c.annee === a)),
     anneeActuelle: p.annee,
-    entreprise: { nom: p.entreprise.nom, secteur: p.entreprise.secteur, description: p.entreprise.description },
+    univers: universPour({ pays: p.pays, niveauId: niveau.id, niveau: niveau.label, filiere: p.filiere, filiereLabel: filiere, entreprise: p.entreprise }),
     chapitres,
   }
   const json = JSON.stringify(donnees).replace(/</g, "\\u003c")
   return modele.replace("window.DONNEES = null;", () => `window.DONNEES = ${json};`)
+}
+
+const DESCRIPTIONS: Record<string, string> = {
+  entreprise: "Ton programme sous forme d'entreprise : chaque matière est un service, avec fiches, quiz, révision du jour et progression.",
+  lieu: "Ton programme dans un lieu de stage lié à ta formation : chaque matière est un secteur, avec fiches, quiz, révision du jour et progression.",
+  expedition: "Ton programme en expédition : chaque matière est un territoire à explorer, chaque chapitre une étape, avec défis, points et badges.",
+  examen: "Ton plan de préparation à l'examen : préparation par discipline, points à retravailler, examen blanc et compte à rebours.",
 }
 
 type ParDefaut = {
@@ -121,9 +131,14 @@ export default function ArtefactsSection({ userId, parDefaut }: { userId: string
   if (ouvert) return <Lecteur source={ouvert} onFermer={() => setOuvert(null)} />
 
   const niveau = trouverNiveau(parDefaut.pays, parDefaut.niveauId)
+  const univers = niveau ? universPour({
+    pays: parDefaut.pays, niveauId: niveau.id, niveau: niveau.label, filiere: parDefaut.filiere,
+    filiereLabel: niveau.filieres?.find(f => f.id === parDefaut.filiere)?.label ?? null, entreprise: parDefaut.entreprise,
+  }) : null
+  const couleur = univers?.couleur ?? colors.blue
   const cleDefaut = `${parDefaut.pays}-${parDefaut.niveauId}-${parDefaut.filiere ?? "tous"}`
   const ouvrirDefaut = () => setOuvert({
-    titre: `Révision · ${parDefaut.entreprise.nom}`,
+    titre: `Révision · ${univers?.titre ?? "Mon programme"}`,
     // L'état (progression) est rangé à part des pages personnelles (.html)
     cheminEtat: `${userId}/${DOSSIER}/defaut-${cleDefaut}.etat.json`,
     charger: () => pageParDefaut(parDefaut),
@@ -131,25 +146,25 @@ export default function ArtefactsSection({ userId, parDefaut }: { userId: string
 
   return (
     <div>
-      <div style={{ ...carte, background: `linear-gradient(135deg, ${parDefaut.entreprise.couleur}1f, #fff)`, borderColor: `${parDefaut.entreprise.couleur}55` }}>
+      <div style={{ ...carte, background: `linear-gradient(135deg, ${couleur}1f, #fff)`, borderColor: `${couleur}55` }}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <div aria-hidden="true" style={{ width: 40, height: 40, borderRadius: 10, background: parDefaut.entreprise.couleur, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, flexShrink: 0 }}>
-            {parDefaut.entreprise.nom[0]}
+          <div aria-hidden="true" style={{ width: 40, height: 40, borderRadius: 10, background: couleur, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, flexShrink: 0 }}>
+            {univers?.forme === "expedition" ? "🧭" : univers?.forme === "examen" ? "🎯" : (univers?.titre ?? "?")[0]}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: "11px", color: colors.textFaint }}>Page de révision par défaut</div>
-            <div style={{ fontSize: "14px", fontWeight: 600, color: colors.text }}>{parDefaut.entreprise.nom}</div>
+            <div style={{ fontSize: "14px", fontWeight: 600, color: colors.text }}>{univers?.titre ?? "Mon programme"}</div>
             <div style={{ fontSize: "11px", color: colors.textMuted }}>{niveau ? niveau.label : "Choisis ton niveau dans Réglages"}</div>
           </div>
           <PetitBouton onClick={ouvrirDefaut}>Ouvrir</PetitBouton>
         </div>
         <p style={{ fontSize: "12px", color: colors.textMuted, margin: "8px 0 0", lineHeight: 1.5 }}>
-          Ton programme sous forme d&apos;entreprise : chaque matière est un service, avec fiches, quiz, révision du jour et progression.
+          {DESCRIPTIONS[univers?.forme ?? "examen"]}
         </p>
-        <button onClick={() => setChoixEntreprise(!choixEntreprise)} style={{ background: "none", border: "none", color: colors.blue, fontSize: "12px", cursor: "pointer", padding: "8px 0 0" }}>
+        {univers?.forme === "entreprise" && <button onClick={() => setChoixEntreprise(!choixEntreprise)} style={{ background: "none", border: "none", color: colors.blue, fontSize: "12px", cursor: "pointer", padding: "8px 0 0" }}>
           {choixEntreprise ? "Fermer" : "Changer d'entreprise"}
-        </button>
-        {choixEntreprise && (
+        </button>}
+        {univers?.forme === "entreprise" && choixEntreprise && (
           <ChoixEntreprise actuelle={parDefaut.entrepriseId} perso={parDefaut.entreprisePerso}
             onChoisir={(id, perso) => { parDefaut.onChangerEntreprise(id, perso); setChoixEntreprise(false) }} />
         )}
@@ -225,7 +240,7 @@ function Lecteur({ source, onFermer }: { source: Source; onFermer: () => void })
   }, [cheminEtat])
 
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 100, background: "#fff", display: "flex", flexDirection: "column" }}>
+    <div style={{ position: "fixed", inset: 0, zIndex: 1100, background: "#fff", display: "flex", flexDirection: "column" }}>
       <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 14px", background: colors.navy, color: "#fff" }}>
         <button onClick={onFermer} style={{ background: "rgba(255,255,255,0.15)", color: "#fff", border: "none", borderRadius: radius.pill, padding: "6px 14px", fontSize: "13px", cursor: "pointer" }}>← Fermer</button>
         <span style={{ fontSize: "13px", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{source.titre}</span>
