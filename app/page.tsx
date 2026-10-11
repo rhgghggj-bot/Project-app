@@ -4,6 +4,7 @@ import Link from "next/link"
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { syncActivitesGroupeVersCalendrier } from "@/lib/syncActivites"
+import { evenementsDuJour, prochainesOccurrences } from "@/lib/calendrier"
 import { useDeviseConversion } from "./hooks/useDevise"
 
 const JOURS = ["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"]
@@ -99,34 +100,16 @@ export default function Home() {
     d.setDate(lundi.getDate() + i)
     return d
   })
-  const evtDuJour = (date: Date) => evenements.filter(e => new Date(e.date).toDateString() === date.toDateString())
+  const evtDuJour = (date: Date) => evenementsDuJour(evenements, date)
 
   const moisActuel = today.getMonth()
   const anneeActuelle = today.getFullYear()
   const totalDep = depenses.filter(d => { const dt = new Date(d.date); return dt.getMonth() === moisActuel && dt.getFullYear() === anneeActuelle }).reduce((s,d) => s + Number(d.montant), 0)
   const totalRev = revenus.filter(r => { const dt = new Date(r.date); return dt.getMonth() === moisActuel && dt.getFullYear() === anneeActuelle }).reduce((s,r) => s + Number(r.montant), 0)
   const solde = totalRev - totalDep
-  const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`
-  const nowMin = today.getHours() * 60 + today.getMinutes()
-  const prochainEvt = evenements
-    .filter(e => {
-      if (e.date > todayStr) return true
-      if (e.date === todayStr) {
-        if (!e.heure) return true
-        const [h, m] = e.heure.split(':').map(Number)
-        const debut = h * 60 + m
-        const fin = debut + (e.duree || 0)
-        return fin > nowMin
-      }
-      return false
-    })
-    .sort((a, b) => {
-      if (a.date !== b.date) return a.date.localeCompare(b.date)
-      if (!a.heure && !b.heure) return 0
-      if (!a.heure) return -1
-      if (!b.heure) return 1
-      return a.heure.localeCompare(b.heure)
-    })[0]
+  // Prochain événement en tenant compte des cours répétés chaque semaine
+  const prochaine = prochainesOccurrences(evenements, today)[0]
+  const prochainEvt = prochaine?.evt
 
   return (
     <main className="min-h-screen bg-white">
@@ -175,17 +158,11 @@ export default function Home() {
         )}
       </div>
 
-      {user && evenements.filter(e => {
-        const now = new Date()
-        const todayStr = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0')
-        if (e.date !== todayStr || !e.heure) return false
-        const [h,m] = e.heure.split(':').map(Number)
-        const diffMin = (h*60+m) - (now.getHours()*60+now.getMinutes())
-        return diffMin > 0 && diffMin <= 60
-      }).map(e => {
-        const now = new Date()
-        const [h,m] = e.heure.split(':').map(Number)
-        const diffMin = (h*60+m) - (now.getHours()*60+now.getMinutes())
+      {user && prochainesOccurrences(evenements, today, 0)
+        .filter(o => o.evt.heure && o.debut.getTime() > today.getTime() && o.debut.getTime() - today.getTime() <= 3600_000)
+        .map(o => {
+        const diffMin = Math.round((o.debut.getTime() - today.getTime()) / 60_000)
+        const e = o.evt
         return (
           <div key={e.id} style={{margin:'0 14px 8px',background:'#FFE4E6',border:'0.5px solid #FECDD3',borderRadius:'10px',padding:'10px 14px',display:'flex',alignItems:'center',gap:'10px'}}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F43F5E" strokeWidth="2" style={{flexShrink:0}}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -247,7 +224,7 @@ export default function Home() {
               <div style={{background:'rgba(15,45,92,0.85)',borderRadius:'14px',padding:'12px',border:'1px solid rgba(255,255,255,0.15)'}}>
                 <div style={{fontSize:'11px',color:'#fcd34d',fontWeight:'500',marginBottom:'4px'}}>Prochain</div>
                 <div style={{fontSize:'13px',fontWeight:'500',color:'#fff'}}>{prochainEvt?.titre || 'Aucun'}</div>
-                <div style={{fontSize:'11px',color:'rgba(255,255,255,0.5)',marginTop:'2px'}}>{prochainEvt ? new Date(prochainEvt.date).toLocaleDateString('fr-FR',{day:'numeric',month:'short'}) : 'Ajoute un événement'}</div>
+                <div style={{fontSize:'11px',color:'rgba(255,255,255,0.5)',marginTop:'2px'}}>{prochaine ? prochaine.debut.toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'}) + (prochaine.evt.heure ? ' · ' + prochaine.evt.heure.slice(0,5) : '') : 'Ajoute un événement'}</div>
               </div>
             </Link>
           </div>
