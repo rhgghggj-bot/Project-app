@@ -272,7 +272,7 @@ export default function Home() {
               </div>
               <div>
                 <div style={{fontSize:'13px',fontWeight:'500',color:'#fff'}}>Espace étudiant</div>
-                <div style={{fontSize:'11px',color:'rgba(255,255,255,0.6)',marginTop:'2px'}}>Notes, corrections par l&apos;IA, révisions</div>
+                <div style={{fontSize:'11px',color:'rgba(255,255,255,0.6)',marginTop:'2px'}}>Notes, révisions, quiz</div>
               </div>
               <div style={{marginLeft:'auto',color:'rgba(255,255,255,0.5)',fontSize:'18px'}}>›</div>
             </div>
