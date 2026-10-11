@@ -9,7 +9,7 @@ import { supabase } from "@/lib/supabase"
 import { toast } from "@/lib/toast"
 import { useChargement } from "@/lib/useChargement"
 import { ecrireStockage, useStockagesLocaux } from "@/lib/useStockage"
-import { IA_ACTIVE, OLLAMA_MODELE_DEFAUT, OLLAMA_URL_DEFAUT, SYSTEMES, type EntreprisePerso, type Pays } from "@/lib/etudes"
+import { IA_ACTIVE, entrepriseChoisie, OLLAMA_MODELE_DEFAUT, OLLAMA_URL_DEFAUT, SYSTEMES, type EntreprisePerso, type Pays } from "@/lib/etudes"
 import type { ChoixIA, ReglagesIA } from "./document"
 import { champ } from "./Depot"
 import NotesSection from "./NotesSection"
@@ -208,7 +208,13 @@ export default function EspaceEtudiant() {
               entrepriseId={p.entreprise_id} entreprisePerso={p.entreprise_perso}
               onChangerEntreprise={(id, perso) => majProfil({ entreprise_id: id, entreprise_perso: perso })} />
           )}
-          {onglet === "artefacts" && <ArtefactsSection userId={userId} />}
+          {onglet === "artefacts" && (
+            <ArtefactsSection userId={userId} parDefaut={{
+              pays: p.pays, niveauId: p.niveau, filiere: p.filiere, specialites: p.specialites, annee: p.annee,
+              entreprise: entrepriseChoisie(p.entreprise_id, p.entreprise_perso), entrepriseId: p.entreprise_id, entreprisePerso: p.entreprise_perso,
+              onChangerEntreprise: (id, perso) => majProfil({ entreprise_id: id, entreprise_perso: perso }),
+            }} />
+          )}
         </div>
       </div>
     </main>

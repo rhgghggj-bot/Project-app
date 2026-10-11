@@ -152,7 +152,7 @@ export default function RevisionSection({ userId, pays, niveau, matieres, reglag
   )
 }
 
-function ChoixEntreprise({ actuelle, perso, onChoisir }: { actuelle: string; perso: EntreprisePerso | null; onChoisir: (id: string, perso: EntreprisePerso | null) => void }) {
+export function ChoixEntreprise({ actuelle, perso, onChoisir }: { actuelle: string; perso: EntreprisePerso | null; onChoisir: (id: string, perso: EntreprisePerso | null) => void }) {
   const [form, setForm] = useState<EntreprisePerso>(perso || { nom: "", secteur: "", description: "" })
   return (
     <div style={{ marginTop: "12px" }}>

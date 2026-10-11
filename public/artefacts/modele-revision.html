@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ma page de révision</title>
+<!--
+  Page de révision par défaut de l'Espace étudiant (dans l'esprit de Bise
+  Cycles) : l'entreprise fictive de l'élève sert de bâtiment, chaque matière
+  est un service, chaque chapitre une fiche. L'appli remplace la ligne
+  « window.DONNEES = null » par les chapitres du programme de l'élève avant
+  d'afficher la page ; la progression passe par localStorage (sauvegardé par
+  l'appli).
+-->
+<style>
+:root{
+  --fond:#EEF2F7; --carte:#FFFFFF; --encre:#14213D; --doux:#5B6478; --pale:#9AA3B5; --ligne:#DCE3EE;
+  --accent:#2B7FFF; --accent-pale:#E6F0FF; --ok:#16803C; --ok-pale:#E3F5EA; --ko:#B42323; --ko-pale:#FDE8E8;
+  --or:#B7791F; --or-pale:#FDF3DC; --mur:#14213D;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--fond);color:var(--encre);font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  background-image:linear-gradient(rgba(43,127,255,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(43,127,255,.06) 1px,transparent 1px);background-size:24px 24px}
+.page{max-width:980px;margin:0 auto;padding:16px 16px 48px;display:flex;flex-direction:column;gap:16px}
+button{font:inherit;color:inherit;cursor:pointer}
+h1,h2,h3{margin:0;line-height:1.15}
+.sur{font:600 11px/1.2 ui-monospace,Menlo,monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--doux)}
+.carte{background:var(--carte);border:1.5px solid var(--mur);border-radius:4px;padding:16px}
+.entete{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:16px;align-items:end}
+.entete h1{font-size:clamp(28px,6vw,48px);font-weight:800;letter-spacing:-.01em}
+.entete h1 span{color:var(--accent)}
+.entete p{margin:8px 0 0;color:var(--doux);max-width:60ch}
+.registre dl{display:grid;grid-template-columns:max-content 1fr;gap:4px 12px;margin:8px 0 0;font-size:13.5px}
+.registre dt{color:var(--doux)}.registre dd{margin:0}
+.recherche input{width:100%;font:inherit;font-size:16px;padding:12px 14px;border:1.5px solid var(--mur);border-radius:4px;background:var(--carte)}
+.annees{display:flex;gap:6px;flex-wrap:wrap}
+.puce{border:1.5px solid var(--ligne);background:var(--carte);padding:5px 12px;border-radius:999px;font-size:13px}
+.puce[aria-pressed="true"]{background:var(--encre);color:#fff;border-color:var(--encre)}
+.actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.action{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center;text-align:left;border:1.5px solid var(--mur);background:var(--carte);padding:12px;border-radius:4px}
+.action.principale{background:var(--encre);color:#fff}
+.action b{display:block;font-size:15px}.action span{font-size:12.5px;opacity:.8}
+.action .ic{font-size:22px}
+.progression{display:flex;gap:10px;flex-wrap:wrap}
+.stat{flex:1 1 110px;border:1px solid var(--ligne);background:var(--carte);border-radius:4px;padding:8px 10px}
+.stat b{display:block;font-size:22px;font-weight:800}.stat span{font-size:12px;color:var(--doux)}
+.barre{height:8px;background:var(--ligne);border-radius:4px;overflow:hidden}.barre i{display:block;height:100%;background:var(--ok)}
+.batiment{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:0;border:4px solid var(--mur);background:var(--mur)}
+.piece{background:var(--carte);border:1.5px solid var(--mur);min-height:120px;padding:12px;text-align:left;display:flex;flex-direction:column;gap:6px}
+.piece:hover{background:var(--accent-pale)}
+.piece .tag{font:600 10.5px ui-monospace,Menlo,monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--doux)}
+.piece h3{font-size:16px}
+.piece .bas{margin-top:auto;display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--doux)}
+.retour{background:none;border:0;padding:0;color:var(--accent);font:600 12.5px ui-monospace,Menlo,monospace}
+.liste{list-style:none;margin:0;padding:0}
+.liste li{border-top:1px solid var(--ligne)}.liste li:first-child{border-top:0}
+.ligne{width:100%;display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;background:none;border:0;padding:10px 2px;text-align:left}
+.ligne:hover .t{text-decoration:underline}
+.pastille{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:12px;border:2px solid var(--ligne);color:var(--doux)}
+.pastille.ok{background:var(--ok);border-color:var(--ok);color:#fff}
+.meta{font:12px ui-monospace,Menlo,monospace;color:var(--pale)}
+.fiche{display:flex;flex-direction:column;gap:12px}
+.fiche h2{font-size:22px}
+.fiche ul{margin:0;padding-left:20px}
+.encadre{border-left:3px solid var(--accent);background:var(--accent-pale);padding:8px 12px;border-radius:2px}
+.encadre.or{border-color:var(--or);background:var(--or-pale)}
+.encadre h4{margin:0 0 4px;font:600 11px ui-monospace,Menlo,monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--doux)}
+details.exo{border:1px solid var(--ligne);background:var(--fond);padding:10px 12px;border-radius:4px}
+details.exo summary{cursor:pointer;color:var(--accent);font:600 12.5px ui-monospace,Menlo,monospace}
+details.exo p{white-space:pre-line}
+.quiz{display:flex;flex-direction:column;gap:10px}
+.question{font-weight:700;font-size:17px}
+.choix{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media (max-width:560px){.choix{grid-template-columns:1fr}.entete{grid-template-columns:1fr}}
+.choix button{border:0;border-radius:4px;padding:12px;color:#fff;font-weight:600;text-align:left;min-height:56px;box-shadow:0 3px 0 rgba(0,0,0,.2)}
+.choix button:nth-child(1){background:#B83A3A}.choix button:nth-child(2){background:#2F5FA8}.choix button:nth-child(3){background:#A8770F}.choix button:nth-child(4){background:#2E7355}
+.choix button.off{opacity:.3}.choix button.bon{outline:4px solid var(--ok);outline-offset:2px;opacity:1}.choix button.faux{outline:4px dashed var(--encre);outline-offset:2px}
+.retour-q{padding:10px 12px;border-radius:4px}.retour-q.ok{background:var(--ok-pale)}.retour-q.ko{background:var(--ko-pale)}
+.btn{border:1.5px solid var(--encre);background:var(--encre);color:#fff;padding:8px 16px;border-radius:4px;font-weight:700}
+.btn.clair{background:var(--carte);color:var(--encre)}
+.score{font-size:48px;font-weight:800;text-align:center}
+.vide{border:1px dashed var(--ligne);padding:14px;color:var(--doux);border-radius:4px;background:var(--carte)}
+.resultats .ligne .m{font-size:12px;color:var(--doux)}
+</style>
+</head>
+<body>
+<div class="page" id="app"></div>
+<script>window.DONNEES = null;</script>
+<script>
+(function () {
+  "use strict";
+  var D = window.DONNEES;
+  var app = document.getElementById("app");
+  if (!D || !D.chapitres || !D.chapitres.length) {
+    app.innerHTML = '<div class="vide">Aucun chapitre pour ton niveau pour l\'instant. Choisis ton niveau, ta filière et ton année dans les Réglages de l\'Espace étudiant.</div>';
+    return;
+  }
+
+  // ─── Sauvegarde de la progression ───
+  var CLE = "revision-etat";
+  function lire() { try { return JSON.parse(localStorage.getItem(CLE) || "{}") } catch (e) { return {} } }
+  var etat = lire();
+  etat.maitrise = etat.maitrise || {};   // chapitre → meilleur score (0-1)
+  etat.boites = etat.boites || {};       // question → { b: boîte 1-5, p: prochaine révision (jour) }
+  etat.jours = etat.jours || [];         // jours où l'élève a révisé
+  function sauver() { try { localStorage.setItem(CLE, JSON.stringify(etat)) } catch (e) {} }
+  function jour(d) { d = d || new Date(); return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate() }
+  function dansJours(n) { var d = new Date(); d.setDate(d.getDate() + n); return jour(d) }
+
+  // ─── Données ───
+  var annees = D.annees && D.annees.length ? D.annees : uniques(D.chapitres.map(function (c) { return c.annee }));
+  var vue = { ecran: "accueil", annee: D.anneeActuelle && annees.indexOf(D.anneeActuelle) >= 0 ? D.anneeActuelle : annees[0], matiere: null, chapitre: null, quiz: null };
+  var parId = {}; D.chapitres.forEach(function (c) { parId[c.id] = c });
+  var QUESTIONS = [];
+  D.chapitres.forEach(function (c) {
+    if (!c.doc) return;
+    c.doc.quiz.forEach(function (q, i) {
+      if (q.choix && q.choix.length > 1 && q.bonne >= 0 && q.bonne < q.choix.length) QUESTIONS.push({ cle: c.id + "#" + i, chap: c, q: q });
+    });
+  });
+
+  function uniques(t) { var v = []; t.forEach(function (x) { if (v.indexOf(x) < 0) v.push(x) }); return v }
+  function esc(t) { return String(t == null ? "" : t).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] }) }
+  function norm(t) { return String(t).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase() }
+  function melanger(t) { t = t.slice(); for (var i = t.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var x = t[i]; t[i] = t[j]; t[j] = x } return t }
+  function chapitresAnnee() { return D.chapitres.filter(function (c) { return c.annee === vue.annee }) }
+  function matieresAnnee() { return uniques(chapitresAnnee().map(function (c) { return c.matiere })) }
+  function maitrise(c) { return (etat.maitrise[c.id] || 0) >= 1 }
+  function aReviser() {
+    var auj = jour();
+    return QUESTIONS.filter(function (x) { var b = etat.boites[x.cle]; return b && b.p <= auj });
+  }
+  function serie() {
+    var j = etat.jours.slice().sort().reverse(), n = 0, d = new Date();
+    if (j[0] !== jour(d)) d.setDate(d.getDate() - 1);
+    for (;;) { if (j.indexOf(jour(d)) >= 0) { n++; d.setDate(d.getDate() - 1) } else break }
+    return n;
+  }
+
+  // ─── Écrans ───
+  function rendre() {
+    var h = "";
+    if (vue.ecran === "accueil") h = ecranAccueil();
+    else if (vue.ecran === "matiere") h = ecranMatiere();
+    else if (vue.ecran === "chapitre") h = ecranChapitre();
+    else if (vue.ecran === "quiz") h = ecranQuiz();
+    app.innerHTML = h;
+    window.scrollTo(0, 0);
+  }
+
+  function ecranAccueil() {
+    var chs = chapitresAnnee(), faits = chs.filter(maitrise).length, total = chs.filter(function (c) { return c.doc }).length;
+    var e = D.entreprise || { nom: "Mon entreprise", secteur: "", description: "" };
+    var h = '<header class="entete"><div><div class="sur">Plan de révision · ' + esc(D.niveau) + '</div>' +
+      '<h1>' + esc(e.nom).replace(/ ([^ ]+)$/, ' <span>$1</span>') + '</h1>' +
+      '<p>Chaque service du bâtiment correspond à une matière. Entre dans une pièce pour réviser ses chapitres, puis teste-toi : un chapitre est maîtrisé quand tu réussis tout son quiz.</p></div>' +
+      '<aside class="carte registre"><div class="sur">Extrait du registre (fictif)</div><dl>' +
+      '<dt>Raison sociale</dt><dd>' + esc(e.nom) + '</dd>' + (e.secteur ? '<dt>Secteur</dt><dd>' + esc(e.secteur) + '</dd>' : '') +
+      (e.description ? '<dt>Activité</dt><dd>' + esc(e.description) + '</dd>' : '') + '<dt>Formation</dt><dd>' + esc(D.filiere || D.niveau) + '</dd></dl></aside></header>';
+    h += '<div class="recherche"><label class="sur" for="q">Rechercher une notion</label><input id="q" type="search" autocomplete="off" placeholder="ex. bilan, élasticité, Perfekt, Pythagore…" data-action="chercher"></div><div id="resultats"></div>';
+    h += '<div class="annees" role="tablist">' + annees.map(function (a) { return '<button class="puce" role="tab" aria-pressed="' + (a === vue.annee) + '" data-action="annee" data-v="' + esc(a) + '">' + esc(a) + '</button>' }).join("") + '</div>';
+    var due = aReviser().length;
+    h += '<section class="actions">' +
+      '<button class="action principale" data-action="revision"><span class="ic">📅</span><div><b>Révision du jour</b><span>' + (due ? due + ' question' + (due > 1 ? 's' : '') + ' à revoir aujourd\'hui' : '10 questions pour commencer') + ' · série de ' + serie() + ' jour' + (serie() > 1 ? 's' : '') + '</span></div></button>' +
+      '<button class="action" data-action="quiz-annee"><span class="ic">▶</span><div><b>Mode quiz</b><span>10 questions au hasard de ton année</span></div></button></section>';
+    h += '<section class="progression"><div class="stat"><b>' + faits + ' / ' + total + '</b><span>chapitres maîtrisés (' + esc(vue.annee) + ')</span><div class="barre"><i style="width:' + (total ? Math.round(faits / total * 100) : 0) + '%"></i></div></div>' +
+      '<div class="stat"><b>' + serie() + '</b><span>jours de suite</span></div><div class="stat"><b>' + Object.keys(etat.boites).length + '</b><span>questions travaillées</span></div></section>';
+    h += '<div><div class="sur" style="margin-bottom:8px">Plan de l\'entreprise · ' + esc(vue.annee) + '</div><div class="batiment">' +
+      matieresAnnee().map(function (m) {
+        var cs = chs.filter(function (c) { return c.matiere === m }), ok = cs.filter(maitrise).length;
+        return '<button class="piece" data-action="matiere" data-v="' + esc(m) + '"><span class="tag">Service</span><h3>' + esc(m) + '</h3><div class="bas"><span>' + cs.length + ' chapitre' + (cs.length > 1 ? 's' : '') + ' · ' + ok + ' maîtrisé' + (ok > 1 ? 's' : '') + '</span><div class="barre"><i style="width:' + Math.round(ok / cs.length * 100) + '%"></i></div></div></button>';
+      }).join("") + '</div></div>';
+    return h;
+  }
+
+  function ecranMatiere() {
+    var cs = chapitresAnnee().filter(function (c) { return c.matiere === vue.matiere });
+    var nbQ = QUESTIONS.filter(function (x) { return x.chap.matiere === vue.matiere && x.chap.annee === vue.annee }).length;
+    return '<button class="retour" data-action="accueil">← Plan de l\'entreprise</button>' +
+      '<div class="carte"><div class="sur">Service · ' + esc(vue.annee) + '</div><h2 style="margin:4px 0 10px">' + esc(vue.matiere) + '</h2>' +
+      '<ul class="liste">' + cs.map(function (c, i) {
+        return '<li><button class="ligne" data-action="chapitre" data-v="' + esc(c.id) + '"><span class="pastille' + (maitrise(c) ? ' ok' : '') + '">' + (maitrise(c) ? '✓' : (i + 1)) + '</span><span class="t">' + esc(c.titre) + '</span><span class="meta">' + (c.doc ? '' : 'bientôt') + '</span></button></li>';
+      }).join("") + '</ul>' +
+      (nbQ ? '<div style="margin-top:12px"><button class="btn" data-action="quiz-matiere">Quiz de la matière (' + Math.min(10, nbQ) + ' questions)</button></div>' : '') + '</div>';
+  }
+
+  function ecranChapitre() {
+    var c = parId[vue.chapitre], d = c.doc;
+    var h = '<button class="retour" data-action="matiere" data-v="' + esc(c.matiere) + '">← ' + esc(c.matiere) + '</button><div class="carte fiche">' +
+      '<div class="sur">' + esc(c.matiere) + ' · ' + esc(c.annee) + (maitrise(c) ? ' · ✓ maîtrisé' : '') + '</div><h2>' + esc(c.titre) + '</h2>';
+    if (!d) {
+      return h + '<p>Ce que tu dois savoir :</p><ul>' + c.notions.map(function (n) { return '<li>' + esc(n) + '</li>' }).join("") + '</ul><div class="vide">Le document de révision de ce chapitre est en préparation.</div></div>';
+    }
+    h += '<p>' + esc(d.resume) + '</p>';
+    if (d.points.length) h += '<ul>' + d.points.map(function (p) { return '<li>' + esc(p) + '</li>' }).join("") + '</ul>';
+    if (d.vocabulaire.length) h += '<div class="encadre"><h4>Vocabulaire</h4>' + d.vocabulaire.map(function (v) { return '<div><b>' + esc(v.mot) + '</b> : ' + esc(v.definition) + '</div>' }).join("") + '</div>';
+    if (d.exemple) h += '<div class="encadre or"><h4>Exemple concret</h4>' + esc(d.exemple) + '</div>';
+    if (d.exercice && d.exercice.enonce) h += '<details class="exo"><summary>Exercice · voir la solution</summary><p><b>Énoncé.</b> ' + esc(d.exercice.enonce) + '</p><p><b>Solution.</b> ' + esc(d.exercice.solution) + '</p></details>';
+    if (d.quiz.length) h += '<div><button class="btn" data-action="quiz-chapitre">Teste-toi (' + d.quiz.length + ' questions)</button></div>';
+    return h + '</div>';
+  }
+
+  // ─── Quiz ───
+  function lancerQuiz(questions, titre, retour, chapitre) {
+    if (!questions.length) return;
+    vue.quiz = { qs: questions, i: 0, score: 0, choisi: null, titre: titre, retour: retour, chapitre: chapitre || null, rates: [] };
+    vue.ecran = "quiz"; rendre();
+  }
+  function ecranQuiz() {
+    var z = vue.quiz;
+    if (z.i >= z.qs.length) {
+      return '<div class="carte quiz"><div class="sur">' + esc(z.titre) + '</div><div class="score">' + z.score + ' / ' + z.qs.length + '</div>' +
+        '<p style="text-align:center;margin:0">' + (z.score === z.qs.length ? 'Parfait, c\'est maîtrisé.' : z.score / z.qs.length >= .6 ? 'Bien joué. Relis les questions ratées.' : 'Relis la fiche puis recommence.') + '</p>' +
+        (z.rates.length ? '<div><div class="sur" style="margin:8px 0">À revoir</div>' + z.rates.map(function (x) { return '<div class="retour-q ko" style="margin-bottom:6px"><b>' + esc(x.q.question) + '</b><br>' + esc(x.q.choix[x.q.bonne]) + ' — ' + esc(x.q.explication) + '</div>' }).join("") + '</div>' : '') +
+        '<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="btn" data-action="quiz-encore">Recommencer</button><button class="btn clair" data-action="quiz-fin">Terminer</button></div></div>';
+    }
+    var x = z.qs[z.i], q = x.q, rep = z.choisi !== null;
+    var h = '<div class="carte quiz"><div class="sur">' + esc(z.titre) + ' · question ' + (z.i + 1) + ' / ' + z.qs.length + '</div>' +
+      '<div class="meta">' + esc(x.chap.matiere) + ' · ' + esc(x.chap.titre) + '</div><div class="question">' + esc(q.question) + '</div><div class="choix">' +
+      q.choix.map(function (c, i) {
+        var cl = !rep ? '' : i === q.bonne ? 'bon' : i === z.choisi ? 'faux' : 'off';
+        return '<button class="' + cl + '" ' + (rep ? 'disabled' : '') + ' data-action="repondre" data-v="' + i + '">' + esc(c) + '</button>';
+      }).join("") + '</div>';
+    if (rep) {
+      var juste = z.choisi === q.bonne;
+      h += '<div class="retour-q ' + (juste ? 'ok' : 'ko') + '"><b>' + (juste ? 'Juste ! ' : 'Pas tout à fait. ') + '</b>' + esc(q.explication) + '</div>' +
+        '<div><button class="btn" data-action="suivante">' + (z.i + 1 < z.qs.length ? 'Question suivante' : 'Voir mon score') + '</button></div>';
+    }
+    return h + '</div>';
+  }
+  function repondre(i) {
+    var z = vue.quiz, x = z.qs[z.i], juste = i === x.q.bonne;
+    z.choisi = i;
+    if (juste) z.score++; else z.rates.push(x);
+    // Répétition espacée (boîtes de Leitner) : juste → boîte suivante, faux → boîte 1
+    var b = etat.boites[x.cle] || { b: 0, p: 0 };
+    b.b = juste ? Math.min(5, b.b + 1) : 1;
+    b.p = dansJours([0, 1, 2, 4, 8, 16][b.b]);
+    etat.boites[x.cle] = b;
+    if (etat.jours.indexOf(jour()) < 0) etat.jours.push(jour());
+    sauver(); rendre();
+  }
+  function finirQuiz() {
+    var z = vue.quiz;
+    if (z.chapitre) { etat.maitrise[z.chapitre] = Math.max(etat.maitrise[z.chapitre] || 0, z.score / z.qs.length); sauver() }
+  }
+
+  // ─── Recherche ───
+  function chercher(t) {
+    var zone = document.getElementById("resultats"), mots = norm(t).split(/\s+/).filter(Boolean);
+    if (!mots.length) { zone.innerHTML = ""; return }
+    var r = D.chapitres.filter(function (c) {
+      var texte = norm([c.titre, c.matiere].concat(c.notions, c.doc ? [c.doc.resume].concat(c.doc.points) : []).join(" "));
+      return mots.every(function (m) { return texte.indexOf(m) >= 0 });
+    }).slice(0, 20);
+    zone.innerHTML = '<div class="carte resultats">' + (r.length ? '<ul class="liste">' + r.map(function (c) {
+      return '<li><button class="ligne" data-action="chapitre" data-v="' + esc(c.id) + '"><span class="pastille' + (maitrise(c) ? ' ok' : '') + '">' + (maitrise(c) ? '✓' : '•') + '</span><span><span class="t">' + esc(c.titre) + '</span><br><span class="m">' + esc(c.matiere) + ' · ' + esc(c.annee) + '</span></span><span></span></button></li>';
+    }).join("") + '</ul>' : '<span class="meta">Aucun chapitre trouvé.</span>') + '</div>';
+  }
+
+  // ─── Actions ───
+  app.addEventListener("input", function (e) { if (e.target.dataset.action === "chercher") chercher(e.target.value) });
+  app.addEventListener("click", function (e) {
+    var el = e.target.closest("[data-action]"); if (!el) return;
+    var a = el.dataset.action, v = el.dataset.v;
+    if (a === "accueil") { vue.ecran = "accueil"; rendre() }
+    else if (a === "annee") { vue.annee = v; rendre() }
+    else if (a === "matiere") { vue.matiere = v; vue.ecran = "matiere"; rendre() }
+    else if (a === "chapitre") { vue.chapitre = v; vue.annee = parId[v].annee; vue.matiere = parId[v].matiere; vue.ecran = "chapitre"; rendre() }
+    else if (a === "quiz-chapitre") { var c = parId[vue.chapitre]; lancerQuiz(QUESTIONS.filter(function (x) { return x.chap === c }), c.titre, "chapitre", c.id) }
+    else if (a === "quiz-matiere") lancerQuiz(melanger(QUESTIONS.filter(function (x) { return x.chap.matiere === vue.matiere && x.chap.annee === vue.annee })).slice(0, 10), vue.matiere, "matiere")
+    else if (a === "quiz-annee") lancerQuiz(melanger(QUESTIONS.filter(function (x) { return x.chap.annee === vue.annee })).slice(0, 10), "Mode quiz · " + vue.annee, "accueil")
+    else if (a === "revision") {
+      var due = melanger(aReviser());
+      var qs = due.length ? due.slice(0, 15) : melanger(QUESTIONS.filter(function (x) { return x.chap.annee === vue.annee && !etat.boites[x.cle] })).slice(0, 10);
+      if (!qs.length) qs = melanger(QUESTIONS).slice(0, 10);
+      lancerQuiz(qs, "Révision du jour", "accueil");
+    }
+    else if (a === "repondre") repondre(Number(v))
+    else if (a === "suivante") { vue.quiz.i++; vue.quiz.choisi = null; if (vue.quiz.i >= vue.quiz.qs.length) finirQuiz(); rendre() }
+    else if (a === "quiz-encore") { var z = vue.quiz; lancerQuiz(melanger(z.qs), z.titre, z.retour, z.chapitre) }
+    else if (a === "quiz-fin") { vue.ecran = vue.quiz.retour; rendre() }
+  });
+  rendre();
+})();
+</script>
+</body>
+</html>
