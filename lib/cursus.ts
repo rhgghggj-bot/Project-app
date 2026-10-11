@@ -11,6 +11,8 @@ export type Niveau = {
   id: string
   label: string
   detail: string
+  // Années du cursus, dans l'ordre (ex. 9e, 10e, 11e)
+  annees: string[]
   matieres: string[]
   filieres?: Filiere[]
   libelleFiliere?: string
@@ -24,6 +26,7 @@ export const CURSUS: Record<Pays, Niveau[]> = {
   CH: [
     {
       id: "co", label: "Cycle d'orientation (9e–11e)", detail: "Secondaire I · fin de l'école obligatoire",
+      annees: ["9e", "10e", "11e"],
       matieres: [...LANGUES_CH, "Mathématiques", "Histoire", "Géographie", "Biologie", "Physique", "Arts visuels", "Musique", "Éducation physique", "Éducation numérique"],
       libelleFiliere: "Section",
       filieres: [
@@ -36,6 +39,7 @@ export const CURSUS: Record<Pays, Niveau[]> = {
     },
     {
       id: "college", label: "Collège / gymnase (maturité gymnasiale)", detail: "4 ans · donne accès à l'université et à l'EPF",
+      annees: ["1re", "2e", "3e", "4e"],
       matieres: [...LANGUES_CH, "Mathématiques", "Biologie", "Chimie", "Physique", "Histoire", "Géographie", "Philosophie", "Informatique", "Économie et droit", "Arts visuels", "Musique", "Éducation physique", "Travail de maturité"],
       libelleFiliere: "Option spécifique (OS)",
       filieres: [
@@ -53,6 +57,7 @@ export const CURSUS: Record<Pays, Niveau[]> = {
     },
     {
       id: "ecg", label: "ECG (école de culture générale)", detail: "3 ans · certificat ECG puis maturité spécialisée",
+      annees: ["1re", "2e", "3e"],
       matieres: [...LANGUES_CH, "Mathématiques", "Histoire", "Géographie", "Biologie", "Chimie", "Physique", "Économie et droit", "Arts", "Éducation physique"],
       libelleFiliere: "Option préprofessionnelle",
       filieres: [
@@ -65,6 +70,7 @@ export const CURSUS: Record<Pays, Niveau[]> = {
     },
     {
       id: "cfc-commerce", label: "CFC employé·e de commerce", detail: "Apprentissage · réforme 2023",
+      annees: ["1re", "2e", "3e"],
       matieres: [
         "Langue nationale locale (français)", "Langue étrangère (allemand)", "Anglais", "Économie et société",
         "Finances et comptabilité", "Technologies d'application", "Relations clients et fournisseurs",
@@ -78,10 +84,12 @@ export const CURSUS: Record<Pays, Niveau[]> = {
     },
     {
       id: "cfc-autre", label: "Autre CFC / AFP (apprentissage)", detail: "Culture générale + branches professionnelles",
+      annees: ["1re", "2e", "3e", "4e"],
       matieres: ["Culture générale · langue et communication", "Culture générale · société", "Branches professionnelles", "Mathématiques professionnelles", "Connaissances professionnelles", "Éducation physique"],
     },
     {
       id: "mp2", label: "Maturité professionnelle après CFC (MP2)", detail: "1 an à plein temps ou 2 ans en emploi",
+      annees: ["MP2"],
       matieres: ["Français", "Allemand", "Anglais", "Mathématiques", "Histoire et politique"],
       libelleFiliere: "Orientation",
       filieres: [
@@ -94,6 +102,7 @@ export const CURSUS: Record<Pays, Niveau[]> = {
     },
     {
       id: "hes", label: "Haute école spécialisée (HES)", detail: "Bachelor HES, ex. HEG, HEPIA, HEdS",
+      annees: ["1re", "2e", "3e"],
       matieres: ["Anglais", "Communication"],
       libelleFiliere: "Filière",
       filieres: [
@@ -108,6 +117,7 @@ export const CURSUS: Record<Pays, Niveau[]> = {
     },
     {
       id: "uni", label: "Université / EPF", detail: "Bachelor ou master",
+      annees: ["Bachelor 1", "Bachelor 2", "Bachelor 3", "Master"],
       matieres: ["Méthodologie", "Statistique", "Anglais"],
       libelleFiliere: "Faculté",
       filieres: [
@@ -124,6 +134,7 @@ export const CURSUS: Record<Pays, Niveau[]> = {
   FR: [
     {
       id: "college-fr", label: "Collège (6e–3e)", detail: "Diplôme national du brevet en 3e",
+      annees: ["6e", "5e", "4e", "3e"],
       matieres: ["Français", "Mathématiques", "Histoire-géographie", "EMC", "Anglais (LV1)", "LV2", "SVT", "Physique-chimie", "Technologie", "Arts plastiques", "Éducation musicale", "EPS"],
       libelleFiliere: "Option",
       filieres: [
@@ -134,10 +145,12 @@ export const CURSUS: Record<Pays, Niveau[]> = {
     },
     {
       id: "seconde", label: "Seconde générale et technologique", detail: "Tronc commun avant le choix de voie",
+      annees: ["Seconde"],
       matieres: ["Français", "Mathématiques", "Histoire-géographie", "EMC", "LVA", "LVB", "SES", "Physique-chimie", "SVT", "SNT", "EPS"],
     },
     {
       id: "lycee-general", label: "Lycée · voie générale (1re–Tle)", detail: "3 spécialités en 1re, 2 en terminale",
+      annees: ["1re", "Terminale"],
       matieres: ["Français (1re)", "Philosophie (Tle)", "Histoire-géographie", "EMC", "LVA", "LVB", "Enseignement scientifique", "Mathématiques (tronc commun)", "EPS", "Grand oral"],
       specialites: [
         "Mathématiques", "Physique-chimie", "SVT", "SES", "HGGSP", "HLP", "LLCER (langues, littératures et cultures étrangères)",
@@ -147,6 +160,7 @@ export const CURSUS: Record<Pays, Niveau[]> = {
     },
     {
       id: "lycee-techno", label: "Lycée · voie technologique (1re–Tle)", detail: "Bac technologique",
+      annees: ["1re", "Terminale"],
       matieres: ["Français (1re)", "Philosophie (Tle)", "Histoire-géographie", "EMC", "LVA", "LVB", "Mathématiques", "EPS", "Grand oral"],
       libelleFiliere: "Série",
       filieres: [
@@ -162,6 +176,7 @@ export const CURSUS: Record<Pays, Niveau[]> = {
     },
     {
       id: "lycee-pro", label: "Lycée professionnel (CAP, bac pro)", detail: "Enseignement général + professionnel",
+      annees: ["CAP 1", "CAP 2", "Seconde pro", "1re pro", "Terminale pro"],
       matieres: ["Français", "Histoire-géographie", "EMC", "Mathématiques", "Anglais", "Prévention santé environnement", "Économie-gestion / Économie-droit", "Arts appliqués", "EPS", "Enseignement professionnel", "Chef-d'œuvre"],
       libelleFiliere: "Famille de métiers",
       filieres: [
@@ -176,6 +191,7 @@ export const CURSUS: Record<Pays, Niveau[]> = {
     },
     {
       id: "sup-fr", label: "Études supérieures", detail: "BTS, BUT, licence, prépa, école",
+      annees: ["1re année", "2e année", "3e année"],
       matieres: ["Anglais", "Culture générale et expression"],
       libelleFiliere: "Formation",
       filieres: [

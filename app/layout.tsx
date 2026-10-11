@@ -5,6 +5,7 @@ import "./transitions.css";
 import Navigation from "./components/Navigation"
 import JarvisButton from "./components/JarvisButton";
 import PushNotifSetup from "./components/PushNotifSetup";
+import RappelsEvenements from "./components/RappelsEvenements";
 import SplashWrapper from "./components/SplashWrapper";
 import PageFrame from "./components/PageFrame";
 import Toaster from "./components/Toaster";
@@ -75,6 +76,7 @@ export default function RootLayout({
           <Navigation />
           <JarvisButton />
           <PushNotifSetup />
+          <RappelsEvenements />
           <PageFrame>{children}</PageFrame>
           <Toaster />
         </SplashWrapper>

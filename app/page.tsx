@@ -4,9 +4,20 @@ import Link from "next/link"
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { syncActivitesGroupeVersCalendrier } from "@/lib/syncActivites"
+import { evenementsDuJour, prochainesOccurrences } from "@/lib/calendrier"
 import { useDeviseConversion } from "./hooks/useDevise"
 
 const JOURS = ["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"]
+
+// Raccourcis de l'accueil, en tuiles compactes sur une seule ligne
+const RACCOURCIS = [
+  { href: '/scanner', titre: 'Scanner', sous: 'Factures, contrats', fond: 'rgba(15,45,92,0.85)', bord: 'rgba(255,255,255,0.15)',
+    icone: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8"><polyline points="4 7 4 4 7 4"/><polyline points="17 4 20 4 20 7"/><polyline points="20 17 20 20 17 20"/><polyline points="7 20 4 20 4 17"/><line x1="4" y1="12" x2="20" y2="12"/></svg> },
+  { href: '/etudes', titre: 'Étudiant', sous: 'Notes, révisions', fond: 'rgba(15,45,92,0.85)', bord: 'rgba(255,255,255,0.15)',
+    icone: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a8d8f0" strokeWidth="1.8"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c3 2 9 2 12 0v-5"/></svg> },
+  { href: '/jeux', titre: 'Jeux', sous: 'Block Blast, 2048…', fond: 'linear-gradient(135deg,rgba(212,168,67,0.32),rgba(249,115,22,0.22)),#1a3a6e', bord: 'rgba(212,168,67,0.45)',
+    icone: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F97316" strokeWidth="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> },
+]
 
 export default function Home() {
   const [projets, setProjets] = useState<Projet[]>([])
@@ -99,40 +110,22 @@ export default function Home() {
     d.setDate(lundi.getDate() + i)
     return d
   })
-  const evtDuJour = (date: Date) => evenements.filter(e => new Date(e.date).toDateString() === date.toDateString())
+  const evtDuJour = (date: Date) => evenementsDuJour(evenements, date)
 
   const moisActuel = today.getMonth()
   const anneeActuelle = today.getFullYear()
   const totalDep = depenses.filter(d => { const dt = new Date(d.date); return dt.getMonth() === moisActuel && dt.getFullYear() === anneeActuelle }).reduce((s,d) => s + Number(d.montant), 0)
   const totalRev = revenus.filter(r => { const dt = new Date(r.date); return dt.getMonth() === moisActuel && dt.getFullYear() === anneeActuelle }).reduce((s,r) => s + Number(r.montant), 0)
   const solde = totalRev - totalDep
-  const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`
-  const nowMin = today.getHours() * 60 + today.getMinutes()
-  const prochainEvt = evenements
-    .filter(e => {
-      if (e.date > todayStr) return true
-      if (e.date === todayStr) {
-        if (!e.heure) return true
-        const [h, m] = e.heure.split(':').map(Number)
-        const debut = h * 60 + m
-        const fin = debut + (e.duree || 0)
-        return fin > nowMin
-      }
-      return false
-    })
-    .sort((a, b) => {
-      if (a.date !== b.date) return a.date.localeCompare(b.date)
-      if (!a.heure && !b.heure) return 0
-      if (!a.heure) return -1
-      if (!b.heure) return 1
-      return a.heure.localeCompare(b.heure)
-    })[0]
+  // Prochain événement en tenant compte des cours répétés chaque semaine
+  const prochaine = prochainesOccurrences(evenements, today)[0]
+  const prochainEvt = prochaine?.evt
 
   return (
     <main className="min-h-screen bg-white">
 
       {/* Zone bleue - header */}
-      <div style={{background:'linear-gradient(160deg,#0A1628,#1a3a6e,#2B7FFF)',padding:'20px 18px 20px',position:'relative',overflow:'hidden'}}>
+      <div style={{background:'linear-gradient(160deg,#0A1628,#1a3a6e,#2B7FFF)',padding:'14px 16px 14px',position:'relative',overflow:'hidden'}}>
         <div style={{position:'absolute',top:'-40px',right:'-40px',width:'200px',height:'200px',borderRadius:'50%',background:'rgba(43,127,255,0.15)'}}></div>
 
         {!authChecked && (
@@ -152,42 +145,34 @@ export default function Home() {
         )}
 
         {user && (
-          <div>
-            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'12px'}}>
-              <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
-                <svg width='22' height='22' viewBox='0 0 60 60' style={{flexShrink:0}}>
+          <div style={{position:'relative'}}>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'8px'}}>
+              <div style={{display:'flex',alignItems:'center',gap:'7px'}}>
+                <svg width='18' height='18' viewBox='0 0 60 60' style={{flexShrink:0}}>
                   <path d='M30 5 L35 25 L55 30 L35 35 L30 55 L25 35 L5 30 L25 25 Z' fill='url(#navGrad)'/>
                   <defs><linearGradient id='navGrad' x1='0%' y1='0%' x2='100%' y2='100%'><stop offset='0%' stopColor='#2B7FFF'/><stop offset='100%' stopColor='#D4A843'/></linearGradient></defs>
                 </svg>
-                <span style={{fontSize:'16px',fontWeight:'700',color:'#fff',letterSpacing:'2px'}}>NEXIA</span>
+                <span style={{fontSize:'14px',fontWeight:'700',color:'#fff',letterSpacing:'2px'}}>NEXIA</span>
               </div>
+              <span style={{fontSize:'11px',color:'rgba(255,255,255,0.55)'}}>{today.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})}</span>
             </div>
-            <div style={{fontSize:'12px',color:'rgba(255,255,255,0.5)',marginBottom:'4px'}}>
-              {today.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}
-            </div>
-            <h1 className="nx-display" style={{fontSize:'30px',fontWeight:'600',color:'#fff',margin:'0 0 12px',lineHeight:1.1}}>Bonjour</h1>
-            <div style={{display:'flex',gap:'12px'}}>
-              <div style={{fontSize:'13px',color:'#86efac',fontWeight:'500'}}><span style={{color:'rgba(255,255,255,0.5)'}}>Rev. </span>{format(totalRev)}</div>
-              <div style={{fontSize:'13px',color:'#fca5a5',fontWeight:'500'}}><span style={{color:'rgba(255,255,255,0.5)'}}>Dép. </span>{format(totalDep)}</div>
-              <div style={{fontSize:'13px',color: solde >= 0 ? '#86efac' : '#fca5a5',fontWeight:'500'}}>Solde : {solde >= 0 ? '+' : ''}{format(solde)}</div>
+            <h1 className="nx-display" style={{fontSize:'24px',fontWeight:'600',color:'#fff',margin:'0 0 6px',lineHeight:1.1}}>Bonjour</h1>
+            <div style={{display:'flex',gap:'12px',flexWrap:'wrap'}}>
+              <div style={{fontSize:'12px',color:'#86efac',fontWeight:'500'}}><span style={{color:'rgba(255,255,255,0.5)'}}>Rev. </span>{format(totalRev)}</div>
+              <div style={{fontSize:'12px',color:'#fca5a5',fontWeight:'500'}}><span style={{color:'rgba(255,255,255,0.5)'}}>Dép. </span>{format(totalDep)}</div>
+              <div style={{fontSize:'12px',color: solde >= 0 ? '#86efac' : '#fca5a5',fontWeight:'500'}}>Solde : {solde >= 0 ? '+' : ''}{format(solde)}</div>
             </div>
           </div>
         )}
       </div>
 
-      {user && evenements.filter(e => {
-        const now = new Date()
-        const todayStr = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0')
-        if (e.date !== todayStr || !e.heure) return false
-        const [h,m] = e.heure.split(':').map(Number)
-        const diffMin = (h*60+m) - (now.getHours()*60+now.getMinutes())
-        return diffMin > 0 && diffMin <= 60
-      }).map(e => {
-        const now = new Date()
-        const [h,m] = e.heure.split(':').map(Number)
-        const diffMin = (h*60+m) - (now.getHours()*60+now.getMinutes())
+      {user && prochainesOccurrences(evenements, today, 0)
+        .filter(o => o.evt.heure && o.debut.getTime() > today.getTime() && o.debut.getTime() - today.getTime() <= 3600_000)
+        .map(o => {
+        const diffMin = Math.round((o.debut.getTime() - today.getTime()) / 60_000)
+        const e = o.evt
         return (
-          <div key={e.id} style={{margin:'0 14px 8px',background:'#FFE4E6',border:'0.5px solid #FECDD3',borderRadius:'10px',padding:'10px 14px',display:'flex',alignItems:'center',gap:'10px'}}>
+          <div key={e.id} style={{margin:'8px 12px 0',background:'#FFE4E6',border:'0.5px solid #FECDD3',borderRadius:'10px',padding:'10px 14px',display:'flex',alignItems:'center',gap:'10px'}}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F43F5E" strokeWidth="2" style={{flexShrink:0}}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
             <span style={{fontSize:'12px',color:'#1a1a2e',flex:1}}><b style={{color:'#F43F5E'}}>{e.titre}</b> dans <b style={{color:'#F43F5E'}}>{diffMin} min</b></span>
             <Link href="/semaine" style={{fontSize:'11px',color:'#F43F5E',fontWeight:'500',textDecoration:'none'}}>Voir →</Link>
@@ -197,9 +182,9 @@ export default function Home() {
 
       {/* Zone gris clair - calendrier + cartes */}
       {user && (
-        <div style={{background:'#f0f4ff',padding:'14px'}}>
-          <div style={{borderRadius:'16px',padding:'14px',background:'rgba(15,45,92,0.85)',border:'1px solid rgba(255,255,255,0.15)',marginBottom:'10px'}}>
-            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'12px'}}>
+        <div style={{background:'#f0f4ff',padding:'10px 12px'}}>
+          <div style={{borderRadius:'14px',padding:'10px 12px',background:'rgba(15,45,92,0.85)',border:'1px solid rgba(255,255,255,0.15)',marginBottom:'8px'}}>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'8px'}}>
               <span style={{fontSize:'13px',fontWeight:'500',color:'#fff'}}>Cette semaine</span>
               <Link href="/semaine" style={{fontSize:'12px',color:'#a8d8f0',fontWeight:'500',textDecoration:'none'}}>Voir tout →</Link>
             </div>
@@ -211,7 +196,7 @@ export default function Home() {
                 return (
                   <Link key={i} href="/semaine" style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:'3px',textDecoration:'none'}}>
                     <div style={{fontSize:'10px',color:'rgba(255,255,255,0.5)',fontWeight:'500'}}>{JOURS[i]}</div>
-                    <div style={{width:'100%',minHeight: hasEvts ? '42px' : '28px',borderRadius:'6px',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:'3px',
+                    <div style={{width:'100%',minHeight: hasEvts ? '36px' : '26px',borderRadius:'6px',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:'3px',
                       background: isToday ? '#fff' : hasEvts ? 'rgba(255,255,255,0.12)' : 'transparent',
                       border: hasEvts && !isToday ? '1px solid rgba(255,255,255,0.2)' : 'none',
                       padding: hasEvts ? '3px 0' : '0'}}>
@@ -235,69 +220,45 @@ export default function Home() {
             </div>
           </div>
 
-          <div style={{display:'flex',gap:'8px',marginBottom:'8px'}}>
-            <Link href="/finances" style={{flex:1,textDecoration:'none'}}>
-              <div style={{background:'rgba(15,45,92,0.85)',borderRadius:'14px',padding:'12px',border:'1px solid rgba(255,255,255,0.15)'}}>
-                <div style={{fontSize:'11px',color:'#a8d8f0',fontWeight:'500',marginBottom:'4px'}}>Finances</div>
-                <div style={{fontSize:'18px',fontWeight:'500',color: solde >= 0 ? '#86efac' : '#fca5a5'}}>{solde >= 0 ? '+' : ''}{format(solde)}</div>
-                <div style={{fontSize:'11px',color:'rgba(255,255,255,0.5)',marginTop:'2px'}}>Solde ce mois</div>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'8px',marginBottom:'8px'}}>
+            <Link href="/finances" style={{textDecoration:'none'}}>
+              <div style={{background:'rgba(15,45,92,0.85)',borderRadius:'12px',padding:'10px',border:'1px solid rgba(255,255,255,0.15)',height:'100%'}}>
+                <div style={{fontSize:'11px',color:'#a8d8f0',fontWeight:'500'}}>Finances</div>
+                <div style={{fontSize:'17px',fontWeight:'500',color: solde >= 0 ? '#86efac' : '#fca5a5',margin:'2px 0'}}>{solde >= 0 ? '+' : ''}{format(solde)}</div>
+                <div style={{fontSize:'10px',color:'rgba(255,255,255,0.5)'}}>Solde ce mois</div>
               </div>
             </Link>
-            <Link href="/semaine" style={{flex:1,textDecoration:'none'}}>
-              <div style={{background:'rgba(15,45,92,0.85)',borderRadius:'14px',padding:'12px',border:'1px solid rgba(255,255,255,0.15)'}}>
-                <div style={{fontSize:'11px',color:'#fcd34d',fontWeight:'500',marginBottom:'4px'}}>Prochain</div>
-                <div style={{fontSize:'13px',fontWeight:'500',color:'#fff'}}>{prochainEvt?.titre || 'Aucun'}</div>
-                <div style={{fontSize:'11px',color:'rgba(255,255,255,0.5)',marginTop:'2px'}}>{prochainEvt ? new Date(prochainEvt.date).toLocaleDateString('fr-FR',{day:'numeric',month:'short'}) : 'Ajoute un événement'}</div>
+            <Link href="/semaine" style={{textDecoration:'none'}}>
+              <div style={{background:'rgba(15,45,92,0.85)',borderRadius:'12px',padding:'10px',border:'1px solid rgba(255,255,255,0.15)',height:'100%'}}>
+                <div style={{fontSize:'11px',color:'#fcd34d',fontWeight:'500'}}>Prochain</div>
+                <div style={{fontSize:'13px',fontWeight:'500',color:'#fff',margin:'3px 0',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{prochainEvt?.titre || 'Aucun'}</div>
+                <div style={{fontSize:'10px',color:'rgba(255,255,255,0.5)'}}>{prochaine ? prochaine.debut.toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'}) + (prochaine.evt.heure ? ' · ' + prochaine.evt.heure.slice(0,5) : '') : 'Ajoute un événement'}</div>
               </div>
             </Link>
           </div>
 
-          <Link href="/scanner" style={{textDecoration:'none',display:'block'}}>
-            <div style={{background:'rgba(15,45,92,0.85)',borderRadius:'14px',padding:'12px',display:'flex',alignItems:'center',gap:'12px',border:'1px solid rgba(255,255,255,0.15)'}}>
-              <div style={{width:'38px',height:'38px',borderRadius:'10px',background:'rgba(255,255,255,0.1)',border:'1px solid rgba(255,255,255,0.2)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8"><polyline points="4 7 4 4 7 4"/><polyline points="17 4 20 4 20 7"/><polyline points="20 17 20 20 17 20"/><polyline points="7 20 4 20 4 17"/><line x1="4" y1="12" x2="20" y2="12"/></svg>
-              </div>
-              <div>
-                <div style={{fontSize:'13px',fontWeight:'500',color:'#fff'}}>Scanner un document</div>
-                <div style={{fontSize:'11px',color:'rgba(255,255,255,0.6)',marginTop:'2px'}}>Facture, relevé, contrat…</div>
-              </div>
-              <div style={{marginLeft:'auto',color:'rgba(255,255,255,0.5)',fontSize:'18px'}}>›</div>
-            </div>
-          </Link>
-
-          <Link href="/etudes" style={{textDecoration:'none',display:'block',marginTop:'10px'}}>
-            <div style={{background:'rgba(15,45,92,0.85)',borderRadius:'14px',padding:'12px',display:'flex',alignItems:'center',gap:'12px',border:'1px solid rgba(255,255,255,0.15)'}}>
-              <div style={{width:'38px',height:'38px',borderRadius:'10px',background:'rgba(255,255,255,0.1)',border:'1px solid rgba(255,255,255,0.2)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a8d8f0" strokeWidth="1.8"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c3 2 9 2 12 0v-5"/></svg>
-              </div>
-              <div>
-                <div style={{fontSize:'13px',fontWeight:'500',color:'#fff'}}>Espace étudiant</div>
-                <div style={{fontSize:'11px',color:'rgba(255,255,255,0.6)',marginTop:'2px'}}>Notes, révisions, quiz</div>
-              </div>
-              <div style={{marginLeft:'auto',color:'rgba(255,255,255,0.5)',fontSize:'18px'}}>›</div>
-            </div>
-          </Link>
-
-          <Link href="/jeux" style={{textDecoration:'none',display:'block',marginTop:'10px'}}>
-            <div style={{background:'linear-gradient(135deg,rgba(212,168,67,0.32),rgba(249,115,22,0.22)),#1a3a6e',borderRadius:'14px',padding:'12px',display:'flex',alignItems:'center',gap:'12px',border:'1px solid rgba(212,168,67,0.45)'}}>
-              <div style={{width:'38px',height:'38px',borderRadius:'10px',background:'rgba(255,255,255,0.12)',border:'1px solid rgba(255,255,255,0.2)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F97316" strokeWidth="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-              </div>
-              <div>
-                <div style={{fontSize:'13px',fontWeight:'500',color:'#fff'}}>Jeux</div>
-                <div style={{fontSize:'11px',color:'rgba(255,255,255,0.75)',marginTop:'2px'}}>Block Blast, 2048, Snake, Memory</div>
-              </div>
-              <div style={{marginLeft:'auto',color:'rgba(255,255,255,0.5)',fontSize:'18px'}}>›</div>
-            </div>
-          </Link>
+          {/* Raccourcis : trois tuiles sur une ligne */}
+          <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'8px'}}>
+            {RACCOURCIS.map(r => (
+              <Link key={r.href} href={r.href} style={{textDecoration:'none'}}>
+                <div style={{background:r.fond,borderRadius:'12px',padding:'10px',border:`1px solid ${r.bord}`,height:'100%'}}>
+                  <div style={{width:'30px',height:'30px',borderRadius:'8px',background:'rgba(255,255,255,0.1)',border:'1px solid rgba(255,255,255,0.2)',display:'flex',alignItems:'center',justifyContent:'center',marginBottom:'6px'}}>{r.icone}</div>
+                  <div style={{fontSize:'12px',fontWeight:'500',color:'#fff'}}>{r.titre}</div>
+                  <div style={{fontSize:'10px',color:'rgba(255,255,255,0.6)',marginTop:'1px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{r.sous}</div>
+                </div>
+              </Link>
+            ))}
+          </div>
         </div>
       )}
 
       {/* Zone decouvrir */}
       <div style={{background:'#f8faff'}}>
-        <div style={{padding:'16px 14px 8px'}}>
-          <div style={{fontSize:'11px',color:'#aaa',marginBottom:'4px'}}>Réseau Nexia</div>
-          <h2 style={{fontSize:'24px',fontWeight:'600',color:'#1a1a2e',margin:'0 0 12px'}}>Découvrir</h2>
+        <div style={{padding:'12px 12px 4px'}}>
+          <div style={{display:'flex',alignItems:'baseline',gap:'8px',marginBottom:'8px'}}>
+            <h2 style={{fontSize:'20px',fontWeight:'600',color:'#1a1a2e',margin:0}}>Découvrir</h2>
+            <span style={{fontSize:'11px',color:'#aaa'}}>Réseau Nexia</span>
+          </div>
           <div style={{display:'flex',gap:'8px',overflowX:'auto',paddingBottom:'4px'}}>
             {['Tous','Tech','Business','Art','Sport','Éducation','Santé','Autre'].map(cat => (
               <button key={cat} onClick={() => setCategorie(cat)}
@@ -310,7 +271,7 @@ export default function Home() {
           </div>
         </div>
 
-        <div style={{padding:'16px 14px'}}>
+        <div style={{padding:'8px 12px 16px'}}>
           {projets.length === 0 && (
             <div className="text-center py-12">
               <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="1.5" style={{margin:'0 auto 12px'}}><path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/></svg>
@@ -334,12 +295,12 @@ export default function Home() {
             return (
               <>
                 {/* Projet en vedette */}
-                <Link href={'/projet/'+vedette.id} style={{textDecoration:'none',display:'block',marginBottom:'14px'}}>
-                  <div style={{background:'linear-gradient(135deg,#1a3a6e,#2B7FFF)',borderRadius:'20px',padding:'20px',position:'relative',overflow:'hidden'}}>
+                <Link href={'/projet/'+vedette.id} style={{textDecoration:'none',display:'block',marginBottom:'10px'}}>
+                  <div style={{background:'linear-gradient(135deg,#1a3a6e,#2B7FFF)',borderRadius:'16px',padding:'14px',position:'relative',overflow:'hidden'}}>
                     <div style={{position:'absolute',top:'-20px',right:'-20px',width:'100px',height:'100px',borderRadius:'50%',background:'rgba(255,255,255,0.08)'}}></div>
                     <div style={{fontSize:'11px',color:'rgba(255,255,255,0.65)',marginBottom:'6px',fontWeight:'500',display:'flex',alignItems:'center',gap:'5px'}}><span style={{width:'6px',height:'6px',borderRadius:'50%',background:'#D4A843',display:'inline-block'}}></span>En vedette</div>
-                    <div style={{fontSize:'17px',fontWeight:'500',color:'#fff',marginBottom:'6px'}}>{vedette.titre}</div>
-                    <div style={{fontSize:'12px',color:'rgba(255,255,255,0.7)',marginBottom:'14px',lineHeight:'1.5'}}>{vedette.description}</div>
+                    <div style={{fontSize:'16px',fontWeight:'500',color:'#fff',marginBottom:'4px'}}>{vedette.titre}</div>
+                    <div style={{fontSize:'12px',color:'rgba(255,255,255,0.7)',marginBottom:'10px',lineHeight:'1.45',display:'-webkit-box',WebkitLineClamp:2,WebkitBoxOrient:'vertical',overflow:'hidden'}}>{vedette.description}</div>
                     <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
                       <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
                         <div style={{width:'28px',height:'28px',borderRadius:'50%',background:'rgba(255,255,255,0.2)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'11px',fontWeight:'500',color:'#fff'}}>
@@ -352,7 +313,7 @@ export default function Home() {
                   </div>
                 </Link>
 
-                <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',marginBottom:'12px'}}>Récents</div>
+                <div style={{fontSize:'13px',fontWeight:'500',color:'#1a1a2e',marginBottom:'8px'}}>Récents</div>
               </>
             )
           })()}
@@ -368,24 +329,24 @@ export default function Home() {
             <div key={projet.id} role="link" tabIndex={0}
               onClick={() => window.location.assign('/projet/'+projet.id)}
               onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); window.location.assign('/projet/'+projet.id) } }}
-              style={{cursor:'pointer',display:'block',marginBottom:'10px'}}>
-              <div style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'16px',padding:'14px'}}>
-                <div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'10px'}}>
-                  <div style={{width:'40px',height:'40px',borderRadius:'12px',background:'linear-gradient(135deg,#EEF5FF,#DCE9FF)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2B7FFF" strokeWidth="1.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              style={{cursor:'pointer',display:'block',marginBottom:'8px'}}>
+              <div style={{background:'#fff',border:'0.5px solid #E8F1FF',borderRadius:'14px',padding:'10px 12px'}}>
+                <div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'6px'}}>
+                  <div style={{width:'32px',height:'32px',borderRadius:'10px',background:'linear-gradient(135deg,#EEF5FF,#DCE9FF)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2B7FFF" strokeWidth="1.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
                   </div>
-                  <div style={{flex:1}}>
-                    <div style={{fontSize:'14px',fontWeight:'500',color:'#1a1a2e',marginBottom:'3px'}}>{projet.titre}</div>
-                    <div style={{display:'flex',alignItems:'center',gap:'6px',marginBottom:'3px'}}>
-                      <span style={{fontSize:'10px',background:'#EEF5FF',color:'#2B7FFF',padding:'2px 8px',borderRadius:'99px',fontWeight:'500'}}>{projet.categorie}</span>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontSize:'14px',fontWeight:'500',color:'#1a1a2e',marginBottom:'2px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{projet.titre}</div>
+                    <div style={{display:'flex',alignItems:'center',gap:'6px',flexWrap:'wrap'}}>
+                      <span style={{fontSize:'10px',background:'#EEF5FF',color:'#2B7FFF',padding:'1px 7px',borderRadius:'99px',fontWeight:'500'}}>{projet.categorie}</span>
                       <span style={{fontSize:'11px',color:'#aaa'}}>{new Date(projet.created_at).toLocaleDateString('fr-FR',{day:'numeric',month:'short'})}</span>
+                      <Link href={'/profil/'+projet.user_id} onClick={e => e.stopPropagation()} style={{fontSize:'11px',color:'#2B7FFF',textDecoration:'none'}}>
+                        par {profilsCreateurs[projet.user_id] || 'Membre'}
+                      </Link>
                     </div>
-                    <Link href={'/profil/'+projet.user_id} onClick={e => e.stopPropagation()} style={{fontSize:'11px',color:'#2B7FFF',textDecoration:'none'}}>
-                      par {profilsCreateurs[projet.user_id] || 'Membre'}
-                    </Link>
                   </div>
                 </div>
-                <div style={{fontSize:'12px',color:'#666',marginBottom:'12px',lineHeight:'1.5'}}>{projet.description}</div>
+                <div style={{fontSize:'12px',color:'#666',marginBottom:'8px',lineHeight:'1.45',display:'-webkit-box',WebkitLineClamp:2,WebkitBoxOrient:'vertical',overflow:'hidden'}}>{projet.description}</div>
                 <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
                   <div style={{display:'flex',gap:'12px'}}>
                     <button onClick={e => { e.stopPropagation(); toggleLikeProjet(projet.id) }}
@@ -413,7 +374,7 @@ export default function Home() {
           })}
 
           {user && (
-            <Link href="/nouveau-projet" style={{textDecoration:'none',display:'block',marginTop:'8px',width:'100%',background:'#EEF5FF',color:'#2B7FFF',fontSize:'13px',fontWeight:'500',padding:'14px',borderRadius:'14px',border:'0.5px solid #DCE9FF',cursor:'pointer',textAlign:'center'}}>
+            <Link href="/nouveau-projet" style={{textDecoration:'none',display:'block',marginTop:'8px',width:'100%',background:'#EEF5FF',color:'#2B7FFF',fontSize:'13px',fontWeight:'500',padding:'11px',borderRadius:'14px',border:'0.5px solid #DCE9FF',cursor:'pointer',textAlign:'center'}}>
                 + Publier mon projet
               </Link>
           )}

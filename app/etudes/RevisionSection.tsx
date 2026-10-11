@@ -6,13 +6,15 @@ import { useChargement } from "@/lib/useChargement"
 import { colors, radius } from "@/app/components/ui/tokens"
 import { ENTREPRISES, FichesSchema, IA_ACTIVE, consigneFiches, entrepriseChoisie, quizValide, type EntreprisePerso, type Fiches, type Pays } from "@/lib/etudes"
 import { analyserDocument, deposerFichier, lienFichier, type ReglagesIA } from "./document"
-import Depot, { Exercice, carte, champ, titreCarte } from "./Depot"
+import Depot, { carte, champ, titreCarte } from "./Depot"
 import { PetitBouton } from "./CorrectionSection"
 import Quiz from "./Quiz"
+import FicheNotion from "./FicheNotion"
+import ProgrammeSection from "./ProgrammeSection"
 
 type CoursEtudiant = { id: string; matiere: string; titre: string; fichier_path: string | null; entreprise_id: string; fiches: Fiches; created_at: string }
 
-export default function RevisionSection({ userId, pays, niveau, matieres, reglages, entrepriseId, entreprisePerso, onChangerEntreprise }: {
+export default function RevisionSection({ userId, pays, niveau, matieres, reglages, entrepriseId, entreprisePerso, onChangerEntreprise, niveauId, filiere, specialites, annee, onChangerAnnee, chapitreOuvert, onOuvrirChapitre }: {
   userId: string
   pays: Pays
   niveau: string
@@ -21,6 +23,13 @@ export default function RevisionSection({ userId, pays, niveau, matieres, reglag
   entrepriseId: string
   entreprisePerso: EntreprisePerso | null
   onChangerEntreprise: (id: string, perso: EntreprisePerso | null) => void
+  niveauId: string | null
+  filiere: string | null
+  specialites: string[]
+  annee: string | null
+  onChangerAnnee: (annee: string) => void
+  chapitreOuvert: string | null
+  onOuvrirChapitre: (id: string | null) => void
 }) {
   const [cours, setCours] = useState<CoursEtudiant[] | null>(null)
   const [ouvert, setOuvert] = useState<string | null>(null)
@@ -78,6 +87,11 @@ export default function RevisionSection({ userId, pays, niveau, matieres, reglag
 
   return (
     <div>
+      <ProgrammeSection userId={userId} pays={pays} niveauId={niveauId} filiere={filiere} specialites={specialites} annee={annee}
+        onChangerAnnee={onChangerAnnee} chapitreOuvert={chapitreOuvert} onOuvrirChapitre={onOuvrirChapitre} />
+
+      {!chapitreOuvert && (
+        <>
       {IA_ACTIVE ? (
         <>
       {/* Entreprise fictive */}
@@ -132,6 +146,8 @@ export default function RevisionSection({ userId, pays, niveau, matieres, reglag
           ))}
         </div>
       ))}
+        </>
+      )}
     </div>
   )
 }
@@ -209,34 +225,8 @@ function DetailCours({ cours, userId, onSupprimer }: { cours: CoursEtudiant; use
           <Quiz key={`global-${cours.id}`} questions={tousLesQuiz} onTermine={enregistrerScore} />
         </div>
       ) : (
-        <div>
-          <div style={{ fontSize: "15px", fontWeight: 600, color: colors.text, marginBottom: "6px" }}>{n.titre}</div>
-          <p style={{ fontSize: "13px", color: colors.textMuted, lineHeight: 1.55, margin: "0 0 8px", whiteSpace: "pre-line" }}>{n.resume}</p>
-          {n.points.length > 0 && (
-            <ul style={{ margin: "0 0 10px", paddingLeft: "18px" }}>
-              {n.points.map((p, i) => <li key={i} style={{ fontSize: "13px", color: colors.text, lineHeight: 1.5, marginBottom: "3px" }}>{p}</li>)}
-            </ul>
-          )}
-          {n.vocabulaire.length > 0 && (
-            <div style={{ background: colors.blueLight, borderRadius: radius.sm, padding: "10px 12px", marginBottom: "10px" }}>
-              <div style={{ fontSize: "12px", fontWeight: 500, color: colors.blue, marginBottom: "4px" }}>Vocabulaire</div>
-              {n.vocabulaire.map((v, i) => <div key={i} style={{ fontSize: "12px", color: colors.text, lineHeight: 1.5 }}><b>{v.mot}</b> : {v.definition}</div>)}
-            </div>
-          )}
-          {n.exemple_entreprise && (
-            <div style={{ background: colors.goldLight, borderRadius: radius.sm, padding: "10px 12px", marginBottom: "10px" }}>
-              <div style={{ fontSize: "12px", fontWeight: 500, color: "#92400E", marginBottom: "4px" }}>Dans ton entreprise</div>
-              <div style={{ fontSize: "12px", color: colors.text, lineHeight: 1.5 }}>{n.exemple_entreprise}</div>
-            </div>
-          )}
-          {n.exercice.enonce && <Exercice numero={1} enonce={n.exercice.enonce} solution={n.exercice.solution} />}
-          {quizValide(n.quiz).length > 0 && (
-            <div style={{ background: "#F8FBFF", borderRadius: radius.sm, padding: "12px", marginTop: "6px" }}>
-              <div style={titreCarte}>Teste-toi</div>
-              <Quiz key={`${cours.id}-${fiche}`} questions={quizValide(n.quiz)} onTermine={enregistrerScore} />
-            </div>
-          )}
-        </div>
+        <FicheNotion fiche={{ ...n, exemple: n.exemple_entreprise }} libelleExemple="Dans ton entreprise"
+          cleQuiz={`${cours.id}-${fiche}`} onQuizTermine={enregistrerScore} />
       )}
 
       <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "12px" }}>
