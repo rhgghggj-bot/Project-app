@@ -23,6 +23,11 @@ const STEPS: Record<string, Step[]> = {
     { titre: "Scanne un document", texte: "Prends en photo une facture, un releve ou un contrat. Le scanner extrait automatiquement le montant et la date.", position: 'center' },
     { titre: "Transfere les donnees", texte: "Apres l'analyse, choisis d'ajouter le montant en depense, revenu, fiscalite ou calendrier.", position: 'bottom-left' },
   ],
+  etudes: [
+    { titre: "Tes notes", texte: "Ajoute tes notes (sur 6 en Suisse, sur 20 en France) et suis ta moyenne au fil de l'année. Change de pays dans Réglages.", position: 'center' },
+    { titre: "Corrige une évaluation", texte: "Dans Corriger, photographie ta copie : l'IA t'explique tes erreurs et te propose des exercices et un quiz.", position: 'top-left' },
+    { titre: "Révise avec une entreprise", texte: "Dans Réviser, choisis une entreprise fictive et dépose tes cours : chaque notion devient une fiche avec un exemple concret.", position: 'bottom-left' },
+  ],
   fiscalite: [
     { titre: "Choisis ton canton", texte: "Va dans l'onglet Situation et selectionne ton canton. Les taux sont bases sur les baremes officiels 2025.", position: 'center' },
     { titre: "Optimise tes déductions", texte: "Dans Déductions, entre ton 3e pilier (7 258 CHF max), frais de transport et primes maladie pour réduire ton impôt.", position: 'bottom-left' },
