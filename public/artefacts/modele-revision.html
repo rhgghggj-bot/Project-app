@@ -221,8 +221,8 @@ body.f-expedition{--fond:#FFF7ED;--mur:#7C2D12;--accent:#EA580C;--accent-pale:#F
     h += '<div class="annees" role="tablist">' + annees.map(function (a) { return '<button class="puce" role="tab" aria-pressed="' + (a === vue.annee) + '" data-action="annee" data-v="' + esc(a) + '">' + esc(a) + '</button>' }).join("") + '</div>';
     var due = aReviser().length;
     h += '<section class="actions">' +
-      '<button class="action principale" data-action="revision"><span class="ic">' + (F === "expedition" ? '🔥' : '📅') + '</span><div><b>' + (F === "expedition" ? 'Défi du jour' : 'Révision du jour') + '</b><span>' + (due ? due + ' question' + (due > 1 ? 's' : '') + ' à revoir aujourd\'hui' : '10 questions pour commencer') + ' · série de ' + serie() + ' jour' + (serie() > 1 ? 's' : '') + '</span></div></button>' +
-      '<button class="action" data-action="quiz-annee"><span class="ic">' + (F === "expedition" ? '🎲' : '▶') + '</span><div><b>' + (F === "examen" ? 'Examen blanc' : 'Mode quiz') + '</b><span>' + (F === "examen" ? '20 questions mélangées de ton année' : '10 questions au hasard de ton année') + '</span></div></button></section>';
+      '<button class="action principale" data-action="revision"><span class="ic">' + (F === "expedition" ? '🔥' : '📅') + '</span><div><b>' + (F === "expedition" ? 'Défi du jour' : 'Révision du jour') + '</b><span>' + (due ? due + ' question' + (due > 1 ? 's' : '') + ' à revoir aujourd\'hui' : '20 questions pour commencer') + ' · série de ' + serie() + ' jour' + (serie() > 1 ? 's' : '') + '</span></div></button>' +
+      '<button class="action" data-action="quiz-annee"><span class="ic">' + (F === "expedition" ? '🎲' : '▶') + '</span><div><b>' + (F === "examen" ? 'Examen blanc' : 'Mode quiz') + '</b><span>' + (F === "examen" ? '40 questions mélangées de ton année' : '20 questions au hasard de ton année') + '</span></div></button></section>';
     h += '<section class="progression"><div class="stat"><b>' + faits + ' / ' + total + '</b><span>' + mot[0] + 's ' + mot[1] + 's (' + esc(vue.annee) + ')</span><div class="barre"><i style="width:' + (total ? Math.round(faits / total * 100) : 0) + '%"></i></div></div>' +
       '<div class="stat"><b>' + serie() + '</b><span>jours de suite</span></div><div class="stat"><b>' + (F === "expedition" ? etat.xp : Object.keys(etat.boites).length) + '</b><span>' + (F === "expedition" ? 'points gagnés' : 'questions travaillées') + '</span></div></section>';
     var mats = matieresAnnee().map(function (m) {
@@ -263,7 +263,7 @@ body.f-expedition{--fond:#FFF7ED;--mur:#7C2D12;--accent:#EA580C;--accent-pale:#F
       '<ul class="' + (exp ? 'chemin' : 'liste') + '">' + cs.map(function (c, i) {
         return '<li><button class="ligne" data-action="chapitre" data-v="' + esc(c.id) + '"><span class="pastille' + (maitrise(c) ? ' ok' : '') + '">' + (maitrise(c) ? '✓' : (i + 1)) + '</span><span class="t">' + esc(c.titre) + '</span><span class="meta">' + (c.doc ? '' : 'bientôt') + '</span></button></li>';
       }).join("") + '</ul>' +
-      (nbQ ? '<div style="margin-top:12px"><button class="btn" data-action="quiz-matiere">' + (exp ? 'Défi du territoire' : 'Quiz de la matière') + ' (' + Math.min(10, nbQ) + ' questions)</button></div>' : '') + '</div>';
+      (nbQ ? '<div style="margin-top:12px"><button class="btn" data-action="quiz-matiere">' + (exp ? 'Défi du territoire' : 'Quiz de la matière') + ' (' + Math.min(20, nbQ) + ' questions)</button></div>' : '') + '</div>';
   }
 
   function ecranChapitre() {
@@ -351,12 +351,12 @@ body.f-expedition{--fond:#FFF7ED;--mur:#7C2D12;--accent:#EA580C;--accent-pale:#F
     else if (a === "matiere") { vue.matiere = v; vue.ecran = "matiere"; rendre() }
     else if (a === "chapitre") { vue.chapitre = v; vue.annee = parId[v].annee; vue.matiere = parId[v].matiere; vue.ecran = "chapitre"; rendre() }
     else if (a === "quiz-chapitre") { var c = parId[vue.chapitre]; lancerQuiz(QUESTIONS.filter(function (x) { return x.chap === c }), c.titre, "chapitre", c.id) }
-    else if (a === "quiz-matiere") lancerQuiz(melanger(QUESTIONS.filter(function (x) { return x.chap.matiere === vue.matiere && x.chap.annee === vue.annee })).slice(0, 10), vue.matiere, "matiere")
-    else if (a === "quiz-annee") lancerQuiz(melanger(QUESTIONS.filter(function (x) { return x.chap.annee === vue.annee })).slice(0, F === "examen" ? 20 : 10), (F === "examen" ? "Examen blanc · " : "Mode quiz · ") + vue.annee, "accueil")
+    else if (a === "quiz-matiere") lancerQuiz(melanger(QUESTIONS.filter(function (x) { return x.chap.matiere === vue.matiere && x.chap.annee === vue.annee })).slice(0, 20), vue.matiere, "matiere")
+    else if (a === "quiz-annee") lancerQuiz(melanger(QUESTIONS.filter(function (x) { return x.chap.annee === vue.annee })).slice(0, F === "examen" ? 40 : 20), (F === "examen" ? "Examen blanc · " : "Mode quiz · ") + vue.annee, "accueil")
     else if (a === "revision") {
       var due = melanger(aReviser());
-      var qs = due.length ? due.slice(0, 15) : melanger(QUESTIONS.filter(function (x) { return x.chap.annee === vue.annee && !etat.boites[x.cle] })).slice(0, 10);
-      if (!qs.length) qs = melanger(QUESTIONS).slice(0, 10);
+      var qs = due.length ? due.slice(0, 30) : melanger(QUESTIONS.filter(function (x) { return x.chap.annee === vue.annee && !etat.boites[x.cle] })).slice(0, 20);
+      if (!qs.length) qs = melanger(QUESTIONS).slice(0, 20);
       lancerQuiz(qs, "Révision du jour", "accueil");
     }
     else if (a === "repondre") repondre(Number(v))
