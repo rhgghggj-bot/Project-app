@@ -5,13 +5,22 @@ import { useChargement } from "@/lib/useChargement"
 import { colors, radius } from "@/app/components/ui/tokens"
 import { formaterNote, systemeDeEchelle, type Echelle, type Pays } from "@/lib/etudes"
 import { trouverNiveau } from "@/lib/cursus"
-import { chapitresPour, chargerProgramme, type Chapitre, type Programme } from "@/lib/programmes"
+import { chapitreVisible, chapitresPour, chargerProgramme, type Chapitre, type Programme } from "@/lib/programmes"
 import { carte } from "./Depot"
 import FicheNotion from "./FicheNotion"
 
 // « Mon programme » : les chapitres de l'année de l'élève, matière par
 // matière, sans avoir besoin d'importer de fichier. Un chapitre ouvert affiche
 // son document de révision et les notes que l'élève y a liées.
+
+// Recherche insensible aux accents et aux majuscules
+function normaliser(t: string) {
+  return t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
+}
+
+function texteChapitre(c: Chapitre) {
+  return normaliser([c.titre, c.matiere, ...c.notions, c.doc?.resume ?? "", ...(c.doc?.points ?? []), ...(c.doc?.vocabulaire.map(v => v.mot) ?? [])].join(" "))
+}
 
 type NoteLiee = { id: string; note: number; echelle: Echelle; titre: string | null; date: string }
 
@@ -29,6 +38,7 @@ export default function ProgrammeSection({ userId, pays, niveauId, filiere, spec
   const niveau = trouverNiveau(pays, niveauId)
   const [programme, setProgramme] = useState<Programme | null | undefined>(undefined)
   const [matiereOuverte, setMatiereOuverte] = useState<string | null>(null)
+  const [recherche, setRecherche] = useState("")
 
   useChargement(async () => {
     if (!niveauId) { setProgramme(null); return }
@@ -52,12 +62,40 @@ export default function ProgrammeSection({ userId, pays, niveauId, filiere, spec
   const matieres = [...new Set(chapitres.map(c => c.matiere))]
   const filiereLabel = niveau.filieres?.find(f => f.id === filiere)?.label
 
+  // Recherche dans tout le programme (toutes années) : chaque mot tapé doit
+  // apparaître ; les chapitres dont le titre correspond passent en premier.
+  const mots = normaliser(recherche).split(/\s+/).filter(Boolean)
+  const resultats = mots.length === 0 ? [] : programme.chapitres
+    .filter(c => chapitreVisible(c, filiere, specialites))
+    .map(c => ({ c, texte: texteChapitre(c), titre: normaliser(c.titre + " " + c.matiere) }))
+    .filter(r => mots.every(m => r.texte.includes(m)))
+    .sort((a, b) => Number(mots.every(m => b.titre.includes(m))) - Number(mots.every(m => a.titre.includes(m))))
+    .slice(0, 30)
+    .map(r => r.c)
+
   return (
     <div style={carte}>
       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: "8px", marginBottom: "8px" }}>
         <div style={{ fontSize: "13px", fontWeight: 600, color: colors.text }}>Mon programme</div>
         <div style={{ fontSize: "11px", color: colors.textFaint, textAlign: "right" }}>{filiereLabel || niveau.label}</div>
       </div>
+      <input type="search" value={recherche} onChange={e => setRecherche(e.target.value)} aria-label="Rechercher un chapitre"
+        placeholder="Rechercher un chapitre, une notion…"
+        style={{ width: "100%", border: `0.5px solid ${colors.blueBorder}`, borderRadius: radius.pill, padding: "8px 14px", fontSize: "13px", color: colors.text, background: "#F8FBFF", marginBottom: "10px" }} />
+      {mots.length > 0 ? (
+        <div>
+          <div style={{ fontSize: "11px", color: colors.textFaint, marginBottom: "6px" }}>
+            {resultats.length === 0 ? "Aucun chapitre trouvé." : `${resultats.length}${resultats.length === 30 ? "+" : ""} résultat${resultats.length > 1 ? "s" : ""}`}
+          </div>
+          {resultats.map(c => (
+            <button key={c.id} onClick={() => onOuvrirChapitre(c.id)}
+              style={{ width: "100%", display: "block", background: colors.blueLight, border: "none", borderRadius: radius.sm, padding: "8px 10px", marginBottom: "4px", cursor: "pointer", textAlign: "left" }}>
+              <div style={{ fontSize: "12px", color: colors.text, fontWeight: 500 }}>{c.titre}{!c.doc && <span style={{ fontSize: "10px", color: colors.textFaint, fontWeight: 400 }}> · bientôt</span>}</div>
+              <div style={{ fontSize: "11px", color: colors.textMuted }}>{c.matiere} · {c.annee}</div>
+            </button>
+          ))}
+        </div>
+      ) : (<>
       {niveau.annees.length > 1 && (
         <div role="tablist" aria-label="Année" style={{ display: "flex", gap: "4px", overflowX: "auto", marginBottom: "10px" }}>
           {niveau.annees.map(a => (
@@ -101,6 +139,7 @@ export default function ProgrammeSection({ userId, pays, niveauId, filiere, spec
           </div>
         )
       })}
+      </>)}
       <p style={{ fontSize: "10px", color: colors.textFaint, margin: "8px 0 0", lineHeight: 1.4 }}>
         Programme indicatif basé sur les plans d&apos;études officiels : l&apos;ordre des chapitres peut varier selon ton école.
       </p>
