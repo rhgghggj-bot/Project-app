@@ -2,6 +2,10 @@ import { z } from "zod"
 
 // ─── Notation selon le pays ────────────────────────────────────────────────
 // Chaque note garde son échelle : changer de pays ne fausse pas les anciennes.
+// Fonctions qui passent par une IA (correction de copies, création de fiches).
+// Désactivées tant que NEXT_PUBLIC_ETUDES_IA n'est pas mis à "1" sur Vercel.
+export const IA_ACTIVE = process.env.NEXT_PUBLIC_ETUDES_IA === "1"
+
 export type Pays = "CH" | "FR"
 export type Echelle = "CH6" | "FR20"
 

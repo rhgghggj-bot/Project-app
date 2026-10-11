@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabase"
 import { toast, confirmer } from "@/lib/toast"
 import { useChargement } from "@/lib/useChargement"
 import { colors, radius } from "@/app/components/ui/tokens"
-import { ENTREPRISES, FichesSchema, consigneFiches, entrepriseChoisie, quizValide, type EntreprisePerso, type Fiches, type Pays } from "@/lib/etudes"
+import { ENTREPRISES, FichesSchema, IA_ACTIVE, consigneFiches, entrepriseChoisie, quizValide, type EntreprisePerso, type Fiches, type Pays } from "@/lib/etudes"
 import { analyserDocument, deposerFichier, lienFichier, type ReglagesIA } from "./document"
 import Depot, { Exercice, carte, champ, titreCarte } from "./Depot"
 import { PetitBouton } from "./CorrectionSection"
@@ -78,6 +78,8 @@ export default function RevisionSection({ userId, pays, niveau, matieres, reglag
 
   return (
     <div>
+      {IA_ACTIVE ? (
+        <>
       {/* Entreprise fictive */}
       <div style={{ ...carte, background: `linear-gradient(135deg, ${entreprise.couleur}22, #fff)`, borderColor: `${entreprise.couleur}55` }}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
@@ -100,6 +102,16 @@ export default function RevisionSection({ userId, pays, niveau, matieres, reglag
 
       <Depot titre="Déposer un cours" matieres={matieres} ia={reglages.ia} enCours={enCours} libelleAction={`Créer mes fiches avec ${entreprise.nom}`} onEnvoyer={creerFiches}
         aide={`Envoie tes slides ou ton polycopié. Chaque notion devient une fiche avec un résumé, le vocabulaire expliqué, un exemple chez ${entreprise.nom}, un exercice corrigé et un quiz. Tes documents restent privés.`} />
+
+        </>
+      ) : (
+        <div style={carte}>
+          <div style={titreCarte}>Ajouter des cours</div>
+          <p style={{ fontSize: "12px", color: colors.textMuted, margin: 0, lineHeight: 1.5 }}>
+            Importe un fichier de fiches avec Réglages → « Importer un fichier », ou ajoute une page de révision complète dans l&apos;onglet Artefacts.
+          </p>
+        </div>
+      )}
 
       {cours === null && <div className="nx-skel" style={{ height: 80, borderRadius: radius.md }} />}
       {[...parMatiere.entries()].map(([matiere, liste]) => (

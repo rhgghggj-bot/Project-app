@@ -25,8 +25,8 @@ const STEPS: Record<string, Step[]> = {
   ],
   etudes: [
     { titre: "Tes notes", texte: "Ajoute tes notes (sur 6 en Suisse, sur 20 en France) et suis ta moyenne au fil de l'année. Change de pays dans Réglages.", position: 'center' },
-    { titre: "Corrige une évaluation", texte: "Dans Corriger, photographie ta copie : l'IA t'explique tes erreurs et te propose des exercices et un quiz.", position: 'top-left' },
-    { titre: "Révise avec une entreprise", texte: "Dans Réviser, choisis une entreprise fictive et dépose tes cours : chaque notion devient une fiche avec un exemple concret.", position: 'bottom-left' },
+    { titre: "Révise tes cours", texte: "Dans Réviser, retrouve tes fiches et leurs quiz. Ajoute-en avec Réglages → Importer un fichier.", position: 'top-left' },
+    { titre: "Tes pages de révision", texte: "Dans Artefacts, ajoute une page HTML (par exemple un artefact Claude) et ouvre-la en plein écran.", position: 'bottom-left' },
   ],
   fiscalite: [
     { titre: "Choisis ton canton", texte: "Va dans l'onglet Situation et selectionne ton canton. Les taux sont bases sur les baremes officiels 2025.", position: 'center' },
