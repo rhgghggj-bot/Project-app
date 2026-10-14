@@ -7,6 +7,7 @@ import dynamic from "next/dynamic"
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { syncActivitesGroupeVersCalendrier } from "@/lib/syncActivites"
+import { lireICS } from "@/lib/ics"
 
 // Vue 3D optionnelle et peu utilisée : on ne la charge que quand l'utilisateur
 // l'ouvre, au lieu de l'inclure dans le bundle initial de /semaine (page très
@@ -16,44 +17,12 @@ const Constellation = dynamic(() => import("../components/Constellation"), { ssr
 const JOURS = ["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"]
 const COULEURS_EVT = ["#2B7FFF","#10B981","#F43F5E","#D4A843","#8B5CF6","#F59E0B","#EC4899"]
 
-function parseDateICS(v: string) {
-  // Formats ICS courants : YYYYMMDD ou YYYYMMDDTHHMMSS(Z)
-  const m = v.match(/^(\d{4})(\d{2})(\d{2})(?:T(\d{2})(\d{2})(\d{2}))?/)
-  if (!m) return null
-  const [, y, mo, d, h, mi] = m
-  return { date: `${y}-${mo}-${d}`, heure: h ? `${h}:${mi}` : null }
-}
-
-function parseICS(texte: string) {
-  const lignes = texte.split(/\r\n|\n|\r/)
-  const evenements: { titre: string; date: string; heure: string | null }[] = []
-  let dansEvenement = false
-  let titre = ""
-  let debut: { date: string; heure: string | null } | null = null
-
-  for (const ligne of lignes) {
-    if (ligne.startsWith("BEGIN:VEVENT")) { dansEvenement = true; titre = ""; debut = null; continue }
-    if (ligne.startsWith("END:VEVENT")) {
-      if (dansEvenement && debut) evenements.push({ titre: titre || "Événement importé", date: debut.date, heure: debut.heure })
-      dansEvenement = false
-      continue
-    }
-    if (!dansEvenement) continue
-    if (ligne.startsWith("SUMMARY:")) titre = ligne.slice(8).trim()
-    else if (ligne.startsWith("DTSTART")) {
-      const valeur = ligne.split(":")[1]
-      if (valeur) debut = parseDateICS(valeur.trim())
-    }
-  }
-  return evenements
-}
-
 export default function Semaine() {
   const [evenements, setEvenements] = useState<EvenementCalendrier[]>([])
   const [user, setUser] = useState<User | null>(null)
   const [selectedDay, setSelectedDay] = useState<Date | null>(null)
   const [importEnCours, setImportEnCours] = useState(false)
-  const [importMessage, setImportMessage] = useState("")
+  const [importMessage, setImportMessage] = useState<{ texte: string; erreur: boolean } | null>(null)
   const [semaineOffset, setSemaineOffset] = useState(0)
   const [jourFiltre, setJourFiltre] = useState<Date>(() => new Date())
   const [voirTouteLaSemaine, setVoirTouteLaSemaine] = useState(false)
@@ -77,24 +46,46 @@ export default function Semaine() {
 
   async function importerICS(fichier: File) {
     if (!user) return
+    if (!/\.ics$/i.test(fichier.name) && fichier.type !== "text/calendar") {
+      setImportMessage({ texte: "Choisis un fichier calendrier .ics (export de Google Agenda, Apple Calendrier, Outlook ou de ton école)", erreur: true })
+      return
+    }
     setImportEnCours(true)
-    setImportMessage("")
+    setImportMessage(null)
     try {
-      const texte = await fichier.text()
-      const trouves = parseICS(texte)
+      const trouves = lireICS(await fichier.text())
       if (trouves.length === 0) {
-        setImportMessage("Aucun événement trouvé dans ce fichier")
+        setImportMessage({ texte: "Aucun événement trouvé dans ce fichier", erreur: true })
+        return
+      }
+      // Pas de doublon si le même fichier est importé deux fois
+      const cle = (e: { titre: string; date: string; heure: string | null }) => `${e.titre}|${e.date}|${e.heure ?? ""}`
+      const deja = new Set(evenements.map(cle))
+      const nouveaux = trouves.filter(e => !deja.has(cle(e)))
+      if (nouveaux.length === 0) {
+        setImportMessage({ texte: "Ces événements sont déjà dans ton calendrier", erreur: false })
         return
       }
       const couleur = COULEURS_EVT[Math.floor(Math.random() * COULEURS_EVT.length)]
-      await supabase.from("evenements_calendrier").insert(
-        trouves.map(e => ({ user_id: user.id, titre: e.titre, date: e.date, heure: e.heure, duree: 60, couleur }))
+      const { error } = await supabase.from("evenements_calendrier").insert(
+        nouveaux.map(e => ({ user_id: user.id, couleur, ...e, duree: e.duree ?? 60 }))
       )
+      if (error) {
+        setImportMessage({ texte: "Import impossible : " + error.message, erreur: true })
+        return
+      }
       const { data } = await supabase.from("evenements_calendrier").select("*").eq("user_id", user.id).order("date", { ascending: true })
       setEvenements(data || [])
-      setImportMessage(`${trouves.length} événement${trouves.length > 1 ? 's' : ''} importé${trouves.length > 1 ? 's' : ''} !`)
+      const repetes = nouveaux.filter(e => e.recurrence_jours).length
+      const n = nouveaux.length, ignores = trouves.length - n
+      setImportMessage({
+        texte: `${n} événement${n > 1 ? "s" : ""} importé${n > 1 ? "s" : ""}` +
+          (repetes ? `, dont ${repetes} qui se répète${repetes > 1 ? "nt" : ""} chaque semaine` : "") +
+          (ignores ? ` (${ignores} déjà présent${ignores > 1 ? "s" : ""})` : ""),
+        erreur: false,
+      })
     } catch {
-      setImportMessage("Erreur lors de la lecture du fichier .ics")
+      setImportMessage({ texte: "Ce fichier .ics ne peut pas être lu", erreur: true })
     } finally {
       setImportEnCours(false)
     }
@@ -190,18 +181,20 @@ export default function Semaine() {
   return (
     <main className="min-h-screen bg-white"><Tutorial page="calendrier" />
       <div style={{background:'linear-gradient(160deg,#0A1628,#1a3a6e)',padding:'20px 18px 32px',position:'relative',overflow:'hidden'}}>
-        <div style={{position:'absolute',top:'-40px',right:'-40px',width:'180px',height:'180px',borderRadius:'50%',background:'rgba(43,127,255,0.15)'}}></div>
-        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'8px'}}>
+        <div aria-hidden="true" style={{position:'absolute',top:'-40px',right:'-40px',width:'180px',height:'180px',borderRadius:'50%',background:'rgba(43,127,255,0.15)',pointerEvents:'none'}}></div>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'8px',position:'relative',zIndex:1}}>
           <Link href="/" transitionTypes={['nav-back']} style={{fontSize:'12px',color:'rgba(255,255,255,0.5)'}}>← Accueil</Link>
-          <label style={{fontSize:'11px',color:'rgba(255,255,255,0.7)',background:'rgba(255,255,255,0.1)',border:'0.5px solid rgba(255,255,255,0.2)',borderRadius:'99px',padding:'5px 12px',cursor:'pointer'}}>
-            {importEnCours ? 'Import…' : '+ Importer .ics'}
-            <input type="file" accept=".ics" style={{display:'none'}} onChange={e => { const f = e.target.files?.[0]; if (f) importerICS(f); e.target.value = '' }} />
+          {/* Sur iPhone, accept=".ics" seul grise les fichiers calendrier : on accepte aussi le type MIME */}
+          <label style={{fontSize:'12px',fontWeight:500,color:'#fff',background:'rgba(255,255,255,0.16)',border:'0.5px solid rgba(255,255,255,0.3)',borderRadius:'99px',padding:'9px 14px',minHeight:36,display:'inline-flex',alignItems:'center',cursor:importEnCours ? 'wait' : 'pointer'}}>
+            {importEnCours ? 'Import…' : '+ Importer un calendrier'}
+            <input type="file" accept=".ics,text/calendar,application/ics" disabled={importEnCours} style={{position:'absolute',width:1,height:1,opacity:0,pointerEvents:'none'}}
+              onChange={e => { const f = e.target.files?.[0]; if (f) importerICS(f); e.target.value = '' }} />
           </label>
         </div>
         <div style={{fontSize:'12px',color:'rgba(255,255,255,0.5)',marginBottom:'4px'}}>Calendrier</div>
         <div style={{fontSize:'20px',fontWeight:'500',color:'#fff',marginBottom:'2px'}}>{debutSemaine} – {finSemaine}</div>
         <div style={{fontSize:'13px',color:'rgba(255,255,255,0.6)'}}>{evenements.length} événements au total</div>
-        {importMessage && <div style={{fontSize:'12px',color:'#86efac',marginTop:'6px'}}>{importMessage}</div>}
+        {importMessage && <div role="status" style={{fontSize:'12px',color: importMessage.erreur ? '#fda4af' : '#86efac',marginTop:'6px',lineHeight:1.4}}>{importMessage.texte}</div>}
       </div>
 
       <div style={{margin:'-16px 14px 0',borderRadius:'18px',padding:'14px',position:'relative',zIndex:2,background:'rgba(255,255,255,0.85)',backdropFilter:'blur(20px)',border:'0.5px solid rgba(255,255,255,0.9)',boxShadow:'0 4px 24px rgba(43,127,255,0.1)'}}>

@@ -25,6 +25,14 @@ export const COLONNES_NOTE = "id,dossier_id,titre,contenu,texte,epingle,chapitre
 const BLOCS = new Set(["P", "H2", "H3", "UL", "OL", "LI"])
 const EN_LIGNE: Record<string, string> = { B: "b", STRONG: "b", I: "i", EM: "i", U: "u", MARK: "mark" }
 
+// Tailles et polices autorisées (voir TAILLES et POLICES dans l'éditeur)
+const TAILLES_OK = new Set(["s", "m", "l", "xl"])  // m = normal (dans un passage agrandi)
+const POLICES_OK = new Set(["standard", "titre", "livre", "main", "machine"])
+function tailleDeFont(size: string | null): string | null {
+  const n = Number(size)
+  return !n ? null : n <= 2 ? "s" : n === 3 ? "m" : n <= 5 ? "l" : "xl"
+}
+
 function estSurligne(el: HTMLElement) {
   const fond = el.style?.backgroundColor
   return !!fond && fond !== "transparent" && fond !== "rgba(0, 0, 0, 0)" && fond !== "inherit" && fond !== "initial"
@@ -67,9 +75,21 @@ function nettoyerNoeud(source: Node, cible: Node, doc: Document) {
     } else if (EN_LIGNE[tag]) {
       nouveau = doc.createElement(EN_LIGNE[tag])
     } else if (tag === "SPAN" || tag === "FONT") {
+      // Taille et police : <font size/face> pendant la frappe, <span data-…> une fois enregistré
+      const taille = tag === "FONT" ? tailleDeFont(el.getAttribute("size")) : el.getAttribute("data-taille")
+      const police = tag === "FONT" ? el.getAttribute("face") : el.getAttribute("data-police")
+      const style = doc.createElement("span")
+      if (taille && TAILLES_OK.has(taille)) style.setAttribute("data-taille", taille)
+      if (police && POLICES_OK.has(police)) style.setAttribute("data-police", police)
       // Le surligneur du navigateur produit <span style="background-color">
-      if (estSurligne(el)) nouveau = doc.createElement("mark")
-      else if (el.style?.fontWeight === "bold" || Number(el.style?.fontWeight) >= 600) nouveau = doc.createElement("b")
+      const interieur = estSurligne(el) ? doc.createElement("mark")
+        : el.style?.fontWeight === "bold" || Number(el.style?.fontWeight) >= 600 ? doc.createElement("b") : null
+      if (style.attributes.length) {
+        if (interieur) { nettoyerNoeud(el, interieur, doc); style.appendChild(interieur) } else nettoyerNoeud(el, style, doc)
+        cible.appendChild(style)
+        continue
+      }
+      nouveau = interieur
     }
 
     if (nouveau) {

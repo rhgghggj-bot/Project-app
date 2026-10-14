@@ -196,9 +196,6 @@ export default function CarnetSection({ userId, contexte, action, onActionTraite
         {dossiers.map(d => (
           <button key={d.id} aria-pressed={filtre === d.id} style={puce(filtre === d.id)} onClick={() => setFiltre(d.id)}>{d.nom} <span style={{ opacity: 0.6 }}>{compte(d.id)}</span></button>
         ))}
-        {dossiers.length > 0 && compte("sans") > 0 && (
-          <button aria-pressed={filtre === "sans"} style={puce(filtre === "sans")} onClick={() => setFiltre("sans")}>Sans dossier <span style={{ opacity: 0.6 }}>{compte("sans")}</span></button>
-        )}
         </div>
         {nomDossier === null ? (
           <button style={{ ...puce(false), borderStyle: "dashed", color: BLEU_TEXTE }} onClick={() => setNomDossier("")} disabled={!!erreur}>+ Dossier</button>
