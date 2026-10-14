@@ -433,7 +433,24 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
     remettreCurseur()
     const apercu = URL.createObjectURL(fichier)
     apercus.current.push(apercu)
-    document.execCommand("insertHTML", false, `<img data-chemin="${chemin}" src="${apercu}" alt="${alt}"><p><br></p>`)
+    // L'image se place sous le bloc où est le curseur (jamais au milieu d'une
+    // liste ou d'un titre), suivie d'une ligne vide pour continuer à écrire.
+    const page = pageRef.current
+    let bloc: Node | null = document.getSelection()?.anchorNode ?? null
+    while (bloc && bloc.parentNode !== page) bloc = bloc.parentNode
+    const img = document.createElement("img")
+    img.setAttribute("data-chemin", chemin)
+    img.setAttribute("alt", alt)
+    img.src = apercu
+    const suite = document.createElement("p")
+    suite.appendChild(document.createElement("br"))
+    if (bloc) bloc.parentNode!.insertBefore(suite, bloc.nextSibling)
+    else page.appendChild(suite)
+    page.insertBefore(img, suite)
+    const r = document.createRange()
+    r.setStart(suite, 0); r.collapse(true)
+    const sel = document.getSelection()
+    sel?.removeAllRanges(); sel?.addRange(r)
     planifier()
   }
 
