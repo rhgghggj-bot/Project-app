@@ -4,7 +4,8 @@ import { supabase } from "@/lib/supabase"
 import { toast, confirmer } from "@/lib/toast"
 import { useChargement } from "@/lib/useChargement"
 import { colors, radius } from "@/app/components/ui/tokens"
-import { chapitreVisible, chargerProgramme, type Chapitre } from "@/lib/programmes"
+import { chapitreVisible, chargerProgramme } from "@/lib/programmes"
+import { chargerFichesPerso } from "@/lib/fichesPerso"
 import { COLONNES_NOTE, dateCourte, normaliser, type Dossier, type NoteCarnet } from "@/lib/carnet"
 import EditeurNote, { type ContexteProgramme } from "./EditeurNote"
 import DocumentsSection from "./DocumentsSection"
@@ -33,7 +34,7 @@ export default function CarnetSection({ userId, contexte, action, onActionTraite
   const [ouverte, setOuverte] = useState<{ note: NoteCarnet; nouvelle: boolean } | null>(null)
   const [nomDossier, setNomDossier] = useState<string | null>(null)
   const [renommer, setRenommer] = useState<string | null>(null)
-  const [chapitres, setChapitres] = useState<Map<string, Chapitre>>(new Map())
+  const [chapitres, setChapitres] = useState<Map<string, { matiere: string; titre: string }>>(new Map())
   const [vue, setVue] = useState<"notes" | "documents">("notes")
 
   async function charger() {
@@ -53,15 +54,21 @@ export default function CarnetSection({ userId, contexte, action, onActionTraite
   }
   useChargement(charger, userId)
 
-  // Titres des chapitres reliés, pour les afficher dans la liste
+  // Titres des chapitres et fiches reliés, pour les afficher dans la liste
   useEffect(() => {
-    if (!contexte.niveauId) return
     let actif = true
-    chargerProgramme(contexte.pays, contexte.niveauId).then(p => {
-      if (actif && p) setChapitres(new Map(p.chapitres.filter(c => chapitreVisible(c, contexte.filiere, contexte.specialites)).map(c => [c.id, c])))
+    Promise.all([
+      chargerFichesPerso(userId),
+      contexte.niveauId ? chargerProgramme(contexte.pays, contexte.niveauId) : Promise.resolve(null),
+    ]).then(([perso, prog]) => {
+      if (!actif) return
+      const m = new Map<string, { matiere: string; titre: string }>()
+      for (const c of prog?.chapitres.filter(c => chapitreVisible(c, contexte.filiere, contexte.specialites)) || []) m.set(c.id, c)
+      for (const f of perso) m.set(f.id, f)
+      setChapitres(m)
     })
     return () => { actif = false }
-  }, [contexte.pays, contexte.niveauId, contexte.filiere, contexte.specialites])
+  }, [userId, contexte.pays, contexte.niveauId, contexte.filiere, contexte.specialites])
 
   function nouvelleNote(chapitreId: string | null = null): NoteCarnet {
     const maintenant = new Date().toISOString()

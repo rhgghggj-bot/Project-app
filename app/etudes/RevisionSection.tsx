@@ -1,11 +1,12 @@
 "use client"
 import type { ActionCarnet } from "./CarnetSection"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { toast, confirmer } from "@/lib/toast"
 import { useChargement } from "@/lib/useChargement"
 import { colors, radius } from "@/app/components/ui/tokens"
-import { ENTREPRISES, FichesSchema, IA_ACTIVE, consigneFiches, entrepriseChoisie, quizValide, type EntreprisePerso, type Fiches, type Pays } from "@/lib/etudes"
+import { ENTREPRISES, FichesSchema, IA_ACTIVE, consigneFiches, entrepriseChoisie, quizValide, type EntreprisePerso, type Fiches, type NotionFiche, type Pays } from "@/lib/etudes"
+import { estIdFichePerso, fichesDe, idFiche, oublierFichesPerso } from "@/lib/fichesPerso"
 import { analyserDocument, deposerFichier, lienFichier, type ReglagesIA } from "./document"
 import Depot, { carte, champ, titreCarte } from "./Depot"
 import { PetitBouton } from "./CorrectionSection"
@@ -63,6 +64,7 @@ export default function RevisionSection({ userId, pays, niveau, matieres, reglag
       }).select("id,matiere,titre,fichier_path,entreprise_id,fiches,created_at").single()
       if (error || !data) throw new Error("Fiches créées mais pas enregistrées")
       setCours(c => [data as CoursEtudiant, ...(c || [])])
+      oublierFichesPerso()
       setOuvert(data.id)
       toast(`${fiches.notions.length} fiches créées`, "success")
     } catch (e) {
@@ -78,7 +80,19 @@ export default function RevisionSection({ userId, pays, niveau, matieres, reglag
     if (error) return toast("Suppression impossible", "error")
     if (c.fichier_path) await supabase.storage.from("etudes").remove([c.fichier_path])
     setCours(l => (l || []).filter(x => x.id !== c.id))
+    oublierFichesPerso()
   }
+
+  // Fiche d'un de mes cours ouverte depuis le carnet (note reliée)
+  const fichePerso = estIdFichePerso(chapitreOuvert) ? chapitreOuvert : null
+  const cible = fichePerso && cours ? fichesDe(cours).find(f => f.id === fichePerso) ?? null : null
+  const coursOuvert = cible?.coursId ?? ouvert
+  // Une seule fois par fiche ouverte (pas à chaque rendu : l'élève doit
+  // pouvoir faire défiler la page ensuite)
+  const coursCible = cible?.coursId ?? null
+  useEffect(() => {
+    if (coursCible) document.getElementById(`cours-${coursCible}`)?.scrollIntoView({ block: "start", behavior: "smooth" })
+  }, [fichePerso, coursCible])
 
   // Regroupe les cours par matière : une "pièce" de l'entreprise par matière.
   const parMatiere = new Map<string, CoursEtudiant[]>()
@@ -90,9 +104,9 @@ export default function RevisionSection({ userId, pays, niveau, matieres, reglag
   return (
     <div>
       <ProgrammeSection onCarnet={onCarnet} userId={userId} pays={pays} niveauId={niveauId} filiere={filiere} specialites={specialites} annee={annee}
-        onChangerAnnee={onChangerAnnee} chapitreOuvert={chapitreOuvert} onOuvrirChapitre={onOuvrirChapitre} />
+        onChangerAnnee={onChangerAnnee} chapitreOuvert={fichePerso ? null : chapitreOuvert} onOuvrirChapitre={onOuvrirChapitre} />
 
-      {!chapitreOuvert && (
+      {(!chapitreOuvert || fichePerso) && (
         <>
       {IA_ACTIVE ? (
         <>
@@ -134,16 +148,19 @@ export default function RevisionSection({ userId, pays, niveau, matieres, reglag
         <div key={matiere} style={{ marginBottom: "6px" }}>
           <div style={{ fontSize: "12px", fontWeight: 600, color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.5px", margin: "14px 2px 8px" }}>{matiere}</div>
           {liste.map(c => (
-            <div key={c.id} style={carte}>
-              <button onClick={() => setOuvert(ouvert === c.id ? null : c.id)} aria-expanded={ouvert === c.id}
+            <div key={c.id} id={`cours-${c.id}`} style={carte}>
+              <button onClick={() => { if (fichePerso) onOuvrirChapitre(null); setOuvert(coursOuvert === c.id ? null : c.id) }} aria-expanded={coursOuvert === c.id}
                 style={{ width: "100%", display: "flex", alignItems: "center", gap: "10px", background: "none", border: "none", padding: 0, cursor: "pointer", textAlign: "left" }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: "14px", fontWeight: 500, color: colors.text }}>{c.titre || "Cours"}</div>
                   <div style={{ fontSize: "11px", color: colors.textFaint }}>{c.fiches.notions.length} fiches · {entrepriseChoisie(c.entreprise_id, entreprisePerso).nom} · {new Date(c.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}</div>
                 </div>
-                <span aria-hidden="true" style={{ color: colors.textFaint }}>{ouvert === c.id ? "▴" : "▾"}</span>
+                <span aria-hidden="true" style={{ color: colors.textFaint }}>{coursOuvert === c.id ? "▴" : "▾"}</span>
               </button>
-              {ouvert === c.id && <DetailCours cours={c} userId={userId} onSupprimer={() => supprimer(c)} />}
+              {coursOuvert === c.id && (
+                <DetailCours key={`${c.id}-${cible?.coursId === c.id ? cible.index : ""}`} cours={c} userId={userId} ficheInitiale={cible?.coursId === c.id ? cible.index : 0}
+                  onCarnet={onCarnet} onSupprimer={() => supprimer(c)} />
+              )}
             </div>
           ))}
         </div>
@@ -182,11 +199,23 @@ export function ChoixEntreprise({ actuelle, perso, onChoisir }: { actuelle: stri
   )
 }
 
-function DetailCours({ cours, userId, onSupprimer }: { cours: CoursEtudiant; userId: string; onSupprimer: () => void }) {
-  const [fiche, setFiche] = useState(0)
+function DetailCours({ cours, userId, ficheInitiale, onCarnet, onSupprimer }: { cours: CoursEtudiant; userId: string; ficheInitiale: number; onCarnet: (a: ActionCarnet) => void; onSupprimer: () => void }) {
+  const [fiche, setFiche] = useState(ficheInitiale)
+  const [notesLiees, setNotesLiees] = useState<{ id: string; titre: string }[]>([])
   const [quizGlobal, setQuizGlobal] = useState(false)
   const notions = cours.fiches.notions
-  const n = notions[fiche]
+  const n = notions[fiche] as NotionFiche | undefined
+  const idCourant = n ? idFiche(cours.id, n, fiche) : null
+
+  // Notes du carnet reliées à cette fiche
+  useEffect(() => {
+    if (!idCourant) return
+    let actif = true
+    supabase.from("carnet_notes").select("id,titre").eq("user_id", userId).eq("chapitre_id", idCourant).order("updated_at", { ascending: false })
+      .then(({ data }) => { if (actif) setNotesLiees(data || []) })
+    return () => { actif = false }
+  }, [idCourant, userId])
+
   const tousLesQuiz = quizValide(notions.flatMap(x => x.quiz))
 
   async function enregistrerScore(score: number, total: number) {
@@ -227,8 +256,24 @@ function DetailCours({ cours, userId, onSupprimer }: { cours: CoursEtudiant; use
           <Quiz key={`global-${cours.id}`} questions={tousLesQuiz} onTermine={enregistrerScore} />
         </div>
       ) : (
+        <>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", alignItems: "center", marginBottom: "10px" }}>
+          {notesLiees.map(p => (
+            <button key={p.id} onClick={() => onCarnet({ type: "ouvrir", noteId: p.id })}
+              style={{ fontSize: "12px", border: `1px solid ${colors.blueBorder}`, background: "#fff", color: colors.navy, borderRadius: radius.pill, padding: "5px 11px", cursor: "pointer", maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              Ma note : {p.titre || "Sans titre"}
+            </button>
+          ))}
+          {idCourant && (
+            <button onClick={() => onCarnet({ type: "nouvelle", chapitreId: idCourant })}
+              style={{ fontSize: "12px", border: `1px dashed ${colors.blue}`, background: "none", color: colors.blue, borderRadius: radius.pill, padding: "5px 11px", cursor: "pointer" }}>
+              Prendre une note sur cette fiche
+            </button>
+          )}
+        </div>
         <FicheNotion fiche={{ ...n, exemple: n.exemple_entreprise }} libelleExemple="Dans ton entreprise"
           cleQuiz={`${cours.id}-${fiche}`} onQuizTermine={enregistrerScore} />
+        </>
       )}
 
       <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "12px" }}>
