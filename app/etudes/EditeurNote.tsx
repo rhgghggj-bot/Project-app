@@ -8,6 +8,7 @@ import { cheminsImages, compresserImage, nettoyerHtml, normaliser, texteBrut, ty
 import type { Pays } from "@/lib/etudes"
 import { CARREAU, FOND_PAGE } from "./cahier"
 import Dessin from "./Dessin"
+import { caveat, lora } from "./polices"
 
 // Éditeur plein écran d'une note du carnet. Le texte est mis en forme dans
 // un contentEditable (titres, gras, surligneur, listes, cases à cocher),
@@ -36,6 +37,29 @@ type Statut = "pret" | "modifie" | "enregistrement" | "enregistre" | "erreur"
 
 const SURLIGNEUR = "#FFE66D"
 
+// Tailles : valeur de execCommand("fontSize") (1-7) → nom gardé dans la note
+export const TAILLES = [
+  { id: "s", nom: "Petit", commande: "2", px: 13 },
+  { id: "", nom: "Normal", commande: "3", px: 16 },
+  { id: "l", nom: "Grand", commande: "5", px: 20 },
+  { id: "xl", nom: "Très grand", commande: "6", px: 26 },
+] as const
+// Taille du passage où est le curseur, au format des boutons ("" = normal)
+function tailleAffichee(el: Element): string {
+  const d = el.getAttribute("data-taille")
+  if (d) return d === "m" ? "" : d
+  const n = Number(el.getAttribute("size"))
+  return n <= 2 ? "s" : n === 3 ? "" : n <= 5 ? "l" : "xl"
+}
+
+export const POLICES = [
+  { id: "", nom: "Standard", css: "var(--font-geist-sans), sans-serif" },
+  { id: "titre", nom: "Titre", css: "var(--font-display), sans-serif" },
+  { id: "livre", nom: "Livre", css: "var(--font-lora), Georgia, serif" },
+  { id: "main", nom: "Manuscrite", css: "var(--font-caveat), cursive" },
+  { id: "machine", nom: "Machine", css: "var(--font-geist-mono), monospace" },
+] as const
+
 const STYLES = `
 .carnet-page{outline:none;min-height:calc(100dvh - 260px);padding:0 16px ${CARREAU * 4}px 52px;font-size:16px;line-height:${CARREAU}px;color:${colors.text};word-wrap:break-word}
 .carnet-page p,.carnet-page h2,.carnet-page h3,.carnet-page ul,.carnet-page ol{margin:0}
@@ -51,6 +75,18 @@ const STYLES = `
 .carnet-page img{display:block;max-width:100%;max-height:420px;margin:${CARREAU / 2}px 0;border-radius:6px;box-shadow:0 1px 6px rgba(10,22,40,.12)}
 .carnet-page img[src=""],.carnet-page img:not([src]){min-height:120px;width:60%;background:${colors.blueLight}}
 .carnet-titre{font-size:27px !important}
+.carnet-page font[size="1"],.carnet-page font[size="2"],.carnet-page [data-taille="s"]{font-size:13px}
+.carnet-page font[size="3"],.carnet-page [data-taille="m"]{font-size:16px}
+.carnet-page font[size="4"],.carnet-page font[size="5"],.carnet-page [data-taille="l"]{font-size:20px}
+.carnet-page font[size="6"],.carnet-page font[size="7"],.carnet-page [data-taille="xl"]{font-size:26px;line-height:1.25}
+.carnet-page font[face="titre"],.carnet-page [data-police="titre"]{font-family:var(--font-display),sans-serif}
+.carnet-page font[face="livre"],.carnet-page [data-police="livre"]{font-family:var(--font-lora),Georgia,serif}
+.carnet-page font[face="main"],.carnet-page [data-police="main"]{font-family:var(--font-caveat),cursive;font-size-adjust:0.53}
+.carnet-page font[face="machine"],.carnet-page [data-police="machine"]{font-family:var(--font-geist-mono),monospace;font-size-adjust:0.5}
+.carnet-page font[face="standard"],.carnet-page [data-police="standard"]{font-family:var(--font-geist-sans),sans-serif}
+.carnet-menu{position:absolute;z-index:5;background:#fff;border:1px solid ${colors.blueBorder};border-radius:14px;box-shadow:0 10px 30px rgba(10,22,40,.15);padding:12px}
+.carnet-choix{border:1px solid ${colors.blueBorder};background:#fff;border-radius:10px;min-height:40px;padding:0 12px;cursor:pointer;color:${colors.text}}
+.carnet-choix[aria-pressed="true"]{border-color:${colors.navy};background:${colors.navy};color:#fff}
 .carnet-titre::placeholder{color:#B8C2D6}
 .carnet-page img[alt="Dessin"]{box-shadow:none;border-radius:0}
 .carnet-page:empty::before{content:attr(data-vide);color:${colors.textFaint};pointer-events:none}
@@ -116,17 +152,19 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
   const [brouillon] = useState(() => lireBrouillon(note))
   const meta = useRef<Meta>({ titre: brouillon?.titre ?? note.titre, dossier_id: note.dossier_id, epingle: note.epingle, chapitre_id: note.chapitre_id })
 
-  const [titre, setTitre] = useState(meta.current.titre)
+  const [titre, setTitre] = useState(brouillon?.titre ?? note.titre)
   const [dossierId, setDossierId] = useState(note.dossier_id)
   const [epingle, setEpingle] = useState(note.epingle)
   const [chapitreId, setChapitreId] = useState(note.chapitre_id)
   const [statut, setStatut] = useState<Statut>("pret")
   const [formats, setFormats] = useState<Record<string, boolean>>({})
+  const [styleTexte, setStyleTexte] = useState<{ taille: string; police: string }>({ taille: "", police: "" })
   const [dessin, setDessin] = useState(false)
   const [choixChapitre, setChoixChapitre] = useState(false)
   const [chapitres, setChapitres] = useState<Chapitre[] | null>(null)
   const [envoi, setEnvoi] = useState(0)
   const [vue, setVue] = useState<{ haut: number; hauteur: number } | null>(null)
+  const [menu, setMenu] = useState<"infos" | "texte" | null>(null)
 
   // Photos : liens signés (24 h) pour les images sans source
   function afficherImages() {
@@ -148,7 +186,6 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
     const page = pageRef.current!
     page.innerHTML = nettoyerHtml(brouillon?.html ?? note.contenu)
     afficherImages()
-    if (brouillon) { sale.current = true; minuteur.current = setTimeout(() => { void enregistrer() }, 300) }
     if (nouvelle) page.focus()
     const urls = apercus.current
     return () => urls.forEach(u => URL.revokeObjectURL(u))
@@ -201,6 +238,12 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
         mark: !!ancre?.closest('mark, span[style*="background-color"]'),
         cases: !!ancre?.closest('ul[data-liste="cases"]'),
         puces: !!ancre?.closest("ul:not([data-liste])"), numeros: !!ancre?.closest("ol"),
+      })
+      const t = ancre?.closest("font[size], [data-taille]")
+      const f = ancre?.closest("font[face], [data-police]")
+      setStyleTexte({
+        taille: t ? tailleAffichee(t) : "",
+        police: f ? ((f.getAttribute("data-police") ?? f.getAttribute("face") ?? "").replace("standard", "")) : "",
       })
     }
     document.addEventListener("selectionchange", surSelection)
@@ -298,6 +341,14 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
     onFermer({ note: null, supprimee: true })
   }
 
+  // Brouillon repris : on l'envoie dès l'ouverture
+  useEffect(() => {
+    if (!brouillon) return
+    sale.current = true
+    minuteur.current = setTimeout(() => { void enregistrer() }, 300)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // Envoie tout de suite si l'élève quitte l'onglet ou ferme l'appli
   useEffect(() => {
     function cache() { if (document.visibilityState === "hidden" && sale.current) void enregistrer() }
@@ -309,7 +360,12 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
 
   // Échap ferme la note (sauf si une fenêtre est ouverte par-dessus)
   useEffect(() => {
-    function echap(e: KeyboardEvent) { if (e.key === "Escape" && !dessin && !choixChapitre) { e.preventDefault(); void fermer() } }
+    function echap(e: KeyboardEvent) {
+      if (e.key !== "Escape" || dessin || choixChapitre) return
+      e.preventDefault()
+      if (menu) setMenu(null)
+      else void fermer()
+    }
     window.addEventListener("keydown", echap)
     return () => window.removeEventListener("keydown", echap)
   })
@@ -360,6 +416,22 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
       document.execCommand("hiliteColor", false, SURLIGNEUR)
       document.execCommand("styleWithCSS", false, "false")
     }
+    planifier()
+    document.dispatchEvent(new Event("selectionchange"))
+  }
+
+  function taille(commandeTaille: string) {
+    remettreCurseur()
+    document.execCommand("styleWithCSS", false, "false")
+    document.execCommand("fontSize", false, commandeTaille)
+    planifier()
+    document.dispatchEvent(new Event("selectionchange"))
+  }
+
+  function police(id: string) {
+    remettreCurseur()
+    document.execCommand("styleWithCSS", false, "false")
+    document.execCommand("fontName", false, id || "standard")
     planifier()
     document.dispatchEvent(new Event("selectionchange"))
   }
@@ -425,7 +497,7 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
   // ─── Photos et dessins ───
   async function insererImage(fichier: Blob, extension: "jpg" | "png", alt: string) {
     setEnvoi(n => n + 1)
-    const chemin = `${userId}/notes/${note.id}/${Date.now()}.${extension}`
+    const chemin = `${userId}/notes/${note.id}/${crypto.randomUUID()}.${extension}`
     const { error } = await supabase.storage.from("etudes").upload(chemin, fichier, { contentType: extension === "png" ? "image/png" : "image/jpeg" })
     setEnvoi(n => n - 1)
     if (error) return toast("Image non envoyée, vérifie ta connexion", "error")
@@ -464,7 +536,7 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
   const libelleStatut = { pret: "", modifie: "Modifié", enregistrement: "Enregistrement…", enregistre: "Enregistré", erreur: "Non enregistré" }[statut]
 
   return (
-    <div role="dialog" aria-modal="true" aria-label="Éditeur de note" style={{ position: "fixed", left: 0, right: 0, top: vue?.haut ?? 0, height: vue?.hauteur ?? "100%", zIndex: 1100, background: "#fff", display: "flex", flexDirection: "column" }}>
+    <div role="dialog" aria-modal="true" aria-label="Éditeur de note" className={`${lora.variable} ${caveat.variable}`} style={{ position: "fixed", left: 0, right: 0, top: vue?.haut ?? 0, height: vue?.hauteur ?? "100%", zIndex: 1100, background: "#fff", display: "flex", flexDirection: "column" }}>
       <style>{STYLES}</style>
 
       <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "10px 12px", paddingTop: "calc(10px + env(safe-area-inset-top))", borderBottom: `1px solid ${colors.border}` }}>
@@ -477,12 +549,18 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
             </>
           ) : <span role="status">{envoi > 0 ? "Envoi de l'image…" : libelleStatut}</span>}
         </span>
+        <button className="carnet-outil" aria-label="Dossier et chapitre" aria-expanded={menu === "infos"} title="Dossier et chapitre"
+          onClick={() => setMenu(menu === "infos" ? null : "infos")} style={{ position: "relative" }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="19" cy="12" r="2" /></svg>
+          {(dossierId || chapitreId) && <span aria-hidden="true" style={{ position: "absolute", top: 9, right: 9, width: 7, height: 7, borderRadius: "50%", background: colors.blue }} />}
+        </button>
         <button className="carnet-outil" aria-pressed={epingle} aria-label="Épingler en haut du carnet" title="Épingler"
           onClick={() => changerMeta({ epingle: !epingle })}><Icone d={ICONES.epingle} /></button>
         <button className="carnet-outil" aria-label="Supprimer la note" title="Supprimer" onClick={supprimer} style={{ color: colors.red }}><Icone d={ICONES.corbeille} /></button>
       </div>
 
       <div role="toolbar" aria-label="Mise en forme" style={{ display: "flex", gap: "2px", padding: "4px 8px", overflowX: "auto", borderBottom: `1px solid ${colors.border}`, background: "#FBFCFF" }}>
+        <Outil label="Taille et police" actif={menu === "texte"} onAction={() => setMenu(menu === "texte" ? null : "texte")}><span style={{ fontFamily: "var(--font-lora), Georgia, serif", fontSize: "18px" }}>A<span style={{ fontSize: "13px" }}>a</span></span></Outil>
         <Outil label="Titre" actif={formats.h2} onAction={() => titreBloc("h2")}><span style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: "17px" }}>Titre</span></Outil>
         <Outil label="Sous-titre" actif={formats.h3} onAction={() => titreBloc("h3")}><span style={{ fontWeight: 650, fontSize: "14px" }}>Sous-titre</span></Outil>
         <span aria-hidden="true" style={{ width: 1, background: colors.blueBorder, margin: "8px 4px", flexShrink: 0 }} />
@@ -500,36 +578,65 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
         <input ref={photoRef} type="file" accept="image/*" hidden onChange={e => { const f = e.target.files?.[0]; e.target.value = ""; if (f) void choisirPhoto(f) }} />
       </div>
 
-      <div style={{ flex: 1, overflowY: "auto", ...FOND_PAGE }}>
+      <div style={{ position: "relative" }}>
+        {menu === "texte" && (
+          <div className="carnet-menu" role="group" aria-label="Taille et police" style={{ left: 8, right: 8, top: 6, maxWidth: 520 }}>
+            <div style={{ fontSize: "12px", color: "#6B7280", marginBottom: 6 }}>Taille</div>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
+              {TAILLES.map(t => (
+                <button key={t.nom} type="button" className="carnet-choix" aria-pressed={styleTexte.taille === t.id}
+                  onPointerDown={e => e.preventDefault()} onMouseDown={e => e.preventDefault()} onClick={() => taille(t.commande)}
+                  style={{ fontSize: Math.min(t.px, 22) }}>{t.nom}</button>
+              ))}
+            </div>
+            <div style={{ fontSize: "12px", color: "#6B7280", marginBottom: 6 }}>Police</div>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              {POLICES.map(f => (
+                <button key={f.nom} type="button" className="carnet-choix" aria-pressed={styleTexte.police === f.id}
+                  onPointerDown={e => e.preventDefault()} onMouseDown={e => e.preventDefault()} onClick={() => police(f.id)}
+                  style={{ fontFamily: f.css, fontSize: f.id === "main" ? 19 : 15 }}>{f.nom}</button>
+              ))}
+            </div>
+            <p style={{ margin: "10px 0 0", fontSize: "12px", color: "#6B7280" }}>Sélectionne du texte pour le changer, ou choisis avant d&apos;écrire.</p>
+          </div>
+        )}
+        {menu === "infos" && (
+          <div className="carnet-menu" role="group" aria-label="Dossier et chapitre" style={{ right: 8, top: 6, width: "min(340px, calc(100% - 16px))" }}>
+            <label style={{ display: "block", fontSize: "12px", color: "#6B7280", marginBottom: 6 }} htmlFor="note-dossier">Dossier</label>
+            <select id="note-dossier" value={dossierId ?? ""} onChange={e => changerMeta({ dossier_id: e.target.value || null })}
+              style={{ width: "100%", border: `1px solid ${colors.blueBorder}`, borderRadius: 10, padding: "9px 10px", background: "#fff", color: colors.text, marginBottom: 12 }}>
+              <option value="">Aucun (reste dans « Toutes »)</option>
+              {dossiers.map(d => <option key={d.id} value={d.id}>{d.nom}</option>)}
+            </select>
+            {dossiers.length === 0 && <p style={{ margin: "-6px 0 12px", fontSize: "12px", color: "#6B7280" }}>Crée des dossiers depuis la liste du carnet (« + Dossier »).</p>}
+            {contexte.niveauId && (
+              <>
+                <div style={{ fontSize: "12px", color: "#6B7280", marginBottom: 6 }}>Chapitre du programme</div>
+                {chapitreId ? (
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <button onClick={() => { void enregistrer().then(() => onOuvrirChapitre(chapitreId)) }} className="carnet-choix"
+                      style={{ flex: 1, minWidth: 0, textAlign: "left", color: "#1A5FD0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {chapitre ? `${chapitre.matiere} : ${chapitre.titre}` : "Chapitre relié"}
+                    </button>
+                    <button className="carnet-choix" onClick={() => changerMeta({ chapitre_id: null })} aria-label="Délier le chapitre">Délier</button>
+                  </div>
+                ) : (
+                  <button className="carnet-choix" style={{ width: "100%" }} onClick={() => { setMenu(null); setChoixChapitre(true) }}>Relier à un chapitre</button>
+                )}
+                <p style={{ margin: "8px 0 0", fontSize: "12px", color: "#6B7280" }}>Une note reliée apparaît aussi dans le chapitre, dans Réviser.</p>
+              </>
+            )}
+          </div>
+        )}
+      </div>
+
+      <div style={{ flex: 1, overflowY: "auto", ...FOND_PAGE }} onPointerDown={() => { if (menu) setMenu(null) }}>
         <div style={{ maxWidth: 760, margin: "0 auto" }}>
           <textarea ref={titreRef} className="carnet-titre" rows={1} value={titre} placeholder="Titre" aria-label="Titre de la note" maxLength={200}
             onChange={e => { changerMeta({ titre: e.target.value.replace(/\n/g, " ") }); ajusterTitre() }}
             onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); pageRef.current?.focus() } }}
             style={{ display: "block", width: "100%", border: "none", background: "transparent", outline: "none", resize: "none", overflow: "hidden", padding: `${CARREAU}px 16px 0 52px`,
               fontFamily: "var(--font-display)", fontSize: "27px", fontWeight: 700, lineHeight: 1.2, paddingBottom: 10, color: colors.navy, boxSizing: "border-box" }} />
-
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", padding: `0 16px 0 52px`, minHeight: CARREAU * 2, alignItems: "center" }}>
-            <label className="carnet-puce" style={{ position: "relative" }}>
-              <span aria-hidden="true">📁</span>
-              <select value={dossierId ?? ""} onChange={e => changerMeta({ dossier_id: e.target.value || null })} aria-label="Dossier"
-                style={{ border: "none", background: "transparent", fontSize: "12.5px", color: colors.text, cursor: "pointer", maxWidth: 160 }}>
-                <option value="">Sans dossier</option>
-                {dossiers.map(d => <option key={d.id} value={d.id}>{d.nom}</option>)}
-              </select>
-            </label>
-            {chapitreId ? (
-              <span className="carnet-puce" style={{ background: colors.blueLight, borderColor: colors.blueBorder, cursor: "default" }}>
-                <Icone d={ICONES.livre} />
-                <button onClick={() => { void enregistrer().then(() => onOuvrirChapitre(chapitreId)) }}
-                  style={{ border: "none", background: "none", padding: 0, color: colors.blue, fontSize: "12.5px", cursor: "pointer", textAlign: "left", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 200 }}>
-                  {chapitre ? chapitre.titre : "Chapitre relié"}
-                </button>
-                <button onClick={() => changerMeta({ chapitre_id: null })} aria-label="Délier le chapitre" style={{ border: "none", background: "none", padding: "0 6px", minWidth: 32, minHeight: 32, color: colors.textMuted, cursor: "pointer", fontSize: "14px" }}>×</button>
-              </span>
-            ) : contexte.niveauId ? (
-              <button className="carnet-puce" onClick={() => setChoixChapitre(true)}><Icone d={ICONES.livre} />Relier à un chapitre</button>
-            ) : null}
-          </div>
 
           <div ref={pageRef} className="carnet-page" contentEditable suppressContentEditableWarning
             role="textbox" aria-multiline="true" aria-label="Contenu de la note" data-vide="Écris ici…"
