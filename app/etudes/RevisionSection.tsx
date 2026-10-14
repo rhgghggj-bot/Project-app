@@ -1,4 +1,5 @@
 "use client"
+import type { ActionCarnet } from "./CarnetSection"
 import { useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { toast, confirmer } from "@/lib/toast"
@@ -14,7 +15,8 @@ import ProgrammeSection from "./ProgrammeSection"
 
 type CoursEtudiant = { id: string; matiere: string; titre: string; fichier_path: string | null; entreprise_id: string; fiches: Fiches; created_at: string }
 
-export default function RevisionSection({ userId, pays, niveau, matieres, reglages, entrepriseId, entreprisePerso, onChangerEntreprise, niveauId, filiere, specialites, annee, onChangerAnnee, chapitreOuvert, onOuvrirChapitre }: {
+export default function RevisionSection({ userId, pays, niveau, matieres, reglages, entrepriseId, entreprisePerso, onChangerEntreprise, niveauId, filiere, specialites, annee, onChangerAnnee, chapitreOuvert, onOuvrirChapitre, onCarnet }: {
+  onCarnet: (a: ActionCarnet) => void
   userId: string
   pays: Pays
   niveau: string
@@ -87,7 +89,7 @@ export default function RevisionSection({ userId, pays, niveau, matieres, reglag
 
   return (
     <div>
-      <ProgrammeSection userId={userId} pays={pays} niveauId={niveauId} filiere={filiere} specialites={specialites} annee={annee}
+      <ProgrammeSection onCarnet={onCarnet} userId={userId} pays={pays} niveauId={niveauId} filiere={filiere} specialites={specialites} annee={annee}
         onChangerAnnee={onChangerAnnee} chapitreOuvert={chapitreOuvert} onOuvrirChapitre={onOuvrirChapitre} />
 
       {!chapitreOuvert && (

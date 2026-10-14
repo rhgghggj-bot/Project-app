@@ -1,4 +1,5 @@
 "use client"
+import type { ActionCarnet } from "./CarnetSection"
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { useChargement } from "@/lib/useChargement"
@@ -24,7 +25,8 @@ function texteChapitre(c: Chapitre) {
 
 type NoteLiee = { id: string; note: number; echelle: Echelle; titre: string | null; date: string }
 
-export default function ProgrammeSection({ userId, pays, niveauId, filiere, specialites, annee, onChangerAnnee, chapitreOuvert, onOuvrirChapitre }: {
+export default function ProgrammeSection({ userId, pays, niveauId, filiere, specialites, annee, onChangerAnnee, chapitreOuvert, onOuvrirChapitre, onCarnet }: {
+  onCarnet: (a: ActionCarnet) => void
   userId: string
   pays: Pays
   niveauId: string | null
@@ -56,7 +58,7 @@ export default function ProgrammeSection({ userId, pays, niveauId, filiere, spec
 
   const anneeChoisie = annee && niveau.annees.includes(annee) ? annee : niveau.annees[0]
   const chapitre = chapitreOuvert ? programme.chapitres.find(c => c.id === chapitreOuvert) : undefined
-  if (chapitre) return <VueChapitre chapitre={chapitre} userId={userId} onRetour={() => onOuvrirChapitre(null)} />
+  if (chapitre) return <VueChapitre chapitre={chapitre} userId={userId} onRetour={() => onOuvrirChapitre(null)} onCarnet={onCarnet} />
 
   const chapitres = chapitresPour(programme, anneeChoisie, filiere, specialites)
   const matieres = [...new Set(chapitres.map(c => c.matiere))]
@@ -147,8 +149,16 @@ export default function ProgrammeSection({ userId, pays, niveauId, filiere, spec
   )
 }
 
-function VueChapitre({ chapitre, userId, onRetour }: { chapitre: Chapitre; userId: string; onRetour: () => void }) {
+function VueChapitre({ chapitre, userId, onRetour, onCarnet }: { chapitre: Chapitre; userId: string; onRetour: () => void; onCarnet: (a: ActionCarnet) => void }) {
   const [notes, setNotes] = useState<NoteLiee[]>([])
+  const [pages, setPages] = useState<{ id: string; titre: string }[]>([])
+
+  useEffect(() => {
+    let actif = true
+    supabase.from("carnet_notes").select("id,titre").eq("user_id", userId).eq("chapitre_id", chapitre.id).order("updated_at", { ascending: false })
+      .then(({ data }) => { if (actif) setPages(data || []) })
+    return () => { actif = false }
+  }, [chapitre.id, userId])
 
   useEffect(() => {
     let actif = true
@@ -175,6 +185,19 @@ function VueChapitre({ chapitre, userId, onRetour }: { chapitre: Chapitre; userI
           })}
         </div>
       )}
+
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", alignItems: "center", marginBottom: "10px" }}>
+        {pages.map(p => (
+          <button key={p.id} onClick={() => onCarnet({ type: "ouvrir", noteId: p.id })}
+            style={{ fontSize: "12px", border: `1px solid ${colors.blueBorder}`, background: "#fff", color: colors.navy, borderRadius: radius.pill, padding: "5px 11px", cursor: "pointer", maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            Ma note : {p.titre || "Sans titre"}
+          </button>
+        ))}
+        <button onClick={() => onCarnet({ type: "nouvelle", chapitreId: chapitre.id })}
+          style={{ fontSize: "12px", border: `1px dashed ${colors.blue}`, background: "none", color: colors.blue, borderRadius: radius.pill, padding: "5px 11px", cursor: "pointer" }}>
+          Prendre une note sur ce chapitre
+        </button>
+      </div>
 
       {chapitre.doc ? (
         <FicheNotion fiche={{ titre: chapitre.titre, ...chapitre.doc }} libelleExemple="Exemple concret" cleQuiz={chapitre.id} />

@@ -17,15 +17,17 @@ import CorrectionSection from "./CorrectionSection"
 import RevisionSection from "./RevisionSection"
 import Donnees from "./Donnees"
 import ArtefactsSection from "./ArtefactsSection"
+import CarnetSection, { type ActionCarnet } from "./CarnetSection"
 import { CURSUS, descriptionNiveau, matieresProposees, trouverNiveau } from "@/lib/cursus"
 
-type Onglet = "notes" | "corriger" | "reviser" | "artefacts"
+type Onglet = "notes" | "corriger" | "reviser" | "carnet" | "artefacts"
 type Profil = { pays: Pays; niveau: string | null; filiere: string | null; annee: string | null; specialites: string[]; entreprise_id: string; entreprise_perso: EntreprisePerso | null }
 
 const TOUS_ONGLETS: { id: Onglet; label: string }[] = [
   { id: "notes", label: "Mes notes" },
   { id: "corriger", label: "Corriger" },
   { id: "reviser", label: "Réviser" },
+  { id: "carnet", label: "Carnet" },
   { id: "artefacts", label: "Artefacts" },
 ]
 
@@ -42,6 +44,8 @@ export default function EspaceEtudiant() {
   // Chapitre du programme ouvert dans « Réviser » (depuis une note par exemple)
   const [chapitreOuvert, setChapitreOuvert] = useState<string | null>(null)
   const [reglagesOuverts, setReglagesOuverts] = useState(false)
+  // Note à ouvrir ou à créer dans le carnet (depuis un chapitre de « Réviser »)
+  const [actionCarnet, setActionCarnet] = useState<ActionCarnet | null>(null)
   // Change après un import pour recharger les onglets
   const [version, setVersion] = useState(0)
   const stockage = useStockagesLocaux(CLES_IA)
@@ -205,8 +209,14 @@ export default function EspaceEtudiant() {
             <RevisionSection userId={userId} pays={p.pays} niveau={texteNiveau} matieres={matieres} reglages={reglages}
               niveauId={p.niveau} filiere={p.filiere} specialites={p.specialites} annee={p.annee} onChangerAnnee={a => majProfil({ annee: a })}
               chapitreOuvert={chapitreOuvert} onOuvrirChapitre={setChapitreOuvert}
+              onCarnet={a => { setActionCarnet(a); setOnglet("carnet") }}
               entrepriseId={p.entreprise_id} entreprisePerso={p.entreprise_perso}
               onChangerEntreprise={(id, perso) => majProfil({ entreprise_id: id, entreprise_perso: perso })} />
+          )}
+          {onglet === "carnet" && (
+            <CarnetSection userId={userId} contexte={{ pays: p.pays, niveauId: p.niveau, filiere: p.filiere, specialites: p.specialites }}
+              action={actionCarnet} onActionTraitee={() => setActionCarnet(null)}
+              onOuvrirChapitre={id => { setChapitreOuvert(id); setOnglet("reviser") }} />
           )}
           {onglet === "artefacts" && (
             <ArtefactsSection userId={userId} parDefaut={{
