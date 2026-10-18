@@ -4,6 +4,7 @@ import { supabase } from "@/lib/supabase"
 import { toast, confirmer } from "@/lib/toast"
 import { colors, radius } from "@/app/components/ui/tokens"
 import { FichierSchema, type FichierEtudes } from "@/lib/etudesFichier"
+import { oublierFichesPerso } from "@/lib/fichesPerso"
 
 
 export default function Donnees({ userId, onImporte }: { userId: string; onImporte: () => void }) {
@@ -44,12 +45,13 @@ export default function Donnees({ userId, onImporte }: { userId: string; onImpor
     }
     const resume = [
       donnees.cours?.length ? `${donnees.cours.length} cours` : "",
+      donnees.horaire?.length ? `ton horaire (${donnees.horaire.length} cours par semaine, ajoutés au calendrier)` : "",
       donnees.notes?.length ? `${donnees.notes.length} notes` : "",
       donnees.evaluations?.length ? `${donnees.evaluations.length} corrections` : "",
       donnees.profil ? "ton profil" : "",
     ].filter(Boolean).join(", ")
     if (!resume) return toast("Le fichier est vide", "error")
-    if (!(await confirmer(`Ajouter ${resume} à ton espace ?`, "Importer"))) return
+    if (!(await confirmer(`Ajouter ${resume} à ton espace ?${donnees.cours?.length ? " Un cours qui porte le même nom qu'un cours déjà présent le remplace (nouvelle version), sans doublon." : ""}`, "Importer"))) return
 
     setOccupe(true)
     const erreurs: string[] = []
@@ -62,13 +64,40 @@ export default function Donnees({ userId, onImporte }: { userId: string; onImpor
       if (error) erreurs.push("notes")
     }
     if (donnees.cours?.length) {
-      const { error } = await supabase.from("cours_etudiant").insert(donnees.cours.map(c => ({ ...c, user_id: userId, ia: "claude" })))
-      if (error) erreurs.push("cours")
+      // Nouvelle version d'un cours déjà importé : elle remplace l'ancienne.
+      // Un cours à la fois, pour ne pas envoyer plusieurs Mo d'un coup.
+      for (const c of donnees.cours) {
+        const { data: anciens } = await supabase.from("cours_etudiant").select("id").eq("user_id", userId).eq("titre", c.titre)
+        const { error } = await supabase.from("cours_etudiant").insert({ ...c, user_id: userId, ia: "claude" })
+        if (error) { erreurs.push(`cours « ${c.titre} »`); continue }
+        if (anciens?.length) await supabase.from("cours_etudiant").delete().in("id", anciens.map(a => a.id))
+      }
+    }
+    if (donnees.horaire?.length) {
+      const { data: existants } = await supabase.from("evenements_calendrier").select("titre,heure,recurrence_jours").eq("user_id", userId)
+      const deja = new Set((existants || []).flatMap(e => (e.recurrence_jours || []).map((j: number) => `${e.titre}|${e.heure}|${j}`)))
+      const COULEURS = ["#2B7FFF", "#10B981", "#F43F5E", "#D4A843", "#8B5CF6", "#F59E0B", "#EC4899"]
+      const minutes = (h: string) => Number(h.slice(0, 2)) * 60 + Number(h.slice(3, 5))
+      const nouveaux = donnees.horaire.filter(h => !deja.has(`${h.titre}|${h.debut}|${h.jour}`)).map((h, i) => {
+        // Première séance : le premier jour de la semaine voulu à partir de « du »
+        const d = new Date(h.du + "T12:00")
+        while ((d.getDay() + 6) % 7 !== h.jour) d.setDate(d.getDate() + 1)
+        const date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
+        return {
+          user_id: userId, titre: h.titre, date, heure: h.debut, duree: Math.max(15, minutes(h.fin) - minutes(h.debut)),
+          lieu: h.lieu || null, couleur: COULEURS[i % COULEURS.length], recurrence_jours: [h.jour], recurrence_fin: h.au,
+        }
+      })
+      if (nouveaux.length) {
+        const { error } = await supabase.from("evenements_calendrier").insert(nouveaux)
+        if (error) erreurs.push("horaire")
+      }
     }
     if (donnees.evaluations?.length) {
       const { error } = await supabase.from("evaluations_corrigees").insert(donnees.evaluations.map(e => ({ ...e, user_id: userId, ia: "claude" })))
       if (error) erreurs.push("corrections")
     }
+    oublierFichesPerso()
     setOccupe(false)
     if (erreurs.length) toast(`Import partiel : échec pour ${erreurs.join(", ")}`, "error")
     else toast("Import terminé", "success")

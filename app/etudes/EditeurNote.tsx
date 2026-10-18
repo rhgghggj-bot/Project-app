@@ -3,7 +3,8 @@ import { useEffect, useRef, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { toast, confirmer } from "@/lib/toast"
 import { colors, radius } from "@/app/components/ui/tokens"
-import { chapitreVisible, chargerProgramme, type Chapitre } from "@/lib/programmes"
+import { chapitreVisible, chargerProgramme } from "@/lib/programmes"
+import { chargerFichesPerso } from "@/lib/fichesPerso"
 import { cheminsImages, compresserImage, nettoyerHtml, normaliser, texteBrut, type Dossier, type NoteCarnet } from "@/lib/carnet"
 import type { Pays } from "@/lib/etudes"
 import { CARREAU, FOND_PAGE } from "./cahier"
@@ -161,7 +162,7 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
   const [styleTexte, setStyleTexte] = useState<{ taille: string; police: string }>({ taille: "", police: "" })
   const [dessin, setDessin] = useState(false)
   const [choixChapitre, setChoixChapitre] = useState(false)
-  const [chapitres, setChapitres] = useState<Chapitre[] | null>(null)
+  const [chapitres, setChapitres] = useState<OptionLien[] | null>(null)
   const [envoi, setEnvoi] = useState(0)
   const [vue, setVue] = useState<{ haut: number; hauteur: number } | null>(null)
   const [menu, setMenu] = useState<"infos" | "texte" | null>(null)
@@ -214,13 +215,23 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
 
   // Titre du chapitre relié (et liste pour le choisir)
   useEffect(() => {
-    if (!contexte.niveauId || (!chapitreId && !choixChapitre)) return
+    if (!chapitreId && !choixChapitre && menu !== "infos") return
     let actif = true
-    chargerProgramme(contexte.pays, contexte.niveauId).then(p => {
-      if (actif) setChapitres(p ? p.chapitres.filter(c => chapitreVisible(c, contexte.filiere, contexte.specialites)) : [])
+    // Mes cours (fiches importées ou créées) + chapitres du programme
+    Promise.all([
+      chargerFichesPerso(userId),
+      contexte.niveauId ? chargerProgramme(contexte.pays, contexte.niveauId) : Promise.resolve(null),
+    ]).then(([perso, prog]) => {
+      if (!actif) return
+      setChapitres([
+        ...perso.map(f => ({ id: f.id, titre: f.titre, groupe: f.matiere, source: "perso" as const, cherche: `${f.titre} ${f.matiere}` })),
+        ...(prog ? prog.chapitres.filter(c => chapitreVisible(c, contexte.filiere, contexte.specialites)).map(c => ({
+          id: c.id, titre: c.titre, groupe: `${c.matiere}, ${c.annee}`, source: "programme" as const, cherche: `${c.titre} ${c.matiere} ${c.annee} ${c.notions.join(" ")}`,
+        })) : []),
+      ])
     })
     return () => { actif = false }
-  }, [contexte.pays, contexte.niveauId, contexte.filiere, contexte.specialites, chapitreId, choixChapitre])
+  }, [userId, contexte.pays, contexte.niveauId, contexte.filiere, contexte.specialites, chapitreId, choixChapitre, menu])
 
   // Mémorise la position du curseur (pour insérer une photo au bon endroit)
   // et l'état des boutons de mise en forme.
@@ -609,14 +620,14 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
               {dossiers.map(d => <option key={d.id} value={d.id}>{d.nom}</option>)}
             </select>
             {dossiers.length === 0 && <p style={{ margin: "-6px 0 12px", fontSize: "12px", color: "#6B7280" }}>Crée des dossiers depuis la liste du carnet (« + Dossier »).</p>}
-            {contexte.niveauId && (
+            {(
               <>
-                <div style={{ fontSize: "12px", color: "#6B7280", marginBottom: 6 }}>Chapitre du programme</div>
+                <div style={{ fontSize: "12px", color: "#6B7280", marginBottom: 6 }}>Chapitre ou fiche de cours</div>
                 {chapitreId ? (
                   <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                     <button onClick={() => { void enregistrer().then(() => onOuvrirChapitre(chapitreId)) }} className="carnet-choix"
                       style={{ flex: 1, minWidth: 0, textAlign: "left", color: "#1A5FD0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      {chapitre ? `${chapitre.matiere} : ${chapitre.titre}` : "Chapitre relié"}
+                      {chapitre ? `${chapitre.groupe.split(",")[0]} : ${chapitre.titre}` : "Chapitre relié"}
                     </button>
                     <button className="carnet-choix" onClick={() => changerMeta({ chapitre_id: null })} aria-label="Délier le chapitre">Délier</button>
                   </div>
@@ -653,13 +664,18 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
   )
 }
 
-function ChoixChapitre({ chapitres, onChoisir, onFermer }: { chapitres: Chapitre[] | null; onChoisir: (id: string) => void; onFermer: () => void }) {
+export type OptionLien = { id: string; titre: string; groupe: string; source: "perso" | "programme"; cherche: string }
+
+function ChoixChapitre({ chapitres, onChoisir, onFermer }: { chapitres: OptionLien[] | null; onChoisir: (id: string) => void; onFermer: () => void }) {
   const [q, setQ] = useState("")
+  const aDesPerso = !!chapitres?.some(c => c.source === "perso")
+  const [source, setSource] = useState<"perso" | "programme" | null>(null)
+  const sourceActive = source ?? (aDesPerso ? "perso" : "programme")
   const mots = normaliser(q).split(/\s+/).filter(Boolean)
-  const liste = (chapitres || []).filter(c => {
-    const t = normaliser(`${c.titre} ${c.matiere} ${c.annee} ${c.notions.join(" ")}`)
-    return mots.every(m => t.includes(m))
-  }).slice(0, 60)
+  const liste = (chapitres || [])
+    .filter(c => (mots.length ? true : c.source === sourceActive))
+    .filter(c => mots.every(m => normaliser(c.cherche).includes(m)))
+    .slice(0, 80)
   return (
     <div role="dialog" aria-modal="true" aria-label="Relier à un chapitre" onClick={e => { if (e.target === e.currentTarget) onFermer() }}
       style={{ position: "fixed", inset: 0, zIndex: 1200, background: "rgba(10,22,40,0.55)", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
@@ -668,17 +684,34 @@ function ChoixChapitre({ chapitres, onChoisir, onFermer }: { chapitres: Chapitre
           <div style={{ flex: 1, fontFamily: "var(--font-display)", fontWeight: 600, fontSize: "16px", color: colors.text }}>Relier à un chapitre</div>
           <button onClick={onFermer} className="carnet-puce" style={{ border: "none" }}>Fermer</button>
         </div>
-        <input type="search" autoFocus value={q} onChange={e => setQ(e.target.value)} placeholder="Chercher un chapitre, une notion…" aria-label="Chercher un chapitre"
+        <input type="search" autoFocus value={q} onChange={e => setQ(e.target.value)} placeholder="Chercher (ex. introduction, bilan, demande…)" aria-label="Chercher un chapitre"
           style={{ width: "100%", border: `1px solid ${colors.blueBorder}`, borderRadius: radius.pill, padding: "9px 14px", fontSize: "16px", background: "#F8FBFF" }} />
+        {aDesPerso && !mots.length && (
+          <div role="tablist" style={{ display: "flex", gap: 2, background: "#EEF2F8", borderRadius: 10, padding: 3 }}>
+            {(["perso", "programme"] as const).map(s => (
+              <button key={s} role="tab" aria-selected={sourceActive === s} onClick={() => setSource(s)}
+                style={{ flex: 1, border: "none", borderRadius: 8, padding: "7px 0", fontSize: "13px", fontWeight: 600, cursor: "pointer",
+                  background: sourceActive === s ? "#fff" : "transparent", color: sourceActive === s ? colors.navy : "#6B7280" }}>
+                {s === "perso" ? "Mes cours" : "Programme"}
+              </button>
+            ))}
+          </div>
+        )}
         <div style={{ overflowY: "auto" }}>
           {chapitres === null && <div className="nx-skel" style={{ height: 120, borderRadius: radius.sm }} />}
           {chapitres && liste.length === 0 && <p style={{ fontSize: "13px", color: colors.textMuted }}>Aucun chapitre ne correspond.</p>}
-          {liste.map(c => (
-            <button key={c.id} onClick={() => onChoisir(c.id)}
-              style={{ width: "100%", display: "block", textAlign: "left", background: "none", border: "none", borderBottom: `1px solid ${colors.border}`, padding: "10px 4px", cursor: "pointer" }}>
-              <div style={{ fontSize: "14px", color: colors.text, fontWeight: 500 }}>{c.titre}</div>
-              <div style={{ fontSize: "12px", color: colors.textMuted }}>{c.matiere}, {c.annee}</div>
-            </button>
+          {liste.map((c, i) => (
+            <div key={c.id}>
+              {(i === 0 || liste[i - 1].groupe !== c.groupe) && (
+                <div style={{ fontSize: "12px", fontWeight: 600, color: "#6B7280", padding: "12px 4px 4px" }}>
+                  {c.groupe}{mots.length ? (c.source === "perso" ? " (mes cours)" : " (programme)") : ""}
+                </div>
+              )}
+              <button onClick={() => onChoisir(c.id)}
+                style={{ width: "100%", display: "block", textAlign: "left", background: "none", border: "none", borderBottom: `1px solid ${colors.border}`, padding: "10px 4px", cursor: "pointer" }}>
+                <div style={{ fontSize: "14px", color: colors.text, fontWeight: 500 }}>{c.titre}</div>
+              </button>
+            </div>
           ))}
         </div>
       </div>

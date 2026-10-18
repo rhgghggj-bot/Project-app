@@ -4,18 +4,16 @@ import { supabase } from "@/lib/supabase"
 import { toast, confirmer } from "@/lib/toast"
 import { useChargement } from "@/lib/useChargement"
 import { colors, radius } from "@/app/components/ui/tokens"
-import { chapitreVisible, chargerProgramme, type Chapitre } from "@/lib/programmes"
+import { chapitreVisible, chargerProgramme } from "@/lib/programmes"
+import { chargerFichesPerso } from "@/lib/fichesPerso"
 import { COLONNES_NOTE, dateCourte, normaliser, type Dossier, type NoteCarnet } from "@/lib/carnet"
 import EditeurNote, { type ContexteProgramme } from "./EditeurNote"
-import { FOND_CAHIER } from "./cahier"
+import DocumentsSection from "./DocumentsSection"
+import { BLEU_TEXTE, FOND_CAHIER, ROUGE_TEXTE, TEXTE_DOUX } from "./cahier"
 
 // Onglet « Carnet » : toutes les notes de l'élève, rangées par dossier, avec
 // recherche dans les titres et le texte. Les notes épinglées restent en haut.
 
-// Teintes plus foncées que les jetons pour le petit texte (contraste ≥ 4,5:1)
-export const TEXTE_DOUX = "#6B7280"
-export const BLEU_TEXTE = "#1A5FD0"
-export const ROUGE_TEXTE = "#C81E3F"
 
 export type ActionCarnet = { type: "nouvelle"; chapitreId: string } | { type: "ouvrir"; noteId: string }
 
@@ -36,7 +34,8 @@ export default function CarnetSection({ userId, contexte, action, onActionTraite
   const [ouverte, setOuverte] = useState<{ note: NoteCarnet; nouvelle: boolean } | null>(null)
   const [nomDossier, setNomDossier] = useState<string | null>(null)
   const [renommer, setRenommer] = useState<string | null>(null)
-  const [chapitres, setChapitres] = useState<Map<string, Chapitre>>(new Map())
+  const [chapitres, setChapitres] = useState<Map<string, { matiere: string; titre: string }>>(new Map())
+  const [vue, setVue] = useState<"notes" | "documents">("notes")
 
   async function charger() {
     const [n, d] = await Promise.all([
@@ -55,15 +54,21 @@ export default function CarnetSection({ userId, contexte, action, onActionTraite
   }
   useChargement(charger, userId)
 
-  // Titres des chapitres reliés, pour les afficher dans la liste
+  // Titres des chapitres et fiches reliés, pour les afficher dans la liste
   useEffect(() => {
-    if (!contexte.niveauId) return
     let actif = true
-    chargerProgramme(contexte.pays, contexte.niveauId).then(p => {
-      if (actif && p) setChapitres(new Map(p.chapitres.filter(c => chapitreVisible(c, contexte.filiere, contexte.specialites)).map(c => [c.id, c])))
+    Promise.all([
+      chargerFichesPerso(userId),
+      contexte.niveauId ? chargerProgramme(contexte.pays, contexte.niveauId) : Promise.resolve(null),
+    ]).then(([perso, prog]) => {
+      if (!actif) return
+      const m = new Map<string, { matiere: string; titre: string }>()
+      for (const c of prog?.chapitres.filter(c => chapitreVisible(c, contexte.filiere, contexte.specialites)) || []) m.set(c.id, c)
+      for (const f of perso) m.set(f.id, f)
+      setChapitres(m)
     })
     return () => { actif = false }
-  }, [contexte.pays, contexte.niveauId, contexte.filiere, contexte.specialites])
+  }, [userId, contexte.pays, contexte.niveauId, contexte.filiere, contexte.specialites])
 
   function nouvelleNote(chapitreId: string | null = null): NoteCarnet {
     const maintenant = new Date().toISOString()
@@ -179,8 +184,31 @@ export default function CarnetSection({ userId, contexte, action, onActionTraite
     )
   }
 
+  const bascule = (
+    <div role="tablist" aria-label="Notes ou documents" style={{ display: "flex", gap: 2, background: "#EEF2F8", borderRadius: 10, padding: 3, marginBottom: 10 }}>
+      {(["notes", "documents"] as const).map(v => (
+        <button key={v} role="tab" aria-selected={vue === v} onClick={() => setVue(v)}
+          style={{ flex: 1, border: "none", borderRadius: 8, padding: "8px 0", fontSize: "13px", fontWeight: 600, cursor: "pointer",
+            background: vue === v ? "#fff" : "transparent", color: vue === v ? colors.navy : TEXTE_DOUX, boxShadow: vue === v ? "0 1px 3px rgba(10,22,40,.12)" : "none" }}>
+          {v === "notes" ? "Notes" : "Documents"}
+        </button>
+      ))}
+    </div>
+  )
+
+  if (vue === "documents") {
+    return (
+      <div>
+        {bascule}
+        <DocumentsSection userId={userId} dossiers={dossiers}
+          onNoteCreee={n => { setNotes(ns => [n, ...(ns || [])]); setVue("notes"); setOuverte({ note: n, nouvelle: false }) }} />
+      </div>
+    )
+  }
+
   return (
     <div>
+      {bascule}
       <div style={{ display: "flex", gap: "8px", marginBottom: "10px" }}>
         <input type="search" value={recherche} onChange={e => setRecherche(e.target.value)} placeholder="Rechercher" aria-label="Rechercher dans mes notes"
           style={{ flex: 1, minWidth: 0, border: `1px solid ${colors.blueBorder}`, borderRadius: radius.pill, padding: "10px 15px", fontSize: "14px", color: colors.text, background: "#fff" }} />

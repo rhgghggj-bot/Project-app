@@ -17,3 +17,8 @@ export const FOND_PAGE: CSSProperties = {
   backgroundImage: `linear-gradient(90deg, transparent 39px, rgba(225,29,72,0.45) 39px, rgba(225,29,72,0.45) 41px, transparent 41px), ${FOND_CAHIER.backgroundImage}`,
   backgroundSize: `100% 100%, ${CARREAU}px ${CARREAU}px, ${CARREAU}px ${CARREAU}px`,
 }
+
+// Teintes plus foncées que les jetons pour le petit texte (contraste ≥ 4,5:1)
+export const TEXTE_DOUX = "#6B7280"
+export const BLEU_TEXTE = "#1A5FD0"
+export const ROUGE_TEXTE = "#C81E3F"

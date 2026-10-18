@@ -109,6 +109,14 @@ export const FichesSchema = z.object({
   })),
 })
 export type Fiches = z.infer<typeof FichesSchema>
+// Fiche enregistrée : celles importées d'un artefact peuvent avoir en plus un
+// identifiant stable, un schéma, des vidéos et d'autres exercices.
+export type NotionFiche = Fiches["notions"][number] & {
+  ref?: string
+  schema?: string
+  videos?: { titre: string; url: string; duree?: string }[]
+  exercices?: { enonce: string; solution: string }[]
+}
 
 // ─── Consignes communes aux deux IA ────────────────────────────────────────
 function ligneNiveau(niveau?: string) {
