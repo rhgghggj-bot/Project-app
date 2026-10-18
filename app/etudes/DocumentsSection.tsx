@@ -5,6 +5,7 @@ import { toast, confirmer } from "@/lib/toast"
 import { useChargement } from "@/lib/useChargement"
 import { colors, radius } from "@/app/components/ui/tokens"
 import { COLONNES_NOTE, compresserImage, dateCourte, nettoyerHtml, normaliser, texteBrut, type Dossier, type NoteCarnet } from "@/lib/carnet"
+import { mettreALaCorbeille } from "@/lib/corbeille"
 import { convertir, typeConvertible, versHtml, type TypeConvertible } from "@/lib/conversion"
 import { BLEU_TEXTE, ROUGE_TEXTE, TEXTE_DOUX } from "./cahier"
 
@@ -251,11 +252,11 @@ function Lecteur({ doc, userId, dossiers, onFermer, onMaj, onSupprime, onOuvrirN
   }
 
   async function supprimer() {
-    if (!(await confirmer(`Supprimer « ${doc.nom} » ? Les notes déjà créées à partir de ce document sont gardées.`, "Supprimer"))) return
+    if (!(await confirmer(`Supprimer « ${doc.nom} » ? Il reste 30 jours dans la corbeille du carnet. Ta version modifiable est gardée.`, "Supprimer"))) return
+    if (!(await mettreALaCorbeille(userId, "document", doc, doc.nom))) return toast("Suppression impossible, vérifie ta connexion", "error")
     const { error } = await supabase.from("etudes_documents").delete().eq("id", doc.id)
     if (error) return toast("Suppression impossible", "error")
-    await supabase.storage.from("etudes").remove([doc.chemin])
-    toast("Document supprimé", "success")
+    toast("Document mis à la corbeille", "success")
     onSupprime(doc.id)
   }
 

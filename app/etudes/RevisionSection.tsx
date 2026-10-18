@@ -13,6 +13,10 @@ import { PetitBouton } from "./CorrectionSection"
 import Quiz from "./Quiz"
 import FicheNotion from "./FicheNotion"
 import ProgrammeSection from "./ProgrammeSection"
+import Cartes from "./Cartes"
+import Planning from "./Planning"
+import { aRevoir, chargerCartes, chargerEtats } from "@/lib/cartes"
+import { chargerPlans, enRetard, joursAvant, type Plan } from "@/lib/planning"
 
 type CoursEtudiant = { id: string; matiere: string; titre: string; fichier_path: string | null; entreprise_id: string; fiches: Fiches; created_at: string }
 
@@ -38,6 +42,21 @@ export default function RevisionSection({ userId, pays, niveau, matieres, reglag
   const [ouvert, setOuvert] = useState<string | null>(null)
   const [enCours, setEnCours] = useState(false)
   const [choixOuvert, setChoixOuvert] = useState(false)
+  const [outil, setOutil] = useState<"cartes" | "planning" | null>(null)
+  const [aRevoirAujourdhui, setARevoir] = useState<number | null>(null)
+  const [prochainExamen, setProchainExamen] = useState<Plan | null>(null)
+
+  // Résumé du jour : cartes à revoir et prochain examen planifié
+  useEffect(() => {
+    if (outil) return
+    let actif = true
+    Promise.all([chargerCartes(userId), chargerEtats(userId), chargerPlans(userId)]).then(([c, e, p]) => {
+      if (!actif) return
+      setARevoir(c.filter(x => aRevoir(x, e)).length)
+      setProchainExamen(p.filter(x => joursAvant(x.date) >= 0).sort((a, b) => a.date.localeCompare(b.date))[0] ?? null)
+    }).catch(() => {})
+    return () => { actif = false }
+  }, [userId, outil])
   const entreprise = entrepriseChoisie(entrepriseId, entreprisePerso)
 
   async function charger() {
@@ -101,8 +120,38 @@ export default function RevisionSection({ userId, pays, niveau, matieres, reglag
     parMatiere.set(m, [...(parMatiere.get(m) || []), c])
   }
 
+  const tuile: React.CSSProperties = { flex: 1, minWidth: 0, textAlign: "left", background: "#fff", border: `1px solid ${colors.blueBorder}`, borderRadius: radius.md, padding: "12px 12px", cursor: "pointer" }
+
   return (
     <div>
+      {!chapitreOuvert && (
+        <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+          <button onClick={() => setOutil("cartes")} style={tuile}>
+            <div style={{ fontSize: 12, color: colors.textMuted }}>Cartes de révision</div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: colors.navy, margin: "2px 0" }}>{aRevoirAujourdhui ?? "…"}</div>
+            <div style={{ fontSize: 11.5, color: colors.blue }}>{aRevoirAujourdhui ? "à revoir aujourd'hui" : "Ouvrir"}</div>
+          </button>
+          <button onClick={() => setOutil("planning")} style={tuile}>
+            <div style={{ fontSize: 12, color: colors.textMuted }}>Planning d&apos;examen</div>
+            {prochainExamen ? (
+              <>
+                <div style={{ fontSize: 20, fontWeight: 700, color: joursAvant(prochainExamen.date) <= 3 ? colors.red : colors.navy, margin: "2px 0" }}>{joursAvant(prochainExamen.date) === 0 ? "Jour J" : `J-${joursAvant(prochainExamen.date)}`}</div>
+                <div style={{ fontSize: 11.5, color: enRetard(prochainExamen) ? "#B45309" : colors.blue, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{enRetard(prochainExamen) ? `${enRetard(prochainExamen)} en retard · ` : ""}{prochainExamen.examen}</div>
+              </>
+            ) : (
+              <>
+                <div style={{ fontSize: 20, fontWeight: 700, color: colors.navy, margin: "2px 0" }}>+</div>
+                <div style={{ fontSize: 11.5, color: colors.blue }}>Préparer un examen</div>
+              </>
+            )}
+          </button>
+        </div>
+      )}
+      {outil === "cartes" && <Cartes userId={userId} onFermer={() => setOutil(null)} />}
+      {outil === "planning" && (
+        <Planning userId={userId} pays={pays} niveauId={niveauId} filiere={filiere} specialites={specialites}
+          onFermer={() => setOutil(null)} onOuvrirChapitre={id => { setOutil(null); onOuvrirChapitre(id) }} />
+      )}
       <ProgrammeSection onCarnet={onCarnet} userId={userId} pays={pays} niveauId={niveauId} filiere={filiere} specialites={specialites} annee={annee}
         onChangerAnnee={onChangerAnnee} chapitreOuvert={fichePerso ? null : chapitreOuvert} onOuvrirChapitre={onOuvrirChapitre} />
 

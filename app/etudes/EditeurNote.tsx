@@ -7,6 +7,7 @@ import { chapitreVisible, chargerProgramme } from "@/lib/programmes"
 import { chargerFichesPerso } from "@/lib/fichesPerso"
 import { cheminsImages, compresserImage, COULEURS_SURLIGNEUR, COULEURS_TEXTE, nettoyerHtml, normaliser, texteBrut, type Dossier, type NoteCarnet } from "@/lib/carnet"
 import type { Pays } from "@/lib/etudes"
+import { mettreALaCorbeille } from "@/lib/corbeille"
 import { effacerSous, estSurligne, motSous, plageEntre, pointSous, surligner as surlignerPlage, type Point } from "@/lib/surligneur"
 import { CARREAU, FOND_PAGE } from "./cahier"
 import Dessin from "./Dessin"
@@ -94,6 +95,10 @@ ${COULEURS_TEXTE.map(c => `.carnet-page [data-couleur="${c.id}"]:not(mark){color
 ${ENCADRES.map(e => `.carnet-page blockquote[data-encadre="${e.id}"]{background:${e.fond};border-color:${e.bord}}.carnet-page blockquote[data-encadre="${e.id}"]::before{content:"${e.nom}";color:${e.texte}}`).join("")}
 .carnet-page[data-stylo]{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;cursor:crosshair;caret-color:transparent}
 .carnet-page.carnet-mesure{-webkit-user-select:text !important;user-select:text !important}
+.carnet-page.carnet-cache{-webkit-user-select:none;user-select:none;caret-color:transparent}
+.carnet-page.carnet-cache mark:not(.vu){color:transparent !important;background:repeating-linear-gradient(-45deg,#D6DEEA 0 6px,#E6ECF5 6px 12px) !important;cursor:pointer;border-radius:4px}
+.carnet-page.carnet-cache mark:not(.vu) *{color:transparent !important}
+.carnet-page.carnet-cache mark.vu{outline:2px solid ${colors.green};outline-offset:1px}
 .carnet-apercu{position:absolute;pointer-events:none;border-radius:3px;mix-blend-mode:multiply}
 .carnet-page table{border-collapse:collapse;margin:${CARREAU / 2}px 0;background:#fff;min-width:50%;max-width:100%;display:block;overflow-x:auto}
 .carnet-page td,.carnet-page th{border:1px solid #C9D3E3;padding:2px 8px;min-width:64px;vertical-align:top;text-align:left}
@@ -174,6 +179,7 @@ const ICONES = {
   retrait: "M4 6h16M10 12h10M10 18h10M4 10l3 2-3 2",
   desretrait: "M4 6h16M10 12h10M10 18h10M7 10l-3 2 3 2",
   separateur: "M4 12h16M8 7h8M8 17h8",
+  oeil: "M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12zM12 15a3 3 0 100-6 3 3 0 000 6zM4 4l16 16",
 }
 
 export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte, onFermer, onOuvrirChapitre }: {
@@ -225,6 +231,8 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
   const [nbStylo, setNbStylo] = useState(0)
   const trace = useRef<{ id: number; debut: Point; x: number; y: number; bouge: boolean } | null>(null)
   const feuilleRef = useRef<HTMLDivElement>(null)
+  // Mode « je m'interroge » : les passages surlignés sont cachés, on les révèle d'une touche
+  const [cache, setCache] = useState<{ vus: number; total: number } | null>(null)
   const [plan, setPlan] = useState<{ titres: Element[]; marques: Element[] } | null>(null)
   const [export_, setExport] = useState<string | null>(null)
 
@@ -375,15 +383,22 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
     planifier()
   }
 
-  async function supprimerEnBase(): Promise<boolean> {
+  // corbeille : la note est gardée 30 jours (photos comprises) avant d'être effacée
+  async function supprimerEnBase(corbeille = false): Promise<boolean> {
     supprimee.current = true
     if (minuteur.current) { clearTimeout(minuteur.current); minuteur.current = null }
     while (enVol.current) await enVol.current
+    if (corbeille) {
+      const { contenu, texte } = contenuActuel()
+      const ligne = { ...derniere.current, ...meta.current, titre: meta.current.titre.trim().slice(0, 200), contenu, texte, updated_at: new Date().toISOString() }
+      if (!(await mettreALaCorbeille(userId, "note", ligne, ligne.titre || "Sans titre"))) { supprimee.current = false; return false }
+    }
     if (existe.current) {
       const { error } = await supabase.from("carnet_notes").delete().eq("id", note.id)
       if (error) { supprimee.current = false; return false }
     }
     effacerBrouillon(note.id)
+    if (corbeille) return true
     const dossier = `${userId}/notes/${note.id}`
     const { data } = await supabase.storage.from("etudes").list(dossier, { limit: 1000 })
     if (data?.length) await supabase.storage.from("etudes").remove(data.map(f => `${dossier}/${f.name}`))
@@ -410,9 +425,9 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
   }
 
   async function supprimer() {
-    if (!(await confirmer("Supprimer cette note, ses photos et ses dessins ?", "Supprimer"))) return
-    if (!(await supprimerEnBase())) { toast("Suppression impossible, vérifie ta connexion", "error"); planifier(); return }
-    toast("Note supprimée", "success")
+    if (!(await confirmer("Supprimer cette note ? Elle reste 30 jours dans la corbeille du carnet.", "Supprimer"))) return
+    if (!(await supprimerEnBase(true))) { toast("Suppression impossible, vérifie ta connexion", "error"); planifier(); return }
+    toast("Note mise à la corbeille", "success")
     onFermer({ note: null, supprimee: true })
   }
 
@@ -707,6 +722,32 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
     commande(plus ? "indent" : "outdent")
   }
 
+  // ─── Je m'interroge : surlignages cachés ───
+  function compterCache() {
+    const page = pageRef.current!
+    setCache({ vus: page.querySelectorAll("mark.vu").length, total: page.querySelectorAll("mark").length })
+  }
+
+  function interroger() {
+    const page = pageRef.current!
+    if (!page.querySelector("mark")) return toast("Surligne d'abord l'essentiel avec le crayon : les passages surlignés seront cachés pour t'interroger.", "info")
+    document.getSelection()?.removeAllRanges()
+    page.blur()
+    setMenu(null); setStylo(null)
+    page.querySelectorAll("mark.vu").forEach(m => m.classList.remove("vu"))
+    compterCache()
+  }
+
+  function finInterroger() {
+    pageRef.current!.querySelectorAll("mark.vu").forEach(m => { m.classList.remove("vu"); if (!m.getAttribute("class")) m.removeAttribute("class") })
+    setCache(null)
+  }
+
+  function toutReveler(voir: boolean) {
+    pageRef.current!.querySelectorAll("mark").forEach(m => m.classList.toggle("vu", voir))
+    compterCache()
+  }
+
   // ─── Plan de la note ───
   function ouvrirPlan() {
     const page = pageRef.current!
@@ -945,7 +986,14 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
         <button className="carnet-outil" aria-label="Supprimer la note" title="Supprimer" onClick={supprimer} style={{ color: colors.red }}><Icone d={ICONES.corbeille} /></button>
       </div>
 
-      {stylo ? (
+      {cache ? (
+        <div role="toolbar" aria-label="Je m'interroge" style={{ display: "flex", gap: "6px", padding: "6px 8px", overflowX: "auto", alignItems: "center", borderBottom: `1px solid ${colors.border}`, background: "#EEF7F1" }}>
+          <button type="button" className="carnet-choix" onClick={finInterroger}
+            style={{ flexShrink: 0, background: colors.navy, borderColor: colors.navy, color: "#fff", fontWeight: 600, padding: "0 12px" }}>Terminé</button>
+          <span role="status" style={{ flex: 1, fontSize: 13, color: colors.text, whiteSpace: "nowrap" }}><b>{cache.vus}</b> / {cache.total} révélés</span>
+          <button type="button" className="carnet-choix" style={{ flexShrink: 0 }} onClick={() => toutReveler(cache.vus < cache.total)}>{cache.vus < cache.total ? "Tout révéler" : "Tout cacher"}</button>
+        </div>
+      ) : stylo ? (
         <div role="toolbar" aria-label="Surligneur" style={{ display: "flex", gap: "5px", padding: "6px 8px", overflowX: "auto", alignItems: "center", borderBottom: `1px solid ${colors.border}`, background: "#FFFBEA" }}>
           <button type="button" className="carnet-choix" onClick={() => { setStylo(null); setApercu([]) }}
             style={{ flexShrink: 0, background: colors.navy, borderColor: colors.navy, color: "#fff", fontWeight: 600, padding: "0 12px" }}>Terminé</button>
@@ -971,6 +1019,7 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
             <span aria-hidden="true" style={{ position: "absolute", left: -2, right: -2, bottom: -3, height: 5, borderRadius: 3, background: (COULEURS_SURLIGNEUR.find(c => c.id === couleurStylo) ?? COULEURS_SURLIGNEUR[0]).hex }} />
           </span>
         </Outil>
+        <Outil label="Je m'interroge (cacher les surlignages)" onAction={interroger}><Icone d={ICONES.oeil} /></Outil>
         <Outil label="Annuler" onAction={() => commande("undo")}><Icone d={ICONES.annuler} /></Outil>
         <Outil label="Rétablir" onAction={() => commande("redo")}><Icone d={ICONES.retablir} /></Outil>
         <span aria-hidden="true" style={{ width: 1, background: colors.blueBorder, margin: "8px 4px", flexShrink: 0 }} />
@@ -1003,13 +1052,18 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
         <input ref={photoRef} type="file" accept="image/*" hidden onChange={e => { const f = e.target.files?.[0]; e.target.value = ""; if (f) void choisirPhoto(f) }} />
       </div>
       )}
+      {cache && (
+        <div style={{ fontSize: 12, color: "#6B7280", padding: "5px 12px", background: "#EEF7F1", borderBottom: `1px solid ${colors.border}` }}>
+          Les passages surlignés sont cachés. Récite-les dans ta tête, puis touche un passage pour vérifier.
+        </div>
+      )}
       {stylo && (
         <div style={{ fontSize: 12, color: "#6B7280", padding: "5px 12px", background: "#FFFBEA", borderBottom: `1px solid ${colors.border}` }}>
           {stylo === "gommer" ? "Gomme : passe sur un surlignage pour l'effacer." : "Glisse sur le texte pour surligner. Touche un mot surligné pour l'effacer."}
         </div>
       )}
 
-      {formats.table && !stylo && (
+      {formats.table && !stylo && !cache && (
         <div role="toolbar" aria-label="Tableau" style={{ display: "flex", gap: 6, overflowX: "auto", alignItems: "center", padding: "6px 10px", borderBottom: `1px solid ${colors.border}`, background: "#F4F7FC" }}>
           {([["ligne", "+ Ligne"], ["colonne", "+ Colonne"], ["-ligne", "− Ligne"], ["-colonne", "− Colonne"], ["-tableau", "Supprimer le tableau"]] as const).map(([a, nom]) => (
             <button key={a} type="button" className="carnet-choix" onPointerDown={e => e.preventDefault()} onMouseDown={e => e.preventDefault()} onClick={() => modifierTableau(a)}
@@ -1107,9 +1161,12 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
             style={{ display: "block", width: "100%", border: "none", background: "transparent", outline: "none", resize: "none", overflow: "hidden", padding: `${CARREAU}px 16px 0 52px`,
               fontFamily: "var(--font-display)", fontSize: "27px", fontWeight: 700, lineHeight: 1.2, paddingBottom: 10, color: colors.navy, boxSizing: "border-box" }} />
 
-          <div ref={pageRef} className="carnet-page" contentEditable={!stylo} suppressContentEditableWarning
+          <div ref={pageRef} className={cache ? "carnet-page carnet-cache" : "carnet-page"} contentEditable={!stylo && !cache} suppressContentEditableWarning
             role="textbox" aria-multiline="true" aria-label="Contenu de la note" data-vide="Écris ici…" data-stylo={stylo ?? undefined}
-            onInput={planifier} onClick={e => { if (!stylo) surClic(e) }} onKeyDown={surTouche} onPaste={surCollage}
+            onInput={planifier} onClick={e => {
+              if (cache) { const m = (e.target as Element).closest("mark"); if (m) { m.classList.toggle("vu"); compterCache() } return }
+              if (!stylo) surClic(e)
+            }} onKeyDown={surTouche} onPaste={surCollage}
             onPointerDown={styloDebut} onPointerMove={styloBouge} onPointerUp={styloFin} onPointerCancel={styloFin}
             style={stylo ? { touchAction: "pan-y" } : undefined} />
           {apercu.map((r, i) => (

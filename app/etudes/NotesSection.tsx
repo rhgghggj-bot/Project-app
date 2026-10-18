@@ -5,7 +5,7 @@ import { toast, confirmer } from "@/lib/toast"
 import { useChargement } from "@/lib/useChargement"
 import { useMaintenant } from "@/lib/useMaintenant"
 import { colors, radius } from "@/app/components/ui/tokens"
-import { SYSTEMES, formaterNote, moyennePonderee, type Echelle, type Pays } from "@/lib/etudes"
+import { SYSTEMES, formaterNote, moyennePonderee, noteNecessaire, type Echelle, type Pays } from "@/lib/etudes"
 import { chapitreVisible, chapitresDeMatiere, chargerProgramme, type Programme } from "@/lib/programmes"
 
 export type NoteEtudiant = {
@@ -144,6 +144,8 @@ export default function NotesSection({ userId, pays, matieresProposees, niveauId
         <TableauNotes notes={visibles} pays={pays} parMatiere={filtre === "Toutes"} couleurDe={couleurDe}
           titreChapitre={titreChapitre} onChoisirMatiere={setFiltre} />
       )}
+
+      {notesEchelle.length > 0 && <NoteNecessaire key={filtre} notes={notesEchelle} matieres={matieres} matiereInitiale={filtre === "Toutes" ? "" : filtre} pays={pays} />}
 
       {/* Historique replié + ajout */}
       <div style={{ background: "#fff", border: `0.5px solid ${colors.border}`, borderRadius: radius.md, padding: "10px 12px", marginTop: "10px" }}>
@@ -321,6 +323,53 @@ function TableauNotes({ notes, pays, parMatiere, couleurDe, titreChapitre, onCho
           )}
         </tbody>
       </table>
+    </div>
+  )
+}
+
+// « Quelle note me faut-il ? » : note minimale au prochain examen pour
+// atteindre la moyenne visée, dans une matière ou en moyenne générale.
+function NoteNecessaire({ notes, matieres, matiereInitiale, pays }: { notes: NoteEtudiant[]; matieres: string[]; matiereInitiale: string; pays: Pays }) {
+  const s = SYSTEMES[pays]
+  const [matiere, setMatiere] = useState(matiereInitiale)
+  const [cible, setCible] = useState(String(s.suffisant).replace(".", ","))
+  const [coef, setCoef] = useState("1")
+  const ns = matiere ? notes.filter(n => n.matiere === matiere) : notes
+  const c = Number(cible.replace(",", "."))
+  const k = Number(coef.replace(",", "."))
+  const valide = ns.length > 0 && c >= s.min && c <= s.max && k > 0 && k <= 20
+  const r = valide ? noteNecessaire(ns, c, k, s.echelle) : null
+  const actuelle = moyennePonderee(ns)
+  const couleur = !r ? colors.textMuted : r.statut === "impossible" ? colors.red : r.statut === "acquis" ? colors.green : r.note >= s.max - (s.max - s.suffisant) / 3 ? "#B45309" : colors.blue
+  return (
+    <div style={{ background: "#fff", border: `0.5px solid ${colors.border}`, borderRadius: radius.md, padding: "12px", marginTop: "10px" }}>
+      <div style={{ fontSize: "13px", fontWeight: 600, color: colors.text, marginBottom: 8 }}>Quelle note me faut-il ?</div>
+      <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr 1fr", gap: 8 }}>
+        <label><span style={etiquette}>Matière</span>
+          <select value={matiere} onChange={e => setMatiere(e.target.value)} style={champ}>
+            <option value="">Toutes (moyenne générale)</option>
+            {matieres.map(m => <option key={m} value={m}>{m}</option>)}
+          </select>
+        </label>
+        <label><span style={etiquette}>Moyenne visée</span>
+          <input inputMode="decimal" value={cible} onChange={e => setCible(e.target.value)} style={champ} aria-label="Moyenne visée" />
+        </label>
+        <label><span style={etiquette}>Coef. de l&apos;examen</span>
+          <input inputMode="decimal" value={coef} onChange={e => setCoef(e.target.value)} style={champ} aria-label="Coefficient du prochain examen" />
+        </label>
+      </div>
+      <div role="status" style={{ marginTop: 10, fontSize: 13.5, lineHeight: 1.5, color: colors.text }}>
+        {!valide ? (
+          <span style={{ color: colors.textMuted }}>Indique une moyenne entre {s.min} et {s.max} et un coefficient.</span>
+        ) : r!.statut === "acquis" ? (
+          <><b style={{ color: couleur }}>C&apos;est déjà gagné</b> : même avec {formaterNote(s.min, s.echelle)}, ta moyenne reste à {formaterNote(c, s.echelle)} ou plus.</>
+        ) : r!.statut === "impossible" ? (
+          <><b style={{ color: couleur }}>Pas atteignable en un examen</b> : il faudrait {formaterNote(r!.note, s.echelle)}. Vise une moyenne plus basse ou compte sur les examens suivants.</>
+        ) : (
+          <>Il te faut au moins <b style={{ fontSize: 18, color: couleur }}>{formaterNote(r!.note, s.echelle)}</b> au prochain examen{k !== 1 ? ` (coef. ${coef})` : ""} pour avoir {formaterNote(c, s.echelle)} de moyenne{matiere ? ` en ${matiere}` : ""}.</>
+        )}
+        {actuelle !== null && <div style={{ fontSize: 12, color: colors.textMuted, marginTop: 2 }}>Moyenne actuelle : {formaterNote(arrondi(actuelle), s.echelle)} ({ns.length} note{ns.length > 1 ? "s" : ""})</div>}
+      </div>
     </div>
   )
 }
