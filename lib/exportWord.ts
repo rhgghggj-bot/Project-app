@@ -6,7 +6,14 @@
 import { strToU8, zipSync } from "fflate"
 import { COULEURS_SURLIGNEUR, COULEURS_TEXTE } from "./carnet"
 
-type Style = { b?: boolean; i?: boolean; u?: boolean; s?: boolean; couleur?: string; fond?: string; taille?: number; police?: string }
+type Style = { b?: boolean; i?: boolean; u?: boolean; s?: boolean; couleur?: string; fond?: string; taille?: number; police?: string; pos?: "superscript" | "subscript" }
+// Encadré en cours : bordure gauche + fond (ordre des balises imposé par Word)
+type Cadre = { bord: string; fond: string } | null
+const CADRES: Record<string, { nom: string; bord: string; fond: string; texte: string }> = {
+  definition: { nom: "Définition", bord: "2B6BE6", fond: "EEF4FF", texte: "1F5FD6" },
+  important: { nom: "À retenir", bord: "E8A317", fond: "FFF6E0", texte: "8A5A00" },
+  exemple: { nom: "Exemple", bord: "1E9E63", fond: "EAF8F0", texte: "11744A" },
+}
 type Image = { id: string; nom: string; donnees: Uint8Array; cx: number; cy: number }
 
 const TAILLES: Record<string, number> = { s: 20, m: 22, l: 30, xl: 38 }  // demi-points
@@ -51,6 +58,7 @@ export async function noteEnWord(titre: string, html: string, lireImage: (chemin
     if (st.taille) x += `<w:sz w:val="${st.taille}"/><w:szCs w:val="${st.taille}"/>`
     if (st.u) x += `<w:u w:val="single"/>`
     if (st.fond) x += `<w:shd w:val="clear" w:color="auto" w:fill="${st.fond}"/>`
+    if (st.pos) x += `<w:vertAlign w:val="${st.pos}"/>`
     return x ? `<w:rPr>${x}</w:rPr>` : ""
   }
 
@@ -61,6 +69,8 @@ export async function noteEnWord(titre: string, html: string, lireImage: (chemin
     if (tag === "I") st.i = true
     if (tag === "U") st.u = true
     if (tag === "S") st.s = true
+    if (tag === "SUP") st.pos = "superscript"
+    if (tag === "SUB") st.pos = "subscript"
     if (tag === "MARK") st.fond = (COULEURS_SURLIGNEUR.find(c => c.id === (el.getAttribute("data-couleur") || "")) ?? COULEURS_SURLIGNEUR[0]).hex.slice(1)
     const couleur = el.getAttribute("data-couleur")
     if (tag === "SPAN" && couleur) st.couleur = COULEURS_TEXTE.find(c => c.id === couleur)?.hex.slice(1)
@@ -85,7 +95,7 @@ export async function noteEnWord(titre: string, html: string, lireImage: (chemin
         const el = n as Element
         if (el.tagName === "BR") x += "<w:r><w:br/></w:r>"
         else if (el.tagName === "IMG") x += dessin(el)
-        else if (!["UL", "OL", "TABLE"].includes(el.tagName)) x += runs(el, styleDe(el, st))
+        else if (!["UL", "OL", "TABLE", "BLOCKQUOTE", "HR"].includes(el.tagName)) x += runs(el, styleDe(el, st))
       }
     }
     return x
@@ -103,19 +113,34 @@ export async function noteEnWord(titre: string, html: string, lireImage: (chemin
       + `</a:graphicData></a:graphic></wp:inline></w:drawing></w:r>`
   }
 
-  const para = (contenu: string, pPr = "") => `<w:p>${pPr ? `<w:pPr>${pPr}</w:pPr>` : ""}${contenu}</w:p>`
+  // Propriétés de paragraphe, dans l'ordre exigé par Word
+  type Prop = { style?: string; num?: string; cadre?: Cadre; bas?: boolean; ind?: number }
+  function para(contenu: string, p: Prop = {}) {
+    let x = ""
+    if (p.style) x += `<w:pStyle w:val="${p.style}"/>`
+    if (p.num) x += p.num
+    if (p.cadre || p.bas) x += `<w:pBdr>${p.cadre ? `<w:left w:val="single" w:sz="24" w:space="8" w:color="${p.cadre.bord}"/>` : ""}${p.bas ? `<w:bottom w:val="single" w:sz="8" w:space="1" w:color="C9D3E3"/>` : ""}</w:pBdr>`
+    if (p.cadre) x += `<w:shd w:val="clear" w:color="auto" w:fill="${p.cadre.fond}"/>`
+    if (p.ind !== undefined) x += `<w:ind w:left="${p.ind}"/>`
+    else if (p.cadre && !p.num) x += `<w:ind w:left="200" w:right="200"/>`
+    return `<w:p>${x ? `<w:pPr>${x}</w:pPr>` : ""}${contenu}</w:p>`
+  }
 
-  function liste(el: Element, niveau: number): string {
+  function liste(el: Element, niveau: number, cadre: Cadre): string {
     let x = ""
     const cases = el.getAttribute("data-liste") === "cases"
     let num = 1
     if (el.tagName === "OL") { listes.push(listes.length + 3); num = listes[listes.length - 1] }
     for (const li of Array.from(el.children)) {
+      // Sous-liste placée directement dans la liste (bouton « décaler »)
+      if (li.tagName === "UL" || li.tagName === "OL") { x += liste(li, niveau + 1, cadre); continue }
       if (li.tagName !== "LI") continue
-      const prefixe = cases ? `<w:r><w:t xml:space="preserve">${li.getAttribute("data-fait") === "1" ? "☑" : "☐"} </w:t></w:r>` : ""
-      const pPr = cases ? `<w:ind w:left="${360 + niveau * 360}"/>` : `<w:numPr><w:ilvl w:val="${Math.min(niveau, 2)}"/><w:numId w:val="${num}"/></w:numPr>`
-      x += para(prefixe + runs(li, li.getAttribute("data-fait") === "1" ? { s: true, couleur: "6B7280" } : {}), pPr)
-      for (const sous of Array.from(li.children)) if (sous.tagName === "UL" || sous.tagName === "OL") x += liste(sous, niveau + 1)
+      const fait = li.getAttribute("data-fait") === "1"
+      const prefixe = cases ? `<w:r><w:t xml:space="preserve">${fait ? "☑" : "☐"} </w:t></w:r>` : ""
+      x += para(prefixe + runs(li, fait ? { s: true, couleur: "6B7280" } : {}), cases
+        ? { cadre, ind: 360 + niveau * 360 }
+        : { cadre, num: `<w:numPr><w:ilvl w:val="${Math.min(niveau, 2)}"/><w:numId w:val="${num}"/></w:numPr>` })
+      for (const sous of Array.from(li.children)) if (sous.tagName === "UL" || sous.tagName === "OL") x += liste(sous, niveau + 1, cadre)
     }
     return x
   }
@@ -138,22 +163,35 @@ export async function noteEnWord(titre: string, html: string, lireImage: (chemin
     return x + "</w:tbl>" + para("")
   }
 
-  let corps = para(`<w:r><w:t xml:space="preserve">${echapper(titre || "Note")}</w:t></w:r>`, `<w:pStyle w:val="Title"/>`)
-  let enLigne = ""
-  const finLigne = () => { if (enLigne) { corps += para(enLigne); enLigne = "" } }
-  for (const n of Array.from(doc.body.childNodes)) {
-    const el = n.nodeType === Node.ELEMENT_NODE ? (n as Element) : null
-    const bloc = el && ["P", "H2", "H3", "UL", "OL", "TABLE", "IMG"].includes(el.tagName)
-    if (!bloc) { enLigne += runsDe([n], {}); continue }
+  const titreDoc = para(`<w:r><w:t xml:space="preserve">${echapper(titre || "Note")}</w:t></w:r>`, { style: "Title" })
+
+  function blocs(noeuds: Node[], cadre: Cadre): string {
+    let x = "", enLigne = ""
+    const finLigne = () => { if (enLigne) { x += para(enLigne, { cadre }); enLigne = "" } }
+    for (const n of noeuds) {
+      const el = n.nodeType === Node.ELEMENT_NODE ? (n as Element) : null
+      const bloc = el && ["P", "H2", "H3", "UL", "OL", "TABLE", "IMG", "HR", "BLOCKQUOTE"].includes(el.tagName)
+      if (!bloc) { enLigne += runsDe([n], {}); continue }
+      finLigne()
+      if (el.tagName === "P") x += para(runs(el, {}), { cadre })
+      else if (el.tagName === "H2") x += para(runs(el, {}), { style: "Heading1", cadre })
+      else if (el.tagName === "H3") x += para(runs(el, {}), { style: "Heading2", cadre })
+      else if (el.tagName === "UL" || el.tagName === "OL") x += liste(el, 0, cadre)
+      else if (el.tagName === "TABLE") x += tableau(el)
+      else if (el.tagName === "IMG") x += para(dessin(el), { cadre })
+      else if (el.tagName === "HR") x += para("", { bas: true })
+      else if (el.tagName === "BLOCKQUOTE") {
+        const c = CADRES[el.getAttribute("data-encadre") || ""] ?? CADRES.definition
+        const cadreBq = { bord: c.bord, fond: c.fond }
+        x += para(`<w:r>${rPr({ b: true, couleur: c.texte, taille: 18 })}<w:t xml:space="preserve">${echapper(c.nom.toUpperCase())}</w:t></w:r>`, { cadre: cadreBq })
+        x += blocs(Array.from(el.childNodes), cadreBq)
+        x += para("")
+      }
+    }
     finLigne()
-    if (el.tagName === "P") corps += para(runs(el, {}))
-    else if (el.tagName === "H2") corps += para(runs(el, {}), `<w:pStyle w:val="Heading1"/>`)
-    else if (el.tagName === "H3") corps += para(runs(el, {}), `<w:pStyle w:val="Heading2"/>`)
-    else if (el.tagName === "UL" || el.tagName === "OL") corps += liste(el, 0)
-    else if (el.tagName === "TABLE") corps += tableau(el)
-    else if (el.tagName === "IMG") corps += para(dessin(el))
+    return x
   }
-  finLigne()
+  const corps = titreDoc + blocs(Array.from(doc.body.childNodes), null)
 
   const document = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"><w:body>${corps}<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134" w:header="708" w:footer="708" w:gutter="0"/></w:sectPr></w:body></w:document>`
