@@ -10,8 +10,10 @@ import { BLEU_TEXTE, ROUGE_TEXTE, TEXTE_DOUX } from "./cahier"
 
 // « Mes documents » : n'importe quel fichier (PDF, PowerPoint, Word, images,
 // vidéos, audio…) rangé dans l'espace privé de l'élève. Les formats que le
-// navigateur sait afficher s'ouvrent dans l'appli ; PowerPoint, Word, PDF et
-// images peuvent aussi être transformés en note du carnet.
+// navigateur sait afficher s'ouvrent dans l'appli. « Modifier » transforme
+// un PowerPoint, Word, Excel, PDF ou texte en note du carnet, modifiable et
+// mise en forme ; cette version porte le même identifiant que le document,
+// ce qui permet de la retrouver à chaque ouverture.
 
 export type DocumentEtudes = { id: string; dossier_id: string | null; nom: string; chemin: string; type: string; taille: number; created_at: string }
 
@@ -53,10 +55,10 @@ function nomPropre(nom: string) {
   return nom.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^\w.-]+/g, "_").slice(-80) || "fichier"
 }
 
-export default function DocumentsSection({ userId, dossiers, onNoteCreee }: {
+export default function DocumentsSection({ userId, dossiers, onOuvrirNote }: {
   userId: string
   dossiers: Dossier[]
-  onNoteCreee: (note: NoteCarnet) => void
+  onOuvrirNote: (note: NoteCarnet) => void
 }) {
   const fichierRef = useRef<HTMLInputElement>(null)
   const [docs, setDocs] = useState<DocumentEtudes[] | null>(null)
@@ -101,7 +103,7 @@ export default function DocumentsSection({ userId, dossiers, onNoteCreee }: {
 
   if (ouvert) {
     return (
-      <Lecteur doc={ouvert} userId={userId} dossiers={dossiers} onFermer={() => setOuvert(null)} onNoteCreee={onNoteCreee}
+      <Lecteur doc={ouvert} userId={userId} dossiers={dossiers} onFermer={() => setOuvert(null)} onOuvrirNote={onOuvrirNote}
         onMaj={d => { setDocs(ds => (ds || []).map(x => (x.id === d.id ? d : x))); setOuvert(d) }}
         onSupprime={id => { setDocs(ds => (ds || []).filter(x => x.id !== id)); setOuvert(null) }} />
     )
@@ -153,7 +155,7 @@ export default function DocumentsSection({ userId, dossiers, onNoteCreee }: {
           <div style={{ fontFamily: "var(--font-display)", fontSize: "17px", fontWeight: 600, color: colors.navy, marginBottom: 4 }}>
             {mots.length ? `Aucun document ne s'appelle « ${recherche.trim()} »` : "Ajoute tes supports de cours"}
           </div>
-          {!mots.length && <div style={{ fontSize: "13px", color: colors.textMuted, lineHeight: 1.5 }}>PowerPoint, PDF, Word, photos, vidéos… jusqu&apos;à 50 Mo par fichier. Les PowerPoint, Word et PDF peuvent devenir des notes à annoter.</div>}
+          {!mots.length && <div style={{ fontSize: "13px", color: colors.textMuted, lineHeight: 1.5 }}>PowerPoint, PDF, Word, Excel, photos, vidéos… jusqu&apos;à 50 Mo par fichier. Avec « Modifier », tu peux réécrire, surligner et mettre en forme tes PowerPoint, Word, Excel, PDF et textes.</div>}
         </button>
       )}
 
@@ -182,14 +184,14 @@ export default function DocumentsSection({ userId, dossiers, onNoteCreee }: {
   )
 }
 
-function Lecteur({ doc, userId, dossiers, onFermer, onMaj, onSupprime, onNoteCreee }: {
+function Lecteur({ doc, userId, dossiers, onFermer, onMaj, onSupprime, onOuvrirNote }: {
   doc: DocumentEtudes
   userId: string
   dossiers: Dossier[]
   onFermer: () => void
   onMaj: (d: DocumentEtudes) => void
   onSupprime: (id: string) => void
-  onNoteCreee: (n: NoteCarnet) => void
+  onOuvrirNote: (n: NoteCarnet) => void
 }) {
   const [url, setUrl] = useState<string | null>(null)
   const [texte, setTexte] = useState<string | null>(null)
@@ -197,6 +199,16 @@ function Lecteur({ doc, userId, dossiers, onFermer, onMaj, onSupprime, onNoteCre
   const [renommer, setRenommer] = useState<string | null>(null)
   const g = genre(doc)
   const convertible: TypeConvertible | null = typeConvertible(doc.nom, doc.type)
+  // Version modifiable déjà créée (undefined : pas encore vérifié)
+  const [version, setVersion] = useState<NoteCarnet | null | undefined>(convertible ? undefined : null)
+
+  useEffect(() => {
+    if (!convertible) return
+    let actif = true
+    supabase.from("carnet_notes").select(COLONNES_NOTE).eq("id", doc.id).maybeSingle()
+      .then(({ data }) => { if (actif) setVersion((data as NoteCarnet | null) ?? null) })
+    return () => { actif = false }
+  }, [doc.id, convertible])
 
   useEffect(() => {
     let actif = true
@@ -247,9 +259,22 @@ function Lecteur({ doc, userId, dossiers, onFermer, onMaj, onSupprime, onNoteCre
     onSupprime(doc.id)
   }
 
+  function modifier() {
+    if (version) onOuvrirNote(version)
+    else void enNote()
+  }
+
+  async function repartir() {
+    if (!(await confirmer("Recréer la version modifiable à partir du document d'origine ? Tes changements dans cette version seront remplacés.", "Recréer"))) return
+    void enNote()
+  }
+
   async function enNote() {
     if (!convertible) return
-    const noteId = crypto.randomUUID()
+    // Même identifiant que le document : la version est retrouvée à la prochaine ouverture
+    const noteId = doc.id
+    const dossierImages = `${userId}/notes/${noteId}`
+    const nouvelles: string[] = []
     try {
       setConversion("Téléchargement du document…")
       const { data, error } = await supabase.storage.from("etudes").download(doc.chemin)
@@ -259,22 +284,36 @@ function Lecteur({ doc, userId, dossiers, onFermer, onMaj, onSupprime, onNoteCre
       const html = await versHtml(blocs, async img => {
         const jpeg = await compresserImage(img).catch(() => null)
         if (!jpeg) return null
-        const chemin = `${userId}/notes/${noteId}/${crypto.randomUUID()}.jpg`
+        const chemin = `${dossierImages}/${crypto.randomUUID()}.jpg`
         const { error: e } = await supabase.storage.from("etudes").upload(chemin, jpeg, { contentType: "image/jpeg" })
-        return e ? null : chemin
+        if (e) return null
+        nouvelles.push(chemin)
+        return chemin
       }, setConversion)
-      setConversion("Création de la note…")
+      setConversion("Création de la version modifiable…")
       const contenu = nettoyerHtml(html)
       const maintenant = new Date().toISOString()
       const note = {
-        id: noteId, user_id: userId, dossier_id: doc.dossier_id, titre: doc.nom.replace(/\.[^.]+$/, "").slice(0, 200),
-        contenu, texte: texteBrut(contenu).slice(0, 200000), epingle: false, chapitre_id: null, created_at: maintenant, updated_at: maintenant,
+        id: noteId, user_id: userId,
+        dossier_id: version ? version.dossier_id : doc.dossier_id,
+        titre: version?.titre || doc.nom.replace(/\.[^.]+$/, "").slice(0, 200),
+        contenu, texte: texteBrut(contenu).slice(0, 200000),
+        epingle: version?.epingle ?? false, chapitre_id: version?.chapitre_id ?? null,
+        created_at: version?.created_at ?? maintenant, updated_at: maintenant,
       }
-      const { data: creee, error: e3 } = await supabase.from("carnet_notes").insert(note).select(COLONNES_NOTE).single()
-      if (e3 || !creee) throw new Error("La note n'a pas pu être enregistrée")
-      toast("Note créée à partir du document", "success")
-      onNoteCreee(creee as NoteCarnet)
+      const { data: creee, error: e3 } = await supabase.from("carnet_notes").upsert(note).select(COLONNES_NOTE).single()
+      if (e3 || !creee) throw new Error("La version modifiable n'a pas pu être enregistrée")
+      try { localStorage.removeItem(`carnet-brouillon:${noteId}`) } catch {}
+      // Images de l'ancienne version qui ne servent plus
+      if (version) {
+        const { data: fichiers } = await supabase.storage.from("etudes").list(dossierImages, { limit: 1000 })
+        const anciens = (fichiers || []).map(f => `${dossierImages}/${f.name}`).filter(c => !nouvelles.includes(c))
+        if (anciens.length) await supabase.storage.from("etudes").remove(anciens)
+      }
+      toast(version ? "Version modifiable recréée" : "Version modifiable créée", "success")
+      onOuvrirNote(creee as NoteCarnet)
     } catch (e) {
+      if (nouvelles.length) await supabase.storage.from("etudes").remove(nouvelles)
       setConversion(null)
       toast(e instanceof Error ? e.message : "Transformation impossible", "error")
     }
@@ -301,8 +340,11 @@ function Lecteur({ doc, userId, dossiers, onFermer, onMaj, onSupprime, onNoteCre
 
       <div style={{ display: "flex", gap: 8, padding: "10px 12px", overflowX: "auto", background: "#fff", borderBottom: `1px solid ${colors.border}`, alignItems: "center" }}>
         {convertible && (
-          <button onClick={() => void enNote()} disabled={!!conversion}
-            style={{ ...bouton, background: colors.navy, color: "#fff", borderColor: colors.navy, flexShrink: 0 }}>Transformer en note</button>
+          <button onClick={modifier} disabled={!!conversion || version === undefined}
+            style={{ ...bouton, background: colors.navy, color: "#fff", borderColor: colors.navy, flexShrink: 0 }}>{version ? "Modifier ma version" : "Modifier"}</button>
+        )}
+        {version && (
+          <button onClick={() => void repartir()} disabled={!!conversion} style={{ ...bouton, flexShrink: 0 }}>Repartir de l&apos;original</button>
         )}
         <button onClick={() => void telecharger()} style={{ ...bouton, flexShrink: 0 }}>{g === "office" || g === "autre" ? "Ouvrir avec une app" : "Télécharger"}</button>
         {url && (g === "pdf" || g === "image" || g === "video" || g === "audio") && (
@@ -320,7 +362,7 @@ function Lecteur({ doc, userId, dossiers, onFermer, onMaj, onSupprime, onNoteCre
         {conversion ? (
           <div role="status" style={{ textAlign: "center", color: colors.navy }}>
             <div className="nx-skel" style={{ width: 56, height: 56, borderRadius: "50%", margin: "0 auto 14px" }} />
-            <div style={{ fontFamily: "var(--font-display)", fontSize: 17, fontWeight: 600 }}>Transformation en note</div>
+            <div style={{ fontFamily: "var(--font-display)", fontSize: 17, fontWeight: 600 }}>Préparation de la version modifiable</div>
             <div style={{ fontSize: 13, color: TEXTE_DOUX, marginTop: 4 }}>{conversion}</div>
           </div>
         ) : !url ? (
@@ -338,15 +380,15 @@ function Lecteur({ doc, userId, dossiers, onFermer, onMaj, onSupprime, onNoteCre
           <pre style={{ alignSelf: "stretch", width: "100%", margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-word", background: "#fff", borderRadius: 8, padding: 16, fontSize: 13.5, lineHeight: 1.55, fontFamily: "var(--font-geist-mono), monospace", color: colors.text }}>{texte ?? "Chargement…"}</pre>
         ) : (
           <div style={{ maxWidth: 380, textAlign: "center", color: colors.text }}>
-            <div style={{ fontFamily: "var(--font-display)", fontSize: 18, fontWeight: 600, color: colors.navy, marginBottom: 8 }}>Aperçu impossible dans l&apos;appli</div>
+            <div style={{ fontFamily: "var(--font-display)", fontSize: 18, fontWeight: 600, color: colors.navy, marginBottom: 8 }}>{convertible ? "Ouvre-le ici pour le modifier" : "Aperçu impossible dans l'appli"}</div>
             <p style={{ fontSize: 14, lineHeight: 1.55, color: colors.textMuted, margin: "0 0 14px" }}>
-              {ext === "ppt" || ext === "doc"
-                ? "Ce fichier est dans un ancien format Office (avant 2007). Ouvre-le avec PowerPoint, Word, Keynote ou Pages ; pour le transformer en note, enregistre-le d'abord en .pptx ou .docx."
+              {ext === "ppt" || ext === "doc" || ext === "xls"
+                ? "Ce fichier est dans un ancien format Office (avant 2007). Ouvre-le avec PowerPoint, Word, Keynote ou Pages ; pour le modifier ici, enregistre-le d'abord en .pptx, .docx ou .xlsx."
                 : convertible
-                  ? "Ouvre-le avec l'app de ton téléphone, ou transforme-le en note pour le lire, le surligner et l'annoter ici."
+                  ? "Touche « Modifier » pour le lire ici et le réécrire : gras, surligneur, couleurs, tableaux… Tu pourras ensuite le télécharger en Word ou en PDF."
                   : "Ouvre-le avec l'app adaptée de ton téléphone (PowerPoint, Keynote, Excel, Numbers…)."}
             </p>
-            {convertible && <button onClick={() => void enNote()} style={{ ...bouton, background: colors.navy, color: "#fff", borderColor: colors.navy }}>Transformer en note</button>}
+            {convertible && <button onClick={modifier} disabled={version === undefined} style={{ ...bouton, background: colors.navy, color: "#fff", borderColor: colors.navy }}>{version ? "Modifier ma version" : "Modifier"}</button>}
             <p style={{ fontSize: 12, color: BLEU_TEXTE, marginTop: 14 }}>{poids(doc.taille)}</p>
           </div>
         )}

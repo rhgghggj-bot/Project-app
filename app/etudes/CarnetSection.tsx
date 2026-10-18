@@ -201,7 +201,7 @@ export default function CarnetSection({ userId, contexte, action, onActionTraite
       <div>
         {bascule}
         <DocumentsSection userId={userId} dossiers={dossiers}
-          onNoteCreee={n => { setNotes(ns => [n, ...(ns || [])]); setVue("notes"); setOuverte({ note: n, nouvelle: false }) }} />
+          onOuvrirNote={n => { setNotes(ns => [n, ...(ns || []).filter(x => x.id !== n.id)]); setVue("notes"); setOuverte({ note: n, nouvelle: false }) }} />
       </div>
     )
   }

@@ -22,8 +22,49 @@ export type NoteCarnet = {
 export const COLONNES_NOTE = "id,dossier_id,titre,contenu,texte,epingle,chapitre_id,created_at,updated_at"
 
 // Balises gardées telles quelles ; les autres sont remplacées par leur contenu
-const BLOCS = new Set(["P", "H2", "H3", "UL", "OL", "LI"])
-const EN_LIGNE: Record<string, string> = { B: "b", STRONG: "b", I: "i", EM: "i", U: "u", MARK: "mark" }
+const BLOCS = new Set(["P", "H2", "H3", "UL", "OL", "LI", "TABLE", "TBODY", "TR", "TD", "TH"])
+const EN_LIGNE: Record<string, string> = { B: "b", STRONG: "b", I: "i", EM: "i", U: "u", S: "s", STRIKE: "s", DEL: "s", MARK: "mark" }
+
+// Couleurs du texte et du surligneur : un nom gardé dans la note (jamais une
+// valeur CSS libre), traduit en couleur par la feuille de style.
+export const COULEURS_TEXTE = [
+  { id: "rouge", nom: "Rouge", hex: "#D92D20" },
+  { id: "bleu", nom: "Bleu", hex: "#1F5FD6" },
+  { id: "vert", nom: "Vert", hex: "#0F8A5F" },
+  { id: "violet", nom: "Violet", hex: "#7A3FD1" },
+  { id: "orange", nom: "Orange", hex: "#D46B08" },
+] as const
+export const COULEURS_SURLIGNEUR = [
+  { id: "", nom: "Jaune", hex: "#FFE66D" },
+  { id: "vert", nom: "Vert", hex: "#B7F0C8" },
+  { id: "rose", nom: "Rose", hex: "#FFC7DE" },
+  { id: "bleu", nom: "Bleu", hex: "#BFE3FF" },
+  { id: "orange", nom: "Orange", hex: "#FFD8A8" },
+] as const
+
+function rvb(c: string): [number, number, number] | null {
+  const h = c.trim().match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i)
+  if (h) {
+    const v = h[1].length === 3 ? h[1].split("").map(x => x + x).join("") : h[1]
+    return [0, 2, 4].map(i => parseInt(v.slice(i, i + 2), 16)) as [number, number, number]
+  }
+  const m = c.match(/rgba?\(\s*(\d+)[\s,]+(\d+)[\s,]+(\d+)/i)
+  return m ? [Number(m[1]), Number(m[2]), Number(m[3])] : null
+}
+// Couleur la plus proche dans une palette (null si aucune n'est proche)
+function proche<T extends { id: string; hex: string }>(c: string | null | undefined, palette: readonly T[], max = 90): T | null {
+  const v = c ? rvb(c) : null
+  if (!v) return null
+  let mieux: T | null = null, ecart = Infinity
+  for (const p of palette) {
+    const q = rvb(p.hex)!
+    const d = Math.hypot(v[0] - q[0], v[1] - q[1], v[2] - q[2])
+    if (d < ecart) { ecart = d; mieux = p }
+  }
+  return ecart <= max ? mieux : null
+}
+const TEXTE_OK = new Set<string>(COULEURS_TEXTE.map(c => c.id))
+const SURLIGNEUR_OK = new Set<string>(COULEURS_SURLIGNEUR.map(c => c.id).filter(Boolean))
 
 // Tailles et polices autorisées (voir TAILLES et POLICES dans l'éditeur)
 const TAILLES_OK = new Set(["s", "m", "l", "xl"])  // m = normal (dans un passage agrandi)
@@ -67,23 +108,59 @@ function nettoyerNoeud(source: Node, cible: Node, doc: Document) {
       nouveau = doc.createElement(tag.toLowerCase())
       if (tag === "UL" && el.getAttribute("data-liste") === "cases") nouveau.setAttribute("data-liste", "cases")
       if (tag === "LI" && el.getAttribute("data-fait") === "1") nouveau.setAttribute("data-fait", "1")
+      if (tag === "TD" || tag === "TH") {
+        for (const a of ["colspan", "rowspan"]) {
+          const n = Number(el.getAttribute(a))
+          if (n > 1 && n <= 20) nouveau.setAttribute(a, String(n))
+        }
+      }
     } else if ((tag === "DIV" || tag === "BLOCKQUOTE") && el.querySelector("p,div,h1,h2,h3,h4,h5,h6,ul,ol,li,blockquote")) {
       // Conteneur de blocs (ex. <div><ul>… créé par le navigateur) : on garde seulement son contenu
       nouveau = null
     } else if (tag === "DIV" || tag === "H1" || tag === "H4" || tag === "H5" || tag === "H6" || tag === "BLOCKQUOTE") {
       nouveau = doc.createElement(tag === "H1" ? "h2" : tag.startsWith("H") ? "h3" : "p")
+    } else if (tag === "MARK") {
+      nouveau = doc.createElement("mark")
+      const c = el.getAttribute("data-couleur")
+      if (c && SURLIGNEUR_OK.has(c)) nouveau.setAttribute("data-couleur", c)
     } else if (EN_LIGNE[tag]) {
       nouveau = doc.createElement(EN_LIGNE[tag])
+      // Le navigateur pose parfois la couleur sur la balise existante :
+      // <b style="color:…; background-color:…">
+      const couleur = proche(el.style?.color, COULEURS_TEXTE)?.id
+      let exterieur: HTMLElement | null = null, interieur: HTMLElement | null = null
+      if (couleur) { exterieur = interieur = doc.createElement("span"); exterieur.setAttribute("data-couleur", couleur) }
+      if (estSurligne(el)) {
+        const mark = doc.createElement("mark")
+        const c = proche(el.style.backgroundColor, COULEURS_SURLIGNEUR, 140)?.id
+        if (c) mark.setAttribute("data-couleur", c)
+        if (interieur) interieur.appendChild(mark); else exterieur = mark
+        interieur = mark
+      }
+      if (exterieur && interieur) {
+        nettoyerNoeud(el, nouveau, doc)
+        interieur.appendChild(nouveau)
+        cible.appendChild(exterieur)
+        continue
+      }
     } else if (tag === "SPAN" || tag === "FONT") {
-      // Taille et police : <font size/face> pendant la frappe, <span data-…> une fois enregistré
+      // Taille, police, couleur : <font size/face/color> pendant la frappe,
+      // <span data-…> une fois enregistré
       const taille = tag === "FONT" ? tailleDeFont(el.getAttribute("size")) : el.getAttribute("data-taille")
       const police = tag === "FONT" ? el.getAttribute("face") : el.getAttribute("data-police")
+      const couleur = el.getAttribute("data-couleur") ?? proche(tag === "FONT" ? el.getAttribute("color") : el.style?.color, COULEURS_TEXTE)?.id
       const style = doc.createElement("span")
       if (taille && TAILLES_OK.has(taille)) style.setAttribute("data-taille", taille)
       if (police && POLICES_OK.has(police)) style.setAttribute("data-police", police)
+      if (couleur && TEXTE_OK.has(couleur)) style.setAttribute("data-couleur", couleur)
       // Le surligneur du navigateur produit <span style="background-color">
-      const interieur = estSurligne(el) ? doc.createElement("mark")
-        : el.style?.fontWeight === "bold" || Number(el.style?.fontWeight) >= 600 ? doc.createElement("b") : null
+      let interieur: HTMLElement | null = null
+      if (estSurligne(el)) {
+        interieur = doc.createElement("mark")
+        const c = proche(el.style.backgroundColor, COULEURS_SURLIGNEUR, 140)?.id
+        if (c) interieur.setAttribute("data-couleur", c)
+      } else if (el.style?.fontWeight === "bold" || Number(el.style?.fontWeight) >= 600) interieur = doc.createElement("b")
+      else if (/line-through/.test(el.style?.textDecoration || "")) interieur = doc.createElement("s")
       if (style.attributes.length) {
         if (interieur) { nettoyerNoeud(el, interieur, doc); style.appendChild(interieur) } else nettoyerNoeud(el, style, doc)
         cible.appendChild(style)
@@ -114,7 +191,7 @@ export function nettoyerHtml(html: string): string {
 // Texte brut : recherche, aperçu dans la liste, note vide ou non
 export function texteBrut(html: string): string {
   if (typeof window === "undefined" || !html) return ""
-  const doc = new DOMParser().parseFromString(`<body>${html.replace(/<\/(p|h2|h3|li)>|<br>/g, "$& ")}</body>`, "text/html")
+  const doc = new DOMParser().parseFromString(`<body>${html.replace(/<\/(p|h2|h3|li|td|th)>|<br>/g, "$& ")}</body>`, "text/html")
   return (doc.body.textContent || "").replace(/\s+/g, " ").trim()
 }
 
