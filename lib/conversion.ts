@@ -8,20 +8,24 @@
 
 import { unzip } from "fflate"
 
-export type Morceau = { t: string; b?: boolean; i?: boolean; u?: boolean; mark?: boolean; br?: boolean }
+export type Morceau = { t: string; b?: boolean; i?: boolean; u?: boolean; s?: boolean; mark?: boolean; br?: boolean }
 export type Bloc =
   | { type: "h2" | "h3" | "p" | "li"; morceaux: Morceau[] }
   | { type: "img"; image: Blob; alt: string }
+  | { type: "table"; lignes: string[][] }
 
 export type Avancement = (etape: string) => void
 
-export type TypeConvertible = "pptx" | "docx" | "pdf" | "image"
+export type TypeConvertible = "pptx" | "docx" | "xlsx" | "pdf" | "image" | "texte" | "csv"
 
 export function typeConvertible(nom: string, mime: string): TypeConvertible | null {
   const ext = nom.toLowerCase().split(".").pop() || ""
   if (ext === "pptx" || mime.includes("presentationml")) return "pptx"
   if (ext === "docx" || mime.includes("wordprocessingml")) return "docx"
+  if (ext === "xlsx" || mime.includes("spreadsheetml")) return "xlsx"
   if (ext === "pdf" || mime === "application/pdf") return "pdf"
+  if (ext === "csv" || mime === "text/csv") return "csv"
+  if (["txt", "md", "markdown"].includes(ext) || mime === "text/plain" || mime === "text/markdown") return "texte"
   if (/^image\/(png|jpe?g|gif|webp|bmp|heic|heif)$/.test(mime) || /^(png|jpe?g|gif|webp|bmp)$/.test(ext)) return "image"
   return null
 }
@@ -29,8 +33,10 @@ export function typeConvertible(nom: string, mime: string): TypeConvertible | nu
 export async function convertir(fichier: Blob, type: TypeConvertible, avancer: Avancement): Promise<Bloc[]> {
   if (type === "image") return [{ type: "img", image: fichier, alt: "Image" }]
   if (type === "pdf") return lirePdf(fichier, avancer)
+  if (type === "texte") return lireTexte(await fichier.text())
+  if (type === "csv") return lireCsv(await fichier.text())
   const zip = await ouvrirZip(fichier)
-  return type === "pptx" ? lirePptx(zip, avancer) : lireDocx(zip, avancer)
+  return type === "pptx" ? lirePptx(zip, avancer) : type === "xlsx" ? lireXlsx(zip, avancer) : lireDocx(zip, avancer)
 }
 
 // ─── Outils ZIP / XML ───
@@ -132,7 +138,7 @@ function morceauxDrawingML(p: Element): Morceau[] {
     if (el.tagName === "a:r" || el.tagName === "a:fld") {
       const pr = premier(el, "a:rPr")
       const t = premier(el, "a:t")?.textContent || ""
-      if (t) sortie.push({ t, b: pr?.getAttribute("b") === "1", i: pr?.getAttribute("i") === "1", u: !!pr?.getAttribute("u") && pr.getAttribute("u") !== "none", mark: !!(pr && premier(pr, "a:highlight")) })
+      if (t) sortie.push({ t, b: pr?.getAttribute("b") === "1", i: pr?.getAttribute("i") === "1", u: !!pr?.getAttribute("u") && pr.getAttribute("u") !== "none", s: !!pr?.getAttribute("strike") && pr.getAttribute("strike") !== "noStrike", mark: !!(pr && premier(pr, "a:highlight")) })
     } else if (el.tagName === "a:br") sortie.push({ t: "", br: true })
   }
   return sortie
@@ -161,10 +167,9 @@ function parcourirFormes(arbre: Element, zip: Zip, r: ReturnType<typeof relation
         if (img) { vues.add(cible); corps.push({ type: "img", image: img, alt: premier(forme, "p:cNvPr")?.getAttribute("descr") || "Image de la slide" }) }
       }
     } else if (forme.tagName === "p:graphicFrame") {
-      for (const ligne of Array.from(forme.getElementsByTagName("a:tr"))) {
-        const cellules = Array.from(ligne.getElementsByTagName("a:tc")).map(c => Array.from(c.getElementsByTagName("a:p")).map(texteDe).join(" ").trim())
-        if (cellules.some(Boolean)) corps.push({ type: "p", morceaux: [{ t: cellules.join("  |  ") }] })
-      }
+      const lignes = Array.from(forme.getElementsByTagName("a:tr"))
+        .map(ligne => Array.from(ligne.getElementsByTagName("a:tc")).map(c => Array.from(c.getElementsByTagName("a:p")).map(texteDe).join(" ").trim()))
+      if (lignes.some(l => l.some(Boolean))) corps.push({ type: "table", lignes })
     }
   }
 }
@@ -183,10 +188,10 @@ function lireDocx(zip: Zip, avancer: Avancement): Bloc[] {
     if (n % 50 === 0) avancer(`Paragraphe ${n + 1} / ${elements.length}`)
     if (el.tagName === "w:p") lireParagraphe(el, zip, r, vues, blocs)
     else if (el.tagName === "w:tbl") {
-      for (const ligne of Array.from(el.getElementsByTagName("w:tr"))) {
-        const cellules = Array.from(ligne.getElementsByTagName("w:tc")).map(c => Array.from(c.getElementsByTagName("w:t")).map(t => t.textContent).join("").trim())
-        if (cellules.some(Boolean)) blocs.push({ type: "p", morceaux: [{ t: cellules.join("  |  ") }] })
-      }
+      // Lignes du tableau lui-même (pas celles d'un tableau imbriqué)
+      const lignes = enfants(el, "w:tr").map(ligne => enfants(ligne, "w:tc")
+        .map(c => enfants(c, "w:p").map(p => Array.from(p.getElementsByTagName("w:t")).map(t => t.textContent).join("")).join(" ").trim()))
+      if (lignes.some(l => l.some(Boolean))) blocs.push({ type: "table", lignes })
     }
   })
   return blocs
@@ -200,7 +205,7 @@ function lireParagraphe(p: Element, zip: Zip, r: ReturnType<typeof relations>, v
     const pr = premier(run, "w:rPr")
     const actif = (nom: string) => { const e = pr && premier(pr, nom); return !!e && !["0", "false", "none"].includes(e.getAttribute("w:val") || "") }
     for (const el of Array.from(run.children)) {
-      if (el.tagName === "w:t") morceaux.push({ t: el.textContent || "", b: actif("w:b"), i: actif("w:i"), u: actif("w:u"), mark: actif("w:highlight") || !!(pr && premier(pr, "w:shd")?.getAttribute("w:fill")?.match(/^(FFFF00|FFFF99|FFF2CC)$/i)) })
+      if (el.tagName === "w:t") morceaux.push({ t: el.textContent || "", b: actif("w:b"), i: actif("w:i"), u: actif("w:u"), s: actif("w:strike") || actif("w:dstrike"), mark: actif("w:highlight") || !!(pr && premier(pr, "w:shd")?.getAttribute("w:fill")?.match(/^(FFFF00|FFFF99|FFF2CC)$/i)) })
       else if (el.tagName === "w:tab") morceaux.push({ t: " " })
       else if (el.tagName === "w:br" || el.tagName === "w:cr") morceaux.push({ t: "", br: true })
       else if (el.tagName === "w:drawing" || el.tagName === "w:pict") {
@@ -218,6 +223,109 @@ function lireParagraphe(p: Element, zip: Zip, r: ReturnType<typeof relations>, v
     : /^(subtitle|sous-titre|heading[2-6]|titre[2-6])$/.test(style) ? "h3"
     : liste || /list/.test(style) ? "li" : "p"
   blocs.push({ type, morceaux })
+}
+
+// ─── Excel ───
+// Chaque feuille devient un titre + un tableau (valeurs affichées, sans formules)
+function lireXlsx(zip: Zip, avancer: Avancement): Bloc[] {
+  const classeur = xml(zip, "xl/workbook.xml")
+  if (!classeur) throw new Error("Classeur illisible")
+  const rels = relations(zip, "xl/workbook.xml")
+  const partages = xml(zip, "xl/sharedStrings.xml")
+  const textes = partages ? Array.from(partages.getElementsByTagName("si")).map(si => Array.from(si.getElementsByTagName("t")).map(t => t.textContent).join("")) : []
+  const feuilles = Array.from(classeur.getElementsByTagName("sheet"))
+  const blocs: Bloc[] = []
+  feuilles.slice(0, 20).forEach((f, n) => {
+    avancer(`Feuille ${n + 1} / ${feuilles.length}`)
+    const chemin = rels[f.getAttribute("r:id") || ""]?.cible
+    const doc = chemin ? xml(zip, chemin) : null
+    if (!doc) return
+    const lignes: string[][] = []
+    for (const row of Array.from(doc.getElementsByTagName("row")).slice(0, 500)) {
+      const ligne: string[] = []
+      for (const c of Array.from(row.getElementsByTagName("c"))) {
+        const col = colonne(c.getAttribute("r") || "")
+        if (col >= 30) continue
+        const v = premier(c, "v")?.textContent ?? ""
+        const t = c.getAttribute("t")
+        ligne[col < 0 ? ligne.length : col] = t === "s" ? textes[Number(v)] ?? "" : t === "inlineStr" ? Array.from(c.getElementsByTagName("t")).map(x => x.textContent).join("") : t === "b" ? (v === "1" ? "VRAI" : "FAUX") : nombre(v)
+      }
+      if (ligne.some(x => x?.trim())) lignes.push(Array.from(ligne, x => x ?? ""))
+    }
+    if (!lignes.length) return
+    blocs.push({ type: "h2", morceaux: [{ t: f.getAttribute("name") || `Feuille ${n + 1}` }] })
+    blocs.push({ type: "table", lignes })
+  })
+  return blocs
+}
+
+function colonne(ref: string): number {
+  const l = ref.match(/^[A-Z]+/)?.[0]
+  if (!l) return -1
+  return [...l].reduce((n, c) => n * 26 + c.charCodeAt(0) - 64, 0) - 1
+}
+
+function nombre(v: string): string {
+  const n = Number(v)
+  return v && Number.isFinite(n) && !Number.isInteger(n) ? String(Math.round(n * 1e6) / 1e6).replace(".", ",") : v
+}
+
+// ─── Texte et Markdown ───
+// Titres « # », listes « - » / « 1. », **gras**, *italique*, ~~barré~~
+function lireTexte(texte: string): Bloc[] {
+  const blocs: Bloc[] = []
+  let para: string[] = []
+  const finPara = () => { if (para.length) { blocs.push({ type: "p", morceaux: para.flatMap((l, i) => (i ? [{ t: "", br: true }, ...enLigne(l)] : enLigne(l))) }); para = [] } }
+  for (const brute of texte.replace(/\r\n?/g, "\n").split("\n").slice(0, 20000)) {
+    const l = brute.trimEnd()
+    const titre = l.match(/^(#{1,6})\s+(.*)$/)
+    const puce = l.match(/^\s*(?:[-*+•]|\d+[.)])\s+(.*)$/)
+    if (!l.trim()) finPara()
+    else if (titre) { finPara(); blocs.push({ type: titre[1].length === 1 ? "h2" : "h3", morceaux: enLigne(titre[2]) }) }
+    else if (puce) { finPara(); blocs.push({ type: "li", morceaux: enLigne(puce[1]) }) }
+    else para.push(l)
+  }
+  finPara()
+  return blocs
+}
+
+function enLigne(l: string): Morceau[] {
+  const sortie: Morceau[] = []
+  const re = /\*\*(.+?)\*\*|~~(.+?)~~|(?<![\w*])\*(?!\s)(.+?)\*(?![\w*])|==(.+?)==/g
+  let dernier = 0
+  for (const m of l.matchAll(re)) {
+    if (m.index! > dernier) sortie.push({ t: l.slice(dernier, m.index) })
+    sortie.push(m[1] ? { t: m[1], b: true } : m[2] ? { t: m[2], s: true } : m[3] ? { t: m[3], i: true } : { t: m[4], mark: true })
+    dernier = m.index! + m[0].length
+  }
+  if (dernier < l.length) sortie.push({ t: l.slice(dernier) })
+  return sortie
+}
+
+// CSV : un tableau (séparateur , ; ou tabulation, guillemets gérés)
+function lireCsv(texte: string): Bloc[] {
+  const premiere = texte.split(/\r?\n/, 1)[0] || ""
+  const sep = [";", "\t", ","].map(s => [s, premiere.split(s).length] as const).sort((a, b) => b[1] - a[1])[0][0]
+  const lignes: string[][] = []
+  let ligne: string[] = [], champ = "", guillemets = false
+  for (let i = 0; i < texte.length && lignes.length < 2000; i++) {
+    const c = texte[i]
+    if (guillemets) {
+      if (c === '"' && texte[i + 1] === '"') { champ += '"'; i++ }
+      else if (c === '"') guillemets = false
+      else champ += c
+    } else if (c === '"' && !champ) guillemets = true
+    else if (c === sep) { ligne.push(champ); champ = "" }
+    else if (c === "\n" || c === "\r") {
+      if (c === "\r" && texte[i + 1] === "\n") i++
+      ligne.push(champ); champ = ""
+      if (ligne.some(x => x.trim())) lignes.push(ligne.slice(0, 30))
+      ligne = []
+    } else champ += c
+  }
+  ligne.push(champ)
+  if (ligne.some(x => x.trim())) lignes.push(ligne.slice(0, 30))
+  return lignes.length ? [{ type: "table", lignes }] : []
 }
 
 // ─── PDF ───
@@ -275,6 +383,23 @@ export async function versHtml(blocs: Bloc[], envoyer: (img: Blob) => Promise<st
       break
     }
     if (b.type !== "li") liste = null
+    if (b.type === "table") {
+      const table = document.createElement("table")
+      const corps = document.createElement("tbody")
+      const largeur = Math.max(...b.lignes.map(l => l.length))
+      b.lignes.forEach((l, i) => {
+        const tr = document.createElement("tr")
+        for (let j = 0; j < largeur; j++) {
+          const td = document.createElement(i === 0 && b.lignes.length > 1 ? "th" : "td")
+          td.textContent = l[j] ?? ""
+          tr.appendChild(td)
+        }
+        corps.appendChild(tr)
+      })
+      table.appendChild(corps)
+      racine.appendChild(table)
+      continue
+    }
     if (b.type === "img") {
       iImage++
       avancer(`Image ${iImage} / ${nbImages}`)
@@ -290,7 +415,7 @@ export async function versHtml(blocs: Bloc[], envoyer: (img: Blob) => Promise<st
     for (const m of b.morceaux) {
       if (m.br) { el.appendChild(document.createElement("br")); continue }
       let noeud: Node = document.createTextNode(m.t)
-      for (const [actif, tag] of [[m.mark, "mark"], [m.u, "u"], [m.i, "i"], [m.b, "b"]] as const) {
+      for (const [actif, tag] of [[m.mark, "mark"], [m.s, "s"], [m.u, "u"], [m.i, "i"], [m.b, "b"]] as const) {
         if (actif) { const w = document.createElement(tag); w.appendChild(noeud); noeud = w }
       }
       el.appendChild(noeud)

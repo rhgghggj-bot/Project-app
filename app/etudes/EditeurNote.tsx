@@ -5,7 +5,7 @@ import { toast, confirmer } from "@/lib/toast"
 import { colors, radius } from "@/app/components/ui/tokens"
 import { chapitreVisible, chargerProgramme } from "@/lib/programmes"
 import { chargerFichesPerso } from "@/lib/fichesPerso"
-import { cheminsImages, compresserImage, nettoyerHtml, normaliser, texteBrut, type Dossier, type NoteCarnet } from "@/lib/carnet"
+import { cheminsImages, compresserImage, COULEURS_SURLIGNEUR, COULEURS_TEXTE, nettoyerHtml, normaliser, texteBrut, type Dossier, type NoteCarnet } from "@/lib/carnet"
 import type { Pays } from "@/lib/etudes"
 import { CARREAU, FOND_PAGE } from "./cahier"
 import Dessin from "./Dessin"
@@ -36,7 +36,7 @@ export type ContexteProgramme = { pays: Pays; niveauId: string | null; filiere: 
 type Meta = { titre: string; dossier_id: string | null; epingle: boolean; chapitre_id: string | null }
 type Statut = "pret" | "modifie" | "enregistrement" | "enregistre" | "erreur"
 
-const SURLIGNEUR = "#FFE66D"
+const SURLIGNEUR = COULEURS_SURLIGNEUR[0].hex
 
 // Tailles : valeur de execCommand("fontSize") (1-7) → nom gardé dans la note
 export const TAILLES = [
@@ -68,6 +68,11 @@ const STYLES = `
 .carnet-page h3{font-size:16px;font-weight:650;color:${colors.blue};line-height:${CARREAU}px}
 .carnet-page ul,.carnet-page ol{padding-left:${CARREAU}px}
 .carnet-page mark{background:${SURLIGNEUR};color:inherit;border-radius:2px;padding:0 1px}
+${COULEURS_SURLIGNEUR.filter(c => c.id).map(c => `.carnet-page mark[data-couleur="${c.id}"]{background:${c.hex}}`).join("")}
+${COULEURS_TEXTE.map(c => `.carnet-page [data-couleur="${c.id}"]:not(mark){color:${c.hex}}`).join("")}
+.carnet-page table{border-collapse:collapse;margin:${CARREAU / 2}px 0;background:#fff;min-width:50%;max-width:100%;display:block;overflow-x:auto}
+.carnet-page td,.carnet-page th{border:1px solid #C9D3E3;padding:2px 8px;min-width:64px;vertical-align:top;text-align:left}
+.carnet-page th{background:#EEF2F8;font-weight:650}
 .carnet-page ul[data-liste="cases"]{list-style:none;padding-left:4px}
 .carnet-page ul[data-liste="cases"] li{position:relative;padding-left:28px}
 .carnet-page ul[data-liste="cases"] li::before{content:"";position:absolute;left:0;top:3px;width:18px;height:18px;border:1.5px solid ${colors.navyMid};border-radius:4px;background:#fff;cursor:pointer}
@@ -94,6 +99,17 @@ const STYLES = `
 .carnet-outil{border:none;background:none;min-width:44px;height:44px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;gap:4px;color:${colors.text};font-size:15px;cursor:pointer;padding:0 8px;flex-shrink:0}
 .carnet-outil[aria-pressed="true"]{background:${colors.navy};color:#fff}
 .carnet-outil:focus-visible,.carnet-puce:focus-visible{outline:2px solid ${colors.blue};outline-offset:2px}
+#carnet-impression{display:none}
+@media print{
+  body>*:not(#carnet-impression){display:none !important}
+  #carnet-impression{display:block !important;padding:0;color:#111}
+  #carnet-impression h1{font-family:var(--font-display),sans-serif;font-size:24px;margin:0 0 12px}
+  #carnet-impression .carnet-page{min-height:0;padding:0;line-height:1.5}
+  #carnet-impression .carnet-page h2{padding-top:12px;line-height:1.3}
+  #carnet-impression .carnet-page img{max-height:none;box-shadow:none;break-inside:avoid}
+  #carnet-impression .carnet-page table{display:table}
+  #carnet-impression mark,#carnet-impression th{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
 .carnet-puce{border:1px solid ${colors.blueBorder};background:#fff;border-radius:99px;padding:5px 11px;font-size:12.5px;color:${colors.text};cursor:pointer;display:inline-flex;align-items:center;gap:6px;max-width:100%}
 `
 
@@ -123,6 +139,9 @@ const ICONES = {
   epingle: "M9 4h6l-1 6 3 3H7l3-3zM12 13v7",
   corbeille: "M5 7h14M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3",
   livre: "M4 5a2 2 0 012-2h13v16H6a2 2 0 00-2 2zM4 21V5",
+  annuler: "M9 14L4 9l5-5M4 9h10a6 6 0 010 12h-3",
+  retablir: "M15 14l5-5-5-5M20 9H10a6 6 0 000 12h3",
+  tableau: "M4 5h16v14H4zM4 10h16M4 15h16M10 5v14",
 }
 
 export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte, onFermer, onOuvrirChapitre }: {
@@ -165,7 +184,9 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
   const [chapitres, setChapitres] = useState<OptionLien[] | null>(null)
   const [envoi, setEnvoi] = useState(0)
   const [vue, setVue] = useState<{ haut: number; hauteur: number } | null>(null)
-  const [menu, setMenu] = useState<"infos" | "texte" | null>(null)
+  const [menu, setMenu] = useState<"infos" | "texte" | "couleur" | null>(null)
+  const [couleurSurligneur, setCouleurSurligneur] = useState<(typeof COULEURS_SURLIGNEUR)[number]>(COULEURS_SURLIGNEUR[0])
+  const [export_, setExport] = useState<string | null>(null)
 
   // Photos : liens signés (24 h) pour les images sans source
   function afficherImages() {
@@ -246,6 +267,7 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
       setFormats({
         h2: bloc === "h2", h3: bloc === "h3",
         bold: document.queryCommandState("bold"), italic: document.queryCommandState("italic"), underline: document.queryCommandState("underline"),
+        strike: document.queryCommandState("strikeThrough"), table: !!ancre?.closest("td, th"),
         mark: !!ancre?.closest('mark, span[style*="background-color"]'),
         cases: !!ancre?.closest('ul[data-liste="cases"]'),
         puces: !!ancre?.closest("ul:not([data-liste])"), numeros: !!ancre?.closest("ol"),
@@ -424,11 +446,170 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
       pageRef.current!.querySelectorAll("mark").forEach(m => { if (r?.intersectsNode(m)) m.replaceWith(...Array.from(m.childNodes)) })
     } else {
       document.execCommand("styleWithCSS", false, "true")
-      document.execCommand("hiliteColor", false, SURLIGNEUR)
+      document.execCommand("hiliteColor", false, couleurSurligneur.hex)
       document.execCommand("styleWithCSS", false, "false")
     }
     planifier()
     document.dispatchEvent(new Event("selectionchange"))
+  }
+
+  // Surligneur d'une autre couleur : appliqué tout de suite à la sélection
+  function choisirSurligneur(c: (typeof COULEURS_SURLIGNEUR)[number] | null) {
+    remettreCurseur()
+    const sel = document.getSelection()
+    if (c) setCouleurSurligneur(c)
+    if (sel && !sel.isCollapsed) {
+      document.execCommand("styleWithCSS", false, "true")
+      document.execCommand("hiliteColor", false, c ? c.hex : "transparent")
+      document.execCommand("styleWithCSS", false, "false")
+      if (!c) {
+        const r = sel.getRangeAt(0)
+        pageRef.current!.querySelectorAll("mark").forEach(m => { if (r.intersectsNode(m)) m.replaceWith(...Array.from(m.childNodes)) })
+      }
+      planifier()
+    }
+    document.dispatchEvent(new Event("selectionchange"))
+  }
+
+  function couleurTexte(hex: string | null) {
+    remettreCurseur()
+    document.execCommand("styleWithCSS", false, "true")
+    document.execCommand("foreColor", false, hex ?? colors.text)
+    document.execCommand("styleWithCSS", false, "false")
+    planifier()
+    document.dispatchEvent(new Event("selectionchange"))
+  }
+
+  // ─── Tableaux ───
+  function blocRacine(): Node | null {
+    const page = pageRef.current!
+    let bloc: Node | null = document.getSelection()?.anchorNode ?? null
+    if (!bloc || !page.contains(bloc)) return null
+    while (bloc && bloc.parentNode !== page) bloc = bloc.parentNode
+    return bloc
+  }
+
+  function placerDans(el: Node) {
+    const r = document.createRange()
+    r.selectNodeContents(el); r.collapse(true)
+    const sel = document.getSelection()
+    sel?.removeAllRanges(); sel?.addRange(r)
+  }
+
+  function cellule(tag: "td" | "th") {
+    const c = document.createElement(tag)
+    c.appendChild(document.createElement("br"))
+    return c
+  }
+
+  function insererTableau() {
+    remettreCurseur()
+    const page = pageRef.current!
+    const table = document.createElement("table")
+    const corps = document.createElement("tbody")
+    for (let i = 0; i < 3; i++) {
+      const tr = document.createElement("tr")
+      for (let j = 0; j < 3; j++) tr.appendChild(cellule(i === 0 ? "th" : "td"))
+      corps.appendChild(tr)
+    }
+    table.appendChild(corps)
+    const suite = document.createElement("p")
+    suite.appendChild(document.createElement("br"))
+    const bloc = blocRacine()
+    if (bloc) page.insertBefore(suite, bloc.nextSibling)
+    else page.appendChild(suite)
+    page.insertBefore(table, suite)
+    placerDans(table.querySelector("th")!)
+    planifier()
+    document.dispatchEvent(new Event("selectionchange"))
+  }
+
+  function modifierTableau(action: "ligne" | "colonne" | "-ligne" | "-colonne" | "-tableau") {
+    remettreCurseur()
+    const c = blocCourant()?.closest<HTMLTableCellElement>("td, th")
+    const tr = c?.parentElement as HTMLTableRowElement | undefined
+    const table = c?.closest("table")
+    if (!c || !tr || !table) return
+    const lignes = Array.from(table.querySelectorAll("tr"))
+    const index = c.cellIndex
+    if (action === "ligne") {
+      const nouvelle = document.createElement("tr")
+      for (let j = 0; j < tr.cells.length; j++) nouvelle.appendChild(cellule("td"))
+      tr.after(nouvelle)
+      placerDans(nouvelle.cells[Math.min(index, nouvelle.cells.length - 1)])
+    } else if (action === "colonne") {
+      for (const l of lignes) {
+        const ref = l.cells[Math.min(index, l.cells.length - 1)]
+        const n = cellule(ref?.tagName === "TH" ? "th" : "td")
+        if (ref) ref.after(n); else l.appendChild(n)
+      }
+      placerDans(tr.cells[index + 1])
+    } else if (action === "-ligne" && lignes.length > 1) {
+      const voisine = (tr.nextElementSibling || tr.previousElementSibling) as HTMLTableRowElement
+      tr.remove()
+      placerDans(voisine.cells[Math.min(index, voisine.cells.length - 1)])
+    } else if (action === "-colonne" && tr.cells.length > 1) {
+      for (const l of lignes) l.cells[Math.min(index, l.cells.length - 1)]?.remove()
+      placerDans(tr.cells[Math.max(0, index - 1)])
+    } else {
+      const suite = table.nextSibling
+      table.remove()
+      if (suite) placerDans(suite)
+    }
+    planifier()
+    document.dispatchEvent(new Event("selectionchange"))
+  }
+
+  // ─── Exporter ───
+  function telechargerBlob(blob: Blob, nom: string) {
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url; a.download = nom
+    document.body.appendChild(a); a.click(); a.remove()
+    setTimeout(() => URL.revokeObjectURL(url), 60000)
+  }
+
+  async function exporterWord() {
+    setMenu(null)
+    setExport("Création du fichier Word…")
+    try {
+      await enregistrer()
+      const { noteEnWord, nomFichier } = await import("@/lib/exportWord")
+      const blob = await noteEnWord(meta.current.titre.trim(), nettoyerHtml(pageRef.current?.innerHTML ?? ""), async chemin => {
+        const { data } = await supabase.storage.from("etudes").download(chemin)
+        return data
+      })
+      telechargerBlob(blob, nomFichier(meta.current.titre.trim(), "docx"))
+    } catch {
+      toast("Le fichier Word n'a pas pu être créé", "error")
+    }
+    setExport(null)
+  }
+
+  // Impression (ou « Enregistrer en PDF » dans la fenêtre d'impression)
+  function imprimer() {
+    setMenu(null)
+    const page = pageRef.current
+    if (!page) return
+    document.getElementById("carnet-impression")?.remove()
+    const feuille = document.createElement("div")
+    feuille.id = "carnet-impression"
+    feuille.className = `${lora.variable} ${caveat.variable}`
+    const h1 = document.createElement("h1")
+    h1.textContent = meta.current.titre.trim() || "Note"
+    const contenu = document.createElement("div")
+    contenu.className = "carnet-page"
+    contenu.innerHTML = nettoyerHtml(page.innerHTML)
+    // Mêmes images que dans l'éditeur (liens déjà signés)
+    contenu.querySelectorAll<HTMLImageElement>("img[data-chemin]").forEach(img => {
+      const src = page.querySelector<HTMLImageElement>(`img[data-chemin="${CSS.escape(img.getAttribute("data-chemin")!)}"]`)?.src
+      if (src) img.src = src
+    })
+    feuille.append(h1, contenu)
+    document.body.appendChild(feuille)
+    const retirer = () => { feuille.remove(); window.removeEventListener("afterprint", retirer) }
+    window.addEventListener("afterprint", retirer)
+    setTimeout(() => window.print(), 50)
   }
 
   function taille(commandeTaille: string) {
@@ -481,6 +662,18 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
   }
 
   function surTouche(e: React.KeyboardEvent) {
+    if (e.key === "Tab") {
+      // Tableau : Tab passe à la cellule suivante (une ligne est ajoutée à la fin)
+      const c = blocCourant()?.closest<HTMLTableCellElement>("td, th")
+      if (c) {
+        e.preventDefault()
+        const cellules = Array.from(c.closest("table")!.querySelectorAll<HTMLTableCellElement>("td, th"))
+        const i = cellules.indexOf(c) + (e.shiftKey ? -1 : 1)
+        if (i >= cellules.length) modifierTableau("ligne")
+        else if (i >= 0) placerDans(cellules[i])
+        return
+      }
+    }
     if (e.key === "Enter") {
       // Une nouvelle case n'hérite pas de la coche de la précédente
       setTimeout(() => {
@@ -558,9 +751,9 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
               <span role="alert" style={{ color: "#C81E3F" }}>Non enregistré</span>
               <button onClick={() => void enregistrer()} style={{ background: "none", border: "none", color: "#1A5FD0", fontSize: "12px", cursor: "pointer", textDecoration: "underline", minHeight: 32 }}>Réessayer</button>
             </>
-          ) : <span role="status">{envoi > 0 ? "Envoi de l'image…" : libelleStatut}</span>}
+          ) : <span role="status">{export_ ?? (envoi > 0 ? "Envoi de l'image…" : libelleStatut)}</span>}
         </span>
-        <button className="carnet-outil" aria-label="Dossier et chapitre" aria-expanded={menu === "infos"} title="Dossier et chapitre"
+        <button className="carnet-outil" aria-label="Dossier, chapitre et téléchargement" aria-expanded={menu === "infos"} title="Dossier, chapitre, télécharger"
           onClick={() => setMenu(menu === "infos" ? null : "infos")} style={{ position: "relative" }}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="19" cy="12" r="2" /></svg>
           {(dossierId || chapitreId) && <span aria-hidden="true" style={{ position: "absolute", top: 9, right: 9, width: 7, height: 7, borderRadius: "50%", background: colors.blue }} />}
@@ -571,6 +764,9 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
       </div>
 
       <div role="toolbar" aria-label="Mise en forme" style={{ display: "flex", gap: "2px", padding: "4px 8px", overflowX: "auto", borderBottom: `1px solid ${colors.border}`, background: "#FBFCFF" }}>
+        <Outil label="Annuler" onAction={() => commande("undo")}><Icone d={ICONES.annuler} /></Outil>
+        <Outil label="Rétablir" onAction={() => commande("redo")}><Icone d={ICONES.retablir} /></Outil>
+        <span aria-hidden="true" style={{ width: 1, background: colors.blueBorder, margin: "8px 4px", flexShrink: 0 }} />
         <Outil label="Taille et police" actif={menu === "texte"} onAction={() => setMenu(menu === "texte" ? null : "texte")}><span style={{ fontFamily: "var(--font-lora), Georgia, serif", fontSize: "18px" }}>A<span style={{ fontSize: "13px" }}>a</span></span></Outil>
         <Outil label="Titre" actif={formats.h2} onAction={() => titreBloc("h2")}><span style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: "17px" }}>Titre</span></Outil>
         <Outil label="Sous-titre" actif={formats.h3} onAction={() => titreBloc("h3")}><span style={{ fontWeight: 650, fontSize: "14px" }}>Sous-titre</span></Outil>
@@ -578,17 +774,30 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
         <Outil label="Gras" actif={formats.bold} onAction={() => commande("bold")}><b>G</b></Outil>
         <Outil label="Italique" actif={formats.italic} onAction={() => commande("italic")}><i style={{ fontFamily: "Georgia, serif" }}>I</i></Outil>
         <Outil label="Souligné" actif={formats.underline} onAction={() => commande("underline")}><u>S</u></Outil>
-        <Outil label="Surligner" actif={formats.mark} onAction={surligner}><span style={{ background: SURLIGNEUR, color: colors.text, padding: "0 5px", borderRadius: 3, fontWeight: 600 }}>ab</span></Outil>
+        <Outil label="Barré" actif={formats.strike} onAction={() => commande("strikeThrough")}><s>ab</s></Outil>
+        <Outil label="Surligner" actif={formats.mark} onAction={surligner}><span style={{ background: couleurSurligneur.hex, color: colors.text, padding: "0 5px", borderRadius: 3, fontWeight: 600 }}>ab</span></Outil>
+        <Outil label="Couleurs du texte et du surligneur" actif={menu === "couleur"} onAction={() => setMenu(menu === "couleur" ? null : "couleur")}>
+          <span style={{ display: "inline-flex", flexDirection: "column", alignItems: "center", lineHeight: 1, fontWeight: 700 }}>A<span aria-hidden="true" style={{ width: 16, height: 4, borderRadius: 2, marginTop: 2, background: `linear-gradient(90deg, ${COULEURS_TEXTE.map(c => c.hex).join(",")})` }} /></span>
+        </Outil>
         <span aria-hidden="true" style={{ width: 1, background: colors.blueBorder, margin: "8px 4px", flexShrink: 0 }} />
         <Outil label="Liste à puces" actif={formats.puces} onAction={() => commande("insertUnorderedList")}><Icone d={ICONES.puces} /></Outil>
         <Outil label="Liste numérotée" actif={formats.numeros} onAction={() => commande("insertOrderedList")}><Icone d={ICONES.numeros} /></Outil>
         <Outil label="Liste à cocher" actif={formats.cases} onAction={cases}><Icone d={ICONES.cases} /></Outil>
+        <Outil label="Insérer un tableau" actif={formats.table} onAction={insererTableau}><Icone d={ICONES.tableau} /></Outil>
         <span aria-hidden="true" style={{ width: 1, background: colors.blueBorder, margin: "8px 4px", flexShrink: 0 }} />
         <Outil label="Ajouter une photo" actif={undefined} onAction={() => photoRef.current?.click()}><><Icone d={ICONES.photo} /><span style={{ fontSize: "13px" }}>Photo</span></></Outil>
         <Outil label="Dessiner" actif={undefined} onAction={() => setDessin(true)}><><Icone d={ICONES.dessin} /><span style={{ fontSize: "13px" }}>Dessin</span></></Outil>
         <input ref={photoRef} type="file" accept="image/*" hidden onChange={e => { const f = e.target.files?.[0]; e.target.value = ""; if (f) void choisirPhoto(f) }} />
       </div>
 
+      {formats.table && (
+        <div role="toolbar" aria-label="Tableau" style={{ display: "flex", gap: 6, overflowX: "auto", alignItems: "center", padding: "6px 10px", borderBottom: `1px solid ${colors.border}`, background: "#F4F7FC" }}>
+          {([["ligne", "+ Ligne"], ["colonne", "+ Colonne"], ["-ligne", "− Ligne"], ["-colonne", "− Colonne"], ["-tableau", "Supprimer le tableau"]] as const).map(([a, nom]) => (
+            <button key={a} type="button" className="carnet-choix" onPointerDown={e => e.preventDefault()} onMouseDown={e => e.preventDefault()} onClick={() => modifierTableau(a)}
+              style={{ flexShrink: 0, minHeight: 36, fontSize: 13, color: a === "-tableau" ? "#C81E3F" : undefined }}>{nom}</button>
+          ))}
+        </div>
+        )}
       <div style={{ position: "relative" }}>
         {menu === "texte" && (
           <div className="carnet-menu" role="group" aria-label="Taille et police" style={{ left: 8, right: 8, top: 6, maxWidth: 520 }}>
@@ -611,8 +820,30 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
             <p style={{ margin: "10px 0 0", fontSize: "12px", color: "#6B7280" }}>Sélectionne du texte pour le changer, ou choisis avant d&apos;écrire.</p>
           </div>
         )}
+        {menu === "couleur" && (
+          <div className="carnet-menu" role="group" aria-label="Couleurs" style={{ left: 8, right: 8, top: 6, maxWidth: 520 }}>
+            <div style={{ fontSize: "12px", color: "#6B7280", marginBottom: 6 }}>Couleur du texte</div>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
+              <button type="button" className="carnet-choix" onPointerDown={e => e.preventDefault()} onMouseDown={e => e.preventDefault()} onClick={() => couleurTexte(null)}>Normal</button>
+              {COULEURS_TEXTE.map(c => (
+                <button key={c.id} type="button" className="carnet-choix" onPointerDown={e => e.preventDefault()} onMouseDown={e => e.preventDefault()} onClick={() => couleurTexte(c.hex)}
+                  style={{ color: c.hex, fontWeight: 650 }}>{c.nom}</button>
+              ))}
+            </div>
+            <div style={{ fontSize: "12px", color: "#6B7280", marginBottom: 6 }}>Surligneur</div>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              {COULEURS_SURLIGNEUR.map(c => (
+                <button key={c.nom} type="button" className="carnet-choix" aria-pressed={couleurSurligneur.nom === c.nom}
+                  onPointerDown={e => e.preventDefault()} onMouseDown={e => e.preventDefault()} onClick={() => choisirSurligneur(c)}
+                  style={{ background: c.hex, color: colors.text, borderColor: couleurSurligneur.nom === c.nom ? colors.navy : c.hex, borderWidth: 2 }}>{couleurSurligneur.nom === c.nom ? `✓ ${c.nom}` : c.nom}</button>
+              ))}
+              <button type="button" className="carnet-choix" onPointerDown={e => e.preventDefault()} onMouseDown={e => e.preventDefault()} onClick={() => choisirSurligneur(null)}>Retirer</button>
+            </div>
+            <p style={{ margin: "10px 0 0", fontSize: "12px", color: "#6B7280" }}>Sélectionne du texte pour le colorer. Le bouton « ab » surligne avec la couleur choisie.</p>
+          </div>
+        )}
         {menu === "infos" && (
-          <div className="carnet-menu" role="group" aria-label="Dossier et chapitre" style={{ right: 8, top: 6, width: "min(340px, calc(100% - 16px))" }}>
+          <div className="carnet-menu" role="group" aria-label="Dossier, chapitre et téléchargement" style={{ right: 8, top: 6, width: "min(340px, calc(100% - 16px))" }}>
             <label style={{ display: "block", fontSize: "12px", color: "#6B7280", marginBottom: 6 }} htmlFor="note-dossier">Dossier</label>
             <select id="note-dossier" value={dossierId ?? ""} onChange={e => changerMeta({ dossier_id: e.target.value || null })}
               style={{ width: "100%", border: `1px solid ${colors.blueBorder}`, borderRadius: 10, padding: "9px 10px", background: "#fff", color: colors.text, marginBottom: 12 }}>
@@ -637,6 +868,11 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
                 <p style={{ margin: "8px 0 0", fontSize: "12px", color: "#6B7280" }}>Une note reliée apparaît aussi dans le chapitre, dans Réviser.</p>
               </>
             )}
+            <div style={{ fontSize: "12px", color: "#6B7280", margin: "14px 0 6px" }}>Télécharger</div>
+            <div style={{ display: "flex", gap: 6 }}>
+              <button className="carnet-choix" style={{ flex: 1 }} onClick={() => void exporterWord()} disabled={!!export_}>Word (.docx)</button>
+              <button className="carnet-choix" style={{ flex: 1 }} onClick={imprimer}>PDF / Imprimer</button>
+            </div>
           </div>
         )}
       </div>
