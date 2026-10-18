@@ -11,6 +11,7 @@ import { mettreALaCorbeille } from "@/lib/corbeille"
 import { effacerSous, estSurligne, motSous, plageEntre, pointSous, surligner as surlignerPlage, type Point } from "@/lib/surligneur"
 import { CARREAU, FOND_PAGE } from "./cahier"
 import Dessin from "./Dessin"
+import Astuce, { astuceVue } from "./Astuce"
 import { caveat, lora } from "./polices"
 
 // Éditeur plein écran d'une note du carnet. Le texte est mis en forme dans
@@ -46,6 +47,23 @@ export const ENCADRES = [
   { id: "important", nom: "À retenir", fond: "#FFF6E0", bord: "#E8A317", texte: "#8A5A00" },
   { id: "exemple", nom: "Exemple", fond: "#EAF8F0", bord: "#1E9E63", texte: "#11744A" },
 ] as const
+
+const CLE_USAGE = "carnet-outils"
+function lireFavoris(): string[] {
+  try {
+    const u = JSON.parse(localStorage.getItem(CLE_USAGE) || "{}") as Record<string, number>
+    return Object.entries(u).filter(([, n]) => n >= 3).sort((a, b) => b[1] - a[1]).slice(0, 2).map(([id]) => id)
+  } catch { return [] }
+}
+function noterUsage(id: string) {
+  try {
+    const u = JSON.parse(localStorage.getItem(CLE_USAGE) || "{}") as Record<string, number>
+    u[id] = (u[id] || 0) + 1
+    localStorage.setItem(CLE_USAGE, JSON.stringify(u))
+  } catch {}
+}
+
+type OutilPlus = { id: string; groupe: string; label: string; icone: React.ReactNode; actif?: boolean }
 
 const CLE_STYLO = "carnet-surligneur"
 function couleurMemorisee(): string {
@@ -222,7 +240,9 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
   const [chapitres, setChapitres] = useState<OptionLien[] | null>(null)
   const [envoi, setEnvoi] = useState(0)
   const [vue, setVue] = useState<{ haut: number; hauteur: number } | null>(null)
-  const [menu, setMenu] = useState<"infos" | "texte" | "couleur" | "encadre" | null>(null)
+  const [menu, setMenu] = useState<"infos" | "texte" | "couleur" | "encadre" | "plus" | null>(null)
+  // Outils du « + » les plus utilisés (lus à l'ouverture : la barre ne bouge pas pendant qu'on écrit)
+  const [favoris] = useState<string[]>(lireFavoris)
   // Surligneur crayon : couleur choisie ("" = jaune), mode actif ou non
   const [couleurStylo, setCouleurStylo] = useState<string>(couleurMemorisee)
   const [stylo, setStylo] = useState<null | "surligner" | "gommer">(null)
@@ -958,6 +978,62 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
     catch { toast("Cette image ne peut pas être lue", "error") }
   }
 
+  // ─── Outils rangés dans le « + » ───
+  const outilsPlus: OutilPlus[] = [
+    { id: "italique", groupe: "Texte", label: "Italique", icone: <i style={{ fontFamily: "Georgia, serif", fontSize: 17 }}>I</i>, actif: formats.italic },
+    { id: "souligne", groupe: "Texte", label: "Souligné", icone: <u style={{ fontSize: 16 }}>S</u>, actif: formats.underline },
+    { id: "barre", groupe: "Texte", label: "Barré", icone: <s style={{ fontSize: 15 }}>ab</s>, actif: formats.strike },
+    { id: "couleur", groupe: "Texte", label: "Couleur", icone: <span style={{ display: "inline-flex", flexDirection: "column", alignItems: "center", lineHeight: 1, fontWeight: 700 }}>A<span aria-hidden="true" style={{ width: 16, height: 4, borderRadius: 2, marginTop: 2, background: `linear-gradient(90deg, ${COULEURS_TEXTE.map(c => c.hex).join(",")})` }} /></span> },
+    { id: "taille", groupe: "Texte", label: "Taille, police", icone: <span style={{ fontFamily: "var(--font-lora), Georgia, serif", fontSize: 17 }}>A<span style={{ fontSize: 12 }}>a</span></span> },
+    { id: "exposant", groupe: "Texte", label: "Exposant", icone: <span style={{ fontSize: 15 }}>x<sup style={{ fontSize: 10 }}>2</sup></span>, actif: formats.sup },
+    { id: "indice", groupe: "Texte", label: "Indice", icone: <span style={{ fontSize: 15 }}>x<sub style={{ fontSize: 10 }}>2</sub></span>, actif: formats.sub },
+    { id: "soustitre", groupe: "Structure", label: "Sous-titre", icone: <span style={{ fontWeight: 700, fontSize: 13 }}>Sous-t.</span>, actif: formats.h3 },
+    { id: "numeros", groupe: "Structure", label: "Numérotée", icone: <Icone d={ICONES.numeros} />, actif: formats.numeros },
+    { id: "cases", groupe: "Structure", label: "Cases", icone: <Icone d={ICONES.cases} />, actif: formats.cases },
+    { id: "encadre", groupe: "Structure", label: "Encadré", icone: <Icone d={ICONES.encadre} />, actif: formats.encadre },
+    { id: "tableau", groupe: "Structure", label: "Tableau", icone: <Icone d={ICONES.tableau} />, actif: formats.table },
+    { id: "separateur", groupe: "Structure", label: "Séparation", icone: <Icone d={ICONES.separateur} /> },
+    { id: "dessin", groupe: "Ajouter", label: "Dessin", icone: <Icone d={ICONES.dessin} /> },
+    { id: "retablir", groupe: "Ajouter", label: "Rétablir", icone: <Icone d={ICONES.retablir} /> },
+    { id: "interroger", groupe: "Réviser", label: "Je m'interroge", icone: <Icone d={ICONES.oeil} /> },
+    { id: "plan", groupe: "Réviser", label: "Plan, surlignages", icone: <Icone d={ICONES.plan} /> },
+  ]
+
+  function actionListe(id: string) {
+    if (id === "puces") commande("insertUnorderedList")
+    else if (id === "numeros") commande("insertOrderedList")
+    else if (id === "cases") cases()
+    else retrait(id === "+")
+  }
+
+  function executer(id: string) {
+    switch (id) {
+      case "italique": commande("italic"); break
+      case "souligne": commande("underline"); break
+      case "barre": commande("strikeThrough"); break
+      case "couleur": setMenu("couleur"); break
+      case "taille": setMenu("texte"); break
+      case "exposant": commande("superscript"); break
+      case "indice": commande("subscript"); break
+      case "soustitre": titreBloc("h3"); break
+      case "numeros": commande("insertOrderedList"); break
+      case "cases": cases(); break
+      case "encadre": setMenu("encadre"); break
+      case "tableau": insererTableau(); break
+      case "separateur": separateur(); break
+      case "dessin": setDessin(true); break
+      case "retablir": commande("redo"); break
+      case "interroger": interroger(); break
+      case "plan": ouvrirPlan(); break
+    }
+  }
+
+  function lancer(o: OutilPlus) {
+    noterUsage(o.id)
+    if (menu === "plus") setMenu(null)
+    executer(o.id)
+  }
+
   const chapitre = chapitres?.find(c => c.id === chapitreId) ?? null
   const libelleStatut = { pret: "", modifie: "Modifié", enregistrement: "Enregistrement…", enregistre: "Enregistré", erreur: "Non enregistré" }[statut]
 
@@ -1019,36 +1095,19 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
             <span aria-hidden="true" style={{ position: "absolute", left: -2, right: -2, bottom: -3, height: 5, borderRadius: 3, background: (COULEURS_SURLIGNEUR.find(c => c.id === couleurStylo) ?? COULEURS_SURLIGNEUR[0]).hex }} />
           </span>
         </Outil>
-        <Outil label="Je m'interroge (cacher les surlignages)" onAction={interroger}><Icone d={ICONES.oeil} /></Outil>
+        <Outil label="Titre" actif={formats.h2} onAction={() => titreBloc("h2")}><span style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: "16px" }}>Titre</span></Outil>
+        <Outil label="Gras" actif={formats.bold} onAction={() => commande("bold")}><b style={{ fontSize: 17 }}>G</b></Outil>
+        <Outil label="Liste à puces" actif={formats.puces || formats.numeros || formats.cases} onAction={() => commande("insertUnorderedList")}><Icone d={ICONES.puces} /></Outil>
+        <Outil label="Ajouter une photo" onAction={() => photoRef.current?.click()}><Icone d={ICONES.photo} /></Outil>
         <Outil label="Annuler" onAction={() => commande("undo")}><Icone d={ICONES.annuler} /></Outil>
-        <Outil label="Rétablir" onAction={() => commande("redo")}><Icone d={ICONES.retablir} /></Outil>
-        <span aria-hidden="true" style={{ width: 1, background: colors.blueBorder, margin: "8px 4px", flexShrink: 0 }} />
-        <Outil label="Taille et police" actif={menu === "texte"} onAction={() => setMenu(menu === "texte" ? null : "texte")}><span style={{ fontFamily: "var(--font-lora), Georgia, serif", fontSize: "18px" }}>A<span style={{ fontSize: "13px" }}>a</span></span></Outil>
-        <Outil label="Titre" actif={formats.h2} onAction={() => titreBloc("h2")}><span style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: "17px" }}>Titre</span></Outil>
-        <Outil label="Sous-titre" actif={formats.h3} onAction={() => titreBloc("h3")}><span style={{ fontWeight: 650, fontSize: "14px" }}>Sous-titre</span></Outil>
-        <span aria-hidden="true" style={{ width: 1, background: colors.blueBorder, margin: "8px 4px", flexShrink: 0 }} />
-        <Outil label="Gras" actif={formats.bold} onAction={() => commande("bold")}><b>G</b></Outil>
-        <Outil label="Italique" actif={formats.italic} onAction={() => commande("italic")}><i style={{ fontFamily: "Georgia, serif" }}>I</i></Outil>
-        <Outil label="Souligné" actif={formats.underline} onAction={() => commande("underline")}><u>S</u></Outil>
-        <Outil label="Barré" actif={formats.strike} onAction={() => commande("strikeThrough")}><s>ab</s></Outil>
-        <Outil label="Couleur du texte" actif={menu === "couleur"} onAction={() => setMenu(menu === "couleur" ? null : "couleur")}>
-          <span style={{ display: "inline-flex", flexDirection: "column", alignItems: "center", lineHeight: 1, fontWeight: 700 }}>A<span aria-hidden="true" style={{ width: 16, height: 4, borderRadius: 2, marginTop: 2, background: `linear-gradient(90deg, ${COULEURS_TEXTE.map(c => c.hex).join(",")})` }} /></span>
+        {/* Outils du « + » les plus utilisés, remontés dans la barre */}
+        {favoris.map(id => outilsPlus.find(o => o.id === id)).filter(Boolean).map(o => (
+          <Outil key={o!.id} label={o!.label} actif={o!.actif} onAction={() => lancer(o!)}>{o!.icone}</Outil>
+        ))}
+        <span style={{ flex: 1 }} />
+        <Outil label="Plus d'outils" actif={menu === "plus"} onAction={() => setMenu(menu === "plus" ? null : "plus")}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
         </Outil>
-        <span aria-hidden="true" style={{ width: 1, background: colors.blueBorder, margin: "8px 4px", flexShrink: 0 }} />
-        <Outil label="Liste à puces" actif={formats.puces} onAction={() => commande("insertUnorderedList")}><Icone d={ICONES.puces} /></Outil>
-        <Outil label="Liste numérotée" actif={formats.numeros} onAction={() => commande("insertOrderedList")}><Icone d={ICONES.numeros} /></Outil>
-        <Outil label="Liste à cocher" actif={formats.cases} onAction={cases}><Icone d={ICONES.cases} /></Outil>
-        <Outil label="Décaler à droite (sous-point)" onAction={() => retrait(true)}><Icone d={ICONES.retrait} /></Outil>
-        <Outil label="Décaler à gauche" onAction={() => retrait(false)}><Icone d={ICONES.desretrait} /></Outil>
-        <span aria-hidden="true" style={{ width: 1, background: colors.blueBorder, margin: "8px 4px", flexShrink: 0 }} />
-        <Outil label="Encadré (définition, à retenir, exemple)" actif={formats.encadre || menu === "encadre"} onAction={() => setMenu(menu === "encadre" ? null : "encadre")}><Icone d={ICONES.encadre} /></Outil>
-        <Outil label="Insérer un tableau" actif={formats.table} onAction={insererTableau}><Icone d={ICONES.tableau} /></Outil>
-        <Outil label="Ligne de séparation" onAction={separateur}><Icone d={ICONES.separateur} /></Outil>
-        <Outil label="Exposant" actif={formats.sup} onAction={() => commande("superscript")}><span style={{ fontSize: 15 }}>x<sup style={{ fontSize: 10 }}>2</sup></span></Outil>
-        <Outil label="Indice" actif={formats.sub} onAction={() => commande("subscript")}><span style={{ fontSize: 15 }}>x<sub style={{ fontSize: 10 }}>2</sub></span></Outil>
-        <span aria-hidden="true" style={{ width: 1, background: colors.blueBorder, margin: "8px 4px", flexShrink: 0 }} />
-        <Outil label="Ajouter une photo" actif={undefined} onAction={() => photoRef.current?.click()}><><Icone d={ICONES.photo} /><span style={{ fontSize: "13px" }}>Photo</span></></Outil>
-        <Outil label="Dessiner" actif={undefined} onAction={() => setDessin(true)}><><Icone d={ICONES.dessin} /><span style={{ fontSize: "13px" }}>Dessin</span></></Outil>
         <input ref={photoRef} type="file" accept="image/*" hidden onChange={e => { const f = e.target.files?.[0]; e.target.value = ""; if (f) void choisirPhoto(f) }} />
       </div>
       )}
@@ -1063,6 +1122,24 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
         </div>
       )}
 
+      {(formats.puces || formats.numeros || formats.cases) && !formats.table && !stylo && !cache && (
+        <div role="toolbar" aria-label="Liste" style={{ display: "flex", gap: 6, overflowX: "auto", alignItems: "center", padding: "6px 10px", borderBottom: `1px solid ${colors.border}`, background: "#F4F7FC" }}>
+          {([["puces", "• Puces"], ["numeros", "1. Numéros"], ["cases", "☐ Cases"], ["+", "→ Sous-point"], ["-", "← Remonter"]] as const).map(([id, nom]) => (
+            <button key={id} type="button" className="carnet-choix" aria-pressed={id === "puces" ? !!formats.puces : id === "numeros" ? !!formats.numeros : id === "cases" ? !!formats.cases : undefined}
+              onPointerDown={e => e.preventDefault()} onMouseDown={e => e.preventDefault()} onClick={() => actionListe(id)}
+              style={{ flexShrink: 0, minHeight: 36, fontSize: 13 }}>{nom}</button>
+          ))}
+        </div>
+      )}
+      {formats.encadre && !stylo && !cache && (
+        <div role="toolbar" aria-label="Type d'encadré" style={{ display: "flex", gap: 6, overflowX: "auto", alignItems: "center", padding: "6px 10px", borderBottom: `1px solid ${colors.border}`, background: "#F4F7FC" }}>
+          {ENCADRES.map(e => (
+            <button key={e.id} type="button" className="carnet-choix" onPointerDown={ev => ev.preventDefault()} onMouseDown={ev => ev.preventDefault()} onClick={() => encadrer(e.id)}
+              style={{ flexShrink: 0, minHeight: 36, fontSize: 13, background: e.fond, borderColor: e.bord, color: e.texte, fontWeight: 700 }}>{e.nom}</button>
+          ))}
+          <button type="button" className="carnet-choix" onPointerDown={ev => ev.preventDefault()} onMouseDown={ev => ev.preventDefault()} onClick={() => encadrer(null)} style={{ flexShrink: 0, minHeight: 36, fontSize: 13 }}>Retirer</button>
+        </div>
+      )}
       {formats.table && !stylo && !cache && (
         <div role="toolbar" aria-label="Tableau" style={{ display: "flex", gap: 6, overflowX: "auto", alignItems: "center", padding: "6px 10px", borderBottom: `1px solid ${colors.border}`, background: "#F4F7FC" }}>
           {([["ligne", "+ Ligne"], ["colonne", "+ Colonne"], ["-ligne", "− Ligne"], ["-colonne", "− Colonne"], ["-tableau", "Supprimer le tableau"]] as const).map(([a, nom]) => (
@@ -1072,6 +1149,25 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
         </div>
         )}
       <div style={{ position: "relative" }}>
+        {menu === "plus" && (
+          <div className="carnet-menu" role="group" aria-label="Plus d'outils" style={{ left: 8, right: 8, top: 6, maxWidth: 560, marginLeft: "auto", maxHeight: "60dvh", overflowY: "auto" }}>
+            {["Texte", "Structure", "Ajouter", "Réviser"].map(g => (
+              <div key={g} style={{ marginBottom: 10 }}>
+                <div style={{ fontSize: 12, color: "#6B7280", marginBottom: 6 }}>{g}</div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(74px, 1fr))", gap: 6 }}>
+                  {outilsPlus.filter(o => o.groupe === g).map(o => (
+                    <button key={o.id} type="button" className="carnet-choix" aria-pressed={o.actif}
+                      onPointerDown={e => e.preventDefault()} onMouseDown={e => e.preventDefault()} onClick={() => lancer(o)}
+                      style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 3, padding: "8px 4px", minHeight: 62 }}>
+                      <span style={{ height: 22, display: "inline-flex", alignItems: "center" }}>{o.icone}</span>
+                      <span style={{ fontSize: 11.5, lineHeight: 1.15 }}>{o.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
         {menu === "texte" && (
           <div className="carnet-menu" role="group" aria-label="Taille et police" style={{ left: 8, right: 8, top: 6, maxWidth: 520 }}>
             <div style={{ fontSize: "12px", color: "#6B7280", marginBottom: 6 }}>Taille</div>
@@ -1155,6 +1251,14 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
 
       <div style={{ flex: 1, overflowY: "auto", ...FOND_PAGE }} onPointerDown={() => { if (menu) setMenu(null) }}>
         <div ref={feuilleRef} style={{ maxWidth: 760, margin: "0 auto", position: "relative" }}>
+          {!stylo && !cache && (
+            <div style={{ padding: "12px 12px 0" }}>
+              <Astuce id="carnet-outils" style={{ margin: 0 }}>Le <b>crayon</b> (1<sup>er</sup> bouton) surligne sans sélectionner. Couleurs, tableau, encadré, dessin… sont dans le <b>+</b>.</Astuce>
+              {note.contenu.includes("<mark") && astuceVue("carnet-outils") && (
+                <Astuce id="carnet-cartes" style={{ margin: 0 }}>Tes passages surlignés deviennent des <b>cartes de révision</b> : retrouve-les dans Réviser → Aujourd&apos;hui. Le + → « Je m&apos;interroge » les cache pour t&apos;entraîner.</Astuce>
+              )}
+            </div>
+          )}
           <textarea ref={titreRef} className="carnet-titre" rows={1} value={titre} placeholder="Titre" aria-label="Titre de la note" maxLength={200}
             onChange={e => { changerMeta({ titre: e.target.value.replace(/\n/g, " ") }); ajusterTitre() }}
             onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); pageRef.current?.focus() } }}

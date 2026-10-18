@@ -10,7 +10,8 @@ import { COLONNES_NOTE, dateCourte, normaliser, type Dossier, type NoteCarnet } 
 import EditeurNote, { type ContexteProgramme } from "./EditeurNote"
 import DocumentsSection from "./DocumentsSection"
 import Corbeille from "./Corbeille"
-import { BLEU_TEXTE, FOND_CAHIER, ROUGE_TEXTE, TEXTE_DOUX } from "./cahier"
+import Astuce from "./Astuce"
+import { FOND_CAHIER, ROUGE_TEXTE, TEXTE_DOUX } from "./cahier"
 
 // Onglet « Carnet » : toutes les notes de l'élève, rangées par dossier, avec
 // recherche dans les titres et le texte. Les notes épinglées restent en haut.
@@ -19,6 +20,8 @@ import { BLEU_TEXTE, FOND_CAHIER, ROUGE_TEXTE, TEXTE_DOUX } from "./cahier"
 export type ActionCarnet = { type: "nouvelle"; chapitreId: string } | { type: "ouvrir"; noteId: string }
 
 type Filtre = "toutes" | "sans" | string
+type Tri = "modif" | "creation" | "titre"
+const TRIS: { id: Tri; nom: string }[] = [{ id: "modif", nom: "Modifiées récemment" }, { id: "creation", nom: "Créées récemment" }, { id: "titre", nom: "Titre (A → Z)" }]
 
 export default function CarnetSection({ userId, contexte, action, onActionTraitee, onOuvrirChapitre }: {
   userId: string
@@ -38,6 +41,8 @@ export default function CarnetSection({ userId, contexte, action, onActionTraite
   const [chapitres, setChapitres] = useState<Map<string, { matiere: string; titre: string }>>(new Map())
   const [vue, setVue] = useState<"notes" | "documents">("notes")
   const [corbeille, setCorbeille] = useState(false)
+  const [menuOuvert, setMenuOuvert] = useState(false)
+  const [tri, setTri] = useState<Tri>(() => { try { const t = localStorage.getItem("carnet-tri"); return t === "titre" || t === "creation" ? t : "modif" } catch { return "modif" } })
   // Change quand un document est restauré : la liste des documents se recharge
   const [versionDocs, setVersionDocs] = useState(0)
 
@@ -57,6 +62,13 @@ export default function CarnetSection({ userId, contexte, action, onActionTraite
     setDossiers((d.data || []) as Dossier[])
   }
   useChargement(charger, userId)
+
+  useEffect(() => {
+    if (!menuOuvert) return
+    const echap = (e: KeyboardEvent) => { if (e.key === "Escape") setMenuOuvert(false) }
+    window.addEventListener("keydown", echap)
+    return () => window.removeEventListener("keydown", echap)
+  }, [menuOuvert])
 
   // Titres des chapitres et fiches reliés, pour les afficher dans la liste
   useEffect(() => {
@@ -151,6 +163,7 @@ export default function CarnetSection({ userId, contexte, action, onActionTraite
   const visibles = (notes || [])
     .filter(n => filtre === "toutes" || (filtre === "sans" ? !n.dossier_id : n.dossier_id === filtre))
     .filter(n => mots.every(m => normaliser(`${n.titre} ${n.texte}`).includes(m)))
+    .sort((a, b) => tri === "titre" ? (a.titre || "~").localeCompare(b.titre || "~", "fr") : tri === "creation" ? b.created_at.localeCompare(a.created_at) : b.updated_at.localeCompare(a.updated_at))
   const epinglees = visibles.filter(n => n.epingle)
   const autres = visibles.filter(n => !n.epingle)
   const dossierActif = dossiers.find(d => d.id === filtre)
@@ -188,8 +201,32 @@ export default function CarnetSection({ userId, contexte, action, onActionTraite
     )
   }
 
+  const choixMenu: React.CSSProperties = { width: "100%", textAlign: "left", background: "none", border: "none", borderRadius: 8, padding: "10px 10px", fontSize: 14, color: colors.text, cursor: "pointer", minHeight: 42 }
+  const choisir = (f: () => void) => () => { setMenuOuvert(false); f() }
+  const menu = menuOuvert && (
+    <>
+      <div onClick={() => setMenuOuvert(false)} style={{ position: "fixed", inset: 0, zIndex: 40 }} />
+      <div role="menu" aria-label="Options du carnet" style={{ position: "absolute", right: 0, top: 46, zIndex: 41, width: 250, background: "#fff", border: `1px solid ${colors.blueBorder}`, borderRadius: 14, boxShadow: "0 10px 30px rgba(10,22,40,.15)", padding: 6 }}>
+        {vue === "notes" && (
+          <>
+            <button role="menuitem" style={choixMenu} onClick={choisir(() => setNomDossier(""))}>Nouveau dossier</button>
+            {dossierActif && <button role="menuitem" style={choixMenu} onClick={choisir(() => setRenommer(dossierActif.nom))}>Renommer « {dossierActif.nom} »</button>}
+            {dossierActif && <button role="menuitem" style={{ ...choixMenu, color: ROUGE_TEXTE }} onClick={choisir(() => void supprimerDossier(dossierActif))}>Supprimer le dossier « {dossierActif.nom} »</button>}
+            <div style={{ fontSize: 11.5, color: TEXTE_DOUX, padding: "8px 10px 2px", borderTop: `1px solid ${colors.border}`, marginTop: 4 }}>Trier</div>
+            {TRIS.map(t => (
+              <button key={t.id} role="menuitemradio" aria-checked={tri === t.id} style={{ ...choixMenu, fontWeight: tri === t.id ? 700 : 400 }}
+                onClick={choisir(() => { setTri(t.id); try { localStorage.setItem("carnet-tri", t.id) } catch {} })}>{tri === t.id ? "✓ " : ""}{t.nom}</button>
+            ))}
+          </>
+        )}
+        <button role="menuitem" style={{ ...choixMenu, borderTop: vue === "notes" ? `1px solid ${colors.border}` : "none", marginTop: vue === "notes" ? 4 : 0 }} onClick={choisir(() => setCorbeille(true))}>Corbeille</button>
+      </div>
+    </>
+  )
+
   const bascule = (
-    <div role="tablist" aria-label="Notes ou documents" style={{ display: "flex", gap: 2, background: "#EEF2F8", borderRadius: 10, padding: 3, marginBottom: 10 }}>
+    <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 10, position: "relative" }}>
+    <div role="tablist" aria-label="Notes ou documents" style={{ flex: 1, display: "flex", gap: 2, background: "#EEF2F8", borderRadius: 10, padding: 3 }}>
       {(["notes", "documents"] as const).map(v => (
         <button key={v} role="tab" aria-selected={vue === v} onClick={() => setVue(v)}
           style={{ flex: 1, border: "none", borderRadius: 8, padding: "8px 0", fontSize: "13px", fontWeight: 600, cursor: "pointer",
@@ -198,22 +235,17 @@ export default function CarnetSection({ userId, contexte, action, onActionTraite
         </button>
       ))}
     </div>
+    <button aria-label="Options du carnet (dossiers, tri, corbeille)" aria-haspopup="menu" aria-expanded={menuOuvert} disabled={!!erreur} onClick={() => setMenuOuvert(o => !o)}
+      style={{ flexShrink: 0, width: 42, height: 40, borderRadius: 10, border: `1px solid ${colors.blueBorder}`, background: menuOuvert ? colors.navy : "#fff", color: menuOuvert ? "#fff" : colors.text, cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="19" cy="12" r="2" /></svg>
+    </button>
+    {menu}
+    </div>
   )
 
-  const lienCorbeille = (
-    <>
-      <div style={{ textAlign: "center", marginTop: 14 }}>
-        <button onClick={() => setCorbeille(true)} disabled={!!erreur}
-          style={{ background: "none", border: "none", color: TEXTE_DOUX, fontSize: 13, cursor: "pointer", minHeight: 40, display: "inline-flex", alignItems: "center", gap: 6 }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 7h14M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" /></svg>
-          Corbeille
-        </button>
-      </div>
-      {corbeille && (
-        <Corbeille userId={userId} dossiers={dossiers} onFermer={() => setCorbeille(false)}
-          onRestaure={t => { if (t === "note") void charger(); else setVersionDocs(v => v + 1) }} />
-      )}
-    </>
+  const fenetreCorbeille = corbeille && (
+    <Corbeille userId={userId} dossiers={dossiers} onFermer={() => setCorbeille(false)}
+      onRestaure={t => { if (t === "note") void charger(); else setVersionDocs(v => v + 1) }} />
   )
 
   if (vue === "documents") {
@@ -222,7 +254,7 @@ export default function CarnetSection({ userId, contexte, action, onActionTraite
         {bascule}
         <DocumentsSection key={versionDocs} userId={userId} dossiers={dossiers}
           onOuvrirNote={n => { setNotes(ns => [n, ...(ns || []).filter(x => x.id !== n.id)]); setVue("notes"); setOuverte({ note: n, nouvelle: false }) }} />
-        {lienCorbeille}
+        {fenetreCorbeille}
       </div>
     )
   }
@@ -239,6 +271,7 @@ export default function CarnetSection({ userId, contexte, action, onActionTraite
         </button>
       </div>
 
+      {(dossiers.length > 0 || nomDossier !== null) && (
       <div style={{ display: "flex", gap: "6px", overflowX: "auto", paddingBottom: "4px", marginBottom: "10px" }}>
         <div role="group" aria-label="Filtrer par dossier" style={{ display: "contents" }}>
         <button aria-pressed={filtre === "toutes"} style={puce(filtre === "toutes")} onClick={() => setFiltre("toutes")}>Toutes <span style={{ opacity: 0.6 }}>{compte("toutes")}</span></button>
@@ -246,9 +279,7 @@ export default function CarnetSection({ userId, contexte, action, onActionTraite
           <button key={d.id} aria-pressed={filtre === d.id} style={puce(filtre === d.id)} onClick={() => setFiltre(d.id)}>{d.nom} <span style={{ opacity: 0.6 }}>{compte(d.id)}</span></button>
         ))}
         </div>
-        {nomDossier === null ? (
-          <button style={{ ...puce(false), borderStyle: "dashed", color: BLEU_TEXTE }} onClick={() => setNomDossier("")} disabled={!!erreur}>+ Dossier</button>
-        ) : (
+        {nomDossier !== null && (
           <form onSubmit={e => { e.preventDefault(); void creerDossier() }} style={{ display: "flex", gap: "4px", flexShrink: 0 }}>
             <input autoFocus value={nomDossier} onChange={e => setNomDossier(e.target.value)} onBlur={() => void creerDossier()} maxLength={60}
               onKeyDown={e => { if (e.key === "Escape") { e.preventDefault(); setNomDossier(null) } }}
@@ -257,23 +288,17 @@ export default function CarnetSection({ userId, contexte, action, onActionTraite
           </form>
         )}
       </div>
-
-      {dossierActif && (
-        <div style={{ display: "flex", gap: "12px", alignItems: "center", marginBottom: "10px", fontSize: "12.5px" }}>
-          {renommer === null ? (
-            <>
-              <button onClick={() => setRenommer(dossierActif.nom)} style={{ background: "none", border: "none", padding: "8px 0", minHeight: 36, color: BLEU_TEXTE, cursor: "pointer" }}>Renommer le dossier</button>
-              <button onClick={() => void supprimerDossier(dossierActif)} style={{ background: "none", border: "none", padding: "8px 0", minHeight: 36, color: ROUGE_TEXTE, cursor: "pointer" }}>Supprimer le dossier</button>
-            </>
-          ) : (
-            <form onSubmit={e => { e.preventDefault(); void renommerDossier(dossierActif.id) }}>
-              <input autoFocus value={renommer} onChange={e => setRenommer(e.target.value)} onBlur={() => void renommerDossier(dossierActif.id)} maxLength={60}
-                onKeyDown={e => { if (e.key === "Escape") { e.preventDefault(); setRenommer(null) } }} aria-label="Nouveau nom du dossier"
-                style={{ border: `1px solid ${colors.blue}`, borderRadius: radius.pill, padding: "6px 12px", fontSize: "16px", width: 200 }} />
-            </form>
-          )}
-        </div>
       )}
+
+      {dossierActif && renommer !== null && (
+        <form onSubmit={e => { e.preventDefault(); void renommerDossier(dossierActif.id) }} style={{ marginBottom: 10 }}>
+          <input autoFocus value={renommer} onChange={e => setRenommer(e.target.value)} onBlur={() => void renommerDossier(dossierActif.id)} maxLength={60}
+            onKeyDown={e => { if (e.key === "Escape") { e.preventDefault(); setRenommer(null) } }} aria-label="Nouveau nom du dossier"
+            style={{ border: `1px solid ${colors.blue}`, borderRadius: radius.pill, padding: "6px 12px", fontSize: "16px", width: 220 }} />
+        </form>
+      )}
+
+      <Astuce id="carnet-documents">Touche <b>Documents</b> pour importer tes PowerPoint, Word ou PDF : tu peux les lire et les <b>modifier</b> ici. Dossiers, tri et corbeille sont dans le bouton <b>⋯</b>.</Astuce>
 
       {erreur && <p role="alert" style={{ fontSize: "13px", color: colors.text, background: colors.redLight, borderRadius: radius.sm, padding: "10px 12px" }}>{erreur}</p>}
       {notes === null && <div className="nx-skel" style={{ height: 180, borderRadius: radius.md }} />}
@@ -311,7 +336,7 @@ export default function CarnetSection({ userId, contexte, action, onActionTraite
           <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>{autres.map(ligne)}</ul>
         </div>
       )}
-      {lienCorbeille}
+      {fenetreCorbeille}
     </div>
   )
 }
