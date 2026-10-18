@@ -291,11 +291,13 @@ function lireTexte(texte: string): Bloc[] {
 
 function enLigne(l: string): Morceau[] {
   const sortie: Morceau[] = []
-  const re = /\*\*(.+?)\*\*|~~(.+?)~~|(?<![\w*])\*(?!\s)(.+?)\*(?![\w*])|==(.+?)==/g
+  // (sans « lookbehind » : non reconnu par Safari avant iOS 16.4)
+  const re = /\*\*(.+?)\*\*|~~(.+?)~~|(^|[^\w*])\*(?![\s*])(.+?)\*(?![\w*])|==(.+?)==/g
   let dernier = 0
   for (const m of l.matchAll(re)) {
-    if (m.index! > dernier) sortie.push({ t: l.slice(dernier, m.index) })
-    sortie.push(m[1] ? { t: m[1], b: true } : m[2] ? { t: m[2], s: true } : m[3] ? { t: m[3], i: true } : { t: m[4], mark: true })
+    const debut = m.index! + (m[3]?.length ?? 0)
+    if (debut > dernier) sortie.push({ t: l.slice(dernier, debut) })
+    sortie.push(m[1] ? { t: m[1], b: true } : m[2] ? { t: m[2], s: true } : m[4] ? { t: m[4], i: true } : { t: m[5], mark: true })
     dernier = m.index! + m[0].length
   }
   if (dernier < l.length) sortie.push({ t: l.slice(dernier) })
@@ -377,11 +379,10 @@ export async function versHtml(blocs: Bloc[], envoyer: (img: Blob) => Promise<st
   let liste: HTMLUListElement | null = null
   const nbImages = blocs.filter(b => b.type === "img").length
   let iImage = 0
+  let taille = 0
+  const tropLong = () => { const p = document.createElement("p"); p.textContent = "… (la suite du document est trop longue pour une seule note)"; racine.appendChild(p) }
   for (const b of blocs) {
-    if (racine.innerHTML.length > max) {
-      const p = document.createElement("p"); p.textContent = "… (la suite du document est trop longue pour une seule note)"; racine.appendChild(p)
-      break
-    }
+    if (taille > max) { tropLong(); break }
     if (b.type !== "li") liste = null
     if (b.type === "table") {
       const table = document.createElement("table")
@@ -397,6 +398,8 @@ export async function versHtml(blocs: Bloc[], envoyer: (img: Blob) => Promise<st
         corps.appendChild(tr)
       })
       table.appendChild(corps)
+      if (taille + table.outerHTML.length > max) { tropLong(); break }
+      taille += table.outerHTML.length
       racine.appendChild(table)
       continue
     }
@@ -408,6 +411,7 @@ export async function versHtml(blocs: Bloc[], envoyer: (img: Blob) => Promise<st
       const img = document.createElement("img")
       img.setAttribute("data-chemin", chemin)
       img.setAttribute("alt", b.alt.slice(0, 120))
+      taille += img.outerHTML.length
       racine.appendChild(img)
       continue
     }
@@ -420,6 +424,8 @@ export async function versHtml(blocs: Bloc[], envoyer: (img: Blob) => Promise<st
       }
       el.appendChild(noeud)
     }
+    if (taille + el.outerHTML.length > max) { tropLong(); break }
+    taille += el.outerHTML.length + 9
     if (b.type === "li") {
       if (!liste) { liste = document.createElement("ul"); racine.appendChild(liste) }
       liste.appendChild(el)
