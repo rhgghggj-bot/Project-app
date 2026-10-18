@@ -278,7 +278,7 @@ function Lecteur({ doc, userId, dossiers, onFermer, onMaj, onSupprime, onOuvrirN
     try {
       setConversion("Téléchargement du document…")
       const { data, error } = await supabase.storage.from("etudes").download(doc.chemin)
-      if (error || !data) throw new Error("Téléchargement impossible")
+      if (error || !data) throw new Error(`Téléchargement du document impossible${error?.message ? ` (${error.message})` : ""}`)
       const blocs = await convertir(data, convertible, setConversion)
       if (!blocs.length) throw new Error("Aucun texte ni image trouvé dans ce document")
       const html = await versHtml(blocs, async img => {
@@ -302,7 +302,10 @@ function Lecteur({ doc, userId, dossiers, onFermer, onMaj, onSupprime, onOuvrirN
         created_at: version?.created_at ?? maintenant, updated_at: maintenant,
       }
       const { data: creee, error: e3 } = await supabase.from("carnet_notes").upsert(note).select(COLONNES_NOTE).single()
-      if (e3 || !creee) throw new Error("La version modifiable n'a pas pu être enregistrée")
+      if (e3 || !creee) {
+        console.error("Version modifiable :", e3)
+        throw new Error(`La version modifiable n'a pas pu être enregistrée${e3?.message ? ` (${e3.message})` : ""}`)
+      }
       try { localStorage.removeItem(`carnet-brouillon:${noteId}`) } catch {}
       // Images de l'ancienne version qui ne servent plus
       if (version) {
@@ -315,7 +318,8 @@ function Lecteur({ doc, userId, dossiers, onFermer, onMaj, onSupprime, onOuvrirN
     } catch (e) {
       if (nouvelles.length) await supabase.storage.from("etudes").remove(nouvelles)
       setConversion(null)
-      toast(e instanceof Error ? e.message : "Transformation impossible", "error")
+      console.error("Modifier le document :", e)
+      toast(e instanceof Error && e.message ? e.message : "Transformation impossible", "error")
     }
   }
 
