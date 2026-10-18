@@ -16,7 +16,9 @@ import ProgrammeSection from "./ProgrammeSection"
 import Cartes from "./Cartes"
 import Planning from "./Planning"
 import { aRevoir, chargerCartes, chargerEtats } from "@/lib/cartes"
-import { chargerPlans, enRetard, joursAvant, type Plan } from "@/lib/planning"
+import { chargerPlans, joursAvant, type Plan } from "@/lib/planning"
+import { jourISO } from "@/lib/cartes"
+import Astuce from "./Astuce"
 
 type CoursEtudiant = { id: string; matiere: string; titre: string; fichier_path: string | null; entreprise_id: string; fiches: Fiches; created_at: string }
 
@@ -43,6 +45,7 @@ export default function RevisionSection({ userId, pays, niveau, matieres, reglag
   const [enCours, setEnCours] = useState(false)
   const [choixOuvert, setChoixOuvert] = useState(false)
   const [outil, setOutil] = useState<"cartes" | "planning" | null>(null)
+  const [planOuvert, setPlanOuvert] = useState<string | null>(null)
   const [aRevoirAujourdhui, setARevoir] = useState<number | null>(null)
   const [prochainExamen, setProchainExamen] = useState<Plan | null>(null)
 
@@ -120,36 +123,58 @@ export default function RevisionSection({ userId, pays, niveau, matieres, reglag
     parMatiere.set(m, [...(parMatiere.get(m) || []), c])
   }
 
-  const tuile: React.CSSProperties = { flex: 1, minWidth: 0, textAlign: "left", background: "#fff", border: `1px solid ${colors.blueBorder}`, borderRadius: radius.md, padding: "12px 12px", cursor: "pointer" }
+  // Séances du jour (et en retard) du prochain examen
+  const seancesJour = prochainExamen ? prochainExamen.seances.filter(x => !x.fait && x.date <= jourISO()) : []
+  const nomSeance = (x: Plan["seances"][number]) => x.type === "general" ? "Révision générale" : prochainExamen!.sujets.find(t => t.id === x.sujetId)?.titre ?? ""
+  const ouvrirPlanning = (id: string | null) => { setPlanOuvert(id); setOutil("planning") }
+  const ligneJour: React.CSSProperties = { display: "flex", alignItems: "center", gap: 10, width: "100%", textAlign: "left", background: "none", border: "none", borderTop: `1px solid ${colors.border}`, padding: "11px 2px", cursor: "pointer", fontSize: 14, color: colors.text }
 
   return (
     <div>
       {!chapitreOuvert && (
-        <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-          <button onClick={() => setOutil("cartes")} style={tuile}>
-            <div style={{ fontSize: 12, color: colors.textMuted }}>Cartes de révision</div>
-            <div style={{ fontSize: 20, fontWeight: 700, color: colors.navy, margin: "2px 0" }}>{aRevoirAujourdhui ?? "…"}</div>
-            <div style={{ fontSize: 11.5, color: colors.blue }}>{aRevoirAujourdhui ? "à revoir aujourd'hui" : "Ouvrir"}</div>
-          </button>
-          <button onClick={() => setOutil("planning")} style={tuile}>
-            <div style={{ fontSize: 12, color: colors.textMuted }}>Planning d&apos;examen</div>
-            {prochainExamen ? (
-              <>
-                <div style={{ fontSize: 20, fontWeight: 700, color: joursAvant(prochainExamen.date) <= 3 ? colors.red : colors.navy, margin: "2px 0" }}>{joursAvant(prochainExamen.date) === 0 ? "Jour J" : `J-${joursAvant(prochainExamen.date)}`}</div>
-                <div style={{ fontSize: 11.5, color: enRetard(prochainExamen) ? "#B45309" : colors.blue, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{enRetard(prochainExamen) ? `${enRetard(prochainExamen)} en retard · ` : ""}{prochainExamen.examen}</div>
-              </>
-            ) : (
-              <>
-                <div style={{ fontSize: 20, fontWeight: 700, color: colors.navy, margin: "2px 0" }}>+</div>
-                <div style={{ fontSize: 11.5, color: colors.blue }}>Préparer un examen</div>
-              </>
+        <div style={{ background: "#fff", border: `1px solid ${colors.blueBorder}`, borderRadius: radius.md, padding: "14px 14px 6px", marginBottom: 12, boxShadow: "0 2px 10px rgba(10,22,40,.05)" }}>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 8 }}>
+            <div style={{ flex: 1, fontFamily: "var(--font-display)", fontSize: 18, fontWeight: 700, color: colors.navy }}>Aujourd&apos;hui</div>
+            {prochainExamen && (
+              <button onClick={() => ouvrirPlanning(prochainExamen.id)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 12.5, color: joursAvant(prochainExamen.date) <= 3 ? colors.red : colors.blue, fontWeight: 600, padding: 0 }}>
+                {prochainExamen.examen} · {joursAvant(prochainExamen.date) === 0 ? "Jour J" : `J-${joursAvant(prochainExamen.date)}`}
+              </button>
             )}
+          </div>
+          {seancesJour.map(x => (
+            <button key={x.id} onClick={() => ouvrirPlanning(prochainExamen!.id)} style={ligneJour}>
+              <span aria-hidden="true" style={{ width: 28, height: 28, borderRadius: 8, background: x.date < jourISO() ? "#FFF4E0" : "#F1ECFF", color: x.date < jourISO() ? "#B45309" : "#7C3AED", display: "inline-flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 13, flexShrink: 0 }}>{x.type === "etude" ? "É" : x.type === "revision" ? "R" : "B"}</span>
+              <span style={{ flex: 1, minWidth: 0 }}>
+                <span style={{ display: "block", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{nomSeance(x)}</span>
+                <span style={{ display: "block", fontSize: 12, color: x.date < jourISO() ? "#B45309" : colors.textMuted }}>{x.type === "etude" ? "À étudier" : x.type === "revision" ? "À revoir" : "Bilan"} · {prochainExamen!.minutes} min{x.date < jourISO() ? " · en retard" : ""}</span>
+              </span>
+              <span style={{ color: colors.blue, fontSize: 13, fontWeight: 600 }}>Ouvrir ›</span>
+            </button>
+          ))}
+          <button onClick={() => setOutil("cartes")} style={ligneJour}>
+            <span aria-hidden="true" style={{ width: 28, height: 28, borderRadius: 8, background: colors.blueLight, color: colors.blue, display: "inline-flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 13, flexShrink: 0 }}>C</span>
+            <span style={{ flex: 1, minWidth: 0 }}>
+              <span style={{ display: "block", fontWeight: 600 }}>{aRevoirAujourdhui === null ? "Cartes de révision" : aRevoirAujourdhui ? `${aRevoirAujourdhui} carte${aRevoirAujourdhui > 1 ? "s" : ""} à revoir` : "Cartes : tout est révisé"}</span>
+              <span style={{ display: "block", fontSize: 12, color: colors.textMuted }}>Créées à partir de tes surlignages et définitions</span>
+            </span>
+            <span style={{ color: colors.blue, fontSize: 13, fontWeight: 600 }}>{aRevoirAujourdhui ? "Réviser ›" : "Ouvrir ›"}</span>
           </button>
+          {!prochainExamen && (
+            <button onClick={() => ouvrirPlanning(null)} style={ligneJour}>
+              <span aria-hidden="true" style={{ width: 28, height: 28, borderRadius: 8, background: "#F3F5F9", color: colors.textMuted, display: "inline-flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 16, flexShrink: 0 }}>+</span>
+              <span style={{ flex: 1, fontWeight: 600 }}>Préparer un examen</span>
+              <span style={{ color: colors.blue, fontSize: 13, fontWeight: 600 }}>›</span>
+            </button>
+          )}
+          {prochainExamen && seancesJour.length === 0 && (
+            <div style={{ borderTop: `1px solid ${colors.border}`, padding: "10px 2px", fontSize: 13, color: colors.green }}>✓ Séance du jour faite pour « {prochainExamen.examen} »</div>
+          )}
         </div>
       )}
+      {!chapitreOuvert && <Astuce id="reviser">Commence par <b>Aujourd&apos;hui</b> : il te dit quoi réviser. Le programme et tes cours sont en dessous.</Astuce>}
       {outil === "cartes" && <Cartes userId={userId} onFermer={() => setOutil(null)} />}
       {outil === "planning" && (
-        <Planning userId={userId} pays={pays} niveauId={niveauId} filiere={filiere} specialites={specialites}
+        <Planning userId={userId} planInitial={planOuvert} pays={pays} niveauId={niveauId} filiere={filiere} specialites={specialites}
           onFermer={() => setOutil(null)} onOuvrirChapitre={id => { setOutil(null); onOuvrirChapitre(id) }} />
       )}
       <ProgrammeSection onCarnet={onCarnet} userId={userId} pays={pays} niveauId={niveauId} filiere={filiere} specialites={specialites} annee={annee}

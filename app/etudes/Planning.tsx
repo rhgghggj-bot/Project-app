@@ -29,8 +29,9 @@ function dateLongue(iso: string) {
   return new Date(a, m - 1, j).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })
 }
 
-export default function Planning({ userId, pays, niveauId, filiere, specialites, onFermer, onOuvrirChapitre }: {
+export default function Planning({ userId, planInitial = null, pays, niveauId, filiere, specialites, onFermer, onOuvrirChapitre }: {
   userId: string
+  planInitial?: string | null
   pays: Pays
   niveauId: string | null
   filiere: string | null
@@ -39,7 +40,7 @@ export default function Planning({ userId, pays, niveauId, filiere, specialites,
   onOuvrirChapitre: (id: string) => void
 }) {
   const [plans, setPlans] = useState<Plan[] | null>(null)
-  const [ouvert, setOuvert] = useState<string | null>(null)
+  const [ouvert, setOuvert] = useState<string | null>(planInitial)
   const [nouveau, setNouveau] = useState(false)
   const [options, setOptions] = useState<Option[]>([])
 
