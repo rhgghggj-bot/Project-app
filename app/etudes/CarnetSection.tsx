@@ -9,6 +9,7 @@ import { chargerFichesPerso } from "@/lib/fichesPerso"
 import { COLONNES_NOTE, dateCourte, normaliser, type Dossier, type NoteCarnet } from "@/lib/carnet"
 import EditeurNote, { type ContexteProgramme } from "./EditeurNote"
 import DocumentsSection from "./DocumentsSection"
+import Corbeille from "./Corbeille"
 import { BLEU_TEXTE, FOND_CAHIER, ROUGE_TEXTE, TEXTE_DOUX } from "./cahier"
 
 // Onglet « Carnet » : toutes les notes de l'élève, rangées par dossier, avec
@@ -36,6 +37,9 @@ export default function CarnetSection({ userId, contexte, action, onActionTraite
   const [renommer, setRenommer] = useState<string | null>(null)
   const [chapitres, setChapitres] = useState<Map<string, { matiere: string; titre: string }>>(new Map())
   const [vue, setVue] = useState<"notes" | "documents">("notes")
+  const [corbeille, setCorbeille] = useState(false)
+  // Change quand un document est restauré : la liste des documents se recharge
+  const [versionDocs, setVersionDocs] = useState(0)
 
   async function charger() {
     const [n, d] = await Promise.all([
@@ -196,12 +200,29 @@ export default function CarnetSection({ userId, contexte, action, onActionTraite
     </div>
   )
 
+  const lienCorbeille = (
+    <>
+      <div style={{ textAlign: "center", marginTop: 14 }}>
+        <button onClick={() => setCorbeille(true)} disabled={!!erreur}
+          style={{ background: "none", border: "none", color: TEXTE_DOUX, fontSize: 13, cursor: "pointer", minHeight: 40, display: "inline-flex", alignItems: "center", gap: 6 }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 7h14M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" /></svg>
+          Corbeille
+        </button>
+      </div>
+      {corbeille && (
+        <Corbeille userId={userId} dossiers={dossiers} onFermer={() => setCorbeille(false)}
+          onRestaure={t => { if (t === "note") void charger(); else setVersionDocs(v => v + 1) }} />
+      )}
+    </>
+  )
+
   if (vue === "documents") {
     return (
       <div>
         {bascule}
-        <DocumentsSection userId={userId} dossiers={dossiers}
+        <DocumentsSection key={versionDocs} userId={userId} dossiers={dossiers}
           onOuvrirNote={n => { setNotes(ns => [n, ...(ns || []).filter(x => x.id !== n.id)]); setVue("notes"); setOuverte({ note: n, nouvelle: false }) }} />
+        {lienCorbeille}
       </div>
     )
   }
@@ -290,6 +311,7 @@ export default function CarnetSection({ userId, contexte, action, onActionTraite
           <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>{autres.map(ligne)}</ul>
         </div>
       )}
+      {lienCorbeille}
     </div>
   )
 }

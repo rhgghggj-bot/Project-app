@@ -30,6 +30,21 @@ export function moyennePonderee(notes: { note: number; coefficient: number }[]):
   return notes.reduce((s, n) => s + n.note * n.coefficient, 0) / poids
 }
 
+// Note à obtenir au prochain examen (de coefficient `coef`) pour que la
+// moyenne atteigne `cible`. Arrondie au pas supérieur de l'échelle.
+export function noteNecessaire(notes: { note: number; coefficient: number }[], cible: number, coef: number, echelle: Echelle):
+  { statut: "acquis" | "possible" | "impossible"; note: number } {
+  const s = systemeDeEchelle(echelle)
+  const poids = notes.reduce((t, n) => t + n.coefficient, 0)
+  const somme = notes.reduce((t, n) => t + n.note * n.coefficient, 0)
+  const brute = (cible * (poids + coef) - somme) / coef
+  const note = Math.ceil(Math.round(brute / s.pas * 1000) / 1000) * s.pas
+  const arrondie = Math.round(note * 100) / 100
+  if (arrondie <= s.min) return { statut: "acquis", note: s.min }
+  if (arrondie > s.max) return { statut: "impossible", note: arrondie }
+  return { statut: "possible", note: arrondie }
+}
+
 // ─── Entreprises fictives pour réviser ─────────────────────────────────────
 // Chaque cours déposé est illustré à travers l'entreprise choisie par
 // l'étudiant : les exemples, exercices et quiz parlent de "son" entreprise.
