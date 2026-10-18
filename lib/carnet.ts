@@ -23,7 +23,8 @@ export const COLONNES_NOTE = "id,dossier_id,titre,contenu,texte,epingle,chapitre
 
 // Balises gardées telles quelles ; les autres sont remplacées par leur contenu
 const BLOCS = new Set(["P", "H2", "H3", "UL", "OL", "LI", "TABLE", "TBODY", "TR", "TD", "TH"])
-const EN_LIGNE: Record<string, string> = { B: "b", STRONG: "b", I: "i", EM: "i", U: "u", S: "s", STRIKE: "s", DEL: "s", MARK: "mark" }
+const EN_LIGNE: Record<string, string> = { B: "b", STRONG: "b", I: "i", EM: "i", U: "u", S: "s", STRIKE: "s", DEL: "s", MARK: "mark", SUP: "sup", SUB: "sub" }
+const ENCADRES_OK = new Set(["definition", "important", "exemple"])
 
 // Couleurs du texte et du surligneur : un nom gardé dans la note (jamais une
 // valeur CSS libre), traduit en couleur par la feuille de style.
@@ -92,6 +93,14 @@ function nettoyerNoeud(source: Node, cible: Node, doc: Document) {
     if (["SCRIPT", "STYLE", "IFRAME", "OBJECT", "EMBED", "TEMPLATE", "HEAD", "META", "LINK", "SVG", "MATH"].includes(tag)) continue
 
     if (tag === "BR") { cible.appendChild(doc.createElement("br")); continue }
+    if (tag === "HR") { cible.appendChild(doc.createElement("hr")); continue }
+    if (tag === "BLOCKQUOTE" && ENCADRES_OK.has(el.getAttribute("data-encadre") || "")) {
+      const q = doc.createElement("blockquote")
+      q.setAttribute("data-encadre", el.getAttribute("data-encadre")!)
+      nettoyerNoeud(el, q, doc)
+      cible.appendChild(q)
+      continue
+    }
     if (tag === "IMG") {
       const chemin = el.getAttribute("data-chemin")
       if (chemin && /^[\w-]+\/notes\/[\w-]+\/[\w.-]+$/.test(chemin)) {
@@ -191,7 +200,7 @@ export function nettoyerHtml(html: string): string {
 // Texte brut : recherche, aperçu dans la liste, note vide ou non
 export function texteBrut(html: string): string {
   if (typeof window === "undefined" || !html) return ""
-  const doc = new DOMParser().parseFromString(`<body>${html.replace(/<\/(p|h2|h3|li|td|th)>|<br>/g, "$& ")}</body>`, "text/html")
+  const doc = new DOMParser().parseFromString(`<body>${html.replace(/<\/(p|h2|h3|li|td|th)>|<br>|<hr>/g, "$& ")}</body>`, "text/html")
   return (doc.body.textContent || "").replace(/\s+/g, " ").trim()
 }
 

@@ -7,6 +7,7 @@ import { chapitreVisible, chargerProgramme } from "@/lib/programmes"
 import { chargerFichesPerso } from "@/lib/fichesPerso"
 import { cheminsImages, compresserImage, COULEURS_SURLIGNEUR, COULEURS_TEXTE, nettoyerHtml, normaliser, texteBrut, type Dossier, type NoteCarnet } from "@/lib/carnet"
 import type { Pays } from "@/lib/etudes"
+import { effacerSous, estSurligne, motSous, plageEntre, pointSous, surligner as surlignerPlage, type Point } from "@/lib/surligneur"
 import { CARREAU, FOND_PAGE } from "./cahier"
 import Dessin from "./Dessin"
 import { caveat, lora } from "./polices"
@@ -38,6 +39,18 @@ type Statut = "pret" | "modifie" | "enregistrement" | "enregistre" | "erreur"
 
 const SURLIGNEUR = COULEURS_SURLIGNEUR[0].hex
 
+// Encadrés : définition, à retenir, exemple
+export const ENCADRES = [
+  { id: "definition", nom: "Définition", fond: "#EEF4FF", bord: "#2B6BE6", texte: "#1F5FD6" },
+  { id: "important", nom: "À retenir", fond: "#FFF6E0", bord: "#E8A317", texte: "#8A5A00" },
+  { id: "exemple", nom: "Exemple", fond: "#EAF8F0", bord: "#1E9E63", texte: "#11744A" },
+] as const
+
+const CLE_STYLO = "carnet-surligneur"
+function couleurMemorisee(): string {
+  try { const c = localStorage.getItem(CLE_STYLO); return c !== null && COULEURS_SURLIGNEUR.some(x => x.id === c) ? c : "" } catch { return "" }
+}
+
 // Tailles : valeur de execCommand("fontSize") (1-7) → nom gardé dans la note
 export const TAILLES = [
   { id: "s", nom: "Petit", commande: "2", px: 13 },
@@ -65,11 +78,23 @@ const STYLES = `
 .carnet-page{outline:none;min-height:calc(100dvh - 260px);padding:0 16px ${CARREAU * 4}px 52px;font-size:16px;line-height:${CARREAU}px;color:${colors.text};word-wrap:break-word}
 .carnet-page p,.carnet-page h2,.carnet-page h3,.carnet-page ul,.carnet-page ol{margin:0}
 .carnet-page h2{font-family:var(--font-display),sans-serif;font-size:21px;font-weight:700;line-height:${CARREAU}px;padding-top:${CARREAU}px}
-.carnet-page h3{font-size:16px;font-weight:650;color:${colors.blue};line-height:${CARREAU}px}
+.carnet-page h3{font-size:17px;font-weight:700;color:${colors.navy};line-height:${CARREAU}px}
 .carnet-page ul,.carnet-page ol{padding-left:${CARREAU}px}
+.carnet-page ul{list-style:disc}
+.carnet-page ol{list-style:decimal}
+.carnet-page ul ul,.carnet-page li ul{list-style:circle}
+.carnet-page ul ul ul,.carnet-page li li ul{list-style:square}
 .carnet-page mark{background:${SURLIGNEUR};color:inherit;border-radius:2px;padding:0 1px}
 ${COULEURS_SURLIGNEUR.filter(c => c.id).map(c => `.carnet-page mark[data-couleur="${c.id}"]{background:${c.hex}}`).join("")}
 ${COULEURS_TEXTE.map(c => `.carnet-page [data-couleur="${c.id}"]:not(mark){color:${c.hex}}`).join("")}
+.carnet-page sup,.carnet-page sub{font-size:.72em;line-height:0}
+.carnet-page hr{border:none;border-top:2px solid #C9D3E3;margin:${CARREAU / 2 - 1}px 0}
+.carnet-page blockquote{margin:${CARREAU / 2}px 0;padding:6px 12px 8px 14px;border-left:4px solid;border-radius:0 10px 10px 0}
+.carnet-page blockquote::before{display:block;font-size:11.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;line-height:20px}
+${ENCADRES.map(e => `.carnet-page blockquote[data-encadre="${e.id}"]{background:${e.fond};border-color:${e.bord}}.carnet-page blockquote[data-encadre="${e.id}"]::before{content:"${e.nom}";color:${e.texte}}`).join("")}
+.carnet-page[data-stylo]{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;cursor:crosshair;caret-color:transparent}
+.carnet-page.carnet-mesure{-webkit-user-select:text !important;user-select:text !important}
+.carnet-apercu{position:absolute;pointer-events:none;border-radius:3px;mix-blend-mode:multiply}
 .carnet-page table{border-collapse:collapse;margin:${CARREAU / 2}px 0;background:#fff;min-width:50%;max-width:100%;display:block;overflow-x:auto}
 .carnet-page td,.carnet-page th{border:1px solid #C9D3E3;padding:2px 8px;min-width:64px;vertical-align:top;text-align:left}
 .carnet-page th{background:#EEF2F8;font-weight:650}
@@ -142,6 +167,13 @@ const ICONES = {
   annuler: "M9 14L4 9l5-5M4 9h10a6 6 0 010 12h-3",
   retablir: "M15 14l5-5-5-5M20 9H10a6 6 0 000 12h3",
   tableau: "M4 5h16v14H4zM4 10h16M4 15h16M10 5v14",
+  surligneur: "M15 4l5 5-8 8H7v-5zM7 17l-3 3h6",
+  gomme: "M7 20h11M5 15l9-9 5 5-7 7H8z",
+  encadre: "M5 4v16M9 6h10M9 10h10M9 14h7",
+  plan: "M4 6h16M8 12h12M8 18h12M4 12h.01M4 18h.01",
+  retrait: "M4 6h16M10 12h10M10 18h10M4 10l3 2-3 2",
+  desretrait: "M4 6h16M10 12h10M10 18h10M7 10l-3 2 3 2",
+  separateur: "M4 12h16M8 7h8M8 17h8",
 }
 
 export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte, onFermer, onOuvrirChapitre }: {
@@ -184,8 +216,16 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
   const [chapitres, setChapitres] = useState<OptionLien[] | null>(null)
   const [envoi, setEnvoi] = useState(0)
   const [vue, setVue] = useState<{ haut: number; hauteur: number } | null>(null)
-  const [menu, setMenu] = useState<"infos" | "texte" | "couleur" | null>(null)
-  const [couleurSurligneur, setCouleurSurligneur] = useState<(typeof COULEURS_SURLIGNEUR)[number]>(COULEURS_SURLIGNEUR[0])
+  const [menu, setMenu] = useState<"infos" | "texte" | "couleur" | "encadre" | null>(null)
+  // Surligneur crayon : couleur choisie ("" = jaune), mode actif ou non
+  const [couleurStylo, setCouleurStylo] = useState<string>(couleurMemorisee)
+  const [stylo, setStylo] = useState<null | "surligner" | "gommer">(null)
+  const [apercu, setApercu] = useState<{ x: number; y: number; l: number; h: number }[]>([])
+  const historiqueStylo = useRef<string[]>([])
+  const [nbStylo, setNbStylo] = useState(0)
+  const trace = useRef<{ id: number; debut: Point; x: number; y: number; bouge: boolean } | null>(null)
+  const feuilleRef = useRef<HTMLDivElement>(null)
+  const [plan, setPlan] = useState<{ titres: Element[]; marques: Element[] } | null>(null)
   const [export_, setExport] = useState<string | null>(null)
 
   // Photos : liens signés (24 h) pour les images sans source
@@ -268,6 +308,8 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
         h2: bloc === "h2", h3: bloc === "h3",
         bold: document.queryCommandState("bold"), italic: document.queryCommandState("italic"), underline: document.queryCommandState("underline"),
         strike: document.queryCommandState("strikeThrough"), table: !!ancre?.closest("td, th"),
+        sup: document.queryCommandState("superscript"), sub: document.queryCommandState("subscript"),
+        encadre: !!ancre?.closest("blockquote"),
         mark: !!ancre?.closest('mark, span[style*="background-color"]'),
         cases: !!ancre?.closest('ul[data-liste="cases"]'),
         puces: !!ancre?.closest("ul:not([data-liste])"), numeros: !!ancre?.closest("ol"),
@@ -426,49 +468,90 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
     return n instanceof Element ? n : n?.parentElement ?? null
   }
 
-  function surligner() {
-    remettreCurseur()
+  // ─── Surligneur crayon ───
+  // Pendant le surlignage la note n'est plus modifiable au clavier : un
+  // glissement ne peut jamais effacer du texte.
+  function activerStylo(mode: "surligner" | "gommer" = "surligner") {
+    const page = pageRef.current!
     const sel = document.getSelection()
-    const surligne = blocCourant()?.closest<HTMLElement>('mark, span[style*="background-color"]')
-    if (surligne && sel?.isCollapsed) {
-      // Curseur posé dans un passage surligné : la suite s'écrit sans surligneur
-      const sortie = document.createTextNode("\u200B")
-      surligne.after(sortie)
-      const r = document.createRange()
-      r.setStart(sortie, 1); r.collapse(true)
-      sel.removeAllRanges(); sel.addRange(r)
-    } else if (formats.mark) {
-      document.execCommand("styleWithCSS", false, "true")
-      document.execCommand("hiliteColor", false, "transparent")
-      document.execCommand("styleWithCSS", false, "false")
-      // Retire aussi les <mark> déjà nettoyés de la sélection
-      const r = document.getSelection()?.rangeCount ? document.getSelection()!.getRangeAt(0) : null
-      pageRef.current!.querySelectorAll("mark").forEach(m => { if (r?.intersectsNode(m)) m.replaceWith(...Array.from(m.childNodes)) })
-    } else {
-      document.execCommand("styleWithCSS", false, "true")
-      document.execCommand("hiliteColor", false, couleurSurligneur.hex)
-      document.execCommand("styleWithCSS", false, "false")
+    // Texte déjà sélectionné : surligné tout de suite
+    if (mode === "surligner" && sel && !sel.isCollapsed && sel.rangeCount && page.contains(sel.anchorNode)) {
+      const r = sel.getRangeAt(0).cloneRange()
+      const avant = page.innerHTML
+      if (surlignerPlage(page, r, couleurStylo)) {
+        historiqueStylo.current = [...historiqueStylo.current.slice(-29), avant]
+        setNbStylo(historiqueStylo.current.length)
+        planifier()
+      }
     }
-    planifier()
-    document.dispatchEvent(new Event("selectionchange"))
+    sel?.removeAllRanges()
+    page.blur()
+    setMenu(null)
+    setStylo(mode)
   }
 
-  // Surligneur d'une autre couleur : appliqué tout de suite à la sélection
-  function choisirSurligneur(c: (typeof COULEURS_SURLIGNEUR)[number] | null) {
-    remettreCurseur()
-    const sel = document.getSelection()
-    if (c) setCouleurSurligneur(c)
-    if (sel && !sel.isCollapsed) {
-      document.execCommand("styleWithCSS", false, "true")
-      document.execCommand("hiliteColor", false, c ? c.hex : "transparent")
-      document.execCommand("styleWithCSS", false, "false")
-      if (!c) {
-        const r = sel.getRangeAt(0)
-        pageRef.current!.querySelectorAll("mark").forEach(m => { if (r.intersectsNode(m)) m.replaceWith(...Array.from(m.childNodes)) })
+  function choisirCouleurStylo(id: string) {
+    setCouleurStylo(id)
+    setStylo("surligner")
+    try { localStorage.setItem(CLE_STYLO, id) } catch {}
+  }
+
+  function annulerStylo() {
+    const page = pageRef.current!
+    const avant = historiqueStylo.current.pop()
+    setNbStylo(historiqueStylo.current.length)
+    if (avant === undefined) return
+    page.innerHTML = avant
+    afficherImages()
+    planifier()
+  }
+
+  function rectanglesDe(r: Range) {
+    const base = feuilleRef.current!.getBoundingClientRect()
+    return Array.from(r.getClientRects()).filter(x => x.width > 1).map(x => ({ x: x.left - base.left, y: x.top - base.top, l: x.width, h: x.height }))
+  }
+
+  function styloDebut(e: React.PointerEvent) {
+    if (!stylo || trace.current || (e.pointerType === "mouse" && e.button !== 0)) return
+    const p = pointSous(pageRef.current!, e.clientX, e.clientY)
+    if (!p) return
+    trace.current = { id: e.pointerId, debut: p, x: e.clientX, y: e.clientY, bouge: false }
+  }
+
+  function styloBouge(e: React.PointerEvent) {
+    const t = trace.current
+    if (!t || e.pointerId !== t.id) return
+    if (!t.bouge && Math.hypot(e.clientX - t.x, e.clientY - t.y) < 6) return
+    if (!t.bouge) { t.bouge = true; (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId) }
+    const p = pointSous(pageRef.current!, e.clientX, e.clientY)
+    if (p) setApercu(rectanglesDe(plageEntre(t.debut, p)))
+  }
+
+  function styloFin(e: React.PointerEvent) {
+    const t = trace.current
+    if (!t || e.pointerId !== t.id) return
+    trace.current = null
+    setApercu([])
+    if (e.type === "pointercancel") return
+    const page = pageRef.current!
+    const p = pointSous(page, e.clientX, e.clientY) ?? t.debut
+    const avant = page.innerHTML
+    let change: boolean
+    if (!t.bouge) {
+      // Simple touche : surligne le mot, ou efface le surlignage touché
+      if (estSurligne(page, p)) change = effacerSous(page, p)
+      else {
+        const mot = motSous(p)
+        change = !!mot && stylo === "surligner" && surlignerPlage(page, mot, couleurStylo)
       }
+    } else {
+      change = surlignerPlage(page, plageEntre(t.debut, p), stylo === "gommer" ? null : couleurStylo)
+    }
+    if (change) {
+      historiqueStylo.current = [...historiqueStylo.current.slice(-29), avant]
+      setNbStylo(historiqueStylo.current.length)
       planifier()
     }
-    document.dispatchEvent(new Event("selectionchange"))
   }
 
   function couleurTexte(hex: string | null) {
@@ -558,6 +641,86 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
     }
     planifier()
     document.dispatchEvent(new Event("selectionchange"))
+  }
+
+  // ─── Encadrés, séparateur ───
+  // Garde le curseur au même endroit pendant qu'on déplace des blocs
+  function garderCurseur(action: () => void) {
+    const sel = document.getSelection()
+    const r = sel?.rangeCount ? sel.getRangeAt(0) : null
+    const pos = r ? { n: r.startContainer, o: r.startOffset } : null
+    action()
+    if (pos && pageRef.current!.contains(pos.n)) {
+      const n = document.createRange()
+      n.setStart(pos.n, Math.min(pos.o, pos.n.nodeType === Node.TEXT_NODE ? (pos.n as Text).length : pos.n.childNodes.length))
+      n.collapse(true)
+      sel!.removeAllRanges(); sel!.addRange(n)
+    }
+  }
+
+  function encadrer(type: string | null) {
+    remettreCurseur()
+    setMenu(null)
+    const page = pageRef.current!
+    const bq = blocCourant()?.closest("blockquote")
+    garderCurseur(() => {
+      if (bq && page.contains(bq)) {
+        if (type) bq.setAttribute("data-encadre", type)
+        else bq.replaceWith(...Array.from(bq.childNodes))
+        return
+      }
+      if (!type) return
+      let bloc = blocRacine()
+      const q = document.createElement("blockquote")
+      q.setAttribute("data-encadre", type)
+      if (!bloc || bloc.nodeType === Node.TEXT_NODE || (bloc as Element).tagName === "BR") {
+        // Texte libre ou note vide : on crée un paragraphe pour l'encadré
+        const p = document.createElement("p")
+        if (bloc) { bloc.parentNode!.insertBefore(p, bloc); p.appendChild(bloc) } else p.appendChild(document.createElement("br"))
+        if (!bloc) page.appendChild(p)
+        bloc = p
+      }
+      bloc.parentNode!.insertBefore(q, bloc)
+      q.appendChild(bloc)
+      if (!q.textContent) placerDans(q.firstChild!)
+    })
+    planifier()
+    document.dispatchEvent(new Event("selectionchange"))
+  }
+
+  function separateur() {
+    remettreCurseur()
+    const page = pageRef.current!
+    const hr = document.createElement("hr")
+    const suite = document.createElement("p")
+    suite.appendChild(document.createElement("br"))
+    const bloc = blocRacine()
+    if (bloc) page.insertBefore(suite, bloc.nextSibling)
+    else page.appendChild(suite)
+    page.insertBefore(hr, suite)
+    placerDans(suite)
+    planifier()
+  }
+
+  function retrait(plus: boolean) {
+    if (!(formats.puces || formats.numeros || formats.cases)) return toast("Place le curseur dans une liste pour la décaler", "info")
+    commande(plus ? "indent" : "outdent")
+  }
+
+  // ─── Plan de la note ───
+  function ouvrirPlan() {
+    const page = pageRef.current!
+    setMenu(null)
+    setPlan({
+      titres: Array.from(page.querySelectorAll("h2, h3")).filter(h => h.textContent?.trim()),
+      marques: Array.from(page.querySelectorAll("mark")).filter(m => (m.textContent || "").trim().length > 1),
+    })
+  }
+
+  function allerA(el: Element) {
+    setPlan(null)
+    el.scrollIntoView({ block: "center", behavior: "smooth" })
+    el.animate?.([{ outline: `3px solid ${colors.blue}` }, { outline: "3px solid transparent" }], { duration: 1400 })
   }
 
   // ─── Exporter ───
@@ -674,6 +837,24 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
         return
       }
     }
+    if (e.key === "Tab" && blocCourant()?.closest("li")) {
+      e.preventDefault()
+      commande(e.shiftKey ? "outdent" : "indent")
+      return
+    }
+    if (e.key === "Enter" && !e.shiftKey) {
+      // Ligne vide en fin d'encadré : Entrée fait sortir de l'encadré
+      const bloc = blocCourant()
+      const bq = bloc?.closest("blockquote")
+      const ligne = bloc?.closest("p, h2, h3")
+      if (bq && ligne && ligne.parentElement === bq && !ligne.textContent && ligne === bq.lastElementChild && bq.childElementCount > 1) {
+        e.preventDefault()
+        bq.after(ligne)
+        placerDans(ligne)
+        planifier()
+        return
+      }
+    }
     if (e.key === "Enter") {
       // Une nouvelle case n'hérite pas de la coche de la précédente
       setTimeout(() => {
@@ -753,6 +934,7 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
             </>
           ) : <span role="status">{export_ ?? (envoi > 0 ? "Envoi de l'image…" : libelleStatut)}</span>}
         </span>
+        <button className="carnet-outil" aria-label="Plan et surlignages de la note" title="Plan et surlignages" onClick={ouvrirPlan}><Icone d={ICONES.plan} /></button>
         <button className="carnet-outil" aria-label="Dossier, chapitre et téléchargement" aria-expanded={menu === "infos"} title="Dossier, chapitre, télécharger"
           onClick={() => setMenu(menu === "infos" ? null : "infos")} style={{ position: "relative" }}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="19" cy="12" r="2" /></svg>
@@ -763,7 +945,32 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
         <button className="carnet-outil" aria-label="Supprimer la note" title="Supprimer" onClick={supprimer} style={{ color: colors.red }}><Icone d={ICONES.corbeille} /></button>
       </div>
 
+      {stylo ? (
+        <div role="toolbar" aria-label="Surligneur" style={{ display: "flex", gap: "5px", padding: "6px 8px", overflowX: "auto", alignItems: "center", borderBottom: `1px solid ${colors.border}`, background: "#FFFBEA" }}>
+          <button type="button" className="carnet-choix" onClick={() => { setStylo(null); setApercu([]) }}
+            style={{ flexShrink: 0, background: colors.navy, borderColor: colors.navy, color: "#fff", fontWeight: 600, padding: "0 12px" }}>Terminé</button>
+          <Outil label="Annuler le dernier surlignage" onAction={annulerStylo}><span style={{ opacity: nbStylo ? 1 : 0.35, display: "inline-flex" }}><Icone d={ICONES.annuler} /></span></Outil>
+          <span aria-hidden="true" style={{ width: 1, alignSelf: "stretch", background: colors.blueBorder, margin: "6px 2px", flexShrink: 0 }} />
+          {COULEURS_SURLIGNEUR.map(c => {
+            const actif = stylo === "surligner" && couleurStylo === c.id
+            return (
+              <button key={c.nom} type="button" aria-label={`Surligneur ${c.nom.toLowerCase()}`} aria-pressed={actif} title={c.nom} onClick={() => choisirCouleurStylo(c.id)}
+                style={{ flexShrink: 0, width: 32, height: 32, borderRadius: "50%", background: c.hex, cursor: "pointer", border: "2px solid #fff",
+                  boxShadow: actif ? `0 0 0 2.5px ${colors.navy}` : `0 0 0 1px ${colors.blueBorder}`, transform: actif ? "scale(1.06)" : undefined }} />
+            )
+          })}
+          <button type="button" aria-label="Gomme à surlignage" title="Gomme" aria-pressed={stylo === "gommer"} onClick={() => setStylo("gommer")} className="carnet-outil"
+            style={stylo === "gommer" ? { background: colors.navy, color: "#fff" } : undefined}>
+            <Icone d={ICONES.gomme} />
+          </button>
+        </div>
+      ) : (
       <div role="toolbar" aria-label="Mise en forme" style={{ display: "flex", gap: "2px", padding: "4px 8px", overflowX: "auto", borderBottom: `1px solid ${colors.border}`, background: "#FBFCFF" }}>
+        <Outil label="Surligneur (crayon)" onAction={() => activerStylo()}>
+          <span style={{ position: "relative", display: "inline-flex" }}><Icone d={ICONES.surligneur} />
+            <span aria-hidden="true" style={{ position: "absolute", left: -2, right: -2, bottom: -3, height: 5, borderRadius: 3, background: (COULEURS_SURLIGNEUR.find(c => c.id === couleurStylo) ?? COULEURS_SURLIGNEUR[0]).hex }} />
+          </span>
+        </Outil>
         <Outil label="Annuler" onAction={() => commande("undo")}><Icone d={ICONES.annuler} /></Outil>
         <Outil label="Rétablir" onAction={() => commande("redo")}><Icone d={ICONES.retablir} /></Outil>
         <span aria-hidden="true" style={{ width: 1, background: colors.blueBorder, margin: "8px 4px", flexShrink: 0 }} />
@@ -775,22 +982,34 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
         <Outil label="Italique" actif={formats.italic} onAction={() => commande("italic")}><i style={{ fontFamily: "Georgia, serif" }}>I</i></Outil>
         <Outil label="Souligné" actif={formats.underline} onAction={() => commande("underline")}><u>S</u></Outil>
         <Outil label="Barré" actif={formats.strike} onAction={() => commande("strikeThrough")}><s>ab</s></Outil>
-        <Outil label="Surligner" actif={formats.mark} onAction={surligner}><span style={{ background: couleurSurligneur.hex, color: colors.text, padding: "0 5px", borderRadius: 3, fontWeight: 600 }}>ab</span></Outil>
-        <Outil label="Couleurs du texte et du surligneur" actif={menu === "couleur"} onAction={() => setMenu(menu === "couleur" ? null : "couleur")}>
+        <Outil label="Couleur du texte" actif={menu === "couleur"} onAction={() => setMenu(menu === "couleur" ? null : "couleur")}>
           <span style={{ display: "inline-flex", flexDirection: "column", alignItems: "center", lineHeight: 1, fontWeight: 700 }}>A<span aria-hidden="true" style={{ width: 16, height: 4, borderRadius: 2, marginTop: 2, background: `linear-gradient(90deg, ${COULEURS_TEXTE.map(c => c.hex).join(",")})` }} /></span>
         </Outil>
         <span aria-hidden="true" style={{ width: 1, background: colors.blueBorder, margin: "8px 4px", flexShrink: 0 }} />
         <Outil label="Liste à puces" actif={formats.puces} onAction={() => commande("insertUnorderedList")}><Icone d={ICONES.puces} /></Outil>
         <Outil label="Liste numérotée" actif={formats.numeros} onAction={() => commande("insertOrderedList")}><Icone d={ICONES.numeros} /></Outil>
         <Outil label="Liste à cocher" actif={formats.cases} onAction={cases}><Icone d={ICONES.cases} /></Outil>
+        <Outil label="Décaler à droite (sous-point)" onAction={() => retrait(true)}><Icone d={ICONES.retrait} /></Outil>
+        <Outil label="Décaler à gauche" onAction={() => retrait(false)}><Icone d={ICONES.desretrait} /></Outil>
+        <span aria-hidden="true" style={{ width: 1, background: colors.blueBorder, margin: "8px 4px", flexShrink: 0 }} />
+        <Outil label="Encadré (définition, à retenir, exemple)" actif={formats.encadre || menu === "encadre"} onAction={() => setMenu(menu === "encadre" ? null : "encadre")}><Icone d={ICONES.encadre} /></Outil>
         <Outil label="Insérer un tableau" actif={formats.table} onAction={insererTableau}><Icone d={ICONES.tableau} /></Outil>
+        <Outil label="Ligne de séparation" onAction={separateur}><Icone d={ICONES.separateur} /></Outil>
+        <Outil label="Exposant" actif={formats.sup} onAction={() => commande("superscript")}><span style={{ fontSize: 15 }}>x<sup style={{ fontSize: 10 }}>2</sup></span></Outil>
+        <Outil label="Indice" actif={formats.sub} onAction={() => commande("subscript")}><span style={{ fontSize: 15 }}>x<sub style={{ fontSize: 10 }}>2</sub></span></Outil>
         <span aria-hidden="true" style={{ width: 1, background: colors.blueBorder, margin: "8px 4px", flexShrink: 0 }} />
         <Outil label="Ajouter une photo" actif={undefined} onAction={() => photoRef.current?.click()}><><Icone d={ICONES.photo} /><span style={{ fontSize: "13px" }}>Photo</span></></Outil>
         <Outil label="Dessiner" actif={undefined} onAction={() => setDessin(true)}><><Icone d={ICONES.dessin} /><span style={{ fontSize: "13px" }}>Dessin</span></></Outil>
         <input ref={photoRef} type="file" accept="image/*" hidden onChange={e => { const f = e.target.files?.[0]; e.target.value = ""; if (f) void choisirPhoto(f) }} />
       </div>
+      )}
+      {stylo && (
+        <div style={{ fontSize: 12, color: "#6B7280", padding: "5px 12px", background: "#FFFBEA", borderBottom: `1px solid ${colors.border}` }}>
+          {stylo === "gommer" ? "Gomme : passe sur un surlignage pour l'effacer." : "Glisse sur le texte pour surligner. Touche un mot surligné pour l'effacer."}
+        </div>
+      )}
 
-      {formats.table && (
+      {formats.table && !stylo && (
         <div role="toolbar" aria-label="Tableau" style={{ display: "flex", gap: 6, overflowX: "auto", alignItems: "center", padding: "6px 10px", borderBottom: `1px solid ${colors.border}`, background: "#F4F7FC" }}>
           {([["ligne", "+ Ligne"], ["colonne", "+ Colonne"], ["-ligne", "− Ligne"], ["-colonne", "− Colonne"], ["-tableau", "Supprimer le tableau"]] as const).map(([a, nom]) => (
             <button key={a} type="button" className="carnet-choix" onPointerDown={e => e.preventDefault()} onMouseDown={e => e.preventDefault()} onClick={() => modifierTableau(a)}
@@ -823,23 +1042,26 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
         {menu === "couleur" && (
           <div className="carnet-menu" role="group" aria-label="Couleurs" style={{ left: 8, right: 8, top: 6, maxWidth: 520 }}>
             <div style={{ fontSize: "12px", color: "#6B7280", marginBottom: 6 }}>Couleur du texte</div>
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
               <button type="button" className="carnet-choix" onPointerDown={e => e.preventDefault()} onMouseDown={e => e.preventDefault()} onClick={() => couleurTexte(null)}>Normal</button>
               {COULEURS_TEXTE.map(c => (
                 <button key={c.id} type="button" className="carnet-choix" onPointerDown={e => e.preventDefault()} onMouseDown={e => e.preventDefault()} onClick={() => couleurTexte(c.hex)}
                   style={{ color: c.hex, fontWeight: 650 }}>{c.nom}</button>
               ))}
             </div>
-            <div style={{ fontSize: "12px", color: "#6B7280", marginBottom: 6 }}>Surligneur</div>
+            <p style={{ margin: "0", fontSize: "12px", color: "#6B7280" }}>Sélectionne du texte pour le colorer. Pour surligner, utilise le crayon surligneur (premier bouton de la barre).</p>
+          </div>
+        )}
+        {menu === "encadre" && (
+          <div className="carnet-menu" role="group" aria-label="Encadré" style={{ left: 8, right: 8, top: 6, maxWidth: 520 }}>
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-              {COULEURS_SURLIGNEUR.map(c => (
-                <button key={c.nom} type="button" className="carnet-choix" aria-pressed={couleurSurligneur.nom === c.nom}
-                  onPointerDown={e => e.preventDefault()} onMouseDown={e => e.preventDefault()} onClick={() => choisirSurligneur(c)}
-                  style={{ background: c.hex, color: colors.text, borderColor: couleurSurligneur.nom === c.nom ? colors.navy : c.hex, borderWidth: 2 }}>{couleurSurligneur.nom === c.nom ? `✓ ${c.nom}` : c.nom}</button>
+              {ENCADRES.map(e => (
+                <button key={e.id} type="button" className="carnet-choix" onPointerDown={ev => ev.preventDefault()} onMouseDown={ev => ev.preventDefault()} onClick={() => encadrer(e.id)}
+                  style={{ background: e.fond, borderColor: e.bord, color: e.texte, fontWeight: 700, borderLeftWidth: 4 }}>{e.nom}</button>
               ))}
-              <button type="button" className="carnet-choix" onPointerDown={e => e.preventDefault()} onMouseDown={e => e.preventDefault()} onClick={() => choisirSurligneur(null)}>Retirer</button>
+              {formats.encadre && <button type="button" className="carnet-choix" onPointerDown={ev => ev.preventDefault()} onMouseDown={ev => ev.preventDefault()} onClick={() => encadrer(null)}>Retirer l&apos;encadré</button>}
             </div>
-            <p style={{ margin: "10px 0 0", fontSize: "12px", color: "#6B7280" }}>Sélectionne du texte pour le colorer. Le bouton « ab » surligne avec la couleur choisie.</p>
+            <p style={{ margin: "10px 0 0", fontSize: "12px", color: "#6B7280" }}>Met la ligne du curseur dans un encadré. Une ligne vide + Entrée pour en sortir.</p>
           </div>
         )}
         {menu === "infos" && (
@@ -878,24 +1100,92 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
       </div>
 
       <div style={{ flex: 1, overflowY: "auto", ...FOND_PAGE }} onPointerDown={() => { if (menu) setMenu(null) }}>
-        <div style={{ maxWidth: 760, margin: "0 auto" }}>
+        <div ref={feuilleRef} style={{ maxWidth: 760, margin: "0 auto", position: "relative" }}>
           <textarea ref={titreRef} className="carnet-titre" rows={1} value={titre} placeholder="Titre" aria-label="Titre de la note" maxLength={200}
             onChange={e => { changerMeta({ titre: e.target.value.replace(/\n/g, " ") }); ajusterTitre() }}
             onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); pageRef.current?.focus() } }}
             style={{ display: "block", width: "100%", border: "none", background: "transparent", outline: "none", resize: "none", overflow: "hidden", padding: `${CARREAU}px 16px 0 52px`,
               fontFamily: "var(--font-display)", fontSize: "27px", fontWeight: 700, lineHeight: 1.2, paddingBottom: 10, color: colors.navy, boxSizing: "border-box" }} />
 
-          <div ref={pageRef} className="carnet-page" contentEditable suppressContentEditableWarning
-            role="textbox" aria-multiline="true" aria-label="Contenu de la note" data-vide="Écris ici…"
-            onInput={planifier} onClick={surClic} onKeyDown={surTouche} onPaste={surCollage} />
+          <div ref={pageRef} className="carnet-page" contentEditable={!stylo} suppressContentEditableWarning
+            role="textbox" aria-multiline="true" aria-label="Contenu de la note" data-vide="Écris ici…" data-stylo={stylo ?? undefined}
+            onInput={planifier} onClick={e => { if (!stylo) surClic(e) }} onKeyDown={surTouche} onPaste={surCollage}
+            onPointerDown={styloDebut} onPointerMove={styloBouge} onPointerUp={styloFin} onPointerCancel={styloFin}
+            style={stylo ? { touchAction: "pan-y" } : undefined} />
+          {apercu.map((r, i) => (
+            <div key={i} className="carnet-apercu" style={{ left: r.x, top: r.y, width: r.l, height: r.h,
+              background: stylo === "gommer" ? "rgba(200,30,63,.18)" : (COULEURS_SURLIGNEUR.find(c => c.id === couleurStylo) ?? COULEURS_SURLIGNEUR[0]).hex }} />
+          ))}
         </div>
       </div>
 
+      {plan && <PlanNote titres={plan.titres} marques={plan.marques} onAller={allerA} onFermer={() => setPlan(null)} />}
       {dessin && <Dessin onFermer={() => setDessin(false)} onInserer={png => { setDessin(false); void insererImage(png, "png", "Dessin") }} />}
       {choixChapitre && (
         <ChoixChapitre chapitres={chapitres} onFermer={() => setChoixChapitre(false)}
           onChoisir={id => { setChoixChapitre(false); changerMeta({ chapitre_id: id }) }} />
       )}
+    </div>
+  )
+}
+
+// Plan de la note (titres) et liste des passages surlignés, par couleur
+function PlanNote({ titres, marques, onAller, onFermer }: { titres: Element[]; marques: Element[]; onAller: (el: Element) => void; onFermer: () => void }) {
+  const [onglet, setOnglet] = useState<"plan" | "surlignages">(titres.length || !marques.length ? "plan" : "surlignages")
+  const parCouleur = COULEURS_SURLIGNEUR.map(c => ({ c, liste: marques.filter(m => (m.getAttribute("data-couleur") || "") === c.id) })).filter(g => g.liste.length)
+  async function copier() {
+    const texte = parCouleur.map(g => `${g.c.nom}\n${g.liste.map(m => `• ${(m.textContent || "").trim()}`).join("\n")}`).join("\n\n")
+    try { await navigator.clipboard.writeText(texte); toast("Surlignages copiés", "success") } catch { toast("Copie impossible", "error") }
+  }
+  useEffect(() => {
+    function echap(e: KeyboardEvent) { if (e.key === "Escape") { e.stopPropagation(); onFermer() } }
+    window.addEventListener("keydown", echap, true)
+    return () => window.removeEventListener("keydown", echap, true)
+  }, [onFermer])
+  return (
+    <div role="dialog" aria-modal="true" aria-label="Plan de la note" onClick={e => { if (e.target === e.currentTarget) onFermer() }}
+      style={{ position: "fixed", inset: 0, zIndex: 1200, background: "rgba(10,22,40,0.55)", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+      <div style={{ background: "#fff", width: "100%", maxWidth: 560, maxHeight: "80dvh", borderRadius: "18px 18px 0 0", padding: "14px 14px calc(14px + env(safe-area-inset-bottom))", display: "flex", flexDirection: "column", gap: "10px" }}>
+        <div style={{ display: "flex", alignItems: "center" }}>
+          <div role="tablist" style={{ flex: 1, display: "flex", gap: 2, background: "#EEF2F8", borderRadius: 10, padding: 3, marginRight: 8 }}>
+            {(["plan", "surlignages"] as const).map(o => (
+              <button key={o} role="tab" aria-selected={onglet === o} onClick={() => setOnglet(o)}
+                style={{ flex: 1, border: "none", borderRadius: 8, padding: "8px 0", fontSize: "13px", fontWeight: 600, cursor: "pointer",
+                  background: onglet === o ? "#fff" : "transparent", color: onglet === o ? colors.navy : "#6B7280" }}>
+                {o === "plan" ? `Plan (${titres.length})` : `Surlignages (${marques.length})`}
+              </button>
+            ))}
+          </div>
+          <button onClick={onFermer} className="carnet-puce" style={{ border: "none" }}>Fermer</button>
+        </div>
+        <div style={{ overflowY: "auto" }}>
+          {onglet === "plan" && (titres.length ? titres.map((h, i) => (
+            <button key={i} onClick={() => onAller(h)}
+              style={{ width: "100%", display: "block", textAlign: "left", background: "none", border: "none", borderBottom: `1px solid ${colors.border}`, cursor: "pointer",
+                padding: h.tagName === "H2" ? "11px 4px" : "9px 4px 9px 22px", fontSize: h.tagName === "H2" ? 15 : 14, fontWeight: h.tagName === "H2" ? 700 : 500, color: colors.text }}>
+              {h.textContent}
+            </button>
+          )) : <p style={{ fontSize: 13, color: colors.textMuted }}>Aucun titre pour l&apos;instant. Utilise « Titre » et « Sous-titre » pour structurer ta note : le plan apparaîtra ici.</p>)}
+          {onglet === "surlignages" && (parCouleur.length ? (
+            <>
+              {parCouleur.map(g => (
+                <div key={g.c.nom} style={{ marginBottom: 10 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, fontWeight: 700, color: "#6B7280", padding: "8px 4px 4px" }}>
+                    <span aria-hidden="true" style={{ width: 14, height: 14, borderRadius: 4, background: g.c.hex }} />{g.c.nom} ({g.liste.length})
+                  </div>
+                  {g.liste.map((m, i) => (
+                    <button key={i} onClick={() => onAller(m)}
+                      style={{ width: "100%", display: "block", textAlign: "left", background: "none", border: "none", borderBottom: `1px solid ${colors.border}`, padding: "9px 4px", cursor: "pointer", fontSize: 14, color: colors.text }}>
+                      <span style={{ background: g.c.hex, borderRadius: 3, padding: "0 3px", boxDecorationBreak: "clone", WebkitBoxDecorationBreak: "clone" }}>{(m.textContent || "").trim()}</span>
+                    </button>
+                  ))}
+                </div>
+              ))}
+              <button className="carnet-choix" style={{ width: "100%", marginTop: 4 }} onClick={() => void copier()}>Copier tous les surlignages</button>
+            </>
+          ) : <p style={{ fontSize: 13, color: colors.textMuted }}>Aucun passage surligné. Astuce : une couleur par type d&apos;info (ex. jaune = définitions, vert = exemples, rose = à apprendre par cœur).</p>)}
+        </div>
+      </div>
     </div>
   )
 }
