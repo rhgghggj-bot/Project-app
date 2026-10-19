@@ -11,6 +11,8 @@ import { mettreALaCorbeille } from "@/lib/corbeille"
 import { effacerSous, estSurligne, motSous, plageEntre, pointSous, surligner as surlignerPlage, type Point } from "@/lib/surligneur"
 import { CARREAU, FOND_PAGE } from "./cahier"
 import Dessin from "./Dessin"
+import NuageSurlignages from "./NuageSurlignages"
+import { chargerReference, type Reference } from "@/lib/nuage"
 import Astuce, { astuceVue } from "./Astuce"
 import { caveat, lora } from "./polices"
 
@@ -1280,7 +1282,8 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
         </div>
       </div>
 
-      {plan && <PlanNote titres={plan.titres} marques={plan.marques} onAller={allerA} onFermer={() => setPlan(null)} />}
+      {plan && <PlanNote titres={plan.titres} marques={plan.marques} onAller={allerA} onFermer={() => setPlan(null)}
+        chapitreId={chapitreId} userId={userId} contexte={contexte} />}
       {dessin && <Dessin onFermer={() => setDessin(false)} onInserer={png => { setDessin(false); void insererImage(png, "png", "Dessin") }} />}
       {choixChapitre && (
         <ChoixChapitre chapitres={chapitres} onFermer={() => setChoixChapitre(false)}
@@ -1291,8 +1294,22 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
 }
 
 // Plan de la note (titres) et liste des passages surlignés, par couleur
-function PlanNote({ titres, marques, onAller, onFermer }: { titres: Element[]; marques: Element[]; onAller: (el: Element) => void; onFermer: () => void }) {
+function PlanNote({ titres, marques, onAller, onFermer, chapitreId, userId, contexte }: {
+  titres: Element[]; marques: Element[]; onAller: (el: Element) => void; onFermer: () => void
+  chapitreId: string | null; userId: string; contexte: ContexteProgramme
+}) {
   const [onglet, setOnglet] = useState<"plan" | "surlignages">(titres.length || !marques.length ? "plan" : "surlignages")
+  const [vue, setVue] = useState<"liste" | "nuage">(() => { try { return localStorage.getItem("carnet-surlignages-vue") === "nuage" ? "nuage" : "liste" } catch { return "liste" } })
+  // Chapitre relié : ses notions forment le fil rouge du nuage
+  const [reference, setReference] = useState<{ id: string; ref: Reference | null } | null>(null)
+  useEffect(() => {
+    if (!chapitreId || vue !== "nuage" || reference?.id === chapitreId) return
+    let actif = true
+    chargerReference(userId, chapitreId, contexte).catch(() => null).then(ref => { if (actif) setReference({ id: chapitreId, ref }) })
+    return () => { actif = false }
+  }, [chapitreId, vue, reference, userId, contexte])
+  const passages = marques.map(m => ({ texte: (m.textContent || "").replace(/\s+/g, " ").trim(), couleur: m.getAttribute("data-couleur") || "" }))
+  function changerVue(v: "liste" | "nuage") { setVue(v); try { localStorage.setItem("carnet-surlignages-vue", v) } catch { /* stockage indisponible */ } }
   const parCouleur = COULEURS_SURLIGNEUR.map(c => ({ c, liste: marques.filter(m => (m.getAttribute("data-couleur") || "") === c.id) })).filter(g => g.liste.length)
   async function copier() {
     const texte = parCouleur.map(g => `${g.c.nom}\n${g.liste.map(m => `• ${(m.textContent || "").trim()}`).join("\n")}`).join("\n\n")
@@ -1327,7 +1344,22 @@ function PlanNote({ titres, marques, onAller, onFermer }: { titres: Element[]; m
               {h.textContent}
             </button>
           )) : <p style={{ fontSize: 13, color: colors.textMuted }}>Aucun titre pour l&apos;instant. Utilise « Titre » et « Sous-titre » pour structurer ta note : le plan apparaîtra ici.</p>)}
-          {onglet === "surlignages" && (parCouleur.length ? (
+          {onglet === "surlignages" && marques.length > 0 && (
+            <div role="group" aria-label="Affichage des surlignages" style={{ display: "flex", gap: 6, margin: "0 0 8px" }}>
+              {(["liste", "nuage"] as const).map(v => (
+                <button key={v} className="carnet-puce" aria-pressed={vue === v} onClick={() => changerVue(v)}
+                  style={vue === v ? { background: colors.navy, color: "#fff", borderColor: colors.navy } : undefined}>
+                  {v === "liste" ? "Liste" : "Nuage"}
+                </button>
+              ))}
+            </div>
+          )}
+          {onglet === "surlignages" && vue === "nuage" && marques.length > 0 && (
+            <NuageSurlignages passages={passages} onAller={i => onAller(marques[i])}
+              reference={chapitreId && reference?.id === chapitreId ? reference.ref : null}
+              chargement={!!chapitreId && reference?.id !== chapitreId} />
+          )}
+          {onglet === "surlignages" && (vue === "liste" || !marques.length) && (parCouleur.length ? (
             <>
               {parCouleur.map(g => (
                 <div key={g.c.nom} style={{ marginBottom: 10 }}>
