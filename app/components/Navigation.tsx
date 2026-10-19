@@ -22,7 +22,8 @@ export default function Navigation() {
   const [user, setUser] = useState<User | null>(null)
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => setUser(user))
+    // Session lue sur l'appareil : la barre reste correcte hors connexion
+    supabase.auth.getSession().then(({ data: { session } }) => setUser((session?.user ?? null) as User | null))
   }, [])
 
   if (PLEIN_ECRAN.includes(pathname)) return null

@@ -8,9 +8,10 @@ import { chargerFichesPerso } from "@/lib/fichesPerso"
 import { cheminsImages, compresserImage, COULEURS_SURLIGNEUR, COULEURS_TEXTE, nettoyerHtml, normaliser, texteBrut, type Dossier, type NoteCarnet } from "@/lib/carnet"
 import type { Pays } from "@/lib/etudes"
 import { mettreALaCorbeille } from "@/lib/corbeille"
+import { horsLigne, mettreEnAttente, notesEnAttente, retirerDeAttente } from "@/lib/horsLigne"
 import { effacerSous, estSurligne, motSous, plageEntre, pointSous, surligner as surlignerPlage, type Point } from "@/lib/surligneur"
 import { CARREAU, FOND_PAGE } from "./cahier"
-import Dessin from "./Dessin"
+import Dessin, { type Ecriture } from "./Dessin"
 import NuageSurlignages from "./NuageSurlignages"
 import { chargerReference, type Reference } from "@/lib/nuage"
 import Astuce, { astuceVue } from "./Astuce"
@@ -39,7 +40,7 @@ function effacerBrouillon(id: string) {
 export type ContexteProgramme = { pays: Pays; niveauId: string | null; filiere: string | null; specialites: string[] }
 
 type Meta = { titre: string; dossier_id: string | null; epingle: boolean; chapitre_id: string | null }
-type Statut = "pret" | "modifie" | "enregistrement" | "enregistre" | "erreur"
+type Statut = "pret" | "modifie" | "enregistrement" | "enregistre" | "erreur" | "horsligne"
 
 const SURLIGNEUR = COULEURS_SURLIGNEUR[0].hex
 
@@ -237,7 +238,8 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
   const [statut, setStatut] = useState<Statut>("pret")
   const [formats, setFormats] = useState<Record<string, boolean>>({})
   const [styleTexte, setStyleTexte] = useState<{ taille: string; police: string }>({ taille: "", police: "" })
-  const [dessin, setDessin] = useState(false)
+  // Écriture à la main : nouvelle, ou rouverte depuis une image déjà dans la note
+  const [dessin, setDessin] = useState<{ img?: HTMLImageElement; initiale?: Ecriture } | null>(null)
   const [choixChapitre, setChoixChapitre] = useState(false)
   const [chapitres, setChapitres] = useState<OptionLien[] | null>(null)
   const [envoi, setEnvoi] = useState(0)
@@ -381,12 +383,20 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
     enVol.current = envoiEnCours
     const ok = await envoiEnCours
     enVol.current = null
-    if (!ok) { sale.current = true; setStatut("erreur"); return false }
+    if (!ok) { sale.current = true; mettreEnAttente(userId, maj); setStatut(horsLigne() ? "horsligne" : "erreur"); return false }
+    retirerDeAttente(userId, maj.id)
     existe.current = true
     derniere.current = maj
     if (!sale.current) { effacerBrouillon(note.id); setStatut("enregistre") }
     return true
   }
+
+  // Retour du réseau : on renvoie la note modifiée hors connexion
+  useEffect(() => {
+    const auRetour = () => { if (sale.current) void enregistrer() }
+    window.addEventListener("online", auRetour)
+    return () => window.removeEventListener("online", auRetour)
+  })
 
   function planifier() {
     sale.current = true
@@ -430,7 +440,9 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
   async function fermer() {
     if (envoi > 0) return toast("Attends la fin de l'envoi de l'image", "info")
     const ok = await enregistrer()
-    if (!ok) {
+    // Hors connexion : la note est gardée sur l'appareil (file d'attente), on quitte sans inquiéter
+    if (!ok && horsLigne()) toast("Hors connexion : ta note est gardée sur l'appareil et sera envoyée au retour du réseau.", "info")
+    else if (!ok) {
       const message = existe.current
         ? "Tes dernières modifications n'ont pas pu être enregistrées (connexion ?). Elles restent sur cet appareil et seront envoyées à la prochaine ouverture de la note. Quitter quand même ?"
         : "Cette nouvelle note n'a pas pu être enregistrée (connexion ?). Si tu quittes maintenant, elle sera perdue. Quitter quand même ?"
@@ -443,7 +455,9 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
       onFermer({ note: null, supprimee: existe.current })
       return
     }
-    onFermer({ note: existe.current ? derniere.current : null, supprimee: false })
+    // Une note gardée hors connexion reste visible dans la liste du carnet
+    const enAttente = ok ? undefined : notesEnAttente(userId).find(n => n.id === note.id)
+    onFermer({ note: enAttente ?? (existe.current ? derniere.current : null), supprimee: false })
   }
 
   async function supprimer() {
@@ -795,6 +809,21 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
     setTimeout(() => URL.revokeObjectURL(url), 60000)
   }
 
+  // Lien qui contient la note : le camarade la lit et peut l'ajouter à son carnet
+  async function partager() {
+    setMenu(null)
+    await enregistrer()
+    const { lienDePartage, LIEN_MAX } = await import("@/lib/partage")
+    const lien = lienDePartage({ titre: meta.current.titre.trim() || "Note", html: nettoyerHtml(pageRef.current?.innerHTML ?? "") })
+    if (lien.length > LIEN_MAX) return toast("Note trop longue pour un lien : partage plutôt le fichier Word.", "info")
+    const titre = meta.current.titre.trim() || "Note"
+    try {
+      if (navigator.share) { await navigator.share({ title: titre, text: `Ma note « ${titre} » sur Nexia`, url: lien }); return }
+    } catch (e) { if ((e as Error).name === "AbortError") return }
+    try { await navigator.clipboard.writeText(lien); toast("Lien copié : colle-le dans une discussion ou un message.", "success") }
+    catch { toast("Copie impossible sur cet appareil", "error") }
+  }
+
   async function exporterWord() {
     setMenu(null)
     setExport("Création du fichier Word…")
@@ -943,13 +972,13 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
   }
 
   // ─── Photos et dessins ───
-  async function insererImage(fichier: Blob, extension: "jpg" | "png", alt: string) {
+  async function insererImage(fichier: Blob, extension: "jpg" | "png", alt: string): Promise<string | null> {
     setEnvoi(n => n + 1)
     const chemin = `${userId}/notes/${note.id}/${crypto.randomUUID()}.${extension}`
     const { error } = await supabase.storage.from("etudes").upload(chemin, fichier, { contentType: extension === "png" ? "image/png" : "image/jpeg" })
     setEnvoi(n => n - 1)
-    if (error) return toast("Image non envoyée, vérifie ta connexion", "error")
-    if (!pageRef.current) return
+    if (error) { toast("Image non envoyée, vérifie ta connexion", "error"); return null }
+    if (!pageRef.current) return null
     remettreCurseur()
     const apercu = URL.createObjectURL(fichier)
     apercus.current.push(apercu)
@@ -972,6 +1001,36 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
     const sel = document.getSelection()
     sel?.removeAllRanges(); sel?.addRange(r)
     planifier()
+    return chemin
+  }
+
+  // Les traits d'une écriture sont gardés à côté de l'image (même nom + .json)
+  // pour pouvoir la rouvrir et la corriger plus tard
+  async function enregistrerEcriture(png: Blob, ecriture: Ecriture, img?: HTMLImageElement) {
+    let chemin: string | null
+    if (img) {
+      chemin = `${userId}/notes/${note.id}/${crypto.randomUUID()}.png`
+      setEnvoi(n => n + 1)
+      const { error } = await supabase.storage.from("etudes").upload(chemin, png, { contentType: "image/png" })
+      setEnvoi(n => n - 1)
+      if (error) return toast("Écriture non envoyée, vérifie ta connexion", "error")
+      const apercu = URL.createObjectURL(png)
+      apercus.current.push(apercu)
+      img.setAttribute("data-chemin", chemin)
+      img.src = apercu
+      planifier()
+    } else {
+      chemin = await insererImage(png, "png", "Dessin")
+    }
+    if (chemin) await supabase.storage.from("etudes").upload(chemin + ".json", new Blob([JSON.stringify(ecriture)], { type: "application/json" }), { upsert: true, contentType: "application/json" })
+  }
+
+  async function rouvrirEcriture(img: HTMLImageElement) {
+    const chemin = img.getAttribute("data-chemin")
+    if (!chemin) return
+    const { data } = await supabase.storage.from("etudes").download(chemin + ".json")
+    if (!data) return toast("Ce dessin a été fait avant la nouvelle écriture : il ne peut pas être modifié, mais tu peux en ajouter un nouveau.", "info")
+    try { setDessin({ img, initiale: JSON.parse(await data.text()) as Ecriture }) } catch { toast("Écriture illisible", "error") }
   }
 
   async function choisirPhoto(f: File) {
@@ -995,7 +1054,7 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
     { id: "encadre", groupe: "Structure", label: "Encadré", icone: <Icone d={ICONES.encadre} />, actif: formats.encadre },
     { id: "tableau", groupe: "Structure", label: "Tableau", icone: <Icone d={ICONES.tableau} />, actif: formats.table },
     { id: "separateur", groupe: "Structure", label: "Séparation", icone: <Icone d={ICONES.separateur} /> },
-    { id: "dessin", groupe: "Ajouter", label: "Dessin", icone: <Icone d={ICONES.dessin} /> },
+    { id: "dessin", groupe: "Ajouter", label: "Écrire à la main", icone: <Icone d={ICONES.dessin} /> },
     { id: "retablir", groupe: "Ajouter", label: "Rétablir", icone: <Icone d={ICONES.retablir} /> },
     { id: "interroger", groupe: "Réviser", label: "Je m'interroge", icone: <Icone d={ICONES.oeil} /> },
     { id: "plan", groupe: "Réviser", label: "Plan, surlignages", icone: <Icone d={ICONES.plan} /> },
@@ -1023,7 +1082,7 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
       case "encadre": setMenu("encadre"); break
       case "tableau": insererTableau(); break
       case "separateur": separateur(); break
-      case "dessin": setDessin(true); break
+      case "dessin": setDessin({}); break
       case "retablir": commande("redo"); break
       case "interroger": interroger(); break
       case "plan": ouvrirPlan(); break
@@ -1037,7 +1096,7 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
   }
 
   const chapitre = chapitres?.find(c => c.id === chapitreId) ?? null
-  const libelleStatut = { pret: "", modifie: "Modifié", enregistrement: "Enregistrement…", enregistre: "Enregistré", erreur: "Non enregistré" }[statut]
+  const libelleStatut = { pret: "", modifie: "Modifié", enregistrement: "Enregistrement…", enregistre: "Enregistré", erreur: "Non enregistré", horsligne: "📴 Hors connexion · gardé sur l'appareil" }[statut]
 
   const compact = !!vue && vue.hauteur < 330
   return (
@@ -1250,6 +1309,7 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
               <button className="carnet-choix" style={{ flex: 1 }} onClick={() => void exporterWord()} disabled={!!export_}>Word (.docx)</button>
               <button className="carnet-choix" style={{ flex: 1 }} onClick={imprimer}>PDF / Imprimer</button>
             </div>
+            <button className="carnet-choix" style={{ width: "100%", marginTop: 8 }} onClick={() => void partager()}>Partager à un camarade (lien)</button>
           </div>
         )}
       </div>
@@ -1274,6 +1334,8 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
             role="textbox" aria-multiline="true" aria-label="Contenu de la note" data-vide="Écris ici…" data-stylo={stylo ?? undefined}
             onInput={planifier} onClick={e => {
               if (cache) { const m = (e.target as Element).closest("mark"); if (m) { m.classList.toggle("vu"); compterCache() } return }
+              const t = e.target as Element
+              if (!stylo && t.tagName === "IMG" && t.getAttribute("alt") === "Dessin") { void rouvrirEcriture(t as HTMLImageElement); return }
               if (!stylo) surClic(e)
             }} onKeyDown={surTouche} onPaste={surCollage}
             onPointerDown={styloDebut} onPointerMove={styloBouge} onPointerUp={styloFin} onPointerCancel={styloFin}
@@ -1287,7 +1349,8 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
 
       {plan && <PlanNote titres={plan.titres} marques={plan.marques} onAller={allerA} onFermer={() => setPlan(null)}
         chapitreId={chapitreId} userId={userId} contexte={contexte} />}
-      {dessin && <Dessin onFermer={() => setDessin(false)} onInserer={png => { setDessin(false); void insererImage(png, "png", "Dessin") }} />}
+      {dessin && <Dessin key={dessin.img ? "modif" : "nouveau"} initiale={dessin.initiale} onFermer={() => setDessin(null)}
+        onInserer={(png, ecriture) => { const img = dessin.img; setDessin(null); void enregistrerEcriture(png, ecriture, img) }} />}
       {choixChapitre && (
         <ChoixChapitre chapitres={chapitres} onFermer={() => setChoixChapitre(false)}
           onChoisir={id => { setChoixChapitre(false); changerMeta({ chapitre_id: id }) }} />
