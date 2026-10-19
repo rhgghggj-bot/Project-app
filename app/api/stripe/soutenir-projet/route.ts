@@ -3,6 +3,7 @@ import { getStripe } from '@/lib/stripe'
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin'
 import { getAuthUser } from '@/lib/apiAuth'
 import { rateLimit } from '@/lib/rateLimit'
+import { urlDeRetour } from '@/lib/retourUrl'
 
 export async function POST(request: NextRequest) {
   const authUser = await getAuthUser(request)
@@ -15,8 +16,8 @@ export async function POST(request: NextRequest) {
 
   const { projetId, montant, retourUrl } = await request.json()
   const montantNum = parseFloat(montant)
-  if (!projetId || !montantNum || montantNum <= 0 || !retourUrl) {
-    return NextResponse.json({ error: 'Paramètres manquants' }, { status: 400 })
+  if (!projetId || !Number.isFinite(montantNum) || montantNum < 1 || montantNum > 10000) {
+    return NextResponse.json({ error: 'Montant invalide (entre 1 et 10 000 CHF)' }, { status: 400 })
   }
 
   const { data: projet } = await getSupabaseAdmin().from('projets').select('id,titre,user_id').eq('id', projetId).single()
@@ -47,8 +48,8 @@ export async function POST(request: NextRequest) {
       projet_id: projetId,
       soutien_id: authUser.id,
     },
-    success_url: retourUrl + '?soutien=succes',
-    cancel_url: retourUrl + '?soutien=annule',
+    success_url: urlDeRetour(request, retourUrl) + '?soutien=succes',
+    cancel_url: urlDeRetour(request, retourUrl) + '?soutien=annule',
   })
 
   return NextResponse.json({ url: session.url })

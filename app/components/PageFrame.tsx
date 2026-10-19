@@ -13,9 +13,12 @@ const animations = {
   default: "none",
 }
 
+export const PLEIN_ECRAN = ["/presentation", "/connexion", "/inscription"]
+
 export default function PageFrame({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
-  const bare = pathname === "/presentation"
+  // Pages plein écran, sans colonne ni barre de navigation
+  const bare = PLEIN_ECRAN.includes(pathname)
 
   if (bare) return <>{children}</>
 

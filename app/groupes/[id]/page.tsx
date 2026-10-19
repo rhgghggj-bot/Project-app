@@ -299,14 +299,16 @@ export default function GroupePage() {
     setMessageActif(null)
   }
 
+  // « X a lancé un appel » disparaît après 30 minutes (anciens messages sans accent compris)
+  const RE_APPEL = /a lanc[eé] un appel/
   function estMessageAppel(contenu: string, createdAt: string) {
-    if (!contenu.includes('a lance un appel')) return false
+    if (!RE_APPEL.test(contenu)) return false
     const minutes = (maintenant - new Date(createdAt).getTime()) / 60000
     return minutes < 30
   }
 
   const messagesAffiches = messages.filter(m => {
-    if (m.contenu.includes('a lance un appel')) return estMessageAppel(m.contenu, m.created_at)
+    if (RE_APPEL.test(m.contenu)) return estMessageAppel(m.contenu, m.created_at)
     return true
   })
 

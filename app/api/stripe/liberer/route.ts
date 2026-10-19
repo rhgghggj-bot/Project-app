@@ -31,27 +31,32 @@ export async function POST(request: NextRequest) {
     ? paymentIntent.latest_charge
     : paymentIntent.latest_charge?.id
 
+  // Clé d'idempotence : un double clic ou un nouvel essai ne paie pas deux fois le vendeur
   const transfer = await getStripe().transfers.create({
     amount: montantRecu,
     currency: 'chf',
     destination: vendeur.stripe_account_id,
     transfer_group: 'annonce_' + annonceId,
     source_transaction: latestCharge,
-  })
+  }, { idempotencyKey: 'liberer_' + annonceId })
 
-  await getSupabaseAdmin().from('marketplace_annonces').update({
+  // Seule la première confirmation passe l'annonce à « vendu » et note la vente dans les finances
+  const { data: liberee } = await getSupabaseAdmin().from('marketplace_annonces').update({
     statut: 'vendu',
     paiement_statut: 'libere',
-  }).eq('id', annonceId)
+  }).eq('id', annonceId).eq('paiement_statut', 'retenu').select('id')
 
-  await getSupabaseAdmin().from('revenus').insert({
-    user_id: annonce.user_id, titre: 'Vente : ' + annonce.titre, montant: parseFloat(annonce.prix),
-    categorie: 'Autre', date: new Date().toISOString().slice(0, 10), recurrent: false,
-  })
-  await getSupabaseAdmin().from('depenses').insert({
-    user_id: acheteurId, titre: 'Achat : ' + annonce.titre, montant: parseFloat(annonce.prix),
-    categorie: 'Autre', date: new Date().toISOString().slice(0, 10), recurrent: false,
-  })
+  if (liberee?.length) {
+    const jour = new Date().toISOString().slice(0, 10)
+    await getSupabaseAdmin().from('revenus').insert({
+      user_id: annonce.user_id, titre: 'Vente : ' + annonce.titre, montant: parseFloat(annonce.prix),
+      categorie: 'Autre revenu', date: jour, recurrent: false,
+    })
+    await getSupabaseAdmin().from('depenses').insert({
+      user_id: acheteurId, titre: 'Achat : ' + annonce.titre, montant: parseFloat(annonce.prix),
+      categorie: 'Autres', date: jour, recurrent: false,
+    })
+  }
 
   return NextResponse.json({ success: true, transferId: transfer.id })
 }

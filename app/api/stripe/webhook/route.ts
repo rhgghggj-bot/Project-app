@@ -5,13 +5,15 @@ import { getSupabaseAdmin } from '@/lib/supabaseAdmin'
 
 export async function POST(request: NextRequest) {
   const body = await request.text()
-  const signature = request.headers.get('stripe-signature')!
+  const signature = request.headers.get('stripe-signature')
+  const secret = process.env.STRIPE_WEBHOOK_SECRET
+  if (!signature || !secret) return NextResponse.json({ error: 'Signature manquante' }, { status: 400 })
 
   let event
   try {
-    event = getStripe().webhooks.constructEvent(body, signature, process.env.STRIPE_WEBHOOK_SECRET!)
-  } catch (err) {
-    return NextResponse.json({ error: 'Signature invalide : ' + err.message }, { status: 400 })
+    event = getStripe().webhooks.constructEvent(body, signature, secret)
+  } catch {
+    return NextResponse.json({ error: 'Signature invalide' }, { status: 400 })
   }
 
   if (event.type === 'account.updated') {
@@ -21,54 +23,65 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  // Stripe peut envoyer deux fois le même événement : chaque branche vérifie
+  // d'abord qu'il n'a pas déjà été traité.
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object as Stripe.Checkout.Session
+    const meta = session.metadata ?? {}
+    const intent = typeof session.payment_intent === 'string' ? session.payment_intent : session.payment_intent?.id ?? null
+    if (session.payment_status !== 'paid' || !intent) return NextResponse.json({ received: true })
+    const db = getSupabaseAdmin()
 
-    if (session.metadata?.type === 'depense_partagee') {
-      const partId = session.metadata.part_id
-      await getSupabaseAdmin().from('depenses_partagees_parts').update({
+    if (meta.type === 'depense_partagee' && meta.part_id) {
+      const { data: reglees } = await db.from('depenses_partagees_parts').update({
         statut: 'regle',
-        stripe_payment_intent_id: session.payment_intent,
+        stripe_payment_intent_id: intent,
         regle_le: new Date().toISOString(),
-      }).eq('id', partId)
+      }).eq('id', meta.part_id).neq('statut', 'regle').select('id')
 
-      const { data: part } = await getSupabaseAdmin()
-        .from('depenses_partagees_parts')
-        .select('*, depense:depenses_partagees(*)')
-        .eq('id', partId)
-        .single()
-      if (part?.depense) {
-        await getSupabaseAdmin().from('messages_groupe').insert({
-          groupe_id: part.depense.groupe_id,
-          user_id: part.user_id,
-          contenu: `💸 Remboursement de ${part.montant} CHF réglé pour "${part.depense.titre}".`,
+      if (reglees?.length) {
+        const { data: part } = await db
+          .from('depenses_partagees_parts')
+          .select('*, depense:depenses_partagees(*)')
+          .eq('id', meta.part_id)
+          .single()
+        if (part?.depense) {
+          await db.from('messages_groupe').insert({
+            groupe_id: part.depense.groupe_id,
+            user_id: part.user_id,
+            contenu: `💸 Remboursement de ${part.montant} CHF réglé pour "${part.depense.titre}".`,
+          })
+        }
+      }
+    } else if (meta.type === 'soutien_projet' && meta.projet_id) {
+      const { data: deja } = await db.from('projets_soutiens').select('id').eq('stripe_payment_intent_id', intent).maybeSingle()
+      if (!deja) {
+        await db.from('projets_soutiens').insert({
+          projet_id: meta.projet_id,
+          soutien_id: meta.soutien_id,
+          montant: (session.amount_total || 0) / 100,
+          stripe_payment_intent_id: intent,
         })
       }
-    } else if (session.metadata?.type === 'soutien_projet') {
-      const montant = (session.amount_total || 0) / 100
-      await getSupabaseAdmin().from('projets_soutiens').insert({
-        projet_id: session.metadata.projet_id,
-        soutien_id: session.metadata.soutien_id,
-        montant,
-        stripe_payment_intent_id: session.payment_intent,
-      })
-    } else {
-      const { annonce_id, acheteur_id, groupe_id } = session.metadata
+    } else if (meta.annonce_id && meta.acheteur_id) {
+      const { annonce_id, acheteur_id, groupe_id } = meta
+      const { data: annonce } = await db.from('marketplace_annonces').select('titre,prix,stripe_payment_intent_id').eq('id', annonce_id).single()
+      if (annonce && annonce.stripe_payment_intent_id !== intent) {
+        await db.from('marketplace_annonces').update({
+          statut: 'réservé',
+          paiement_statut: 'retenu',
+          stripe_payment_intent_id: intent,
+          acheteur_id,
+        }).eq('id', annonce_id)
 
-      await getSupabaseAdmin().from('marketplace_annonces').update({
-        statut: 'réservé',
-        paiement_statut: 'retenu',
-        stripe_payment_intent_id: session.payment_intent,
-        acheteur_id: acheteur_id,
-      }).eq('id', annonce_id)
-
-      const { data: annonce } = await getSupabaseAdmin().from('marketplace_annonces').select('titre,prix').eq('id', annonce_id).single()
-
-      await getSupabaseAdmin().from('messages_groupe').insert({
-        groupe_id,
-        user_id: acheteur_id,
-        contenu: `💳 Paiement de ${annonce?.prix} CHF effectué pour "${annonce?.titre}". L'argent est retenu en sécurité jusqu'à confirmation de réception.`,
-      })
+        if (groupe_id) {
+          await db.from('messages_groupe').insert({
+            groupe_id,
+            user_id: acheteur_id,
+            contenu: `💳 Paiement de ${annonce.prix} CHF effectué pour "${annonce.titre}". L'argent est retenu en sécurité jusqu'à confirmation de réception.`,
+          })
+        }
+      }
     }
   }
 
