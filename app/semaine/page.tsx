@@ -3,6 +3,7 @@ import { EvenementCalendrier, User } from "@/lib/types"
 import { onActivate } from "@/lib/a11y"
 import Link from "next/link"
 import Tutorial from "../components/Tutorial"
+import { BoutonRappels } from "../components/RappelsEvenements"
 import dynamic from "next/dynamic"
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
@@ -195,6 +196,7 @@ export default function Semaine() {
         <div style={{fontSize:'20px',fontWeight:'500',color:'#fff',marginBottom:'2px'}}>{debutSemaine} – {finSemaine}</div>
         <div style={{fontSize:'13px',color:'rgba(255,255,255,0.6)'}}>{evenements.length} événements au total</div>
         {importMessage && <div role="status" style={{fontSize:'12px',color: importMessage.erreur ? '#fda4af' : '#86efac',marginTop:'6px',lineHeight:1.4}}>{importMessage.texte}</div>}
+        <BoutonRappels style={{position:'relative',zIndex:1,marginTop:'10px',fontSize:'12px',fontWeight:500,color:'#fff',background:'rgba(255,255,255,0.16)',border:'0.5px solid rgba(255,255,255,0.3)',borderRadius:'99px',padding:'9px 14px',minHeight:36,cursor:'pointer'}} />
       </div>
 
       <div style={{margin:'-16px 14px 0',borderRadius:'18px',padding:'14px',position:'relative',zIndex:2,background:'rgba(255,255,255,0.85)',backdropFilter:'blur(20px)',border:'0.5px solid rgba(255,255,255,0.9)',boxShadow:'0 4px 24px rgba(43,127,255,0.1)'}}>

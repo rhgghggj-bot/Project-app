@@ -8,12 +8,9 @@ const JEUX = [
   { id: '2048', nom: '2048', desc: 'Fusionne les nombres jusqu\'à 2048', couleur: '#2B7FFF', icone: 'grid' },
   { id: 'snake', nom: 'Snake', desc: 'Mange, grandis, ne te mords pas', couleur: '#10B981', icone: 'snake' },
   { id: 'memory', nom: 'Memory', desc: 'Retrouve toutes les paires', couleur: '#8B5CF6', icone: 'cards' },
-  { id: 'puissance4', nom: 'Puissance 4', desc: 'Défie un membre d\'un groupe', couleur: '#F43F5E', icone: 'connect4' },
   { id: 'quiz', nom: 'Quiz', desc: 'Crée ou joue un quiz de groupe', couleur: '#D4A843', icone: 'quiz' },
   { id: 'stacktower', nom: 'Stack Tower', desc: 'Empile les blocs sans déborder', couleur: '#EC4899', icone: 'stack' },
-  { id: 'reflexes', nom: 'Réflexes', desc: 'Teste ton temps de réaction', couleur: '#10B981', icone: 'bolt' },
   { id: 'cassebriques', nom: 'Casse-briques', desc: 'Détruis toutes les briques', couleur: '#2B7FFF', icone: 'breakout' },
-  { id: 'maville', nom: 'Ma Ville', desc: 'Construis et gère ta propre ville', couleur: '#22C55E', icone: 'ville' },
 ]
 
 function Icone({ type, couleur }: { type: string, couleur: string }) {
@@ -21,12 +18,9 @@ function Icone({ type, couleur }: { type: string, couleur: string }) {
   if (type === 'blocks') return <svg {...props}><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
   if (type === 'grid') return <svg {...props}><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg>
   if (type === 'snake') return <svg {...props}><path d="M4 6c0-1.5 1.5-2 3-2s3 .5 3 2-1.5 2-3 2H5c-1.5 0-3 .5-3 2s1.5 2 3 2h9c1.5 0 3 .5 3 2s-1.5 2-3 2h-2"/><circle cx="19" cy="16" r="1"/></svg>
-  if (type === 'connect4') return <svg {...props}><rect x="2" y="4" width="20" height="16" rx="2"/><circle cx="7" cy="9" r="1.6" fill={couleur}/><circle cx="12" cy="9" r="1.6" fill={couleur}/><circle cx="17" cy="9" r="1.6" fill={couleur}/><circle cx="7" cy="15" r="1.6" fill={couleur}/><circle cx="12" cy="15" r="1.6" fill={couleur}/></svg>
   if (type === 'quiz') return <svg {...props}><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
   if (type === 'stack') return <svg {...props}><rect x="4" y="4" width="16" height="4" rx="1"/><rect x="7" y="10" width="10" height="4" rx="1"/><rect x="5" y="16" width="14" height="4" rx="1"/></svg>
-  if (type === 'bolt') return <svg {...props}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
   if (type === 'breakout') return <svg {...props}><rect x="3" y="4" width="5" height="3"/><rect x="9" y="4" width="5" height="3"/><rect x="15" y="4" width="5" height="3"/><rect x="6" y="9" width="5" height="3"/><rect x="12" y="9" width="5" height="3"/><circle cx="12" cy="15" r="1.5" fill={couleur}/><rect x="8" y="20" width="8" height="2" rx="1"/></svg>
-  if (type === 'ville') return <svg {...props}><rect x="3" y="10" width="4" height="11"/><rect x="9" y="6" width="4" height="15"/><rect x="15" y="13" width="4" height="8"/><line x1="2" y1="21" x2="22" y2="21"/></svg>
   return <svg {...props}><rect x="2" y="7" width="8" height="12" rx="1.5"/><rect x="14" y="7" width="8" height="12" rx="1.5"/><path d="M6 7V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2"/></svg>
 }
 
@@ -38,8 +32,6 @@ const CLE_PAR_JEU: Record<string, string> = {
   memory: 'memory_meilleur_facile',
   stacktower: 'stacktower_meilleur',
   cassebriques: 'cassebriques_meilleur',
-  maville: 'simcity_meilleure_population',
-  reflexes: 'reflexes_meilleur_score',
 }
 const CLES_RECORDS = Object.values(CLE_PAR_JEU)
 

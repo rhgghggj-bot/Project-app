@@ -1,13 +1,14 @@
 "use client"
-import { useEffect } from "react"
+import { useEffect, useState, useSyncExternalStore } from "react"
 import { supabase } from "@/lib/supabase"
 import { toast } from "@/lib/toast"
 import { prochainesOccurrences } from "@/lib/calendrier"
 import type { EvenementCalendrier } from "@/lib/types"
 
-// Rappels 1 h, 30 min et 10 min avant chaque événement du calendrier (cours
-// répétés compris), tant que l'appli est ouverte : un message dans l'appli,
-// plus une notification du téléphone / de l'ordinateur si elle est autorisée.
+// Le seul système de rappels de l'appli : 1 h, 30 min et 10 min avant chaque
+// événement du calendrier (cours répétés compris), tant que l'appli est ouverte.
+// Un message dans l'appli, plus une notification du téléphone / de l'ordinateur
+// si l'élève l'a activée lui-même (bouton du calendrier, jamais demandé d'office).
 // Chaque rappel n'est envoyé qu'une fois, même après un rechargement.
 
 const DELAIS_MIN = [60, 30, 10]
@@ -24,6 +25,16 @@ function dejaEnvoye(cle: string) {
 
 function marquer(cle: string) {
   try { localStorage.setItem(cle, "1") } catch { /* stockage indisponible : on accepte un doublon éventuel */ }
+}
+
+// Notifications du téléphone : demandées seulement après un geste de l'élève
+export const notificationsPossibles = () => typeof window !== "undefined" && "Notification" in window
+export async function activerNotifications(): Promise<boolean> {
+  if (!notificationsPossibles()) return false
+  const permission = await Notification.requestPermission()
+  if (permission !== "granted") return false
+  try { await navigator.serviceWorker?.register("/sw.js") } catch { /* sans service worker : notification simple */ }
+  return true
 }
 
 async function notifier(titre: string, corps: string) {
@@ -66,6 +77,8 @@ export default function RappelsEvenements() {
       }
     }
 
+    // Notifications déjà autorisées : on s'assure que le service worker est là
+    if (notificationsPossibles() && Notification.permission === "granted") navigator.serviceWorker?.register("/sw.js").catch(() => {})
     void charger()
     const tic = setInterval(verifier, 30_000)
     const rechargement = setInterval(charger, 10 * 60_000)
@@ -80,4 +93,20 @@ export default function RappelsEvenements() {
   }, [])
 
   return null
+}
+
+// Bouton « recevoir les rappels sur cet appareil » (calendrier), visible tant que
+// l'élève n'a ni accepté ni refusé
+const aucunAbonnement = () => () => {}
+export function BoutonRappels({ style }: { style?: React.CSSProperties }) {
+  const permission = useSyncExternalStore(aucunAbonnement, () => (notificationsPossibles() ? Notification.permission : "denied"), () => "denied")
+  const [fait, setFait] = useState(false)
+  if (permission !== "default" || fait) return null
+  return (
+    <button style={style} onClick={async () => {
+      const ok = await activerNotifications()
+      setFait(true)
+      toast(ok ? "Rappels activés : tu seras prévenu 1 h, 30 min et 10 min avant tes événements." : "Rappels non activés. Tu peux les autoriser plus tard dans les réglages du navigateur.", ok ? "success" : "info")
+    }}>🔔 Recevoir les rappels sur cet appareil</button>
+  )
 }

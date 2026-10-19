@@ -28,6 +28,29 @@ function calcCant(rev: number, code: string) {
   return Math.round(rev * tr[tr.length-1].r)
 }
 
+// Toujours visible, quel que soit le pays : le calcul est une estimation simplifiée
+const OFFICIEL: Record<string, { nom: string; url: string } | undefined> = {
+  ch: { nom: "le calculateur officiel de la Confédération", url: "https://swisstaxcalculator.estv.admin.ch" },
+  fr: { nom: "le simulateur officiel impots.gouv.fr", url: "https://www.impots.gouv.fr/simulateurs" },
+}
+function Avertissement({ pays }: { pays: string }) {
+  const officiel = OFFICIEL[pays]
+  return (
+    <div role="note" style={{background:'#FFF7E6',border:'1px solid #F5C26B',borderRadius:'12px',padding:'12px 14px',marginBottom:'14px',fontSize:'12.5px',color:'#5C4410',lineHeight:1.55}}>
+      <div style={{fontWeight:700,marginBottom:4}}>⚠️ Estimation approximative : ce n&apos;est pas ta déclaration d&apos;impôts</div>
+      <ul style={{margin:0,paddingLeft:18}}>
+        <li>Barèmes simplifiés (2025), qui peuvent avoir changé.</li>
+        {pays === 'ch' && <li>Impôt cantonal calculé avec un seul taux par tranche : le montant peut faire un saut quand ton revenu change de tranche.</li>}
+        {pays === 'ch' && <li>Non inclus : impôt communal et paroissial, calcul exact de l&apos;impôt sur la fortune.</li>}
+        <li>Les situations particulières (enfants, indépendant, frontalier, plusieurs revenus…) ne sont pas toutes prises en compte.</li>
+      </ul>
+      <div style={{marginTop:6}}>
+        Pour un montant exact : {officiel ? <><a href={officiel.url} target="_blank" rel="noopener noreferrer" style={{color:'#8A5A00',fontWeight:600}}>{officiel.nom}</a> ou </> : null}un fiduciaire.
+      </div>
+    </div>
+  )
+}
+
 const inp: React.CSSProperties = {width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'8px 12px',fontSize:'16px',color:'#1a1a2e',background:'#F8FBFF',boxSizing:'border-box'}
 const sel: React.CSSProperties = {width:'100%',border:'1px solid #E8F1FF',borderRadius:'10px',padding:'8px 12px',fontSize:'16px',color:'#1a1a2e',background:'#F8FBFF'}
 
@@ -64,6 +87,7 @@ export default function FiscaliteSection() {
   return (
     <div>
       <Tutorial page="fiscalite" />
+      <Avertissement pays={pays} />
       <div style={{display:'flex',gap:'8px',marginBottom:'16px'}}>
         {[{k:'ch',l:'Suisse'},{k:'fr',l:'France'},{k:'sn',l:'Sénégal'}].map(p => (
           <button key={p.k} onClick={() => setPays(p.k)}
@@ -201,7 +225,7 @@ export default function FiscaliteSection() {
               </div>
               <div style={{flex:1,display:'flex',flexDirection:'column',gap:'8px'}}>
                 <div style={{background:'#FFE4E6',border:'0.5px solid #FECDD3',borderRadius:'10px',padding:'8px 12px'}}>
-                  <div style={{fontSize:'10px',color:'#F43F5E',marginBottom:'2px'}}>Impôt total estimé</div>
+                  <div style={{fontSize:'10px',color:'#F43F5E',marginBottom:'2px'}}>Impôt estimé (approximatif)</div>
                   <div style={{fontSize:'15px',fontWeight:'600',color:'#F43F5E'}}>{total.toLocaleString('fr-CH')} CHF</div>
                 </div>
                 <div style={{background:'#E1F5EE',border:'0.5px solid #A7F3D0',borderRadius:'10px',padding:'8px 12px'}}>
@@ -210,10 +234,6 @@ export default function FiscaliteSection() {
                 </div>
               </div>
             </div>
-          </div>
-          <div style={{background:'#FDF8EC',border:'0.5px solid #F0D88A',borderRadius:'12px',padding:'12px'}}>
-            <div style={{fontSize:'12px',fontWeight:'600',color:'#D4A843',marginBottom:'4px'}}>Estimation uniquement</div>
-            <div style={{fontSize:'12px',color:'#666',lineHeight:'1.6'}}>Basé sur les barèmes 2025. L’impôt communal n’est pas inclus. Consulte un fiduciaire pour un calcul exact.</div>
           </div>
         </div>
       )}
