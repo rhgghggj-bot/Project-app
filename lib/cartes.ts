@@ -165,15 +165,24 @@ export async function chargerCartes(uid: string): Promise<Carte[]> {
 // ─── Avancement ───
 const cheminEtats = (uid: string) => `${uid}/revision/cartes.json`
 
-export async function chargerEtats(uid: string): Promise<Etats> {
-  const { data } = await supabase.storage.from("etudes").download(cheminEtats(uid))
-  if (!data) return {}
-  try { const j = JSON.parse(await data.text()); return j && typeof j.cartes === "object" ? j.cartes : {} } catch { return {} }
+// null : lecture impossible (réseau…) ; {} : pas encore d'avancement
+async function lireEtats(uid: string): Promise<Etats | null> {
+  const { data, error } = await supabase.storage.from("etudes").download(cheminEtats(uid))
+  if (!data) return error && !/not.?found|404/i.test(`${error.message} ${(error as { status?: number }).status ?? ""}`) ? null : {}
+  try { const j = JSON.parse(await data.text()); return j && typeof j.cartes === "object" ? j.cartes : {} } catch { return null }
 }
 
+export async function chargerEtats(uid: string): Promise<Etats> {
+  return (await lireEtats(uid)) ?? {}
+}
+
+// On fusionne avec ce qui est déjà enregistré : un chargement raté (mauvais
+// réseau) ou un autre appareil ne peut pas effacer l'avancement des autres cartes.
 export async function enregistrerEtats(uid: string, etats: Etats): Promise<boolean> {
+  const deja = await lireEtats(uid)
+  if (deja === null) return false
   const { error } = await supabase.storage.from("etudes").upload(cheminEtats(uid),
-    new Blob([JSON.stringify({ v: 1, cartes: etats })], { type: "application/json" }), { upsert: true, contentType: "application/json" })
+    new Blob([JSON.stringify({ v: 1, cartes: { ...deja, ...etats } })], { type: "application/json" }), { upsert: true, contentType: "application/json" })
   return !error
 }
 

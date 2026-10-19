@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getStripe } from '@/lib/stripe'
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin'
+import { libererAnnonce } from '@/lib/liberer'
 import { getAuthUser } from '@/lib/apiAuth'
 import { rateLimit } from '@/lib/rateLimit'
 
@@ -22,41 +22,7 @@ export async function POST(request: NextRequest) {
   if (annonce.acheteur_id !== acheteurId) return NextResponse.json({ error: "Seul l'acheteur peut confirmer la réception" }, { status: 403 })
   if (annonce.paiement_statut !== 'retenu') return NextResponse.json({ error: 'Aucun paiement en attente pour cette annonce' }, { status: 400 })
 
-  const { data: vendeur } = await getSupabaseAdmin().from('profiles').select('stripe_account_id').eq('id', annonce.user_id).single()
-  if (!vendeur?.stripe_account_id) return NextResponse.json({ error: 'Compte vendeur introuvable' }, { status: 400 })
-
-  const paymentIntent = await getStripe().paymentIntents.retrieve(annonce.stripe_payment_intent_id)
-  const montantRecu = paymentIntent.amount_received
-  const latestCharge = typeof paymentIntent.latest_charge === 'string'
-    ? paymentIntent.latest_charge
-    : paymentIntent.latest_charge?.id
-
-  // Clé d'idempotence : un double clic ou un nouvel essai ne paie pas deux fois le vendeur
-  const transfer = await getStripe().transfers.create({
-    amount: montantRecu,
-    currency: 'chf',
-    destination: vendeur.stripe_account_id,
-    transfer_group: 'annonce_' + annonceId,
-    source_transaction: latestCharge,
-  }, { idempotencyKey: 'liberer_' + annonceId })
-
-  // Seule la première confirmation passe l'annonce à « vendu » et note la vente dans les finances
-  const { data: liberee } = await getSupabaseAdmin().from('marketplace_annonces').update({
-    statut: 'vendu',
-    paiement_statut: 'libere',
-  }).eq('id', annonceId).eq('paiement_statut', 'retenu').select('id')
-
-  if (liberee?.length) {
-    const jour = new Date().toISOString().slice(0, 10)
-    await getSupabaseAdmin().from('revenus').insert({
-      user_id: annonce.user_id, titre: 'Vente : ' + annonce.titre, montant: parseFloat(annonce.prix),
-      categorie: 'Autre revenu', date: jour, recurrent: false,
-    })
-    await getSupabaseAdmin().from('depenses').insert({
-      user_id: acheteurId, titre: 'Achat : ' + annonce.titre, montant: parseFloat(annonce.prix),
-      categorie: 'Autres', date: jour, recurrent: false,
-    })
-  }
-
-  return NextResponse.json({ success: true, transferId: transfer.id })
+  const r = await libererAnnonce(annonce)
+  if (r.ok === false) return NextResponse.json({ error: r.erreur }, { status: 400 })
+  return NextResponse.json({ success: true, transferId: r.transferId })
 }

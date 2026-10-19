@@ -67,14 +67,25 @@ export async function POST(request: NextRequest) {
       const { annonce_id, acheteur_id, groupe_id } = meta
       const { data: annonce } = await db.from('marketplace_annonces').select('titre,prix,stripe_payment_intent_id').eq('id', annonce_id).single()
       if (annonce && annonce.stripe_payment_intent_id !== intent) {
-        await db.from('marketplace_annonces').update({
+        // Seul le premier paiement réserve l'annonce : si quelqu'un a payé
+        // entre-temps, ce second paiement est remboursé tout de suite
+        const { data: reservee } = await db.from('marketplace_annonces').update({
           statut: 'réservé',
           paiement_statut: 'retenu',
           stripe_payment_intent_id: intent,
           acheteur_id,
-        }).eq('id', annonce_id)
+        }).eq('id', annonce_id).eq('statut', 'disponible').select('id')
 
-        if (groupe_id) {
+        if (!reservee?.length) {
+          await getStripe().refunds.create({ payment_intent: intent }, { idempotencyKey: 'rembourse_' + intent })
+          if (groupe_id) {
+            await db.from('messages_groupe').insert({
+              groupe_id,
+              user_id: acheteur_id,
+              contenu: `↩️ "${annonce.titre}" a été acheté par quelqu'un d'autre juste avant : ton paiement de ${annonce.prix} CHF est remboursé.`,
+            })
+          }
+        } else if (groupe_id) {
           await db.from('messages_groupe').insert({
             groupe_id,
             user_id: acheteur_id,

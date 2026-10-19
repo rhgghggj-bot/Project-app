@@ -67,7 +67,8 @@ export default function DepensesPartageesPage() {
     if (!titre.trim() || !total || total <= 0 || idsChoisis.length === 0 || !user) return
 
     const nbParts = idsChoisis.length
-    const partMontant = Math.round((total / nbParts) * 100) / 100
+    // Arrondi au centime inférieur : les autres ne paient jamais trop, le payeur garde les centimes restants
+    const partMontant = Math.floor((total / nbParts) * 100) / 100
 
     const { data: nouvelleDepense, error } = await supabase.from("depenses_partagees").insert({
       groupe_id: id, payeur_id: user.id, titre: titre.trim(), montant_total: total,
