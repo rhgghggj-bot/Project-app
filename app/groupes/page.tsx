@@ -7,6 +7,7 @@ import Link from "next/link"
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { ouvrirConversationPrivee } from "@/lib/dm"
+import { dateLu, marquerLu, premiereFois } from "@/lib/lus"
 
 function formaterHeure(dateStr: string) {
   const d = new Date(dateStr)
@@ -28,6 +29,7 @@ type ElementDiscussion = Groupe & {
   profil: Profil | null
   dernierMessage: string | null
   dernierTemps: string
+  nonLu: boolean
 }
 
 export default function Groupes() {
@@ -79,10 +81,14 @@ export default function Groupes() {
         for (const p of (profs || []) as Profil[]) profilsMap[p.id] = p
       }
 
+      const debut = premiereFois()
       const itemsFinal = itemsBruts.map(it => {
         const dernier = dernierMessageParGroupe[it.id]
+        if (debut && dernier) marquerLu(it.id, dernier.created_at)
+        const lu = dateLu(it.id)
         return {
           ...it,
+          nonLu: !!dernier && dernier.user_id !== user.id && (!lu || dernier.created_at > lu),
           profil: it.type === 'dm' ? profilsMap[it.autreId] : null,
           dernierMessage: dernier?.contenu || null,
           dernierTemps: dernier?.created_at || it.created_at
@@ -187,10 +193,13 @@ export default function Groupes() {
                   )}
                 </div>
                 <div style={{flex:1,minWidth:0}}>
-                  <div style={{fontSize:'15px',fontWeight:'600',color:'#1a1a2e',marginBottom:'2px'}}>{nom}</div>
-                  <div style={{fontSize:'13px',color:'#999',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{apercu}</div>
+                  <div style={{fontSize:'15px',fontWeight: it.nonLu ? '700' : '600',color:'#1a1a2e',marginBottom:'2px'}}>{nom}</div>
+                  <div style={{fontSize:'13px',color: it.nonLu ? '#1a1a2e' : '#999',fontWeight: it.nonLu ? 500 : 400,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{apercu}</div>
                 </div>
-                <div style={{fontSize:'12px',color:'#bbb',flexShrink:0}}>{formaterHeure(it.dernierTemps)}</div>
+                <div style={{display:'flex',flexDirection:'column',alignItems:'flex-end',gap:'6px',flexShrink:0}}>
+                  <div style={{fontSize:'12px',color: it.nonLu ? '#2B7FFF' : '#bbb',fontWeight: it.nonLu ? 600 : 400}}>{formaterHeure(it.dernierTemps)}</div>
+                  {it.nonLu && <span aria-label="Nouveau message" style={{width:'10px',height:'10px',borderRadius:'50%',background:'#2B7FFF'}} />}
+                </div>
               </div>
             </Link>
           )

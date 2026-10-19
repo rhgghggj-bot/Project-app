@@ -14,6 +14,7 @@ import { authHeaders } from "@/lib/authFetch"
 import Card from "@/app/components/ui/Card"
 import Button from "@/app/components/ui/Button"
 import { colors } from "@/app/components/ui/tokens"
+import { marquerLu } from "@/lib/lus"
 
 function hexVersRgb(hex: string) {
   const h = hex.replace('#', '')
@@ -118,6 +119,8 @@ export default function GroupePage() {
   const [noteAvis, setNoteAvis] = useState(0)
   const [commentaireAvis, setCommentaireAvis] = useState("")
   const [messages, setMessages] = useState<MessageGroupe[]>([])
+  // Discussion ouverte : ses messages comptent comme lus (point bleu de la liste)
+  useEffect(() => { const d = messages[messages.length - 1]; if (d) marquerLu(String(id), d.created_at) }, [messages, id])
   const [projets, setProjets] = useState<Projet[]>([])
   const [membres, setMembres] = useState<MembreGroupe[]>([])
   const [profils, setProfils] = useState<Record<string, Profil>>({})

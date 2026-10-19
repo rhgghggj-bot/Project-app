@@ -1,7 +1,7 @@
 "use client"
 import { DepensePartagee, MembreGroupe, PartDepense, Profil, User } from "@/lib/types"
 import { useChargement } from "@/lib/useChargement"
-import { toast } from "@/lib/toast"
+import { confirmer, toast } from "@/lib/toast"
 import { useState } from "react"
 import { useParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
@@ -61,13 +61,23 @@ export default function DepensesPartageesPage() {
 
   useChargement(charger, id)
 
+  // Le payeur peut supprimer sa dépense tant que personne ne l'a remboursée par carte
+  async function supprimer(d: DepensePartagee) {
+    if (!(await confirmer(`Supprimer la dépense « ${d.titre} » ?`, "Supprimer"))) return
+    const { error } = await supabase.from("depenses_partagees").delete().eq("id", d.id)
+    if (error) { toast("Suppression impossible : " + error.message, "error"); return }
+    setDepenses(prev => prev.filter(x => x.id !== d.id))
+    toast("Dépense supprimée", "success")
+  }
+
   async function creerDepense() {
     const total = parseFloat(montant)
     const idsChoisis = Object.entries(participants).filter(([, v]) => v).map(([k]) => k)
     if (!titre.trim() || !total || total <= 0 || idsChoisis.length === 0 || !user) return
 
     const nbParts = idsChoisis.length
-    const partMontant = Math.round((total / nbParts) * 100) / 100
+    // Arrondi au centime inférieur : les autres ne paient jamais trop, le payeur garde les centimes restants
+    const partMontant = Math.floor((total / nbParts) * 100) / 100
 
     const { data: nouvelleDepense, error } = await supabase.from("depenses_partagees").insert({
       groupe_id: id, payeur_id: user.id, titre: titre.trim(), montant_total: total,
@@ -184,6 +194,10 @@ export default function DepensesPartageesPage() {
                   <span style={{ color: p.statut === 'regle' ? colors.green : colors.textFaint, fontWeight: 500 }}>{p.statut === 'regle' ? '✓ Réglé' : 'En attente'}</span>
                 </div>
               ))}
+
+              {jeSuisPayeur && !partsDepense.some(p => p.statut === 'regle') && (
+                <button onClick={() => void supprimer(d)} style={{ marginTop: "6px", background: "none", border: "none", padding: "6px 0", fontSize: "12px", color: colors.red, cursor: "pointer" }}>Supprimer cette dépense</button>
+              )}
 
               {!jeSuisPayeur && maPart && (
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "6px" }}>
