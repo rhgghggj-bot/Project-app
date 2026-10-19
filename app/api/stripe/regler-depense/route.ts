@@ -3,6 +3,7 @@ import { getStripe } from '@/lib/stripe'
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin'
 import { getAuthUser } from '@/lib/apiAuth'
 import { rateLimit } from '@/lib/rateLimit'
+import { urlDeRetour } from '@/lib/retourUrl'
 
 export async function POST(request: NextRequest) {
   const authUser = await getAuthUser(request)
@@ -53,8 +54,8 @@ export async function POST(request: NextRequest) {
       type: 'depense_partagee',
       part_id: partId,
     },
-    success_url: retourUrl + '?reglement=succes',
-    cancel_url: retourUrl + '?reglement=annule',
+    success_url: urlDeRetour(request, retourUrl) + '?reglement=succes',
+    cancel_url: urlDeRetour(request, retourUrl) + '?reglement=annule',
   })
 
   return NextResponse.json({ url: session.url })

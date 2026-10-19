@@ -3,6 +3,7 @@ import { getStripe } from '@/lib/stripe'
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin'
 import { getAuthUser } from '@/lib/apiAuth'
 import { rateLimit } from '@/lib/rateLimit'
+import { urlDeRetour } from '@/lib/retourUrl'
 
 export async function POST(request: NextRequest) {
   try {
@@ -37,14 +38,15 @@ export async function POST(request: NextRequest) {
 
     const lien = await getStripe().accountLinks.create({
       account: accountId,
-      refresh_url: retourUrl,
-      return_url: retourUrl,
+      refresh_url: urlDeRetour(request, retourUrl, '/profile'),
+      return_url: urlDeRetour(request, retourUrl, '/profile'),
       type: 'account_onboarding',
     })
 
     return NextResponse.json({ url: lien.url })
   } catch (e) {
-    const message = e instanceof Error ? e.message : 'Erreur serveur inconnue'
-    return NextResponse.json({ error: message }, { status: 500 })
+    // Le détail de l'erreur Stripe reste dans les journaux du serveur
+    console.error('stripe onboarding', e)
+    return NextResponse.json({ error: "Impossible d'ouvrir l'inscription aux paiements. Réessaie plus tard." }, { status: 500 })
   }
 }

@@ -25,8 +25,10 @@ export async function GET(request: NextRequest) {
   // l'utilisateur authentifié fait bien partie de ce groupe avant de lui
   // donner un token d'accès (sinon n'importe qui pouvait rejoindre n'importe
   // quel appel en devinant le nom du salon).
-  const groupeId = room.startsWith('groupe-') ? room.slice('groupe-'.length) : null
-  if (groupeId) {
+  // Seuls les salons de groupe existent : tout autre nom est refusé
+  if (!room.startsWith('groupe-')) return NextResponse.json({ error: 'Salon inconnu' }, { status: 403 })
+  const groupeId = room.slice('groupe-'.length)
+  {
     const { data: membre } = await getSupabaseAdmin()
       .from('membres_groupe')
       .select('user_id')

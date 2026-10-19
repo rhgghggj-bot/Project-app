@@ -168,7 +168,7 @@ export default function AppelGroupe() {
           })
         }
       }
-      const res = await fetch('/api/livekit?room=groupe-' + params.id + '&username=' + username, {
+      const res = await fetch('/api/livekit?room=groupe-' + params.id + '&username=' + encodeURIComponent(username), {
         headers: await authHeaders(),
       })
       const data = await res.json()

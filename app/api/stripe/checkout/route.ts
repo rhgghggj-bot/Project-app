@@ -3,6 +3,7 @@ import { getStripe } from '@/lib/stripe'
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin'
 import { getAuthUser } from '@/lib/apiAuth'
 import { rateLimit } from '@/lib/rateLimit'
+import { urlDeRetour } from '@/lib/retourUrl'
 
 export async function POST(request: NextRequest) {
   const authUser = await getAuthUser(request)
@@ -18,6 +19,11 @@ export async function POST(request: NextRequest) {
   if (!annonceId || !groupeId) {
     return NextResponse.json({ error: 'Paramètres manquants' }, { status: 400 })
   }
+
+  // Le message de paiement sera posté dans ce groupe : l'acheteur doit en faire partie
+  const { data: membre } = await getSupabaseAdmin().from('membres_groupe').select('user_id').eq('groupe_id', groupeId).eq('user_id', acheteurId).maybeSingle()
+  if (!membre) return NextResponse.json({ error: "Tu n'es pas membre de cette discussion" }, { status: 403 })
+  const retour = urlDeRetour(request, retourUrl, '/marketplace')
 
   const { data: annonce } = await getSupabaseAdmin().from('marketplace_annonces').select('*').eq('id', annonceId).single()
   if (!annonce) return NextResponse.json({ error: 'Annonce introuvable' }, { status: 404 })
@@ -44,13 +50,14 @@ export async function POST(request: NextRequest) {
       transfer_group: 'annonce_' + annonceId,
     },
     metadata: {
+      type: 'marketplace',
       annonce_id: annonceId,
       acheteur_id: acheteurId,
       vendeur_id: annonce.user_id,
       groupe_id: groupeId,
     },
-    success_url: retourUrl + '?paiement=succes',
-    cancel_url: retourUrl + '?paiement=annule',
+    success_url: retour + '?paiement=succes',
+    cancel_url: retour + '?paiement=annule',
   })
 
   return NextResponse.json({ url: session.url })

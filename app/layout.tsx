@@ -27,7 +27,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const description = "Nexia — Ton hub de vie. Finances, calendrier, groupes et fiscalité suisse."
+const description = "Nexia — Ton hub de vie. Espace étudiant (notes, cartes de révision, planning d'examen, bibliothèque), finances, calendrier, groupes et fiscalité suisse."
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://project-app-rust-delta.vercel.app"),
