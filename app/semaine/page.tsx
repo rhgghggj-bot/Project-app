@@ -4,6 +4,7 @@ import { onActivate } from "@/lib/a11y"
 import Link from "next/link"
 import Tutorial from "../components/Tutorial"
 import { BoutonRappels } from "../components/RappelsEvenements"
+import VueMois from "./VueMois"
 import dynamic from "next/dynamic"
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
@@ -28,6 +29,7 @@ export default function Semaine() {
   const [jourFiltre, setJourFiltre] = useState<Date>(() => new Date())
   const [voirTouteLaSemaine, setVoirTouteLaSemaine] = useState(false)
   const [vue3D, setVue3D] = useState(false)
+  const [vueMois, setVueMois] = useState(false)
   const [periode3D, setPeriode3D] = useState<'semaine' | 'mois' | 'annee'>('semaine')
 
   const idxSemaine = (d: Date) => (d.getDay() + 6) % 7 // 0=Lun ... 6=Dim, aligné sur JOURS
@@ -125,6 +127,13 @@ export default function Semaine() {
       return ed.toDateString() === date.toDateString()
     })
 
+  // Un jour touché dans la vue mois : on ouvre sa semaine, ce jour sélectionné
+  function choisirJourDuMois(d: Date) {
+    const lundiJour = new Date(d); lundiJour.setDate(d.getDate() - ((d.getDay() || 7) - 1)); lundiJour.setHours(0, 0, 0, 0)
+    setSemaineOffset(Math.round((lundiJour.getTime() - getLundi(0).getTime()) / (7 * 86400000)))
+    setSelectedDay(d); setJourFiltre(d); setVoirTouteLaSemaine(false); setVueMois(false)
+  }
+
   async function supprimerEvt(id: string) {
     await supabase.from("evenements_calendrier").delete().eq("id", id)
     setEvenements(evenements.filter(e => e.id !== id))
@@ -200,6 +209,14 @@ export default function Semaine() {
       </div>
 
       <div style={{margin:'-16px 14px 0',borderRadius:'18px',padding:'14px',position:'relative',zIndex:2,background:'rgba(255,255,255,0.85)',backdropFilter:'blur(20px)',border:'0.5px solid rgba(255,255,255,0.9)',boxShadow:'0 4px 24px rgba(43,127,255,0.1)'}}>
+        <div role="group" aria-label="Affichage" style={{display:'flex',gap:'4px',background:'#EEF5FF',borderRadius:'99px',padding:'3px',marginBottom:'12px'}}>
+          {([['semaine','Semaine'],['mois','Mois']] as const).map(([v, l]) => (
+            <button key={v} aria-pressed={(v === 'mois') === vueMois} onClick={() => setVueMois(v === 'mois')}
+              style={{flex:1,border:'none',borderRadius:'99px',padding:'6px 0',fontSize:'12px',fontWeight:600,cursor:'pointer',
+                background:(v === 'mois') === vueMois ? '#fff' : 'transparent',color:(v === 'mois') === vueMois ? '#2B7FFF' : '#6B7280'}}>{l}</button>
+          ))}
+        </div>
+        {vueMois ? <VueMois evtDuJour={evtDuJour} onChoisir={choisirJourDuMois} /> : (<>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'12px'}}>
           <button onClick={() => setSemaineOffset(o => o-1)} style={{width:'28px',height:'28px',borderRadius:'50%',border:'none',background:'#EEF5FF',color:'#2B7FFF',cursor:'pointer',fontSize:'16px'}}>‹</button>
           <button onClick={() => setSemaineOffset(0)} style={{fontSize:'12px',color:'#2B7FFF',background:'#EEF5FF',border:'none',padding:'4px 12px',borderRadius:'99px',cursor:'pointer',fontWeight:'500'}}>
@@ -234,6 +251,7 @@ export default function Semaine() {
             )
           })}
         </div>
+        </>)}
       </div>
 
       <div style={{padding:'16px 18px'}}>
