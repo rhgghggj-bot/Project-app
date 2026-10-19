@@ -48,7 +48,7 @@ function retenir(noteId: string, v: { doc: string; haut: number } | null) {
   try { if (v) localStorage.setItem(cleNote(noteId), JSON.stringify(v)); else localStorage.removeItem(cleNote(noteId)) } catch { /* stockage indisponible */ }
 }
 
-export default function CoursPanneau({ userId, noteId, onFermer, compact }: { userId: string; noteId: string; onFermer: () => void; compact: boolean }) {
+export default function CoursPanneau({ userId, noteId, onFermer, onEnvoyer, compact }: { userId: string; noteId: string; onFermer: () => void; onEnvoyer: (texte: string, source: string) => void; compact: boolean }) {
   const [docs, setDocs] = useState<DocumentEtudes[] | null>(null)
   const [coursListe, setCoursListe] = useState<CoursRevision[] | null>(null)
   const [pages, setPages] = useState<{ titre: string; chemin: string }[] | null>(null)
@@ -58,6 +58,19 @@ export default function CoursPanneau({ userId, noteId, onFermer, compact }: { us
   const [erreur, setErreur] = useState<string | null>(null)
   const zone = useRef<HTMLDivElement>(null)
   const minuterie = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  // Passage sélectionné dans le cours, prêt à être envoyé dans la note
+  const [passage, setPassage] = useState("")
+
+  useEffect(() => {
+    function suivre() {
+      const sel = document.getSelection()
+      const z = zone.current
+      if (!sel || sel.isCollapsed || !z || !z.contains(sel.anchorNode) || !z.contains(sel.focusNode)) { setPassage(""); return }
+      setPassage(sel.toString().trim().slice(0, 5000))
+    }
+    document.addEventListener("selectionchange", suivre)
+    return () => document.removeEventListener("selectionchange", suivre)
+  }, [])
 
   useEffect(() => {
     let actif = true
@@ -168,6 +181,16 @@ export default function CoursPanneau({ userId, noteId, onFermer, compact }: { us
           })
         )}
       </div>
+      )}
+      {passage && (
+        <div style={{ padding: "6px 8px", borderTop: `1px solid ${colors.border}`, background: "#fff", display: "flex", justifyContent: "center" }}>
+          {/* onPointerDown : le bouton ne doit pas effacer la sélection avant le clic */}
+          <button onPointerDown={e => e.preventDefault()} onMouseDown={e => e.preventDefault()}
+            onClick={() => { onEnvoyer(passage, nom ?? "Cours"); document.getSelection()?.removeAllRanges(); setPassage("") }}
+            style={{ ...bouton, background: colors.blue, borderColor: colors.blue, color: "#fff", fontWeight: 600, minHeight: 40, padding: "0 16px" }}>
+            ➜ Envoyer vers la note
+          </button>
+        </div>
       )}
     </section>
   )
