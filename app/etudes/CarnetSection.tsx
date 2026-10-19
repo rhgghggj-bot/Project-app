@@ -6,6 +6,7 @@ import { useChargement } from "@/lib/useChargement"
 import { colors, radius } from "@/app/components/ui/tokens"
 import { chapitreVisible, chargerProgramme } from "@/lib/programmes"
 import { chargerFichesPerso } from "@/lib/fichesPerso"
+import { envoyerAttente, horsLigne, memoriser, notesEnAttente, relire } from "@/lib/horsLigne"
 import { COLONNES_NOTE, dateCourte, normaliser, type Dossier, type NoteCarnet } from "@/lib/carnet"
 import EditeurNote, { type ContexteProgramme } from "./EditeurNote"
 import DocumentsSection from "./DocumentsSection"
@@ -33,6 +34,7 @@ export default function CarnetSection({ userId, contexte, action, onActionTraite
   const [notes, setNotes] = useState<NoteCarnet[] | null>(null)
   const [dossiers, setDossiers] = useState<Dossier[]>([])
   const [erreur, setErreur] = useState<string | null>(null)
+  const [horsConnexion, setHorsConnexion] = useState(false)
   const [filtre, setFiltre] = useState<Filtre>("toutes")
   const [recherche, setRecherche] = useState("")
   const [ouverte, setOuverte] = useState<{ note: NoteCarnet; nouvelle: boolean } | null>(null)
@@ -47,20 +49,45 @@ export default function CarnetSection({ userId, contexte, action, onActionTraite
   const [versionDocs, setVersionDocs] = useState(0)
 
   async function charger() {
+    // Sans réseau : directement la copie gardée sur l'appareil
+    const copieLocale = () => {
+      const copie = relire<{ notes: NoteCarnet[]; dossiers: Dossier[] }>(`carnet:${userId}`)
+      if (!copie) return false
+      const attente = notesEnAttente(userId)
+      setErreur(null); setHorsConnexion(true)
+      setNotes([...attente, ...copie.notes.filter(x => !attente.some(a => a.id === x.id))])
+      setDossiers(copie.dossiers)
+      return true
+    }
+    if (horsLigne() && copieLocale()) return
+    // Notes écrites hors connexion : envoyées d'abord
+    await envoyerAttente(userId)
     const [n, d] = await Promise.all([
       supabase.from("carnet_notes").select(COLONNES_NOTE).eq("user_id", userId).order("updated_at", { ascending: false }),
       supabase.from("carnet_dossiers").select("id,nom").eq("user_id", userId).order("nom"),
     ])
+    const attente = notesEnAttente(userId)
+    const avecAttente = (liste: NoteCarnet[]) => [...attente, ...liste.filter(x => !attente.some(a => a.id === x.id))]
     if (n.error || d.error) {
+      // Sans réseau : la copie gardée sur l'appareil
+      if ((horsLigne() || !n.error?.code) && copieLocale()) return
       const absent = [n.error, d.error].some(e => e?.code === "42P01" || e?.code === "PGRST205")
       setErreur(absent ? "Le carnet n'est pas encore activé sur la base de données. Il faut exécuter le fichier SQL du carnet dans Supabase." : "Impossible de charger le carnet. Vérifie ta connexion puis réessaie.")
       setNotes([])
       return
     }
     setErreur(null)
-    setNotes((n.data || []) as NoteCarnet[])
+    setHorsConnexion(false)
+    memoriser(`carnet:${userId}`, { notes: n.data || [], dossiers: d.data || [] })
+    setNotes(avecAttente((n.data || []) as NoteCarnet[]))
     setDossiers((d.data || []) as Dossier[])
   }
+  // Retour du réseau : on envoie ce qui attend et on recharge
+  useEffect(() => {
+    const auRetour = () => { void charger() }
+    window.addEventListener("online", auRetour)
+    return () => window.removeEventListener("online", auRetour)
+  })
   useChargement(charger, userId)
 
   useEffect(() => {
@@ -300,6 +327,7 @@ export default function CarnetSection({ userId, contexte, action, onActionTraite
 
       <Astuce id="carnet-documents">Touche <b>Documents</b> pour importer tes PowerPoint, Word ou PDF : tu peux les lire et les <b>modifier</b> ici. Dossiers, tri et corbeille sont dans le bouton <b>⋯</b>.</Astuce>
 
+      {horsConnexion && <p role="status" style={{ fontSize: "13px", color: colors.text, background: "#FFF7E6", border: "1px solid #F5C26B", borderRadius: radius.sm, padding: "10px 12px" }}>📴 Hors connexion : tu vois les notes gardées sur cet appareil. Ce que tu écris est gardé et sera envoyé dès que le réseau revient.</p>}
       {erreur && <p role="alert" style={{ fontSize: "13px", color: colors.text, background: colors.redLight, borderRadius: radius.sm, padding: "10px 12px" }}>{erreur}</p>}
       {notes === null && <div className="nx-skel" style={{ height: 180, borderRadius: radius.md }} />}
 

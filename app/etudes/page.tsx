@@ -1,5 +1,6 @@
 "use client"
 import { useState } from "react"
+import { memoriser, relire } from "@/lib/horsLigne"
 import SectionHeader from "@/app/components/ui/SectionHeader"
 import Button from "@/app/components/ui/Button"
 import { SkeletonPage } from "@/app/components/ui/Skeleton"
@@ -58,10 +59,19 @@ export default function EspaceEtudiant() {
   }
 
   async function charger() {
-    const { data: { user } } = await supabase.auth.getUser()
+    // La session est lue sur l'appareil : l'espace étudiant s'ouvre aussi hors connexion
+    const { data: { session } } = await supabase.auth.getSession()
+    const user = session?.user ?? null
     setUserId(user?.id ?? null)
     if (!user) return
-    const { data } = await supabase.from("profils_etudiant").select("pays,niveau,filiere,annee,specialites,entreprise_id,entreprise_perso").eq("user_id", user.id).maybeSingle()
+    const { data, error } = await supabase.from("profils_etudiant").select("pays,niveau,filiere,annee,specialites,entreprise_id,entreprise_perso").eq("user_id", user.id).maybeSingle()
+    if (error) {
+      // Sans réseau : le profil gardé sur l'appareil
+      const copie = relire<Profil>(`profil-etudes:${user.id}`)
+      if (copie) setProfil(copie)
+      return
+    }
+    if (data) memoriser(`profil-etudes:${user.id}`, { ...data, specialites: data.specialites ?? [] })
     if (data) {
       setProfil({ ...data, specialites: data.specialites ?? [] } as Profil)
       if (!data.niveau) setReglagesOuverts(true)

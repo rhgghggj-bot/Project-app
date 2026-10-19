@@ -7,6 +7,11 @@ import { clavierOuvert, estEditable, garderCurseurVisible } from "@/lib/clavier"
 // clavier est ouvert, <html data-clavier="ouvert"> permet de masquer ce qui
 // prend de la place (barre de navigation du bas, en-têtes en paysage).
 export default function ClavierConfort() {
+  // Service worker (rappels + appli disponible hors connexion), en production seulement
+  useEffect(() => {
+    if (process.env.NODE_ENV === "production" && "serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => {})
+  }, [])
+
   useEffect(() => {
     const vv = window.visualViewport
     let minuteries: ReturnType<typeof setTimeout>[] = []
