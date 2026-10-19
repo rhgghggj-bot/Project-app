@@ -8,7 +8,7 @@
   Page de révision par défaut de l'Espace étudiant (dans l'esprit de Bise
   Cycles). Son habillage (D.univers, voir lib/univers.ts) dépend du type
   d'études : entreprise fictive ou lieu de stage (chaque matière est une pièce
-  du bâtiment), expédition pour l'école obligatoire (territoires, étapes,
+  du bâtiment, vu en 3D isométrique ou en plan), expédition pour l'école obligatoire (territoires, étapes,
   badges), ou tableau de préparation à l'examen (compte à rebours). L'appli remplace la ligne
   « window.DONNEES = null » par les chapitres du programme de l'élève avant
   d'afficher la page ; la progression passe par localStorage (sauvegardé par
@@ -109,6 +109,38 @@ body.f-expedition{--fond:#FFF7ED;--mur:#7C2D12;--accent:#EA580C;--accent-pale:#F
 .chemin .pastille.ok{background:var(--ok);border-color:var(--ok);color:#fff}
 .badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
 .badge{background:#FEF3C7;border:1px solid #F59E0B;border-radius:999px;padding:2px 9px;font-size:12px}
+/* Plan 3D (entreprise, lieu de stage) : le bâtiment vu en isométrie */
+.plan-tete{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.bascule{display:inline-flex;border:1.5px solid var(--mur);border-radius:4px;overflow:hidden}
+.bascule button{border:0;background:var(--carte);padding:4px 12px;font-size:12.5px}
+.bascule button[aria-pressed="true"]{background:var(--encre);color:#fff}
+.plan3d{position:relative;border:1.5px solid var(--mur);border-radius:4px;background:linear-gradient(#F7F9FC,#E9EEF5);overflow:hidden;height:min(68vh,560px);min-height:360px}
+@media (max-width:640px){.plan3d{height:min(62vh,460px)}}
+.plan3d svg{display:block;width:100%;height:100%;touch-action:pan-y pinch-zoom;user-select:none;-webkit-user-select:none;cursor:grab}
+.plan3d svg.glisse{cursor:grabbing}
+.plan3d .sol{cursor:pointer}
+.plan3d .sol:hover polygon,.plan3d .sol:focus-visible polygon{filter:brightness(.96)}
+.plan3d .poste{cursor:pointer}
+.plan3d .poste:hover,.plan3d .poste:focus-visible{filter:brightness(1.08) drop-shadow(0 0 .3px var(--encre))}
+.plan3d [tabindex]:focus{outline:none}
+.plan3d .etiq{pointer-events:none}
+.plan3d svg:not(.pres) .etiq .complet,.plan3d svg.pres .etiq .compact{display:none}
+.plan3d .sol.choisie polygon{stroke:var(--accent);stroke-width:3px;vector-effect:non-scaling-stroke}
+.zoom{position:absolute;left:8px;top:8px;display:flex;flex-direction:column;gap:4px}
+.zoom button{width:32px;height:32px;border:1.5px solid var(--mur);background:var(--carte);border-radius:4px;font-weight:700;line-height:1;padding:0}
+.legende{position:absolute;left:8px;bottom:8px;display:flex;gap:8px;flex-wrap:wrap;font-size:11px;color:var(--doux);background:rgba(255,255,255,.85);padding:4px 8px;border-radius:4px;max-width:calc(100% - 16px)}
+.legende i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+.salle-fiche{position:absolute;right:8px;top:8px;bottom:8px;width:300px;max-width:calc(100% - 16px);background:var(--carte);border:1.5px solid var(--mur);border-radius:4px;padding:14px;overflow:auto;display:flex;flex-direction:column;gap:10px;box-shadow:0 8px 24px rgba(20,33,61,.18)}
+@media (max-width:640px){.salle-fiche{top:auto;left:8px;right:8px;width:auto;max-height:58%}}
+.salle-fiche .haut{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.salle-fiche h3{font-size:18px}
+.salle-fiche .x{border:0;background:none;font-size:20px;line-height:1;padding:2px 6px;color:var(--doux)}
+.etat-salle{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600}
+.etat-salle:before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor}
+.salle-fiche dl{display:grid;grid-template-columns:1fr auto;gap:4px 12px;margin:0;font-size:13px}
+.salle-fiche dt{color:var(--doux)}.salle-fiche dd{margin:0;font-weight:600;text-align:right}
+.salle-fiche .liste .ligne{padding:7px 2px;font-size:13.5px}
+.salle-fiche .boutons{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto}
 </style>
 </head>
 <body>
@@ -137,13 +169,14 @@ body.f-expedition{--fond:#FFF7ED;--mur:#7C2D12;--accent:#EA580C;--accent-pale:#F
   etat.jours = etat.jours || [];         // jours où l'élève a révisé
   etat.xp = etat.xp || 0;                // bonnes réponses (points d'expédition)
   etat.dateExamen = etat.dateExamen || ""; // forme examen : date choisie par l'élève
+  etat.plan = etat.plan || "3d";         // entreprise / lieu : vue 3D du bâtiment ou plan en grille
   function sauver() { try { localStorage.setItem(CLE, JSON.stringify(etat)) } catch (e) {} }
   function jour(d) { d = d || new Date(); return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate() }
   function dansJours(n) { var d = new Date(); d.setDate(d.getDate() + n); return jour(d) }
 
   // ─── Données ───
   var annees = D.annees && D.annees.length ? D.annees : uniques(D.chapitres.map(function (c) { return c.annee }));
-  var vue = { ecran: "accueil", annee: D.anneeActuelle && annees.indexOf(D.anneeActuelle) >= 0 ? D.anneeActuelle : annees[0], matiere: null, chapitre: null, quiz: null };
+  var vue = { ecran: "accueil", annee: D.anneeActuelle && annees.indexOf(D.anneeActuelle) >= 0 ? D.anneeActuelle : annees[0], matiere: null, chapitre: null, quiz: null, salle: null, vb: null };
   var parId = {}; D.chapitres.forEach(function (c) { parId[c.id] = c });
   var QUESTIONS = [];
   D.chapitres.forEach(function (c) {
@@ -180,6 +213,7 @@ body.f-expedition{--fond:#FFF7ED;--mur:#7C2D12;--accent:#EA580C;--accent-pale:#F
     else if (vue.ecran === "quiz") h = ecranQuiz();
     app.innerHTML = h;
     window.scrollTo(0, 0);
+    initPlan();
   }
 
   var EMOJIS = [[/éducation physique|sport/, "⚽"], [/fran|lettre|litt/, "📖"], [/math|algèbre|analyse/, "📐"], [/allemand|anglais|italien|espagnol|lv/, "🗣️"], [/latin|grec/, "🏛️"],
@@ -225,12 +259,13 @@ body.f-expedition{--fond:#FFF7ED;--mur:#7C2D12;--accent:#EA580C;--accent-pale:#F
       '<button class="action" data-action="quiz-annee"><span class="ic">' + (F === "expedition" ? '🎲' : '▶') + '</span><div><b>' + (F === "examen" ? 'Examen blanc' : 'Mode quiz') + '</b><span>' + (F === "examen" ? '40 questions mélangées de ton année' : '20 questions au hasard de ton année') + '</span></div></button></section>';
     h += '<section class="progression"><div class="stat"><b>' + faits + ' / ' + total + '</b><span>' + mot[0] + 's ' + mot[1] + 's (' + esc(vue.annee) + ')</span><div class="barre"><i style="width:' + (total ? Math.round(faits / total * 100) : 0) + '%"></i></div></div>' +
       '<div class="stat"><b>' + serie() + '</b><span>jours de suite</span></div><div class="stat"><b>' + (F === "expedition" ? etat.xp : Object.keys(etat.boites).length) + '</b><span>' + (F === "expedition" ? 'points gagnés' : 'questions travaillées') + '</span></div></section>';
-    var mats = matieresAnnee().map(function (m) {
-      var cs = chs.filter(function (c) { return c.matiere === m }), avecDoc = cs.filter(function (c) { return c.doc });
-      return { m: m, cs: cs, ok: cs.filter(maitrise).length, total: avecDoc.length };
-    });
-    h += '<div><div class="sur" style="margin-bottom:8px">' + esc(U.plan) + ' · ' + esc(vue.annee) + '</div>';
-    if (F === "expedition") {
+    var mats = matsAccueil();
+    var batiment = F === "entreprise" || F === "lieu";
+    h += '<div><div class="plan-tete"><div class="sur">' + esc(U.plan) + ' · ' + esc(vue.annee) + '</div>' +
+      (batiment ? '<div class="bascule" role="group" aria-label="Affichage du plan"><button aria-pressed="' + (etat.plan === "3d") + '" data-action="plan" data-v="3d">Vue 3D</button><button aria-pressed="' + (etat.plan !== "3d") + '" data-action="plan" data-v="grille">Plan</button></div>' : '') + '</div>';
+    if (batiment && etat.plan === "3d") {
+      h += '<div class="plan3d" id="plan3d">' + plan3d(mats) + '</div>';
+    } else if (F === "expedition") {
       h += '<div class="carte-terr">' + mats.map(function (x) {
         var n = x.total ? Math.round(x.ok / x.total * 3) : 0, fini = x.total && x.ok === x.total;
         return '<button class="terr' + (fini ? ' fini' : '') + '" data-action="matiere" data-v="' + esc(x.m) + '"><span class="em">' + emoji(x.m) + '</span><h3>' + esc(x.m) + '</h3>' +
@@ -253,6 +288,264 @@ body.f-expedition{--fond:#FFF7ED;--mur:#7C2D12;--accent:#EA580C;--accent-pale:#F
     }
     return h + '</div>';
   }
+
+  // ─── Plan 3D du bâtiment (entreprise, lieu de stage) ───
+  // Vue isométrique dessinée en SVG, sans bibliothèque : chaque matière est
+  // une salle, chaque chapitre un poste de travail. Un poste occupé (une
+  // personne au bureau) est un chapitre maîtrisé ; l'écran rouge signale des
+  // questions à revoir aujourd'hui. Toucher une salle ouvre sa fiche.
+  var ISO_C = Math.cos(Math.PI / 6), SALLE = 10;
+  var COUL = /^#[0-9a-f]{6}$/i.test(U.couleur || "") ? U.couleur : "#2B7FFF";
+  var TEINTES = { ok: COUL, encours: "#F2B33D", neuf: "#DCE2EB", bientot: "#EEF1F5" };
+  function iso(x, y, z) { return [(x - y) * ISO_C, (x + y) / 2 - z] }
+  function pts(l) { return l.map(function (p) { var q = iso(p[0], p[1], p[2]); return q[0].toFixed(2) + "," + q[1].toFixed(2) }).join(" ") }
+  function rvb(h) { return [1, 3, 5].map(function (i) { return parseInt(h.substr(i, 2), 16) }) }
+  function hex(t) { return "#" + t.map(function (v) { return ("0" + Math.max(0, Math.min(255, Math.round(v))).toString(16)).slice(-2) }).join("") }
+  function teinte(h, f) { return hex(rvb(h).map(function (v) { return v * f })) }
+  function melange(a, b, t) { var x = rvb(a), y = rvb(b); return hex(x.map(function (v, i) { return v + (y[i] - v) * t })) }
+  function poly(l, fill, extra) { return '<polygon points="' + pts(l) + '" fill="' + fill + '"' + (extra || '') + '/>' }
+  // Pavé : dessus + les deux faces tournées vers l'observateur
+  function boite(x, y, z, w, d, h, c) {
+    return poly([[x, y, z + h], [x + w, y, z + h], [x + w, y + d, z + h], [x, y + d, z + h]], c) +
+      poly([[x, y + d, z], [x + w, y + d, z], [x + w, y + d, z + h], [x, y + d, z + h]], teinte(c, .88)) +
+      poly([[x + w, y, z], [x + w, y + d, z], [x + w, y + d, z + h], [x + w, y, z + h]], teinte(c, .76));
+  }
+  function arbre(x, y) {
+    var c = iso(x, y, 2);
+    return boite(x - .2, y - .2, 0, .4, .4, 1.2, "#8B6B4A") +
+      '<circle cx="' + c[0].toFixed(2) + '" cy="' + c[1].toFixed(2) + '" r="1.25" fill="#7CC47F"/><circle cx="' + (c[0] - .35).toFixed(2) + '" cy="' + (c[1] - .4).toFixed(2) + '" r=".55" fill="#A4DBA6"/>';
+  }
+  function voiture(x, y, c) {
+    var g = "";
+    [[.3, .1], [2.5, .1], [.3, 1.5], [2.5, 1.5]].forEach(function (r) { g += boite(x + r[0], y + r[1], 0, .7, .3, .45, "#2A3448") });
+    return g + boite(x, y + .3, .25, 3.5, 1.4, .6, c) + boite(x + .8, y + .4, .85, 1.8, 1.2, .5, teinte(c, 1.12));
+  }
+  function personne(x, y) {
+    var b = iso(x, y, .5), t = iso(x, y, 1.75);
+    return '<rect x="' + (b[0] - .38).toFixed(2) + '" y="' + (b[1] - 1.05).toFixed(2) + '" width=".76" height="1.1" rx=".35" fill="' + teinte(COUL, .7) + '"/>' +
+      '<circle cx="' + t[0].toFixed(2) + '" cy="' + t[1].toFixed(2) + '" r=".34" fill="#F0C8A4"/>';
+  }
+
+  function dispo() {
+    var g = {};
+    aReviser().forEach(function (x) { g[x.chap.id] = (g[x.chap.id] || 0) + 1 });
+    return g;
+  }
+  function statutChap(c) {
+    if (!c.doc) return "bientot";
+    if (maitrise(c)) return "ok";
+    return etat.maitrise[c.id] !== undefined ? "encours" : "neuf";
+  }
+  function disposition(n) {
+    var cols = n <= 4 ? 2 : n <= 9 ? 3 : 4;
+    return { cols: cols, rangs: Math.ceil(n / cols) };
+  }
+
+  function plan3d(mats) {
+    if (!mats.length) return '<div class="vide" style="margin:12px">Aucune matière cette année.</div>';
+    var due = dispo(), lay = disposition(mats.length), W = lay.cols * SALLE, H = lay.rangs * SALLE;
+    var fond = "", murs = "", sols = "", objets = [], etiq = "";
+    fond += poly([[-4, -4, 0], [W + 5, -4, 0], [W + 5, H + 5, 0], [-4, H + 5, 0]], "#DFE6EF");
+    fond += boite(-.5, -.5, -.35, W + .8, H + .8, .35, "#CBD4E1");
+    // Murs du fond, bandeau à la couleur de l'univers, nom sur la façade
+    murs += boite(-.5, 0, 0, .5, H, 2.6, "#F3F5F9") + boite(-.5, -.5, 0, W + .5, .5, 2.6, "#F3F5F9");
+    murs += poly([[-.5, 0, 2], [W, 0, 2], [W, 0, 2.4], [-.5, 0, 2.4]], COUL) + poly([[0, 0, 2], [0, H, 2], [0, H, 2.4], [0, 0, 2.4]], teinte(COUL, .76));
+    murs += poly([[.6, 0, .6], [1.5, 0, .6], [1.5, 0, 1.5], [.6, 0, 1.5]], COUL);
+    var n0 = iso(1.9, 0, .72);
+    murs += '<text transform="matrix(' + ISO_C.toFixed(4) + ',.5,0,1,' + n0[0].toFixed(2) + ',' + n0[1].toFixed(2) + ')" font-size=".95" font-weight="800" letter-spacing=".08" fill="#14213D">' + esc(U.titre.toUpperCase()) + '</text>';
+    for (var t = 0; t <= lay.rangs; t++) objets.push({ k: W + 2 + t * SALLE + 1.5, s: arbre(W + 2, t * SALLE + 1.5) });
+    for (t = 0; t < lay.cols; t++) objets.push({ k: H + 2 + t * SALLE + 5, s: arbre(t * SALLE + 5, H + 2) });
+
+    // Emplacements libres du bâtiment : le parking
+    for (t = mats.length; t < lay.cols * lay.rangs; t++) {
+      var px = (t % lay.cols) * SALLE, py = Math.floor(t / lay.cols) * SALLE;
+      sols += poly([[px, py, 0], [px + SALLE, py, 0], [px + SALLE, py + SALLE, 0], [px, py + SALLE, 0]], "#C9D1DD", ' stroke="#B4BECD" stroke-width=".08"');
+      for (var v = 0; v < 3; v++) {
+        sols += poly([[px + .6, py + 1 + v * 3, .01], [px + 4.8, py + 1 + v * 3, .01], [px + 4.8, py + 1.1 + v * 3, .01], [px + .6, py + 1.1 + v * 3, .01]], "#fff");
+        if ((t + v) % 3 !== 2) objets.push({ k: px + py + 3 + v * 3, s: voiture(px + 1, py + 1.4 + v * 3, ["#F4F6FA", "#2A3448", COUL][(t + v) % 3]) });
+      }
+    }
+
+    mats.forEach(function (x, k) {
+      var x0 = (k % lay.cols) * SALLE, y0 = Math.floor(k / lay.cols) * SALLE, R = SALLE;
+      var pc = x.total ? x.ok / x.total : 0, aRevoir = 0;
+      x.cs.forEach(function (c) { aRevoir += due[c.id] || 0 });
+      var nom = x.m + " : " + x.ok + " chapitre" + (x.ok > 1 ? "s" : "") + " maîtrisé" + (x.ok > 1 ? "s" : "") + " sur " + x.cs.length + (aRevoir ? ", " + aRevoir + " à revoir" : "");
+      sols += '<g class="sol' + (vue.salle === x.m ? ' choisie' : '') + '" data-action="salle" data-v="' + esc(x.m) + '" tabindex="0" role="button" aria-label="' + esc(nom) + '">' +
+        poly([[x0, y0, 0], [x0 + R, y0, 0], [x0 + R, y0 + R, 0], [x0, y0 + R, 0]], melange("#FFFFFF", COUL, .05 + pc * .28), ' stroke="#C3CCDA" stroke-width=".08"') + '</g>';
+      // Cloisons vitrées basses entre les salles, avec une porte au milieu
+      [[.3, 4], [6, 9.7]].forEach(function (s) {
+        for (var a = s[0]; a < s[1] - .01; a += 1.85) {
+          var b = Math.min(a + 1.85, s[1]);
+          if (k % lay.cols) objets.push({ k: x0 + y0 + (a + b) / 2, s: poly([[x0, y0 + a, 0], [x0, y0 + b, 0], [x0, y0 + b, 1.3], [x0, y0 + a, 1.3]], "rgba(150,180,220,.22)", ' stroke="rgba(80,110,160,.45)" stroke-width=".05"') });
+          if (k >= lay.cols) objets.push({ k: x0 + a + y0 + (b - a) / 2, s: poly([[x0 + a, y0, 0], [x0 + b, y0, 0], [x0 + b, y0, 1.3], [x0 + a, y0, 1.3]], "rgba(150,180,220,.22)", ' stroke="rgba(80,110,160,.45)" stroke-width=".05"') });
+        }
+      });
+      // Postes de travail : un bureau par chapitre (8 au plus)
+      x.cs.slice(0, 8).forEach(function (c, i) {
+        var dx = x0 + (i % 2 ? 5.6 : 1.2), dy = y0 + 1.2 + Math.floor(i / 2) * 2.15, st = statutChap(c), urgent = due[c.id];
+        var g = boite(dx, dy, 0, 3, 1, .75, TEINTES[st]) +
+          boite(dx + 1, dy + .1, .75, 1, .12, .62, urgent ? "#E5484D" : "#2A3448") +
+          boite(dx + 1.1, dy + 1.25, 0, .8, .7, .42, "#8C97AB");
+        if (st === "ok") g += personne(dx + 1.5, dy + 1.6);
+        var lib = c.titre + (st === "ok" ? " (maîtrisé)" : st === "encours" ? " (en cours)" : st === "bientot" ? " (bientôt)" : "") + (urgent ? ", " + urgent + " question" + (urgent > 1 ? "s" : "") + " à revoir" : "");
+        objets.push({ k: dx + dy + 2.2, s: '<g class="poste" data-action="chapitre" data-v="' + esc(c.id) + '" tabindex="0" role="button" aria-label="' + esc(lib) + '"><title>' + esc(lib) + '</title>' + g + '</g>' });
+      });
+      // Étiquette flottante, à taille fixe à l'écran (voir appliquerVb) :
+      // complète quand on est assez près, réduite à la progression sinon
+      var a = iso(x0 + R - 1.4, y0 + R - 1.4, 0), court = x.m.length > 22 ? x.m.slice(0, 21) + "…" : x.m;
+      var larg = Math.max(court.length * 6.4, 70) + 18, info = x.ok + "/" + x.cs.length + (x.total ? " · " + Math.round(pc * 100) + "%" : "");
+      function pastille(cx, cy) { return aRevoir ? '<circle cx="' + cx + '" cy="' + cy + '" r="9" fill="#E5484D"/><text x="' + cx + '" y="' + (cy + 3.5) + '" text-anchor="middle" font-size="10" font-weight="700" fill="#fff">' + aRevoir + '</text>' : '' }
+      etiq += '<g class="etiq" data-x="' + a[0].toFixed(2) + '" data-y="' + a[1].toFixed(2) + '"><g class="complet"><rect x="' + (-larg / 2) + '" y="-36" width="' + larg + '" height="32" rx="6" fill="#fff" stroke="#14213D" stroke-width="1.2"/>' +
+        '<rect x="' + (-larg / 2 + 1) + '" y="-35" width="' + (larg - 2) * pc + '" height="3" fill="' + COUL + '"/>' +
+        '<text x="0" y="-19.5" text-anchor="middle" font-size="11.5" font-weight="700" fill="#14213D">' + esc(court) + '</text>' +
+        '<text x="0" y="-8" text-anchor="middle" font-size="10" fill="#5B6478">' + info + '</text>' + pastille(larg / 2 - 2, -36) + '</g>' +
+        '<g class="compact"><rect x="-19" y="-24" width="38" height="20" rx="10" fill="#fff" stroke="#14213D" stroke-width="1.2"/>' +
+        '<text x="0" y="-10" text-anchor="middle" font-size="10.5" font-weight="700" fill="#14213D">' + x.ok + '/' + x.cs.length + '</text>' + pastille(17, -24) + '</g></g>';
+    });
+
+    objets.sort(function (a, b) { return a.k - b.k });
+    return '<svg id="plan-svg" role="group" aria-label="' + esc(U.plan) + ' en 3D">' + fond + murs + sols + objets.map(function (o) { return o.s }).join("") + etiq + '</svg>' +
+      '<div class="zoom"><button data-action="zoom" data-v="1" aria-label="Zoomer">+</button><button data-action="zoom" data-v="-1" aria-label="Dézoomer">−</button><button data-action="zoom" data-v="0" aria-label="Voir tout le bâtiment">⤢</button></div>' +
+      '<div class="legende" aria-hidden="true"><span><i style="background:' + COUL + '"></i>maîtrisé</span><span><i style="background:' + TEINTES.encours + '"></i>en cours</span><span><i style="background:' + TEINTES.neuf + '"></i>à faire</span><span><i style="background:#E5484D"></i>à revoir</span></div>' +
+      '<div id="salle-zone">' + ficheSalle(mats) + '</div>';
+  }
+
+  function ficheSalle(mats) {
+    var x = mats.filter(function (m) { return m.m === vue.salle })[0];
+    if (!x) return "";
+    var due = dispo(), aRevoir = 0, vus = 0;
+    x.cs.forEach(function (c) { aRevoir += due[c.id] || 0; if (etat.maitrise[c.id] !== undefined) vus++ });
+    var nbQ = QUESTIONS.filter(function (q) { return q.chap.matiere === x.m && q.chap.annee === vue.annee }).length;
+    var etiquette = !x.total ? ["var(--pale)", "Fiches en préparation"] : aRevoir ? ["var(--ko)", aRevoir + " question" + (aRevoir > 1 ? "s" : "") + " à revoir aujourd'hui"]
+      : x.ok === x.total ? ["var(--ok)", "Tout est maîtrisé"] : vus ? ["var(--or)", "En cours"] : ["var(--doux)", "Pas encore commencé"];
+    return '<section class="salle-fiche" aria-labelledby="salle-titre"><div class="haut"><div><div class="sur">' + esc(U.piece) + ' · ' + esc(vue.annee) + '</div><h3 id="salle-titre" tabindex="-1">' + esc(x.m) + '</h3></div>' +
+      '<button class="x" data-action="salle-fermer" aria-label="Fermer la fiche">×</button></div>' +
+      '<span class="etat-salle" style="color:' + etiquette[0] + '">' + etiquette[1] + '</span>' +
+      '<div class="barre"><i style="width:' + (x.total ? Math.round(x.ok / x.total * 100) : 0) + '%"></i></div>' +
+      '<dl><dt>Postes (chapitres)</dt><dd>' + x.cs.length + '</dd><dt>Maîtrisés</dt><dd>' + x.ok + ' / ' + x.total + '</dd><dt>Questions disponibles</dt><dd>' + nbQ + '</dd></dl>' +
+      '<div><div class="sur" style="margin-bottom:4px">Chapitres</div><ul class="liste">' + x.cs.map(function (c, i) {
+        var u = due[c.id];
+        return '<li><button class="ligne" data-action="chapitre" data-v="' + esc(c.id) + '"><span class="pastille' + (maitrise(c) ? ' ok' : '') + '">' + (maitrise(c) ? '✓' : (i + 1)) + '</span><span class="t">' + esc(c.titre) + '</span><span class="meta"' + (u ? ' style="color:var(--ko)"' : '') + '>' + (u ? u + ' à revoir' : c.doc ? (etat.maitrise[c.id] !== undefined ? Math.round(etat.maitrise[c.id] * 100) + '%' : '') : 'bientôt') + '</span></button></li>';
+      }).join("") + '</ul></div>' +
+      '<div class="boutons"><button class="btn" data-action="matiere" data-v="' + esc(x.m) + '">Entrer</button>' + (nbQ ? '<button class="btn clair" data-action="quiz-salle" data-v="' + esc(x.m) + '">Quiz (' + Math.min(20, nbQ) + ')</button>' : '') + '</div></section>';
+  }
+
+  // Cadrage : viewBox courant, ajusté pour que le rectangle visé tienne dans
+  // la partie du cadre laissée libre par la fiche de la salle.
+  function cadre() {
+    var el = document.getElementById("plan3d");
+    return el ? { el: el, svg: document.getElementById("plan-svg"), w: el.clientWidth, h: el.clientHeight } : null;
+  }
+  function viser(r, avecFiche) {
+    var c = cadre(); if (!c) return null;
+    var zone = { x: 48, y: 8, w: c.w - 56, h: c.h - 44 };
+    if (avecFiche) zone = c.w > 640 ? { x: 8, y: 8, w: c.w - 324, h: c.h - 16 } : { x: 8, y: 8, w: c.w - 16, h: c.h * .42 - 12 };
+    // Sur téléphone, la vue d'ensemble peut déborder en largeur (on glisse pour la parcourir)
+    var large = !avecFiche && c.w < 640 ? 1.6 : 1;
+    var s = Math.max(.035, r.w / Math.max(zone.w * large, 40), r.h / Math.max(zone.h, 40));
+    return { x: r.x + r.w / 2 - (zone.x + zone.w / 2) * s, y: r.y + r.h / 2 - (zone.y + zone.h / 2) * s, w: c.w * s, h: c.h * s };
+  }
+  function boiteDe(coins) {
+    var xs = coins.map(function (p) { return iso(p[0], p[1], p[2])[0] }), ys = coins.map(function (p) { return iso(p[0], p[1], p[2])[1] });
+    var x = Math.min.apply(null, xs), y = Math.min.apply(null, ys);
+    return { x: x, y: y, w: Math.max.apply(null, xs) - x, h: Math.max.apply(null, ys) - y };
+  }
+  function rectBatiment(n) {
+    var lay = disposition(n), W = lay.cols * SALLE, H = lay.rangs * SALLE;
+    return boiteDe([[-4, -4, 0], [W + 5, -4, 0], [-4, H + 5, 0], [W + 5, H + 5, 0], [-.5, -.5, 3.2]]);
+  }
+  function rectSalle(k, n) {
+    var lay = disposition(n), x0 = (k % lay.cols) * SALLE, y0 = Math.floor(k / lay.cols) * SALLE;
+    return boiteDe([[x0 - .5, y0 - .5, 0], [x0 + SALLE + .5, y0 - .5, 0], [x0 - .5, y0 + SALLE + .5, 0], [x0 + SALLE + .5, y0 + SALLE + .5, 0], [x0, y0, 2.5]]);
+  }
+  function appliquerVb() {
+    var c = cadre(); if (!c || !c.svg || !vue.vb) return;
+    var v = vue.vb, f = v.w / c.w;
+    c.svg.classList.toggle("pres", 2 * SALLE * ISO_C / f > 190);
+    c.svg.setAttribute("viewBox", [v.x, v.y, v.w, v.h].map(function (n) { return n.toFixed(3) }).join(" "));
+    Array.prototype.forEach.call(c.svg.querySelectorAll(".etiq"), function (g) {
+      g.setAttribute("transform", "translate(" + g.dataset.x + " " + g.dataset.y + ") scale(" + f.toFixed(4) + ")");
+    });
+  }
+  var anim = 0;
+  function animerVers(cible) {
+    if (!cible) return;
+    var depart = vue.vb || cible, t0 = null, id = ++anim;
+    if (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) { vue.vb = cible; appliquerVb(); return }
+    function pas(t) {
+      if (id !== anim) return;
+      if (t0 === null) t0 = t;
+      var p = Math.min(1, (t - t0) / 380), e = 1 - Math.pow(1 - p, 3);
+      vue.vb = { x: depart.x + (cible.x - depart.x) * e, y: depart.y + (cible.y - depart.y) * e, w: depart.w + (cible.w - depart.w) * e, h: depart.h + (cible.h - depart.h) * e };
+      appliquerVb();
+      if (p < 1) requestAnimationFrame(pas);
+    }
+    requestAnimationFrame(pas);
+  }
+  function matsAccueil() {
+    var chs = chapitresAnnee();
+    return matieresAnnee().map(function (m) {
+      var cs = chs.filter(function (c) { return c.matiere === m }), avecDoc = cs.filter(function (c) { return c.doc });
+      return { m: m, cs: cs, ok: cs.filter(maitrise).length, total: avecDoc.length };
+    });
+  }
+  // Après chaque rendu de l'accueil : cadre le bâtiment (ou la salle ouverte)
+  function initPlan() {
+    var c = cadre(); if (!c) return;
+    var mats = matsAccueil(), k = mats.map(function (x) { return x.m }).indexOf(vue.salle);
+    if (k < 0) vue.salle = null;
+    var vise = k >= 0 ? viser(rectSalle(k, mats.length), true) : viser(rectBatiment(mats.length), false);
+    // Garde le cadrage courant au retour sur l'accueil, s'il a les bonnes proportions
+    if (!vue.vb || Math.abs(vue.vb.w / vue.vb.h - c.w / c.h) > .01) vue.vb = vise;
+    appliquerVb();
+  }
+  function choisirSalle(m) {
+    var mats = matsAccueil(), k = mats.map(function (x) { return x.m }).indexOf(m);
+    vue.salle = k >= 0 ? m : null;
+    var c = cadre(); if (!c) return;
+    Array.prototype.forEach.call(c.svg.querySelectorAll(".sol"), function (g) { g.classList.toggle("choisie", g.dataset.v === vue.salle) });
+    document.getElementById("salle-zone").innerHTML = ficheSalle(mats);
+    animerVers(k >= 0 ? viser(rectSalle(k, mats.length), true) : viser(rectBatiment(mats.length), false));
+    var titre = document.getElementById("salle-titre");
+    if (titre) titre.focus({ preventScroll: true });
+  }
+  function zoomer(sens) {
+    var c = cadre(); if (!c || !vue.vb) return;
+    if (!sens) return animerVers(viser(rectBatiment(matsAccueil().length), false));
+    var v = vue.vb, f = sens > 0 ? .7 : 1 / .7, w = Math.min(Math.max(v.w * f, 12), 400), h = w * c.h / c.w;
+    animerVers({ x: v.x + (v.w - w) / 2, y: v.y + (v.h - h) / 2, w: w, h: h });
+  }
+
+  // Glisser pour se déplacer dans le plan (le geste vertical reste au défilement de la page sur mobile)
+  var glisse = null, aGlisse = false;
+  app.addEventListener("pointerdown", function (e) {
+    var svg = e.target.closest && e.target.closest("#plan-svg");
+    if (!svg || !vue.vb || e.button > 0) return;
+    glisse = { x: e.clientX, y: e.clientY, vb: vue.vb, f: vue.vb.w / svg.clientWidth, bouge: false };
+  });
+  window.addEventListener("pointermove", function (e) {
+    if (!glisse) return;
+    var dx = e.clientX - glisse.x, dy = e.clientY - glisse.y;
+    if (!glisse.bouge && Math.abs(dx) + Math.abs(dy) < 6) return;
+    if (!glisse.bouge) { glisse.bouge = true; anim++; var s = document.getElementById("plan-svg"); if (s) s.classList.add("glisse") }
+    vue.vb = { x: glisse.vb.x - dx * glisse.f, y: glisse.vb.y - dy * glisse.f, w: glisse.vb.w, h: glisse.vb.h };
+    appliquerVb();
+  });
+  function finGlisse() {
+    if (!glisse) return;
+    if (glisse.bouge) { aGlisse = true; setTimeout(function () { aGlisse = false }, 0) }
+    var s = document.getElementById("plan-svg"); if (s) s.classList.remove("glisse");
+    glisse = null;
+  }
+  window.addEventListener("pointerup", finGlisse);
+  window.addEventListener("pointercancel", finGlisse);
+  // Pincer sur un pavé tactile (ctrl + molette) pour zoomer
+  app.addEventListener("wheel", function (e) {
+    if (!(e.ctrlKey || e.metaKey) || !(e.target.closest && e.target.closest("#plan-svg"))) return;
+    e.preventDefault(); zoomer(e.deltaY < 0 ? 1 : -1);
+  }, { passive: false });
+  window.addEventListener("resize", function () { if (cadre()) { vue.vb = null; initPlan() } });
 
   function ecranMatiere() {
     var cs = chapitresAnnee().filter(function (c) { return c.matiere === vue.matiere });
@@ -344,10 +637,15 @@ body.f-expedition{--fond:#FFF7ED;--mur:#7C2D12;--accent:#EA580C;--accent-pale:#F
   app.addEventListener("input", function (e) { if (e.target.dataset.action === "chercher") chercher(e.target.value) });
   app.addEventListener("change", function (e) { if (e.target.dataset.action === "date-examen") { etat.dateExamen = e.target.value; sauver(); rendre() } });
   app.addEventListener("click", function (e) {
-    var el = e.target.closest("[data-action]"); if (!el) return;
+    var el = e.target.closest("[data-action]"); if (!el || aGlisse) return;
     var a = el.dataset.action, v = el.dataset.v;
     if (a === "accueil") { vue.ecran = "accueil"; rendre() }
-    else if (a === "annee") { vue.annee = v; rendre() }
+    else if (a === "annee") { vue.annee = v; vue.salle = null; vue.vb = null; rendre() }
+    else if (a === "plan") { etat.plan = v; sauver(); vue.vb = null; rendre() }
+    else if (a === "salle") choisirSalle(v === vue.salle ? null : v)
+    else if (a === "salle-fermer") choisirSalle(null)
+    else if (a === "zoom") zoomer(Number(v))
+    else if (a === "quiz-salle") { vue.matiere = v; lancerQuiz(melanger(QUESTIONS.filter(function (x) { return x.chap.matiere === v && x.chap.annee === vue.annee })).slice(0, 20), v, "accueil") }
     else if (a === "matiere") { vue.matiere = v; vue.ecran = "matiere"; rendre() }
     else if (a === "chapitre") { vue.chapitre = v; vue.annee = parId[v].annee; vue.matiere = parId[v].matiere; vue.ecran = "chapitre"; rendre() }
     else if (a === "quiz-chapitre") { var c = parId[vue.chapitre]; lancerQuiz(QUESTIONS.filter(function (x) { return x.chap === c }), c.titre, "chapitre", c.id) }
@@ -363,6 +661,13 @@ body.f-expedition{--fond:#FFF7ED;--mur:#7C2D12;--accent:#EA580C;--accent-pale:#F
     else if (a === "suivante") { vue.quiz.i++; vue.quiz.choisi = null; if (vue.quiz.i >= vue.quiz.qs.length) finirQuiz(); rendre() }
     else if (a === "quiz-encore") { var z = vue.quiz; lancerQuiz(melanger(z.qs), z.titre, z.retour, z.chapitre) }
     else if (a === "quiz-fin") { vue.ecran = vue.quiz.retour; rendre() }
+  });
+  // Les salles et postes du plan 3D (éléments SVG) s'activent aussi au clavier
+  app.addEventListener("keydown", function (e) {
+    var el = e.target;
+    if ((e.key === "Enter" || e.key === " ") && el instanceof SVGElement && el.dataset.action) {
+      e.preventDefault(); el.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    } else if (e.key === "Escape" && vue.salle && document.getElementById("plan3d")) choisirSalle(null);
   });
   rendre();
 })();

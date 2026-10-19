@@ -74,8 +74,8 @@ async function pageParDefaut(p: ParDefaut): Promise<string | null> {
 }
 
 const DESCRIPTIONS: Record<string, string> = {
-  entreprise: "Ton programme sous forme d'entreprise : chaque matière est un service, avec fiches, quiz, révision du jour et progression.",
-  lieu: "Ton programme dans un lieu de stage lié à ta formation : chaque matière est un secteur, avec fiches, quiz, révision du jour et progression.",
+  entreprise: "Ton programme sous forme d'entreprise en 3D : chaque matière est un service, chaque chapitre un poste de travail, avec fiches, quiz, révision du jour et progression.",
+  lieu: "Ton programme dans un lieu de stage en 3D lié à ta formation : chaque matière est un secteur, avec fiches, quiz, révision du jour et progression.",
   expedition: "Ton programme en expédition : chaque matière est un territoire à explorer, chaque chapitre une étape, avec défis, points et badges.",
   examen: "Ton plan de préparation à l'examen : préparation par discipline, points à retravailler, examen blanc et compte à rebours.",
 }
