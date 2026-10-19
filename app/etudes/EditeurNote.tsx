@@ -1,5 +1,5 @@
 "use client"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState, useSyncExternalStore } from "react"
 import { supabase } from "@/lib/supabase"
 import { toast, confirmer } from "@/lib/toast"
 import { colors, radius } from "@/app/components/ui/tokens"
@@ -12,6 +12,7 @@ import { horsLigne, mettreEnAttente, notesEnAttente, retirerDeAttente } from "@/
 import { effacerSous, estSurligne, motSous, plageEntre, pointSous, surligner as surlignerPlage, type Point } from "@/lib/surligneur"
 import { CARREAU, FOND_PAGE } from "./cahier"
 import Dessin, { type Ecriture } from "./Dessin"
+import CoursPanneau, { coursDeLaNote, oublierCours } from "./CoursPanneau"
 import NuageSurlignages from "./NuageSurlignages"
 import { chargerReference, type Reference } from "@/lib/nuage"
 import Astuce, { astuceVue } from "./Astuce"
@@ -187,6 +188,7 @@ const ICONES = {
   cases: "M4 5h5v5H4zM4 14h5v5H4zM13 7.5h7M13 16.5h7M5.3 16.4l1.3 1.3 2.2-2.6",
   photo: "M4 7h3l2-2h6l2 2h3v12H4zM12 16.5a3.5 3.5 0 100-7 3.5 3.5 0 000 7z",
   dessin: "M4 20l4-1 11-11-3-3L5 16zM14 7l3 3",
+  cours: "M3 5h7a2 2 0 012 2v12a2 2 0 00-2-2H3zM21 5h-7a2 2 0 00-2 2v12a2 2 0 012-2h7z",
   epingle: "M9 4h6l-1 6 3 3H7l3-3zM12 13v7",
   corbeille: "M5 7h14M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3",
   livre: "M4 5a2 2 0 012-2h13v16H6a2 2 0 00-2 2zM4 21V5",
@@ -202,6 +204,11 @@ const ICONES = {
   separateur: "M4 12h16M8 7h8M8 17h8",
   oeil: "M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12zM12 15a3 3 0 100-6 3 3 0 000 6zM4 4l16 16",
 }
+
+// Écran partagé : côte à côte sur ordinateur, tablette et téléphone en paysage ;
+// l'un au-dessus de l'autre sur téléphone en portrait
+const suivreTaille = (f: () => void) => { window.addEventListener("resize", f); return () => window.removeEventListener("resize", f) }
+const coteACoteMaintenant = () => window.innerWidth >= 900 || (window.innerWidth > window.innerHeight && window.innerWidth >= 600)
 
 export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte, onFermer, onOuvrirChapitre }: {
   userId: string
@@ -238,6 +245,11 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
   const [statut, setStatut] = useState<Statut>("pret")
   const [formats, setFormats] = useState<Record<string, boolean>>({})
   const [styleTexte, setStyleTexte] = useState<{ taille: string; police: string }>({ taille: "", police: "" })
+  // Cours affiché à côté de la note (écran partagé) ; la note retient son cours
+  const [cours, setCours] = useState(() => typeof window !== "undefined" && !!coursDeLaNote(note.id))
+  const [hautCours, setHautCours] = useState(() => (typeof window !== "undefined" ? Math.round(window.innerHeight * 0.4) : 300))
+  const coteACote = useSyncExternalStore(suivreTaille, coteACoteMaintenant, () => false)
+  const glisse = useRef<number | null>(null)
   // Écriture à la main : nouvelle, ou rouverte depuis une image déjà dans la note
   const [dessin, setDessin] = useState<{ img?: HTMLImageElement; initiale?: Ecriture } | null>(null)
   const [choixChapitre, setChoixChapitre] = useState(false)
@@ -1055,6 +1067,7 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
     { id: "tableau", groupe: "Structure", label: "Tableau", icone: <Icone d={ICONES.tableau} />, actif: formats.table },
     { id: "separateur", groupe: "Structure", label: "Séparation", icone: <Icone d={ICONES.separateur} /> },
     { id: "dessin", groupe: "Ajouter", label: "Écrire à la main", icone: <Icone d={ICONES.dessin} /> },
+    { id: "cours", groupe: "Ajouter", label: "Cours à côté", icone: <Icone d={ICONES.cours} /> },
     { id: "retablir", groupe: "Ajouter", label: "Rétablir", icone: <Icone d={ICONES.retablir} /> },
     { id: "interroger", groupe: "Réviser", label: "Je m'interroge", icone: <Icone d={ICONES.oeil} /> },
     { id: "plan", groupe: "Réviser", label: "Plan, surlignages", icone: <Icone d={ICONES.plan} /> },
@@ -1083,6 +1096,7 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
       case "tableau": insererTableau(); break
       case "separateur": separateur(); break
       case "dessin": setDessin({}); break
+      case "cours": setCours(c => !c); break
       case "retablir": commande("redo"); break
       case "interroger": interroger(); break
       case "plan": ouvrirPlan(); break
@@ -1100,8 +1114,32 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
 
   const compact = !!vue && vue.hauteur < 330
   return (
-    <div role="dialog" aria-modal="true" aria-label="Éditeur de note" className={`${lora.variable} ${caveat.variable}`} style={{ position: "fixed", left: 0, right: 0, top: vue?.haut ?? 0, height: vue?.hauteur ?? "100%", zIndex: 1100, background: "#fff", display: "flex", flexDirection: "column", paddingLeft: "env(safe-area-inset-left)", paddingRight: "env(safe-area-inset-right)" }}>
+    <div role="dialog" aria-modal="true" aria-label="Éditeur de note" className={`${lora.variable} ${caveat.variable}`} style={{ position: "fixed", left: 0, right: 0, top: vue?.haut ?? 0, height: vue?.hauteur ?? "100%", zIndex: 1100, background: "#fff", display: "flex", flexDirection: cours && coteACote ? "row" : "column", paddingLeft: "env(safe-area-inset-left)", paddingRight: "env(safe-area-inset-right)" }}>
       <style>{STYLES}</style>
+      {cours && (
+        <>
+          {/* Clavier ouvert en portrait : le cours se réduit à une bande, la note garde la place pour écrire */}
+          <div style={coteACote ? { width: "48%", minWidth: 0, height: "100%" } : { height: vue ? Math.min(hautCours, 130) : hautCours, minHeight: 0, flexShrink: 0 }}>
+            <CoursPanneau userId={userId} noteId={note.id} compact={!coteACote && !!vue} onFermer={() => { oublierCours(note.id); setCours(false) }} />
+          </div>
+          {coteACote ? (
+            <div aria-hidden="true" style={{ width: 1, background: colors.border, flexShrink: 0 }} />
+          ) : (
+            <div role="separator" aria-orientation="horizontal" aria-label="Glisser pour partager l'écran entre le cours et la note"
+              onPointerDown={e => { e.currentTarget.setPointerCapture(e.pointerId); glisse.current = e.pointerId }}
+              onPointerMove={e => {
+                if (glisse.current !== e.pointerId) return
+                const total = vue?.hauteur ?? window.innerHeight
+                setHautCours(Math.round(Math.max(90, Math.min(total * 0.75, e.clientY - (vue?.haut ?? 0)))))
+              }}
+              onPointerUp={() => { glisse.current = null }} onPointerCancel={() => { glisse.current = null }}
+              style={{ height: 18, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "#EEF2F8", cursor: "row-resize", touchAction: "none", borderTop: `1px solid ${colors.border}`, borderBottom: `1px solid ${colors.border}` }}>
+              <span style={{ width: 44, height: 5, borderRadius: 3, background: "#B8C2D3" }} />
+            </div>
+          )}
+        </>
+      )}
+      <div style={{ flex: 1, minHeight: 0, minWidth: 0, display: "flex", flexDirection: "column" }}>
 
       {/* En paysage avec le clavier ouvert, il reste très peu de hauteur : on
           garde seulement la barre d'outils, l'en-tête revient quand le clavier se ferme */}
@@ -1345,6 +1383,8 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
               background: stylo === "gommer" ? "rgba(200,30,63,.18)" : (COULEURS_SURLIGNEUR.find(c => c.id === couleurStylo) ?? COULEURS_SURLIGNEUR[0]).hex }} />
           ))}
         </div>
+      </div>
+
       </div>
 
       {plan && <PlanNote titres={plan.titres} marques={plan.marques} onAller={allerA} onFermer={() => setPlan(null)}
