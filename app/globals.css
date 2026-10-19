@@ -113,3 +113,7 @@ button:active, a:active, [role="button"]:active, [style*="cursor: pointer"]:acti
 @media (prefers-reduced-motion: reduce) {
   .nx-skel { animation: none; }
 }
+
+/* Clavier ouvert au téléphone (voir ClavierConfort) : la barre du bas laisse
+   la place au texte qu'on écrit */
+html[data-clavier="ouvert"] .nx-nav-bas { display: none !important; }

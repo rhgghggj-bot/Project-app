@@ -40,7 +40,7 @@ export default function Navigation() {
   return (
     <>
       {/* display via className : un display inline écraserait md:hidden et la barre mobile s'afficherait sur ordinateur */}
-      <nav className="flex md:hidden" style={{
+      <nav className="flex md:hidden nx-nav-bas" style={{
         viewTransitionName:'nx-nav-bas',
         position:'fixed',bottom:0,left:0,right:0,
         background:'rgba(255,255,255,0.95)',
