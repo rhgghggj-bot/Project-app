@@ -18,9 +18,10 @@ import RevisionSection from "./RevisionSection"
 import Donnees from "./Donnees"
 import ArtefactsSection from "./ArtefactsSection"
 import CarnetSection, { type ActionCarnet } from "./CarnetSection"
+import BibliothequeSection from "./BibliothequeSection"
 import { CURSUS, descriptionNiveau, matieresProposees, trouverNiveau } from "@/lib/cursus"
 
-type Onglet = "notes" | "corriger" | "reviser" | "carnet" | "artefacts"
+type Onglet = "notes" | "corriger" | "reviser" | "carnet" | "livres" | "artefacts"
 type Profil = { pays: Pays; niveau: string | null; filiere: string | null; annee: string | null; specialites: string[]; entreprise_id: string; entreprise_perso: EntreprisePerso | null }
 
 const TOUS_ONGLETS: { id: Onglet; label: string }[] = [
@@ -28,6 +29,7 @@ const TOUS_ONGLETS: { id: Onglet; label: string }[] = [
   { id: "corriger", label: "Corriger" },
   { id: "reviser", label: "Réviser" },
   { id: "carnet", label: "Carnet" },
+  { id: "livres", label: "Livres" },
   { id: "artefacts", label: "Artefacts" },
 ]
 
@@ -218,6 +220,7 @@ export default function EspaceEtudiant() {
               action={actionCarnet} onActionTraitee={() => setActionCarnet(null)}
               onOuvrirChapitre={id => { setChapitreOuvert(id); setOnglet("reviser") }} />
           )}
+          {onglet === "livres" && <BibliothequeSection userId={userId} />}
           {onglet === "artefacts" && (
             <ArtefactsSection userId={userId} parDefaut={{
               pays: p.pays, niveauId: p.niveau, filiere: p.filiere, specialites: p.specialites, annee: p.annee,

@@ -1,11 +1,13 @@
 // Cartes de révision (flashcards) créées automatiquement :
 //  - chaque passage surligné d'une note devient une phrase à trou ;
 //  - chaque encadré « Définition » ou « À retenir » devient une question ;
-//  - le vocabulaire des cours importés (mot → définition).
+//  - le vocabulaire des cours importés (mot → définition) ;
+//  - les passages surlignés dans la bibliothèque (de quel livre vient la phrase).
 // Révision espacée (méthode Leitner) : une carte sue revient de plus en plus
 // tard, une carte ratée revient tout de suite. L'avancement est gardé dans un
 // fichier JSON de l'espace privé de l'élève.
 
+import { chargerEtat, livre, type Passage } from "./bibliotheque"
 import { supabase } from "./supabase"
 import type { Fiches, NotionFiche } from "./etudes"
 import { idFiche } from "./fichesPerso"
@@ -16,7 +18,7 @@ export type Carte = {
   verso: string
   contexte: string
   groupe: string
-  source: { note: string } | { fiche: string }
+  source: { note: string } | { fiche: string } | { livre: string }
 }
 
 export type EtatCarte = { b: number; p: string; n: number; r: number }
@@ -130,6 +132,20 @@ export function cartesDeCours(cours: { id: string; matiere: string; fiches: Fich
   return cartes
 }
 
+// Passages surlignés dans la bibliothèque : retrouver de quel livre vient la phrase
+export function cartesDeLivres(passages: Passage[]): Carte[] {
+  const vus = new Set<string>()
+  const cartes: Carte[] = []
+  for (const p of passages) {
+    const l = livre(p.livre)
+    const id = `l:${p.livre}:${empreinte(p.t)}`
+    if (!l || vus.has(id)) continue
+    vus.add(id)
+    cartes.push({ id, recto: `De quel livre vient ce passage : « ${p.t} » ?`, verso: `${l.titre}, ${l.auteur}`, contexte: `Bibliothèque › ${l.titre}`, groupe: "Bibliothèque", source: { livre: p.livre } })
+  }
+  return cartes
+}
+
 // Toutes les cartes de l'élève (notes du carnet + vocabulaire des cours)
 export async function chargerCartes(uid: string): Promise<Carte[]> {
   const [notes, dossiers, cours] = await Promise.all([
@@ -142,6 +158,7 @@ export async function chargerCartes(uid: string): Promise<Carte[]> {
   for (const n of notes.data || []) cartes.push(...cartesDeNote(n as { id: string; titre: string; contenu: string }, nomDossier.get(n.dossier_id as string) || "Carnet"))
   const vus = new Set(cartes.map(c => c.id))
   for (const c of cours.data || []) for (const k of cartesDeCours(c as { id: string; matiere: string; fiches: Fiches })) if (!vus.has(k.id)) { vus.add(k.id); cartes.push(k) }
+  cartes.push(...cartesDeLivres((await chargerEtat(uid)).passages))
   return cartes
 }
 
