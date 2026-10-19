@@ -27,6 +27,18 @@ const MESSAGE = "nexia-artefact-stockage"
 
 type Artefact = { nom: string; chemin: string; taille: number; maj: string }
 
+// Pages d'artefacts de l'élève (aussi proposées à côté d'une note)
+export async function listerArtefacts(userId: string): Promise<{ titre: string; chemin: string }[]> {
+  const { data } = await supabase.storage.from("etudes").list(`${userId}/${DOSSIER}`, { sortBy: { column: "updated_at", order: "desc" } })
+  return (data || []).filter(f => /\.html?$/i.test(f.name)).map(f => ({ titre: nomAffiche(f.name), chemin: `${userId}/${DOSSIER}/${f.name}` }))
+}
+export function sourceArtefact(a: { titre: string; chemin: string }): Source {
+  return { titre: a.titre, cheminEtat: a.chemin + ".etat.json", charger: async () => {
+    const { data, error } = await supabase.storage.from("etudes").download(a.chemin)
+    return error || !data ? null : data.text()
+  } }
+}
+
 function nomAffiche(fichier: string) {
   return fichier.replace(/^\d+-/, "").replace(/\.html?$/i, "").replace(/[_-]+/g, " ")
 }
@@ -202,16 +214,18 @@ export default function ArtefactsSection({ userId, parDefaut }: { userId: string
   )
 }
 
-type Source = { titre: string; cheminEtat: string; charger: () => Promise<string | null> }
+export type Source = { titre: string; cheminEtat: string; charger: () => Promise<string | null> }
 
-function Lecteur({ source, onFermer }: { source: Source; onFermer: () => void }) {
+// La page interactive elle-même, avec sa progression sauvegardée dans le compte.
+// Sert au lecteur plein écran et au cours affiché à côté d'une note.
+export function CadreArtefact({ source, onErreur }: { source: Source; onErreur: () => void }) {
   const [doc, setDoc] = useState<string | null>(null)
   const frameRef = useRef<HTMLIFrameElement>(null)
   const cheminEtat = source.cheminEtat
 
   useChargement(async () => {
     const [html, etat] = await Promise.all([source.charger(), supabase.storage.from("etudes").download(cheminEtat)])
-    if (!html) { toast("Impossible d'ouvrir la page", "error"); onFermer(); return }
+    if (!html) { toast("Impossible d'ouvrir la page", "error"); onErreur(); return }
     let sauvegarde: Record<string, string> = {}
     try { if (etat.data) sauvegarde = JSON.parse(await etat.data.text()) } catch { sauvegarde = {} }
     setDoc(injecter(html, scriptStockage(sauvegarde)))
@@ -239,19 +253,23 @@ function Lecteur({ source, onFermer }: { source: Source; onFermer: () => void })
     }
   }, [cheminEtat])
 
+  return doc === null ? (
+    <div className="nx-skel" style={{ flex: 1 }} />
+  ) : (
+    <iframe ref={frameRef} srcDoc={doc} title={source.titre}
+      sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox allow-forms allow-modals allow-downloads"
+      style={{ flex: 1, border: "none", width: "100%", minHeight: 0 }} />
+  )
+}
+
+function Lecteur({ source, onFermer }: { source: Source; onFermer: () => void }) {
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 1100, background: "#fff", display: "flex", flexDirection: "column" }}>
       <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 14px", background: colors.navy, color: "#fff" }}>
         <button onClick={onFermer} style={{ background: "rgba(255,255,255,0.15)", color: "#fff", border: "none", borderRadius: radius.pill, padding: "6px 14px", fontSize: "13px", cursor: "pointer" }}>← Fermer</button>
         <span style={{ fontSize: "13px", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{source.titre}</span>
       </div>
-      {doc === null ? (
-        <div className="nx-skel" style={{ flex: 1 }} />
-      ) : (
-        <iframe ref={frameRef} srcDoc={doc} title={source.titre}
-          sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox allow-forms allow-modals allow-downloads"
-          style={{ flex: 1, border: "none", width: "100%" }} />
-      )}
+      <CadreArtefact source={source} onErreur={onFermer} />
     </div>
   )
 }

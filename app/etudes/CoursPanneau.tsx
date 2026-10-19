@@ -4,10 +4,18 @@ import { supabase } from "@/lib/supabase"
 import { colors, radius } from "@/app/components/ui/tokens"
 import { typeConvertible, type Bloc } from "@/lib/conversion"
 import type { DocumentEtudes } from "./DocumentsSection"
+import type { Fiches, NotionFiche } from "@/lib/etudes"
+import FicheNotion from "./FicheNotion"
+import { CadreArtefact, listerArtefacts, sourceArtefact } from "./ArtefactsSection"
+
+// Trois sortes de cours : un document importé (clé = son id), un cours de
+// « Réviser » avec ses fiches et son cas pratique (« cours:<id> »), ou une
+// page d'artefact interactive (« page:<chemin> »).
+type CoursRevision = { id: string; matiere: string; titre: string; fiches: Fiches }
 
 // Cours affiché à côté de la note (écran partagé) : un document importé dans
-// « Documents » (PDF, PowerPoint, Word, Excel, image, texte), lu dans le
-// navigateur. Un PDF est dessiné page par page (sur iPhone, un PDF dans un
+// « Documents » (PDF, PowerPoint, Word, Excel, image, texte), un cours de
+// « Réviser » ou une page d'artefact (cas pratique), lus dans le navigateur. Un PDF est dessiné page par page (sur iPhone, un PDF dans un
 // cadre n'affiche que la première page). La note retient son cours et
 // l'endroit où on en était.
 
@@ -42,6 +50,8 @@ function retenir(noteId: string, v: { doc: string; haut: number } | null) {
 
 export default function CoursPanneau({ userId, noteId, onFermer, compact }: { userId: string; noteId: string; onFermer: () => void; compact: boolean }) {
   const [docs, setDocs] = useState<DocumentEtudes[] | null>(null)
+  const [coursListe, setCoursListe] = useState<CoursRevision[] | null>(null)
+  const [pages, setPages] = useState<{ titre: string; chemin: string }[] | null>(null)
   const [docId, setDocId] = useState<string | null>(() => coursDeLaNote(noteId)?.doc ?? null)
   const [contenu, setContenu] = useState<Contenu | null>(null)
   const [etape, setEtape] = useState("")
@@ -53,10 +63,16 @@ export default function CoursPanneau({ userId, noteId, onFermer, compact }: { us
     let actif = true
     supabase.from("etudes_documents").select("id,dossier_id,nom,chemin,type,taille,created_at").eq("user_id", userId).order("created_at", { ascending: false })
       .then(({ data }) => { if (actif) setDocs(((data || []) as DocumentEtudes[]).filter(d => typeConvertible(d.nom, d.type))) })
+    supabase.from("cours_etudiant").select("id,matiere,titre,fiches").eq("user_id", userId).order("created_at", { ascending: false })
+      .then(({ data }) => { if (actif) setCoursListe((data || []) as CoursRevision[]) })
+    listerArtefacts(userId).then(p => { if (actif) setPages(p) }).catch(() => { if (actif) setPages([]) })
     return () => { actif = false }
   }, [userId])
 
+  const coursRevision = docId?.startsWith("cours:") ? coursListe?.find(c => c.id === docId.slice(6)) ?? null : null
+  const page = docId?.startsWith("page:") ? pages?.find(p => p.chemin === docId.slice(5)) ?? null : null
   const doc = docs?.find(d => d.id === docId) ?? null
+  const nom = doc ? doc.nom.replace(/\.[^.]+$/, "") : coursRevision ? coursRevision.titre || coursRevision.matiere : page?.titre ?? null
   useEffect(() => {
     if (!doc) return
     let actif = true
@@ -71,6 +87,13 @@ export default function CoursPanneau({ userId, noteId, onFermer, compact }: { us
       .catch(e => { if (actif) setErreur(e instanceof Error ? e.message : "Cours illisible") })
     return () => { actif = false }
   }, [doc, noteId])
+
+  // Cours de Réviser : on revient aussi à l'endroit où on en était
+  useEffect(() => {
+    if (!coursRevision) return
+    const haut = coursDeLaNote(noteId)?.doc === docId ? coursDeLaNote(noteId)!.haut : 0
+    requestAnimationFrame(() => { if (zone.current) zone.current.scrollTop = haut })
+  }, [coursRevision, docId, noteId])
 
   function choisir(id: string | null) {
     setContenu(null); setErreur(null); setEtape("")
@@ -91,22 +114,39 @@ export default function CoursPanneau({ userId, noteId, onFermer, compact }: { us
       {!compact && (
         <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 8px", borderBottom: `1px solid ${colors.border}`, background: "#fff" }}>
           <span aria-hidden="true">📖</span>
-          <span style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 600, color: colors.navy, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{doc ? doc.nom.replace(/\.[^.]+$/, "") : "Choisis un cours"}</span>
-          {doc && <button style={bouton} onClick={() => choisir(null)}>Changer</button>}
+          <span style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 600, color: colors.navy, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{nom ?? "Choisis un cours"}</span>
+          {docId && <button style={bouton} onClick={() => choisir(null)}>Changer</button>}
           <button style={bouton} onClick={onFermer} aria-label="Fermer le cours">✕</button>
         </div>
       )}
+      {page ? (
+        // Page interactive (cas pratique) : elle gère elle-même son défilement
+        <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
+          <CadreArtefact key={page.chemin} source={sourceArtefact(page)} onErreur={() => choisir(null)} />
+        </div>
+      ) : (
       <div ref={zone} onScroll={surDefilement} style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: compact ? "4px 8px" : 10, touchAction: "pan-x pan-y pinch-zoom" }}>
         {!docId ? (
-          docs === null ? <div className="nx-skel" style={{ height: 120, borderRadius: radius.sm }} />
-            : docs.length === 0 ? <p style={{ fontSize: 13, color: colors.textMuted, margin: 8 }}>Importe d&apos;abord ton cours dans Carnet → Documents (PDF, PowerPoint, Word…), puis reviens ici.</p>
-              : docs.map(d => (
-                <button key={d.id} onClick={() => choisir(d.id)} style={{ display: "block", width: "100%", textAlign: "left", background: "#fff", border: `1px solid ${colors.border}`, borderRadius: radius.sm, padding: "10px 12px", marginBottom: 6, fontSize: 14, color: colors.text, cursor: "pointer" }}>
-                  {d.nom}
-                </button>
-              ))
-        ) : erreur ? (
+          docs === null || coursListe === null || pages === null ? <div className="nx-skel" style={{ height: 120, borderRadius: radius.sm }} />
+            : !docs.length && !coursListe.length && !pages.length ? <p style={{ fontSize: 13, color: colors.textMuted, margin: 8 }}>Aucun cours pour l&apos;instant. Importe ton cours dans Carnet → Documents, dans Réviser ou dans Artefacts, puis reviens ici.</p>
+              : (
+                <>
+                  <Groupe titre="Mes cours (Réviser)" elements={coursListe.map(c => ({ cle: "cours:" + c.id, nom: c.titre || c.matiere, detail: `${c.matiere} · ${c.fiches.notions.length} fiche${c.fiches.notions.length > 1 ? "s" : ""}` }))} onChoisir={choisir} />
+                  <Groupe titre="Cas pratiques et pages (Artefacts)" elements={pages.map(p => ({ cle: "page:" + p.chemin, nom: p.titre }))} onChoisir={choisir} />
+                  <Groupe titre="Documents importés (Carnet)" elements={docs.map(d => ({ cle: d.id, nom: d.nom }))} onChoisir={choisir} />
+                </>
+              )
+        ) : docId.startsWith("cours:") ? (
+          !coursRevision ? <div className="nx-skel" style={{ height: 120, borderRadius: radius.sm }} />
+            : (coursRevision.fiches.notions as NotionFiche[]).map((n, i) => (
+              <div key={i} style={{ background: "#fff", border: `1px solid ${colors.border}`, borderRadius: radius.sm, padding: 12, marginBottom: 10 }}>
+                <FicheNotion fiche={{ ...n, exemple: n.exemple_entreprise }} libelleExemple="Dans ton entreprise (cas pratique)" cleQuiz={`${coursRevision.id}-${i}`} />
+              </div>
+            ))
+        ) : docId.startsWith("page:") ? null : erreur ? (
           <p role="alert" style={{ fontSize: 13, color: colors.text, margin: 8 }}>{erreur}. <button style={bouton} onClick={() => choisir(null)}>Choisir un autre cours</button></p>
+        ) : docs !== null && !doc ? (
+          <p style={{ fontSize: 13, color: colors.text, margin: 8 }}>Ce cours n&apos;existe plus. <button style={bouton} onClick={() => choisir(null)}>Choisir un autre cours</button></p>
         ) : !contenu ? (
           <div role="status" style={{ fontSize: 13, color: colors.textMuted, padding: 8 }}>Ouverture du cours… {etape}</div>
         ) : (
@@ -128,6 +168,22 @@ export default function CoursPanneau({ userId, noteId, onFermer, compact }: { us
           })
         )}
       </div>
+      )}
     </section>
+  )
+}
+
+function Groupe({ titre, elements, onChoisir }: { titre: string; elements: { cle: string; nom: string; detail?: string }[]; onChoisir: (cle: string) => void }) {
+  if (!elements.length) return null
+  return (
+    <div style={{ marginBottom: 10 }}>
+      <div style={{ fontSize: 11.5, fontWeight: 700, color: colors.textMuted, textTransform: "uppercase", letterSpacing: ".06em", margin: "4px 2px 6px" }}>{titre}</div>
+      {elements.map(e => (
+        <button key={e.cle} onClick={() => onChoisir(e.cle)} style={{ display: "block", width: "100%", textAlign: "left", background: "#fff", border: `1px solid ${colors.border}`, borderRadius: radius.sm, padding: "10px 12px", marginBottom: 6, fontSize: 14, color: colors.text, cursor: "pointer" }}>
+          {e.nom}
+          {e.detail && <span style={{ display: "block", fontSize: 12, color: colors.textMuted, marginTop: 2 }}>{e.detail}</span>}
+        </button>
+      ))}
+    </div>
   )
 }
