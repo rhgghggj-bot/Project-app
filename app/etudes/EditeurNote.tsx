@@ -1039,11 +1039,14 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
   const chapitre = chapitres?.find(c => c.id === chapitreId) ?? null
   const libelleStatut = { pret: "", modifie: "Modifié", enregistrement: "Enregistrement…", enregistre: "Enregistré", erreur: "Non enregistré" }[statut]
 
+  const compact = !!vue && vue.hauteur < 330
   return (
-    <div role="dialog" aria-modal="true" aria-label="Éditeur de note" className={`${lora.variable} ${caveat.variable}`} style={{ position: "fixed", left: 0, right: 0, top: vue?.haut ?? 0, height: vue?.hauteur ?? "100%", zIndex: 1100, background: "#fff", display: "flex", flexDirection: "column" }}>
+    <div role="dialog" aria-modal="true" aria-label="Éditeur de note" className={`${lora.variable} ${caveat.variable}`} style={{ position: "fixed", left: 0, right: 0, top: vue?.haut ?? 0, height: vue?.hauteur ?? "100%", zIndex: 1100, background: "#fff", display: "flex", flexDirection: "column", paddingLeft: "env(safe-area-inset-left)", paddingRight: "env(safe-area-inset-right)" }}>
       <style>{STYLES}</style>
 
-      <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "10px 12px", paddingTop: "calc(10px + env(safe-area-inset-top))", borderBottom: `1px solid ${colors.border}` }}>
+      {/* En paysage avec le clavier ouvert, il reste très peu de hauteur : on
+          garde seulement la barre d'outils, l'en-tête revient quand le clavier se ferme */}
+      <div style={{ display: compact ? "none" : "flex", alignItems: "center", gap: "8px", padding: "10px 12px", paddingTop: "calc(10px + env(safe-area-inset-top))", borderBottom: `1px solid ${colors.border}` }}>
         <button onClick={() => void fermer()} aria-label="Retour au carnet" disabled={envoi > 0} className="carnet-puce" style={{ border: "none", background: colors.blueLight, color: colors.blue, fontWeight: 600, fontSize: "13px", padding: "7px 13px" }}>← Carnet</button>
         <span style={{ flex: 1, fontSize: "12px", color: "#6B7280", display: "flex", alignItems: "center", gap: 4 }}>
           {statut === "erreur" ? (

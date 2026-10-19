@@ -4,6 +4,7 @@ import "./globals.css";
 import "./transitions.css";
 import Navigation from "./components/Navigation"
 import RappelsEvenements from "./components/RappelsEvenements";
+import ClavierConfort from "./components/ClavierConfort";
 import SplashWrapper from "./components/SplashWrapper";
 import PageFrame from "./components/PageFrame";
 import Toaster from "./components/Toaster";
@@ -73,6 +74,7 @@ export default function RootLayout({
         <SplashWrapper>
           <Navigation />
           <RappelsEvenements />
+          <ClavierConfort />
           <PageFrame>{children}</PageFrame>
           <Toaster />
         </SplashWrapper>
