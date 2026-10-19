@@ -3,8 +3,6 @@ import { Bricolage_Grotesque, Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import "./transitions.css";
 import Navigation from "./components/Navigation"
-import JarvisButton from "./components/JarvisButton";
-import PushNotifSetup from "./components/PushNotifSetup";
 import RappelsEvenements from "./components/RappelsEvenements";
 import SplashWrapper from "./components/SplashWrapper";
 import PageFrame from "./components/PageFrame";
@@ -74,8 +72,6 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable} ${bricolage.variable} antialiased`}>
         <SplashWrapper>
           <Navigation />
-          <JarvisButton />
-          <PushNotifSetup />
           <RappelsEvenements />
           <PageFrame>{children}</PageFrame>
           <Toaster />

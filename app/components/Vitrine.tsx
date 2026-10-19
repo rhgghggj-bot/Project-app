@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState, useSyncExternalStore } from "react"
-import s from "./connexion.module.css"
+import s from "./vitrine.module.css"
 
 // Vitrine de la page de connexion : les nouveautés de l'espace étudiant, une à
 // la fois, avec une petite scène animée. Elles défilent seules (sauf si

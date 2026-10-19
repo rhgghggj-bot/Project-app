@@ -3,8 +3,8 @@ import { useState } from "react"
 import Link from "next/link"
 import { supabase } from "@/lib/supabase"
 import { messageErreurAuth } from "@/lib/authErreurs"
-import Vitrine from "./Vitrine"
-import s from "./connexion.module.css"
+import Vitrine from "@/app/components/Vitrine"
+import s from "@/app/components/vitrine.module.css"
 
 export default function Connexion() {
   const [email, setEmail] = useState("")

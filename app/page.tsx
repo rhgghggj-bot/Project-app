@@ -39,7 +39,7 @@ export default function Home() {
       setAuthChecked(true)
       if (!user) {
         const vu = sessionStorage.getItem('onboardingVu')
-        if (!vu) { sessionStorage.setItem('onboardingVu','1'); window.location.assign('/onboarding'); return }
+        if (!vu) { sessionStorage.setItem('onboardingVu','1'); window.location.assign('/presentation'); return }
       }
       // Deux branches indépendantes en parallèle : le fil "Découvrir" et le tableau de bord perso
       const chargerDecouvrir = async () => {
@@ -139,7 +139,7 @@ export default function Home() {
             <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
               <Link href="/inscription" style={{textDecoration:'none',width:'100%',background:'#fff',color:'#1a3a6e',fontWeight:'500',fontSize:'15px',padding:'14px',borderRadius:'14px',border:'none',cursor:'pointer',display:'block',textAlign:'center'}}>Créer mon compte</Link>
               <Link href="/connexion" style={{textDecoration:'none',width:'100%',background:'transparent',color:'rgba(255,255,255,0.7)',fontWeight:'500',fontSize:'14px',padding:'13px',borderRadius:'14px',border:'0.5px solid rgba(255,255,255,0.3)',cursor:'pointer',display:'block',textAlign:'center'}}>J’ai déjà un compte</Link>
-              <Link href="/onboarding" style={{textDecoration:'none',width:'100%',background:'transparent',color:'rgba(255,255,255,0.5)',fontSize:'13px',padding:'10px',borderRadius:'14px',border:'none',cursor:'pointer',display:'block',textAlign:'center'}}>Voir les fonctionnalités →</Link>
+              <Link href="/presentation" style={{textDecoration:'none',width:'100%',background:'transparent',color:'rgba(255,255,255,0.5)',fontSize:'13px',padding:'10px',borderRadius:'14px',border:'none',cursor:'pointer',display:'block',textAlign:'center'}}>Voir les fonctionnalités →</Link>
             </div>
           </div>
         )}
@@ -165,20 +165,6 @@ export default function Home() {
           </div>
         )}
       </div>
-
-      {user && prochainesOccurrences(evenements, today, 0)
-        .filter(o => o.evt.heure && o.debut.getTime() > today.getTime() && o.debut.getTime() - today.getTime() <= 3600_000)
-        .map(o => {
-        const diffMin = Math.round((o.debut.getTime() - today.getTime()) / 60_000)
-        const e = o.evt
-        return (
-          <div key={e.id} style={{margin:'8px 12px 0',background:'#FFE4E6',border:'0.5px solid #FECDD3',borderRadius:'10px',padding:'10px 14px',display:'flex',alignItems:'center',gap:'10px'}}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F43F5E" strokeWidth="2" style={{flexShrink:0}}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            <span style={{fontSize:'12px',color:'#1a1a2e',flex:1}}><b style={{color:'#F43F5E'}}>{e.titre}</b> dans <b style={{color:'#F43F5E'}}>{diffMin} min</b></span>
-            <Link href="/semaine" style={{fontSize:'11px',color:'#F43F5E',fontWeight:'500',textDecoration:'none'}}>Voir →</Link>
-          </div>
-        )
-      })}
 
       {/* Zone gris clair - calendrier + cartes */}
       {user && (

@@ -1,0 +1,44 @@
+/* Présentation de Nexia : la vitrine de l'espace étudiant (partagée avec la
+   connexion), puis le reste de l'appli. Même ambiance que la page de connexion. */
+
+.page { min-height: 100dvh; color: #fff; background: radial-gradient(1200px 600px at 15% 0%, rgba(43, 127, 255, .35), transparent 60%), linear-gradient(170deg, #0A1628, #13294d 45%, #0f2240); }
+.barre { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: calc(12px + env(safe-area-inset-top)) max(16px, 5vw) 12px; background: rgba(10, 22, 40, .72); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255, 255, 255, .08); }
+.liens { display: flex; align-items: center; gap: 8px; }
+.lien { font-size: 13.5px; color: rgba(255, 255, 255, .8); text-decoration: none; padding: 9px 12px; border-radius: 999px; min-height: 40px; display: inline-flex; align-items: center; }
+.lien:hover { color: #fff; background: rgba(255, 255, 255, .06); }
+.cta { font-size: 13.5px; font-weight: 600; color: #13294d; background: #fff; text-decoration: none; padding: 9px 16px; border-radius: 999px; min-height: 40px; display: inline-flex; align-items: center; transition-property: transform; transition-duration: 150ms; }
+.cta:active { transform: scale(.97); }
+
+.hero { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 360px); gap: 48px; align-items: center; padding: 48px max(24px, 5vw) 40px; max-width: 1240px; margin: 0 auto; }
+.carteCta { border-radius: 22px; background: rgba(255, 255, 255, .08); border: 1px solid rgba(255, 255, 255, .16); padding: 24px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 30px 60px -30px rgba(0, 0, 0, .55); }
+.carteCta h2 { margin: 0; font-family: var(--font-display), sans-serif; font-size: 22px; font-weight: 600; text-wrap: balance; }
+.carteCta p { margin: 0; font-size: 14px; color: rgba(255, 255, 255, .7); line-height: 1.5; }
+.gros { display: block; text-align: center; font-size: 15px; font-weight: 600; color: #13294d; background: #fff; text-decoration: none; padding: 14px; border-radius: 14px; }
+.second { display: block; text-align: center; font-size: 14px; color: #fff; text-decoration: none; padding: 12px; border-radius: 14px; border: 1px solid rgba(255, 255, 255, .22); }
+.valeurs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
+.valeurs span { font-size: 12px; color: rgba(255, 255, 255, .78); border: 1px solid rgba(255, 255, 255, .16); border-radius: 999px; padding: 4px 10px; }
+
+.section { max-width: 1240px; margin: 0 auto; padding: 24px max(24px, 5vw) 56px; }
+.section h2 { font-family: var(--font-display), sans-serif; font-weight: 600; font-size: clamp(24px, 3.2vw, 34px); margin: 0 0 6px; text-wrap: balance; }
+.section > p { margin: 0 0 22px; color: rgba(255, 255, 255, .68); font-size: 15px; max-width: 620px; text-wrap: pretty; }
+.grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 14px; }
+.outil { border-radius: 20px; background: rgba(255, 255, 255, .05); border: 1px solid rgba(255, 255, 255, .1); padding: 18px; display: flex; flex-direction: column; gap: 10px; }
+.outil .tete { display: flex; align-items: center; gap: 10px; }
+.outil .ico { width: 36px; height: 36px; border-radius: 11px; display: grid; place-items: center; flex-shrink: 0; }
+.outil h3 { margin: 0; font-size: 16px; font-weight: 600; }
+.outil .accroche { margin: 0; font-size: 13.5px; color: rgba(255, 255, 255, .7); }
+.outil ul { margin: 0; padding-left: 18px; font-size: 13.5px; line-height: 1.55; color: rgba(255, 255, 255, .85); }
+.outil li + li { margin-top: 3px; }
+.note { font-size: 12px; color: rgba(255, 255, 255, .5); margin-top: 2px; }
+
+.fin { text-align: center; padding: 20px 16px 56px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.fin h2 { margin: 0; font-family: var(--font-display), sans-serif; font-size: clamp(24px, 3.4vw, 36px); font-weight: 600; text-wrap: balance; }
+.fin p { margin: 0; color: rgba(255, 255, 255, .68); }
+.pied { text-align: center; font-size: 12px; color: rgba(255, 255, 255, .45); padding: 0 16px calc(24px + env(safe-area-inset-bottom)); }
+
+@media (max-width: 899px) {
+  .hero { grid-template-columns: minmax(0, 1fr); gap: 22px; padding: 22px 16px 28px; }
+  .section { padding: 12px 16px 40px; }
+  .lienBureau { display: none; }
+}
