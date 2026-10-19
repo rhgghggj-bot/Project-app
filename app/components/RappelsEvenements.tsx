@@ -95,18 +95,31 @@ export default function RappelsEvenements() {
   return null
 }
 
-// Bouton « recevoir les rappels sur cet appareil » (calendrier), visible tant que
-// l'élève n'a ni accepté ni refusé
+// État des rappels sur cet appareil, toujours affiché en haut du calendrier :
+// bouton pour les activer, ou explication s'ils sont bloqués / impossibles.
+type EtatNotif = NotificationPermission | "impossible"
 const aucunAbonnement = () => () => {}
+const lireEtat = (): EtatNotif => (notificationsPossibles() ? Notification.permission : "impossible")
+const AIDE_BLOQUE = "Les notifications sont bloquées pour Nexia. Sur iPhone : Réglages → Notifications → Nexia. Sur Android ou ordinateur : touche le cadenas à gauche de l'adresse → Notifications → Autoriser. Les rappels s'affichent quand même dans l'appli."
+const AIDE_IPHONE = "Sur iPhone, les notifications ne marchent que si Nexia est installé : dans Safari, touche Partager → « Sur l'écran d'accueil », puis ouvre Nexia depuis l'icône. Les rappels s'affichent quand même dans l'appli."
+
 export function BoutonRappels({ style }: { style?: React.CSSProperties }) {
-  const permission = useSyncExternalStore(aucunAbonnement, () => (notificationsPossibles() ? Notification.permission : "denied"), () => "denied")
-  const [fait, setFait] = useState(false)
-  if (permission !== "default" || fait) return null
+  const lu = useSyncExternalStore(aucunAbonnement, lireEtat, () => "impossible" as EtatNotif)
+  const [apres, setApres] = useState<EtatNotif | null>(null)
+  const etat = apres ?? lu
+
+  if (etat === "granted") return (
+    <button style={style} onClick={() => { void notifier("Test Nexia", "Les rappels du calendrier arriveront comme ça."); toast("Notification de test envoyée.", "success") }}>
+      🔔 Rappels activés sur cet appareil · tester
+    </button>
+  )
+  if (etat === "denied") return <button style={style} onClick={() => toast(AIDE_BLOQUE, "info")}>🔕 Rappels bloqués sur cet appareil · comment les autoriser ?</button>
+  if (etat === "impossible") return <button style={style} onClick={() => toast(AIDE_IPHONE, "info")}>🔔 Recevoir les rappels : installe Nexia sur ton écran d&apos;accueil</button>
   return (
     <button style={style} onClick={async () => {
       const ok = await activerNotifications()
-      setFait(true)
-      toast(ok ? "Rappels activés : tu seras prévenu 1 h, 30 min et 10 min avant tes événements." : "Rappels non activés. Tu peux les autoriser plus tard dans les réglages du navigateur.", ok ? "success" : "info")
+      setApres(lireEtat())
+      toast(ok ? "Rappels activés : tu seras prévenu 1 h, 30 min et 10 min avant tes événements." : "Rappels non activés. Ils s'affichent quand même dans l'appli quand elle est ouverte.", ok ? "success" : "info")
     }}>🔔 Recevoir les rappels sur cet appareil</button>
   )
 }

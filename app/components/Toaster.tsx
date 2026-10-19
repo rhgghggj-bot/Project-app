@@ -24,7 +24,7 @@ export default function Toaster() {
     function onToast(e: Event) {
       const t = (e as CustomEvent<ToastDetail>).detail
       setToasts(prev => [...prev.slice(-2), t])
-      setTimeout(() => setToasts(prev => prev.filter(x => x.id !== t.id)), 4500)
+      setTimeout(() => setToasts(prev => prev.filter(x => x.id !== t.id)), Math.max(4500, t.message.length * 65))  // les longs messages restent le temps de les lire
     }
     function onConfirm(e: Event) {
       setDemande((e as CustomEvent<ConfirmDetail>).detail)
