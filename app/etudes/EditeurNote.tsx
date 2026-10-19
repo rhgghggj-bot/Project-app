@@ -974,6 +974,31 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
     }
   }
 
+  // Passage choisi dans le cours à côté : il arrive dans un encadré « À retenir »,
+  // là où était le curseur (sinon à la fin de la note), avec le nom du cours
+  function recevoirDuCours(texte: string, source: string) {
+    const page = pageRef.current!
+    const ailleurs = !plage.current || !page.contains(plage.current.startContainer)
+    if (!ailleurs) remettreCurseur()
+    const q = document.createElement("blockquote")
+    q.setAttribute("data-encadre", "important")
+    const p = document.createElement("p")
+    texte.split(/\n+/).forEach((ligne, i) => { if (i) p.appendChild(document.createElement("br")); p.appendChild(document.createTextNode(ligne)) })
+    const i = document.createElement("i")
+    i.textContent = `— ${source}`
+    p.append(document.createElement("br"), i)
+    q.appendChild(p)
+    const suite = document.createElement("p")
+    suite.appendChild(document.createElement("br"))
+    const bloc = ailleurs ? null : blocRacine()
+    if (bloc && bloc.parentNode === page) page.insertBefore(suite, bloc.nextSibling)
+    else page.appendChild(suite)
+    page.insertBefore(q, suite)
+    placerDans(suite)
+    planifier()
+    toast("Passage ajouté à ta note", "success")
+  }
+
   function surCollage(e: React.ClipboardEvent) {
     e.preventDefault()
     const html = e.clipboardData.getData("text/html")
@@ -1120,7 +1145,7 @@ export default function EditeurNote({ userId, note, nouvelle, dossiers, contexte
         <>
           {/* Clavier ouvert en portrait : le cours se réduit à une bande, la note garde la place pour écrire */}
           <div style={coteACote ? { width: "48%", minWidth: 0, height: "100%" } : { height: vue ? Math.min(hautCours, 130) : hautCours, minHeight: 0, flexShrink: 0 }}>
-            <CoursPanneau userId={userId} noteId={note.id} compact={!coteACote && !!vue} onFermer={() => { oublierCours(note.id); setCours(false) }} />
+            <CoursPanneau userId={userId} noteId={note.id} compact={!coteACote && !!vue} onFermer={() => { oublierCours(note.id); setCours(false) }} onEnvoyer={recevoirDuCours} />
           </div>
           {coteACote ? (
             <div aria-hidden="true" style={{ width: 1, background: colors.border, flexShrink: 0 }} />
