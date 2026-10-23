@@ -8,7 +8,8 @@ import s from "./presentation.module.css"
 // reste de l'appli. Page publique, sans compte.
 
 export const metadata: Metadata = {
-  title: "Nexia — Révise moins longtemps, retiens mieux",
+  title: { absolute: "Nexia — Révise moins longtemps, retiens mieux" },
+  alternates: { canonical: "/presentation" },
   description: "Espace étudiant (notes, carnet avec crayon surligneur, cartes de révision, planning d'examen, bibliothèque), finances, groupes, calendrier et impôts suisses : gratuit et sans publicité.",
 }
 
@@ -57,7 +58,6 @@ export default function Presentation() {
           <h2>Tout ton quotidien d&apos;étudiant dans une seule appli.</h2>
           <p>Crée ton compte en moins d&apos;une minute et choisis ton école : tes matières et les chapitres de ton programme sont déjà là.</p>
           <Link href="/inscription" className={s.gros}>Créer mon compte gratuitement</Link>
-          <Link href="/connexion" className={s.second}>J&apos;ai déjà un compte</Link>
           <div className={s.valeurs}>{VALEURS.map(v => <span key={v}>{v}</span>)}</div>
         </aside>
       </div>
@@ -85,7 +85,13 @@ export default function Presentation() {
         <p>Rejoins Nexia gratuitement, en moins d&apos;une minute.</p>
         <Link href="/inscription" className={s.gros} style={{ minWidth: 260 }}>Créer mon compte gratuitement</Link>
       </section>
-      <footer className={s.pied}>Nexia — Ton hub de vie. Fait en Suisse romande.</footer>
+      <footer className={s.pied}>
+        Nexia — Ton hub de vie. Fait en Suisse romande.
+        <nav aria-label="Informations légales" style={{ display: "flex", gap: 16, justifyContent: "center", marginTop: 8 }}>
+          <Link href="/confidentialite" style={{ color: "inherit", padding: "8px 4px" }}>Confidentialité</Link>
+          <Link href="/cgu" style={{ color: "inherit", padding: "8px 4px" }}>Conditions d&apos;utilisation</Link>
+        </nav>
+      </footer>
     </main>
   )
 }

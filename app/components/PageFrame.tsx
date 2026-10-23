@@ -13,7 +13,8 @@ const animations = {
   default: "none",
 }
 
-export const PLEIN_ECRAN = ["/presentation", "/connexion", "/inscription"]
+import { PAGES_PUBLIQUES } from "@/lib/legal"
+export const PLEIN_ECRAN = PAGES_PUBLIQUES
 
 export default function PageFrame({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()

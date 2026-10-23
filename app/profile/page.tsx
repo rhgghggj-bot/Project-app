@@ -353,6 +353,10 @@ export default function Profile() {
               style={{width:'100%',background:'#FFE4E6',color:'#F43F5E',fontSize:'14px',fontWeight:'500',padding:'12px',borderRadius:'14px',border:'none',cursor:'pointer',marginBottom:'24px'}}>
               <span style={{display:"flex",alignItems:"center",gap:"8px",justifyContent:"center"}}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F43F5E" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Se déconnecter</span>
             </button>
+            <nav aria-label="Informations légales" style={{display:'flex',gap:'16px',justifyContent:'center',margin:'-12px 0 24px',fontSize:'12.5px'}}>
+              <Link href="/confidentialite" style={{color:'#888',padding:'8px 4px'}}>Confidentialité</Link>
+              <Link href="/cgu" style={{color:'#888',padding:'8px 4px'}}>Conditions d&apos;utilisation</Link>
+            </nav>
           </div>
         )}
       </div>

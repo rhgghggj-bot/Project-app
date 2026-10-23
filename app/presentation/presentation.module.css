@@ -15,7 +15,6 @@
 .carteCta h2 { margin: 0; font-family: var(--font-display), sans-serif; font-size: 22px; font-weight: 600; text-wrap: balance; }
 .carteCta p { margin: 0; font-size: 14px; color: rgba(255, 255, 255, .7); line-height: 1.5; }
 .gros { display: block; text-align: center; font-size: 15px; font-weight: 600; color: #13294d; background: #fff; text-decoration: none; padding: 14px; border-radius: 14px; }
-.second { display: block; text-align: center; font-size: 14px; color: #fff; text-decoration: none; padding: 12px; border-radius: 14px; border: 1px solid rgba(255, 255, 255, .22); }
 .valeurs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
 .valeurs span { font-size: 12px; color: rgba(255, 255, 255, .78); border: 1px solid rgba(255, 255, 255, .16); border-radius: 999px; padding: 4px 10px; }
 
