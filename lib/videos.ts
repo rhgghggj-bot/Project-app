@@ -4,6 +4,8 @@
 // bibliothèque, pour suivre d'un appareil à l'autre.
 
 import { supabase } from "./supabase"
+import { memoriser, relire } from "./horsLigne"
+import type { VideoPerso } from "./videosPerso"
 
 export type Video = { id: string; titre: string; chaine: string; duree?: string; note?: string }
 export type Collection = { id: string; titre: string; sport: string; desc: string; videos: Video[] }
@@ -77,18 +79,24 @@ export function idYoutube(lien: string): string | null {
 export const miniature = (id: string) => `https://i.ytimg.com/vi/${id}/hqdefault.jpg`
 export const lecteurYoutube = (id: string) => `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0&playsinline=1&modestbranding=1`
 
-export type EtatVideos = { vues: Record<string, string>; favoris: string[]; perso: (Video & { collection: string })[] }
-export const ETAT_VIDE: EtatVideos = { vues: {}, favoris: [], perso: [] }
+export type EtatVideos = { vues: Record<string, string>; favoris: string[]; perso: (Video & { collection: string })[]; entrainements: VideoPerso[] }
+export const ETAT_VIDE: EtatVideos = { vues: {}, favoris: [], perso: [], entrainements: [] }
 
 const chemin = (uid: string) => `${uid}/videos/etat.json`
 
+// Une copie reste sur l'appareil : la liste (et les vidéos gardées) s'affiche sans réseau
+const copie = (uid: string) => `videos:${uid}`
+
 export async function chargerEtatVideos(uid: string): Promise<EtatVideos> {
+  const local = relire<EtatVideos>(copie(uid))
   const { data } = await supabase.storage.from("etudes").download(chemin(uid))
-  if (!data) return { ...ETAT_VIDE }
-  try { return { ...ETAT_VIDE, ...JSON.parse(await data.text()) } } catch { return { ...ETAT_VIDE } }
+  // Pas de réseau (ou fichier pas encore créé) : la copie de l'appareil
+  if (!data) return { ...ETAT_VIDE, ...(local ?? {}) }
+  try { const e = { ...ETAT_VIDE, ...JSON.parse(await data.text()) }; memoriser(copie(uid), e); return e } catch { return { ...ETAT_VIDE, ...(local ?? {}) } }
 }
 
 export async function enregistrerEtatVideos(uid: string, e: EtatVideos): Promise<boolean> {
+  memoriser(copie(uid), e)
   const { error } = await supabase.storage.from("etudes").upload(chemin(uid),
     new Blob([JSON.stringify(e)], { type: "application/json" }), { upsert: true, contentType: "application/json" })
   return !error
