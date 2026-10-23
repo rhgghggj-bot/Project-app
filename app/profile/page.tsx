@@ -5,6 +5,7 @@ import { toast } from "@/lib/toast"
 import { onActivate, useEscape } from "@/lib/a11y"
 import Link from "next/link"
 import SupprimerCompte from "./SupprimerCompte"
+import ChoixApparence from "./ChoixApparence"
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { authHeaders } from "@/lib/authFetch"
@@ -350,6 +351,7 @@ export default function Profile() {
                 <span style={{fontSize:'14px',fontWeight:'500',color:'#2B7FFF'}}>Partager l application</span>
               </div>
             </Link>
+            <ChoixApparence />
             <button onClick={deconnecter}
               style={{width:'100%',background:'#FFE4E6',color:'#F43F5E',fontSize:'14px',fontWeight:'500',padding:'12px',borderRadius:'14px',border:'none',cursor:'pointer',marginBottom:'24px'}}>
               <span style={{display:"flex",alignItems:"center",gap:"8px",justifyContent:"center"}}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F43F5E" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Se déconnecter</span>

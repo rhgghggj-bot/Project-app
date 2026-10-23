@@ -9,6 +9,7 @@ import SplashWrapper from "./components/SplashWrapper";
 import PageFrame from "./components/PageFrame";
 import Toaster from "./components/Toaster";
 import BandeauCookies from "./components/BandeauCookies";
+import SuiviErreurs from "./components/SuiviErreurs";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
@@ -62,12 +63,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr" data-scroll-behavior="smooth">
+    <html lang="fr" data-scroll-behavior="smooth" suppressHydrationWarning>
       <head>
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="Nexia" />
         <meta name="theme-color" content="#0A1628" />
+        {/* Apparence choisie (auto / clair / sombre), appliquée avant l'affichage pour éviter un flash */}
+        <script dangerouslySetInnerHTML={{ __html: `try{document.documentElement.dataset.theme=localStorage.getItem("theme")||"auto"}catch(e){document.documentElement.dataset.theme="auto"}` }} />
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         <link rel="apple-touch-icon" href="/icon-192.png" />
       </head>
@@ -79,6 +82,7 @@ export default function RootLayout({
           <PageFrame>{children}</PageFrame>
           <Toaster />
           <BandeauCookies />
+          <SuiviErreurs />
         </SplashWrapper>
         {/* Statistiques de visite et de vitesse anonymes, sans cookies
             (seulement sur Vercel, où les scripts existent) */}

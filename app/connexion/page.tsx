@@ -4,6 +4,7 @@ import Link from "next/link"
 import { supabase } from "@/lib/supabase"
 import { messageErreurAuth } from "@/lib/authErreurs"
 import Vitrine from "@/app/components/Vitrine"
+import BoutonsOAuth from "@/app/components/BoutonsOAuth"
 import s from "@/app/components/vitrine.module.css"
 
 export default function Connexion() {
@@ -38,7 +39,7 @@ export default function Connexion() {
   )
 
   return (
-    <main className={s.page}>
+    <main className={s.page} data-deja-sombre>
       <div className={`${s.mobileSeul} ${s.entete}`}>
         {logo("logo-mobile")}
         <a href="#email" className={s.raccourci} onClick={e => { e.preventDefault(); const c = document.getElementById("email"); c?.scrollIntoView({ behavior: "smooth", block: "center" }); c?.focus({ preventScroll: true }) }}>Se connecter</a>
@@ -48,6 +49,7 @@ export default function Connexion() {
       <div className={s.colonne}>
         <div className={s.bureauSeul} style={{ marginBottom: 18 }}>{logo("logo-bureau")}</div>
         <form onSubmit={connecter} className={s.form}>
+          <BoutonsOAuth onErreur={setMessage} />
           <h2>Content de te revoir !</h2>
           <p>Connecte-toi pour retrouver tes notes, tes cartes et ta lecture en cours.</p>
           <div className={s.champ}>
@@ -59,6 +61,9 @@ export default function Connexion() {
             <label htmlFor="password">Mot de passe</label>
             <input id="password" name="password" type="password" autoComplete="current-password" required
               value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" />
+          </div>
+          <div style={{ textAlign: 'right', margin: '-6px 0 10px' }}>
+            <Link href="/mot-de-passe-oublie" style={{ fontSize: 13, color: 'rgba(255,255,255,0.75)', display: 'inline-block', padding: '8px 0' }}>Mot de passe oublié ?</Link>
           </div>
           {message && <div role="alert" className={s.erreur}>{message}</div>}
           <button type="submit" disabled={envoi} aria-busy={envoi} className={s.envoyer}>

@@ -8,4 +8,4 @@ export const LEGAL = {
 
 // Pages publiques : affichées sans la navigation de l'appli ni l'écran
 // d'accueil animé, et rendues côté serveur (référencement, vitesse)
-export const PAGES_PUBLIQUES = ["/presentation", "/connexion", "/inscription", "/confidentialite", "/cgu"]
+export const PAGES_PUBLIQUES = ["/presentation", "/connexion", "/inscription", "/confidentialite", "/cgu", "/mot-de-passe-oublie", "/nouveau-mot-de-passe"]

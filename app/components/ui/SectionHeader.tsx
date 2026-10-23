@@ -16,7 +16,7 @@ export default function SectionHeader({
   action?: React.ReactNode
 }) {
   return (
-    <div style={{ background: gradients.header, padding: "20px 18px 28px" }}>
+    <div data-sans-inversion style={{ background: gradients.header, padding: "20px 18px 28px" }}>
       <Link href={backHref} transitionTypes={["nav-back"]} style={{ fontSize: "12px", color: "rgba(255,255,255,0.6)", display: "inline-block", marginBottom: "8px", textDecoration: "none" }}>{backLabel}</Link>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}>
         <h1 className="nx-display" style={{ fontSize: "22px", fontWeight: 600, color: "#fff", margin: 0, display: "flex", alignItems: "center", gap: "8px" }}>{title}</h1>
