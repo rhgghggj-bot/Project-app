@@ -7,7 +7,8 @@
 
 import { supabase } from "./supabase"
 
-export const THEMES = ["Pouvoir et influence", "Argent", "Psychologie", "Stoïcisme", "Confiance en soi", "Productivité", "Philosophie de vie"] as const
+export const THEMES = ["Pouvoir et influence", "Argent", "Psychologie", "Stoïcisme", "Confiance en soi", "Productivité", "Philosophie de vie",
+  "Philosophie", "Économie et société", "Histoire et géographie", "Littérature classique"] as const
 export type Theme = (typeof THEMES)[number]
 
 export type Livre = {
@@ -63,6 +64,47 @@ export const LIVRES: Livre[] = [
   { id: "prince", titre: "Le Prince", auteur: "Nicolas Machiavel", annee: 1532, pages: 150, type: "lire", texte: true, themes: ["Pouvoir et influence"], c: ["#7A2E17", "#F3DEB6"], s: "bande",
     desc: "Comment conquérir et garder le pouvoir, vu sans illusions. Le livre qui a donné son nom au mot « machiavélique ».",
     idees: ["Mieux vaut être craint qu'aimé, si l'on ne peut être les deux.", "La fortune gouverne la moitié de nos actions ; l'autre moitié dépend de nous.", "Un dirigeant est jugé sur ses résultats plus que sur ses moyens."] },
+
+  // ─── Culture générale : livres libres de droits, en français ───
+  { id: "contrat", titre: "Du contrat social", auteur: "Jean-Jacques Rousseau", annee: 1762, pages: 210, type: "lire", texte: true, themes: ["Philosophie"], c: ["#3B2F63", "#F0E2B6"], s: "cadre",
+    desc: "Comment vivre sous des lois communes sans perdre sa liberté ? Rousseau répond par un pacte où chacun obéit à la volonté générale, c'est-à-dire à l'intérêt commun du peuple.",
+    idees: ["L'homme naît libre, mais il est partout dans les fers : tout l'enjeu est de rendre cet ordre légitime.", "La force ne crée aucun droit : on n'est obligé d'obéir qu'aux pouvoirs légitimes.", "La loi doit exprimer la volonté générale : le peuple est le seul vrai souverain."] },
+  { id: "apologie", titre: "Apologie de Socrate", auteur: "Platon", annee: -399, pages: 65, type: "lire", texte: true, themes: ["Philosophie"], c: ["#E4D6B2", "#3A2A14"], s: "bande",
+    desc: "Le discours de Socrate devant ses juges athéniens, qui l'accusent de corrompre la jeunesse et de ne pas honorer les dieux. Il refuse de se renier, même au prix de sa vie.",
+    idees: ["Une vie sans examen ne vaut pas la peine d'être vécue : Socrate interroge sans cesse les autres et lui-même.", "La vraie sagesse est de savoir que l'on ne sait pas tout.", "Mieux vaut suivre sa conscience que craindre la mort."] },
+  { id: "persanes", titre: "Lettres persanes", auteur: "Montesquieu", annee: 1721, pages: 440, type: "lire", texte: true, themes: ["Philosophie"], c: ["#6A1F3B", "#F6E4C4"], s: "bande",
+    desc: "Deux Persans voyagent en France et racontent leurs surprises par lettres. Ce regard d'étranger permet à Montesquieu de se moquer avec esprit des coutumes, de la religion et du pouvoir de son époque.",
+    idees: ["Un regard venu d'ailleurs montre l'étrangeté de coutumes que l'on croit naturelles.", "Montesquieu critique le pouvoir absolu, l'intolérance et les privilèges.", "Le drame du sérail d'Usbek, qui se termine mal, montre ce que coûte la tyrannie."] },
+  { id: "voit", titre: "Ce qu'on voit et ce qu'on ne voit pas", auteur: "Frédéric Bastiat", annee: 1850, pages: 90, type: "lire", texte: true, themes: ["Économie et société"], c: ["#E3EBD9", "#2D4A22"], s: "cadre",
+    desc: "Un texte court et vif pour juger une mesure économique par tous ses effets, y compris ceux qu'on ne voit pas. La parabole de la vitre cassée en est l'exemple le plus célèbre.",
+    idees: ["Toute décision a un effet visible et des effets cachés : un bon économiste regarde les deux.", "Casser une vitre fait travailler le vitrier, mais l'argent dépensé ne servira pas à autre chose.", "L'argent de l'État vient des contribuables : ce qu'il dépense n'est jamais gratuit."] },
+  { id: "propriete", titre: "Qu'est-ce que la propriété ?", auteur: "Pierre-Joseph Proudhon", annee: 1840, pages: 465, type: "lire", texte: true, themes: ["Économie et société"], c: ["#4A0E0E", "#F2D8A7"], s: "bande",
+    desc: "Le livre de la formule « la propriété, c'est le vol ». Proudhon examine les justifications de la propriété (occupation, travail, loi) et les conteste une à une au nom de l'égalité.",
+    idees: ["La question posée est simple : qu'est-ce qui justifie qu'on possède la terre et les outils ?", "Selon Proudhon, ni l'occupation, ni le travail, ni la loi ne suffisent à le justifier.", "Il y oppose une société plus égale, où personne ne vit du travail des autres."] },
+  { id: "manifeste", titre: "Manifeste du parti communiste", auteur: "Karl Marx et Friedrich Engels", annee: 1848, pages: 60, type: "lire", texte: true, themes: ["Économie et société"], c: ["#A31F18", "#FFF4DC"], s: "bande",
+    desc: "Écrit en 1848, ce texte court présente l'histoire comme une suite de luttes entre classes sociales et défend l'idée d'une société sans classes. À lire pour comprendre ces idées, avec du recul.",
+    idees: ["L'histoire de toute société est l'histoire de luttes de classes.", "La bourgeoisie a transformé le monde par l'industrie et le commerce, mais elle crée aussi la classe ouvrière qui la conteste.", "Les communistes veulent mettre en commun les moyens de production pour supprimer l'exploitation."] },
+  { id: "democratie", titre: "De la démocratie en Amérique", auteur: "Alexis de Tocqueville", annee: 1835, pages: 330, type: "lire", texte: true, themes: ["Histoire et géographie"], c: ["#0B3C5D", "#F2D49B"], s: "cadre",
+    desc: "Après un voyage aux États-Unis, un jeune Français étudie ce pays pour comprendre l'avenir des démocraties. Cette édition donne le premier tome : géographie, origines, commune, justice et Constitution fédérale.",
+    idees: ["L'égalité des conditions avance partout : c'est un fait que l'on ne peut pas arrêter.", "Les Anglo-Américains sont partis d'une société presque égale, et cela explique leurs lois et leurs mœurs.", "La commune est l'école de la liberté : c'est en gérant les affaires locales que les citoyens apprennent à gouverner."] },
+  { id: "nation", titre: "Qu'est-ce qu'une nation ?", auteur: "Ernest Renan", annee: 1882, pages: 35, type: "lire", texte: true, themes: ["Histoire et géographie"], c: ["#ECE4D3", "#1F3F7A"], s: "bande",
+    desc: "Une conférence donnée à la Sorbonne en 1882. Renan écarte la race, la langue, la religion et la géographie : pour lui, une nation tient surtout à la volonté de vivre ensemble.",
+    idees: ["Ni la race, ni la langue, ni la religion, ni les frontières naturelles ne suffisent à définir une nation.", "Une nation est une âme : un passé de souvenirs et de sacrifices partagés.", "Son existence est « un plébiscite de tous les jours », c'est-à-dire un choix renouvelé."] },
+  { id: "tour80", titre: "Le Tour du monde en quatre-vingts jours", auteur: "Jules Verne", annee: 1873, pages: 360, type: "lire", texte: true, themes: ["Histoire et géographie"], c: ["#0B5B5F", "#FBE8B4"], s: "cadre",
+    desc: "Pour gagner un pari, le gentleman Phileas Fogg et son domestique Passepartout font le tour de la Terre en train, en bateau et même à dos d'éléphant. Un roman d'aventures qui fait voyager à travers les pays et les techniques de 1872.",
+    idees: ["Fogg parie vingt mille livres qu'il fera le tour du monde en 80 jours, grâce aux chemins de fer et aux bateaux à vapeur.", "Le voyage passe par l'Égypte, l'Inde, la Chine, le Japon et les États-Unis avant le retour à Londres.", "Le détective Fix le suit partout, persuadé qu'il est un voleur de banque."] },
+  { id: "romains", titre: "Grandeur et décadence des Romains", auteur: "Montesquieu", annee: 1734, pages: 230, type: "lire", texte: true, themes: ["Histoire et géographie"], c: ["#8A3418", "#FBEBD0"], s: "bande",
+    desc: "Dans ses « Considérations sur les causes de la grandeur des Romains et de leur décadence », Montesquieu cherche pourquoi Rome a conquis le monde puis s'est effondrée. Pour lui, ce sont les mœurs, les institutions et les erreurs politiques qui l'expliquent.",
+    idees: ["Rome grandit grâce à l'esprit civique de ses citoyens, à son armée disciplinée et à sa politique envers les peuples vaincus.", "Ce n'est pas le hasard qui gouverne le monde : des causes générales, morales ou physiques, élèvent ou font tomber chaque État.", "Les guerres civiles et la corruption affaiblissent la République, puis l'Empire se défait peu à peu."] },
+  { id: "condamne", titre: "Le Dernier Jour d'un condamné", auteur: "Victor Hugo", annee: 1829, pages: 180, type: "lire", texte: true, themes: ["Littérature classique"], c: ["#1A1A1A", "#F08A7A"], s: "cadre",
+    desc: "Un homme condamné à mort raconte ses dernières semaines, jusqu'à l'échafaud. Hugo ne donne ni son nom ni son crime : il veut faire sentir l'angoisse d'un condamné et plaider contre la peine de mort.",
+    idees: ["Le narrateur reste anonyme : ce qui compte, c'est ce que vit tout condamné.", "Le récit montre la peur, l'attente et la cruauté d'une justice qui tue.", "La préface de 1832 en fait un plaidoyer direct pour l'abolition de la peine de mort."] },
+  { id: "boule", titre: "Boule de suif", auteur: "Guy de Maupassant", annee: 1880, pages: 70, type: "lire", texte: true, themes: ["Littérature classique"], c: ["#F3E1D8", "#6B1F2E"], s: "bande",
+    desc: "En 1870, dix voyageurs fuient Rouen occupée par les Prussiens. Boule de suif, une prostituée, partage ses provisions avec eux ; ils lui demandent ensuite un sacrifice, puis la rejettent.",
+    idees: ["Maupassant montre l'hypocrisie de ceux qui se croient respectables.", "Les passagers acceptent la générosité de Boule de suif, puis la méprisent.", "La guerre et l'occupation révèlent les égoïsmes plus que les héroïsmes."] },
+  { id: "avare", titre: "L'Avare", auteur: "Molière", annee: 1668, pages: 110, type: "lire", texte: true, themes: ["Littérature classique"], c: ["#D2A93B", "#241704"], s: "cadre",
+    desc: "Harpagon aime son argent plus que tout et veut marier ses enfants selon son intérêt. Le vol de sa cassette fait éclater cette comédie.",
+    idees: ["L'avarice rend Harpagon ridicule, et dur même avec ses propres enfants.", "Cléante et Élise cherchent à échapper aux mariages choisis par leur père.", "« Il faut manger pour vivre, et non pas vivre pour manger » : Molière tire du rire une leçon de morale."] },
 
   // ─── Livres récents : fiches ───
   { id: "loi50", titre: "La 50e loi", auteur: "Robert Greene et 50 Cent", annee: 2009, pages: 300, type: "fiche", themes: ["Confiance en soi", "Pouvoir et influence"], c: ["#0F0F10", "#D7B45A"], s: "bande",

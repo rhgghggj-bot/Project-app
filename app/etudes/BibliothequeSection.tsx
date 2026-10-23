@@ -1,10 +1,14 @@
 "use client"
 
 import "./bibliotheque.css"
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { chargerEtat, enregistrerEtat, ETAT_VIDE, LIVRES, livre as trouverLivre, noterJour, serie, THEMES, type EtatBiblio, type Livre, type Position } from "@/lib/bibliotheque"
 import { cormorant, garamond } from "./polices"
 import LecteurLivre from "./LecteurLivre"
+import dynamic from "next/dynamic"
+
+// Atlas du monde : chargé seulement quand on l'ouvre (carte et chiffres assez lourds)
+const Atlas = dynamic(() => import("./Atlas"), { ssr: false })
 
 type Filtre = "tous" | "lire" | "fiche" | "alire" | "encours" | "lu"
 type Statut = "alire" | "encours" | "lu"
@@ -116,6 +120,8 @@ export default function BibliothequeSection({ userId }: { userId: string }) {
   const [q, setQ] = useState("")
   const [fiche, setFiche] = useState<{ id: string; depuis: DOMRect | null; n: number } | null>(null)
   const [lecture, setLecture] = useState<string | null>(null)
+  const [atlas, setAtlas] = useState(false)
+  const fermerAtlas = useCallback(() => setAtlas(false), [])
   const [erreurSauvegarde, setErreurSauvegarde] = useState(false)
 
   const heroRef = useRef<HTMLDivElement>(null)
@@ -226,6 +232,15 @@ export default function BibliothequeSection({ userId }: { userId: string }) {
           <div className="scene-hero" ref={heroRef} aria-hidden="true" key={enCours.id}><Livre3D l={enCours} w={132} /></div>
         </section>
 
+        <section aria-label="Atlas du monde" style={{ margin: "18px 0 6px", borderRadius: 18, padding: "16px 18px", background: "linear-gradient(135deg, #0B2545 0%, #13315C 55%, #1D4E89 100%)", color: "#fff", display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+          <svg aria-hidden="true" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#9EC2FF" strokeWidth="1.5"><circle cx="12" cy="12" r="10" /><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20" /></svg>
+          <div style={{ flex: "1 1 220px", minWidth: 0 }}>
+            <div style={{ fontSize: 18, fontWeight: 700 }}>Atlas du monde</div>
+            <div style={{ fontSize: 13.5, color: "rgba(255,255,255,.78)", lineHeight: 1.45 }}>Une carte à explorer : touche un pays pour voir son économie, sa place dans le commerce mondial, sa population, ses études supérieures, sa politique et son histoire.</div>
+          </div>
+          <button className="presse" onClick={() => setAtlas(true)} style={{ minHeight: 44, padding: "0 18px", borderRadius: 999, border: "none", background: "#fff", color: "#0B2545", fontWeight: 700, fontSize: 14.5, cursor: "pointer" }}>Ouvrir l&apos;atlas</button>
+        </section>
+
         <div className="outils">
           <input className="recherche" type="search" placeholder="Titre, auteur, idée…" aria-label="Chercher un livre" value={q} onChange={e => setQ(e.target.value)} />
           <div className="segment" role="group" aria-label="Affichage" ref={segmentRef}>
@@ -273,6 +288,8 @@ export default function BibliothequeSection({ userId }: { userId: string }) {
           onLire={() => { setFiche(null); setLecture(livreFiche.id) }}
           onFermer={() => setFiche(null)} />
       )}
+
+      {atlas && <Atlas onFermer={fermerAtlas} />}
 
       {livreLu && (
         <LecteurLivre key={livreLu.id} livre={livreLu} etat={etat} onChange={maj} onPosition={position} onFermer={() => setLecture(null)} />
