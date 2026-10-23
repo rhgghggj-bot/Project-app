@@ -117,3 +117,27 @@ button:active, a:active, [role="button"]:active, [style*="cursor: pointer"]:acti
 /* Clavier ouvert au téléphone (voir ClavierConfort) : la barre du bas laisse
    la place au texte qu'on écrit */
 html[data-clavier="ouvert"] .nx-nav-bas { display: none !important; }
+
+/* ─── Mode sombre ───
+   L'appli est écrite en couleurs claires : en mode sombre, on inverse toute
+   la page (teintes conservées grâce à hue-rotate), puis on ré-inverse les
+   images, vidéos, dessins et pages intégrées pour qu'ils gardent leurs vraies
+   couleurs. Les pages déjà sombres (présentation, connexion…) portent
+   data-deja-sombre et ne changent pas. Choix : Profil → réglages → Apparence. */
+html[data-theme="sombre"]:not(:has([data-deja-sombre])) {
+  filter: invert(0.9) hue-rotate(180deg);
+  background: #fff;
+}
+/* En-têtes et écrans bleu nuit (dégradé #0A1628) : déjà sombres, gardés tels quels */
+html[data-theme="sombre"]:not(:has([data-deja-sombre])) :is(img, video, canvas, iframe, picture, [data-sans-inversion], [style*="gradient(160deg, rgb(10, 22, 40)"]) {
+  filter: invert(1) hue-rotate(180deg);
+}
+@media (prefers-color-scheme: dark) {
+  html:is([data-theme="auto"], :not([data-theme])):not(:has([data-deja-sombre])) {
+    filter: invert(0.9) hue-rotate(180deg);
+    background: #fff;
+  }
+  html:is([data-theme="auto"], :not([data-theme])):not(:has([data-deja-sombre])) :is(img, video, canvas, iframe, picture, [data-sans-inversion], [style*="gradient(160deg, rgb(10, 22, 40)"]) {
+    filter: invert(1) hue-rotate(180deg);
+  }
+}

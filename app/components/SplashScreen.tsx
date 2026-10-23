@@ -8,7 +8,7 @@ export default function SplashScreen({ onDone }: { onDone: () => void }) {
   }, [onDone])
 
   return (
-    <div style={{
+    <div data-deja-sombre style={{
       position:'fixed',inset:0,zIndex:9999,
       background:'#0A1628',
       display:'flex',flexDirection:'column',

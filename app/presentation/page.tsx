@@ -37,7 +37,7 @@ const VALEURS = ["Gratuit", "Sans publicité", "Données privées", "Pensé pour
 
 export default function Presentation() {
   return (
-    <main className={s.page}>
+    <main className={s.page} data-deja-sombre>
       <header className={s.barre}>
         <Link href="/" style={{ display: "flex", alignItems: "center", gap: 9, color: "#fff", textDecoration: "none" }}>
           <svg aria-hidden="true" width="26" height="26" viewBox="0 0 60 60">

@@ -37,6 +37,7 @@ export default function Confidentialite() {
             <tr><td>Groupes : messages, dépenses partagées, sondages, appels</td><td>Les discussions et l&apos;organisation entre membres</td><td>Exécution du contrat</td></tr>
             <tr><td>Marketplace et projets : annonces, photos, avis, soutiens</td><td>Acheter, vendre et soutenir des projets</td><td>Exécution du contrat</td></tr>
             <tr><td>Statistiques de visite anonymes</td><td>Savoir quelles pages sont utilisées et si elles sont rapides</td><td>Intérêt légitime</td></tr>
+            <tr><td>Rapports d&apos;erreurs techniques : page, message d&apos;erreur, navigateur (sans nom ni contenu)</td><td>Détecter et corriger les bugs</td><td>Intérêt légitime</td></tr>
           </tbody>
         </table>
       </div>

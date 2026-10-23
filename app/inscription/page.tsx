@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { supabase } from "@/lib/supabase"
 import { messageErreurAuth } from "@/lib/authErreurs"
+import BoutonsOAuth, { oauthDisponible } from "@/app/components/BoutonsOAuth"
 
 export default function Inscription() {
   const [email, setEmail] = useState("")
@@ -48,7 +49,7 @@ export default function Inscription() {
   }
 
   return (
-    <main style={{minHeight:'100vh',background:'linear-gradient(160deg,#0A1628,#1a3a6e,#2B7FFF)',display:'flex',alignItems:'center',justifyContent:'center',padding:'20px'}}>
+    <main data-deja-sombre style={{minHeight:'100vh',background:'linear-gradient(160deg,#0A1628,#1a3a6e,#2B7FFF)',display:'flex',alignItems:'center',justifyContent:'center',padding:'20px'}}>
       <div style={{width:'100%',maxWidth:'400px'}}>
         <div style={{textAlign:'center',marginBottom:'32px'}}>
           <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'10px',marginBottom:'16px'}}>
@@ -62,6 +63,8 @@ export default function Inscription() {
         </div>
 
         <form onSubmit={inscrire} noValidate style={{background:'rgba(255,255,255,0.1)',backdropFilter:'blur(20px)',border:'0.5px solid rgba(255,255,255,0.2)',borderRadius:'20px',padding:'28px'}}>
+          <BoutonsOAuth onErreur={m => { setSucces(false); setMessage(m) }} />
+          {oauthDisponible && <p style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.55)', margin: '-4px 0 14px', textAlign: 'center' }}>En continuant avec Google ou Apple, tu acceptes les <Link href="/cgu" style={{ color: '#fff' }}>conditions d&apos;utilisation</Link>.</p>}
           <div style={{marginBottom:'16px'}}>
             <label htmlFor="nom" style={{fontSize:'12px',color:'rgba(255,255,255,0.7)',display:'block',marginBottom:'6px'}}>Ton prénom</label>
             <input id="nom" name="given-name" type="text" autoComplete="given-name" required
