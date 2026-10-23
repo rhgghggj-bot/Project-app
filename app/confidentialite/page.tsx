@@ -58,13 +58,13 @@ export default function Confidentialite() {
       <p>Nexia enregistre dans ton navigateur (stockage local) ce qui est nécessaire à son fonctionnement : ta session de connexion, tes préférences, tes brouillons et une copie de tes notes pour le mode hors connexion. La lecture des documents scannés (reconnaissance du texte) se fait aussi sur ton appareil. Il n&apos;y a pas de cookies publicitaires ni de traceurs tiers.</p>
 
       <h2>5. Combien de temps ?</h2>
-      <p>Tes données sont gardées tant que ton compte existe. Si tu demandes la suppression de ton compte, elles sont effacées dans un délai de 30 jours, sauf ce que la loi oblige à conserver (par exemple les justificatifs de paiement, 10 ans en Suisse).</p>
+      <p>Tes données sont gardées tant que ton compte existe. Quand tu supprimes ton compte, elles sont effacées immédiatement (les copies de sauvegarde des services d&apos;hébergement disparaissent ensuite dans un délai de 30 jours), sauf ce que la loi oblige à conserver (par exemple les justificatifs de paiement, 10 ans en Suisse).</p>
 
       <h2>6. Tes droits</h2>
       <ul>
         <li><b>Accès et portabilité</b> : tu peux télécharger tes données d&apos;études à tout moment depuis l&apos;espace étudiant (export), ou demander une copie de toutes tes données.</li>
         <li><b>Rectification</b> : tu peux modifier tes informations dans l&apos;appli.</li>
-        <li><b>Effacement</b> : tu peux supprimer tes contenus dans l&apos;appli, ou demander la suppression de ton compte.</li>
+        <li><b>Effacement</b> : tu peux supprimer ton compte toi-même dans ton profil (« Supprimer mon compte ») : tes données personnelles sont effacées tout de suite. Tes messages et dépenses dans un groupe restent visibles pour les autres membres, sans ton nom.</li>
         <li><b>Opposition et limitation</b>, notamment aux statistiques de visite.</li>
       </ul>
       <p>Pour exercer ces droits, écris à {mail}. Nous répondons dans un délai de 30 jours. Tu peux aussi t&apos;adresser au Préposé fédéral à la protection des données (PFPDT, Suisse) ou à la CNIL (France).</p>

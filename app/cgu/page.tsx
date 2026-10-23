@@ -24,7 +24,7 @@ export default function Cgu() {
       <ul>
         <li>Tu dois donner une adresse e-mail valable et garder ton mot de passe secret.</li>
         <li>Si tu as moins de 16 ans, l&apos;accord de tes parents est nécessaire.</li>
-        <li>Un compte est personnel. Tu peux demander sa suppression à tout moment à <a href={`mailto:${LEGAL.contact}`}>{LEGAL.contact}</a>.</li>
+        <li>Un compte est personnel. Tu peux le supprimer à tout moment depuis ton profil, ou en écrivant à <a href={`mailto:${LEGAL.contact}`}>{LEGAL.contact}</a>.</li>
       </ul>
 
       <h2>3. Services</h2>

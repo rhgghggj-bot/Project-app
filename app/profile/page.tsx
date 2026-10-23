@@ -4,6 +4,7 @@ import Image from "next/image"
 import { toast } from "@/lib/toast"
 import { onActivate, useEscape } from "@/lib/a11y"
 import Link from "next/link"
+import SupprimerCompte from "./SupprimerCompte"
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { authHeaders } from "@/lib/authFetch"
@@ -137,7 +138,7 @@ export default function Profile() {
             <input type='file' accept='image/*' aria-label="Changer ta photo de profil" disabled={uploading} onChange={uploadAvatar} style={{position:'absolute',inset:0,opacity:0,cursor:'pointer',width:'100%',height:'100%'}}/>
           </div>
           <div style={{display:'flex',gap:'8px'}}>
-            <button onClick={() => setOnglet("settings")} style={{fontSize:'12px',padding:'7px 12px',borderRadius:'99px',border:'1.5px solid #E8F1FF',background:'#fff',color:'#666',cursor:'pointer'}}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+            <button onClick={() => setOnglet("settings")} aria-label="Réglages du compte" style={{fontSize:'12px',padding:'7px 12px',borderRadius:'99px',border:'1.5px solid #E8F1FF',background:'#fff',color:'#666',cursor:'pointer'}}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
             <Link href="/nouveau-projet" style={{textDecoration:'none',fontSize:'12px',padding:'7px 14px',borderRadius:'99px',background:couleurProfil,color:'#fff',border:'none',cursor:'pointer',fontWeight:'500',display:'inline-block',textAlign:'center'}}>+ Projet</Link>
           </div>
         </div>
@@ -357,6 +358,7 @@ export default function Profile() {
               <Link href="/confidentialite" style={{color:'#888',padding:'8px 4px'}}>Confidentialité</Link>
               <Link href="/cgu" style={{color:'#888',padding:'8px 4px'}}>Conditions d&apos;utilisation</Link>
             </nav>
+            <SupprimerCompte />
           </div>
         )}
       </div>
