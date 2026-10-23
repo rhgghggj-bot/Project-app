@@ -69,6 +69,10 @@ export default function Connexion() {
           </div>
         </form>
         <Link href="/presentation" className={s.decouvrir}>Découvrir tout Nexia →</Link>
+        <nav aria-label="Informations légales" style={{ display: 'flex', gap: 16, justifyContent: 'center', marginTop: 10, fontSize: 12 }}>
+          <Link href="/confidentialite" style={{ color: 'rgba(255,255,255,0.55)', padding: '8px 4px' }}>Confidentialité</Link>
+          <Link href="/cgu" style={{ color: 'rgba(255,255,255,0.55)', padding: '8px 4px' }}>Conditions d&apos;utilisation</Link>
+        </nav>
       </div>
     </main>
   )

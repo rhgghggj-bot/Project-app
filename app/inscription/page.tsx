@@ -1,5 +1,5 @@
 "use client"
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { supabase } from "@/lib/supabase"
 import { messageErreurAuth } from "@/lib/authErreurs"
@@ -11,10 +11,25 @@ export default function Inscription() {
   const [message, setMessage] = useState("")
   const [succes, setSucces] = useState(false)
   const [envoi, setEnvoi] = useState(false)
+  const [accepte, setAccepte] = useState(false)
+  // Anti-spam : un champ caché que seuls les robots remplissent, et un délai
+  // minimum entre l'affichage du formulaire et l'envoi
+  const [piege, setPiege] = useState("")
+  const ouvertLe = useRef(0)
+  useEffect(() => { ouvertLe.current = Date.now() }, [])
 
   async function inscrire(e: React.FormEvent) {
     e.preventDefault()
     if (envoi) return
+    setSucces(false)
+    if (piege || Date.now() - ouvertLe.current < 2500) {
+      setMessage("Un petit instant… réessaie dans quelques secondes.")
+      return
+    }
+    if (nom.trim().length < 2) return setMessage("Indique ton prénom (2 lettres minimum).")
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim())) return setMessage("Cette adresse e-mail n'a pas l'air correcte.")
+    if (password.length < 8 || !/[A-Za-z]/.test(password) || !/\d/.test(password)) return setMessage("Ton mot de passe doit avoir au moins 8 caractères, avec des lettres et au moins un chiffre.")
+    if (!accepte) return setMessage("Accepte les conditions d'utilisation pour créer ton compte.")
     setEnvoi(true)
     setMessage("")
     const { error } = await supabase.auth.signUp({
@@ -46,7 +61,7 @@ export default function Inscription() {
           <p style={{fontSize:'14px',color:'rgba(255,255,255,0.6)'}}>Crée ton compte gratuitement</p>
         </div>
 
-        <form onSubmit={inscrire} style={{background:'rgba(255,255,255,0.1)',backdropFilter:'blur(20px)',border:'0.5px solid rgba(255,255,255,0.2)',borderRadius:'20px',padding:'28px'}}>
+        <form onSubmit={inscrire} noValidate style={{background:'rgba(255,255,255,0.1)',backdropFilter:'blur(20px)',border:'0.5px solid rgba(255,255,255,0.2)',borderRadius:'20px',padding:'28px'}}>
           <div style={{marginBottom:'16px'}}>
             <label htmlFor="nom" style={{fontSize:'12px',color:'rgba(255,255,255,0.7)',display:'block',marginBottom:'6px'}}>Ton prénom</label>
             <input id="nom" name="given-name" type="text" autoComplete="given-name" required
@@ -63,12 +78,21 @@ export default function Inscription() {
           </div>
           <div style={{marginBottom:'24px'}}>
             <label htmlFor="password" style={{fontSize:'12px',color:'rgba(255,255,255,0.7)',display:'block',marginBottom:'6px'}}>Mot de passe</label>
-            <input id="password" name="new-password" type="password" autoComplete="new-password" minLength={6} required aria-describedby="password-aide"
+            <input id="password" name="new-password" type="password" autoComplete="new-password" minLength={8} required aria-describedby="password-aide"
               value={password} onChange={e => setPassword(e.target.value)}
               placeholder="••••••••"
               style={{width:'100%',background:'rgba(255,255,255,0.1)',border:'0.5px solid rgba(255,255,255,0.2)',borderRadius:'10px',padding:'12px 14px',fontSize:'16px',color:'#fff',boxSizing:'border-box'}}/>
-            <p id="password-aide" style={{fontSize:'12px',color:'rgba(255,255,255,0.55)',margin:'6px 0 0'}}>6 caractères minimum</p>
+            <p id="password-aide" style={{fontSize:'12px',color:'rgba(255,255,255,0.55)',margin:'6px 0 0'}}>8 caractères minimum, avec des lettres et au moins un chiffre</p>
           </div>
+          {/* Champ piège invisible pour les personnes, rempli par les robots */}
+          <div aria-hidden="true" style={{ position: 'absolute', left: '-10000px', width: 1, height: 1, overflow: 'hidden' }}>
+            <label htmlFor="site-web">Ne pas remplir</label>
+            <input id="site-web" name="site-web" type="text" tabIndex={-1} autoComplete="off" value={piege} onChange={e => setPiege(e.target.value)} />
+          </div>
+          <label style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', fontSize: '13px', color: 'rgba(255,255,255,0.8)', lineHeight: 1.45, marginBottom: '18px', cursor: 'pointer' }}>
+            <input type="checkbox" checked={accepte} onChange={e => setAccepte(e.target.checked)} required style={{ width: 20, height: 20, marginTop: 1, flexShrink: 0 }} />
+            <span>J&apos;accepte les <Link href="/cgu" style={{ color: '#fff' }}>conditions d&apos;utilisation</Link> et j&apos;ai lu la <Link href="/confidentialite" style={{ color: '#fff' }}>politique de confidentialité</Link>.</span>
+          </label>
           {message && (
             <div role={succes ? 'status' : 'alert'} style={{background: !succes ? 'rgba(244,63,94,0.2)' : 'rgba(16,185,129,0.18)', border: !succes ? '0.5px solid rgba(244,63,94,0.4)' : '0.5px solid rgba(16,185,129,0.4)', borderRadius:'10px', padding:'10px 14px', fontSize:'13px', color: !succes ? '#fca5a5' : '#86efac', marginBottom:'16px'}}>{message}</div>
           )}

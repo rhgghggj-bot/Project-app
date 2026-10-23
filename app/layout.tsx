@@ -8,6 +8,9 @@ import ClavierConfort from "./components/ClavierConfort";
 import SplashWrapper from "./components/SplashWrapper";
 import PageFrame from "./components/PageFrame";
 import Toaster from "./components/Toaster";
+import BandeauCookies from "./components/BandeauCookies";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,8 +33,8 @@ const description = "Nexia — Ton hub de vie. Espace étudiant (notes, cartes d
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://project-app-rust-delta.vercel.app"),
-  title: "Nexia - Ton hub de vie",
-  icons: { icon: "/favicon.svg" },
+  title: { default: "Nexia - Ton hub de vie", template: "%s · Nexia" },
+  icons: { icon: [{ url: "/favicon.ico", sizes: "any" }, { url: "/favicon.svg", type: "image/svg+xml" }] },
   description,
   manifest: "/manifest.json",
   appleWebApp: {
@@ -45,13 +48,11 @@ export const metadata: Metadata = {
     siteName: "Nexia",
     locale: "fr_CH",
     type: "website",
-    images: [{ url: "/icon-512.png", width: 512, height: 512 }],
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: "Nexia - Ton hub de vie",
     description,
-    images: ["/icon-512.png"],
   },
 };
 
@@ -77,7 +78,11 @@ export default function RootLayout({
           <ClavierConfort />
           <PageFrame>{children}</PageFrame>
           <Toaster />
+          <BandeauCookies />
         </SplashWrapper>
+        {/* Statistiques de visite et de vitesse anonymes, sans cookies
+            (seulement sur Vercel, où les scripts existent) */}
+        {process.env.VERCEL === "1" && <><Analytics /><SpeedInsights /></>}
       </body>
     </html>
   );
