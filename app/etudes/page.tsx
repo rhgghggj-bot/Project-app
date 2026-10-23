@@ -20,9 +20,10 @@ import Donnees from "./Donnees"
 import ArtefactsSection from "./ArtefactsSection"
 import CarnetSection, { type ActionCarnet } from "./CarnetSection"
 import BibliothequeSection from "./BibliothequeSection"
+import VideosSection from "./VideosSection"
 import { CURSUS, descriptionNiveau, matieresProposees, trouverNiveau } from "@/lib/cursus"
 
-type Onglet = "notes" | "corriger" | "reviser" | "carnet" | "livres" | "artefacts"
+type Onglet = "notes" | "corriger" | "reviser" | "carnet" | "livres" | "videos" | "artefacts"
 type Profil = { pays: Pays; niveau: string | null; filiere: string | null; annee: string | null; specialites: string[]; entreprise_id: string; entreprise_perso: EntreprisePerso | null }
 
 const TOUS_ONGLETS: { id: Onglet; label: string }[] = [
@@ -31,6 +32,7 @@ const TOUS_ONGLETS: { id: Onglet; label: string }[] = [
   { id: "reviser", label: "Réviser" },
   { id: "carnet", label: "Carnet" },
   { id: "livres", label: "Livres" },
+  { id: "videos", label: "Vidéos" },
   { id: "artefacts", label: "Artefacts" },
 ]
 
@@ -202,10 +204,10 @@ export default function EspaceEtudiant() {
           </div>
         )}
 
-        <div role="tablist" aria-label="Sections de l'espace étudiant" style={{ display: "flex", gap: "4px", background: colors.blueLight, borderRadius: radius.pill, padding: "4px", marginBottom: "14px" }}>
+        <div role="tablist" aria-label="Sections de l'espace étudiant" style={{ display: "flex", gap: "4px", background: colors.blueLight, borderRadius: radius.pill, padding: "4px", marginBottom: "14px", overflowX: "auto", scrollbarWidth: "none" }}>
           {ONGLETS.map(o => (
             <button key={o.id} role="tab" aria-selected={onglet === o.id} onClick={() => setOnglet(o.id)}
-              style={{ flex: 1, border: "none", borderRadius: radius.pill, padding: "8px 2px", fontSize: "12px", fontWeight: 500, cursor: "pointer",
+              style={{ flex: "1 0 auto", border: "none", borderRadius: radius.pill, padding: "8px 9px", fontSize: "12px", whiteSpace: "nowrap", fontWeight: 500, cursor: "pointer",
                 background: onglet === o.id ? "#fff" : "transparent", color: onglet === o.id ? colors.blue : colors.textMuted,
                 boxShadow: onglet === o.id ? "0 1px 4px rgba(43,127,255,0.15)" : "none" }}>
               {o.label}
@@ -231,6 +233,7 @@ export default function EspaceEtudiant() {
               onOuvrirChapitre={id => { setChapitreOuvert(id); setOnglet("reviser") }} />
           )}
           {onglet === "livres" && <BibliothequeSection userId={userId} />}
+          {onglet === "videos" && <VideosSection userId={userId} />}
           {onglet === "artefacts" && (
             <ArtefactsSection userId={userId} parDefaut={{
               pays: p.pays, niveauId: p.niveau, filiere: p.filiere, specialites: p.specialites, annee: p.annee,
