@@ -1,7 +1,12 @@
 "use client"
 import { useEffect, useMemo, useRef, useState } from "react"
+import dynamic from "next/dynamic"
 import { chargerArticle, lienWikipedia, type ArticleWiki } from "@/lib/wikipedia"
 import s from "./atlas.module.css"
+
+// Globe 3D (MapLibre), chargé seulement quand on l'utilise
+const GlobeCarte = dynamic(() => import("./GlobeCarte"), { ssr: false, loading: () => <div className="nx-skel" style={{ position: "absolute", inset: 16, borderRadius: 16 }} /> })
+const webglPossible = () => { try { return !!document.createElement("canvas").getContext("webgl2") } catch { return false } }
 
 // Atlas du monde : carte à déplacer et zoomer (doigt, souris, molette), et
 // fiche détaillée de chaque pays. Chiffres : Banque mondiale et UNESCO
@@ -350,6 +355,10 @@ export default function Atlas({ onFermer }: { onFermer: () => void }) {
   const [survol, setSurvol] = useState<{ n: string; x: number; y: number } | null>(null)
   const [recherche, setRecherche] = useState("")
   const [grand, setGrand] = useState(false)
+  // Globe 3D par défaut (avec réseau et WebGL), sinon la carte plate qui marche partout
+  const [globe, setGlobe] = useState(() => navigator.onLine && webglPossible())
+  const [fond, setFond] = useState<"plan" | "satellite">("plan")
+  const [centrerGlobe, setCentrerGlobe] = useState<{ iso: string; n: number } | null>(null)
   const zone = useRef<HTMLDivElement>(null)
   const pointeurs = useRef(new Map<number, { x: number; y: number }>())
   const geste = useRef<{ depart: { x: number; y: number }; bouge: boolean; dist?: number; vue: typeof vue } | null>(null)
@@ -431,7 +440,8 @@ export default function Atlas({ onFermer }: { onFermer: () => void }) {
   }
   function choisir(iso: string, centrer = false) {
     setChoisi(iso); setRecherche(""); setSurvol(null)
-    if (centrer && carte) {
+    if (centrer && globe) setCentrerGlobe({ iso, n: Date.now() })
+    else if (centrer && carte) {
       const f = carte.pays.find(x => x.iso === iso)
       if (f) { const k = 4; setVue({ k, x: carte.w / 2 - f.c[0] * k, y: carte.h / 2 - f.c[1] * k }) }
     }
@@ -465,11 +475,16 @@ export default function Atlas({ onFermer }: { onFermer: () => void }) {
       </div>
 
       <div className={s.corps}>
-        <div ref={zone} className={s.carte} onPointerDown={bas} onPointerMove={deplacer} onPointerUp={haut} onPointerCancel={haut}
-          onPointerLeave={() => setSurvol(null)}
-          onWheel={e => { const m = versCarte(e.clientX, e.clientY); zoomer(e.deltaY < 0 ? 1.25 : 0.8, m.x, m.y) }}
-          onDoubleClick={e => { const m = versCarte(e.clientX, e.clientY); zoomer(2, m.x, m.y) }}>
-          {erreur ? <p className={s.vide} style={{ padding: 20 }}>La carte n&apos;a pas pu être chargée. Vérifie ta connexion.</p>
+        <div ref={zone} className={s.carte} {...(globe ? { style: { cursor: "default", touchAction: "auto" } } : {
+          onPointerDown: bas, onPointerMove: deplacer, onPointerUp: haut, onPointerCancel: haut,
+          onPointerLeave: () => setSurvol(null),
+          onWheel: (e: React.WheelEvent) => { const m = versCarte(e.clientX, e.clientY); zoomer(e.deltaY < 0 ? 1.25 : 0.8, m.x, m.y) },
+          onDoubleClick: (e: React.MouseEvent) => { const m = versCarte(e.clientX, e.clientY); zoomer(2, m.x, m.y) },
+        })}>
+          {globe ? (
+            <GlobeCarte couleurs={mode === "aucun" ? null : couleurs.res} choisi={choisi} centrer={centrerGlobe} fond={fond}
+              onChoisir={iso => choisir(iso)} onErreur={() => setGlobe(false)} />
+          ) : erreur ? <p className={s.vide} style={{ padding: 20 }}>La carte n&apos;a pas pu être chargée. Vérifie ta connexion.</p>
             : !carte ? <div className="nx-skel" style={{ position: "absolute", inset: 16, borderRadius: 16 }} />
               : (
                 <svg viewBox={`0 0 ${carte.w} ${carte.h}`} preserveAspectRatio="xMidYMid meet" role="img" aria-label="Carte du monde : touche un pays pour voir sa fiche">
@@ -485,19 +500,26 @@ export default function Atlas({ onFermer }: { onFermer: () => void }) {
             {MODES.map(m => <button key={m.id} aria-pressed={mode === m.id} onClick={() => setMode(m.id)} onPointerDown={e => e.stopPropagation()}>{m.nom}</button>)}
           </div>
           <div className={s.outils} onPointerDown={e => e.stopPropagation()}>
-            <button onClick={() => zoomer(1.6)} aria-label="Zoomer">+</button>
-            <button onClick={() => zoomer(1 / 1.6)} aria-label="Dézoomer">−</button>
-            <button onClick={() => setVue({ x: 0, y: 0, k: 1 })} aria-label="Voir le monde entier">⤢</button>
+            <button onClick={() => setGlobe(g => !g)} aria-label={globe ? "Passer à la carte plate" : "Passer au globe 3D"} title={globe ? "Carte plate" : "Globe 3D"}>{globe ? "🗺️" : "🌍"}</button>
+            {globe ? (
+              <button onClick={() => setFond(f => (f === "plan" ? "satellite" : "plan"))} aria-label={fond === "plan" ? "Vue satellite" : "Vue plan"} title={fond === "plan" ? "Satellite" : "Plan"}>{fond === "plan" ? "🛰️" : "🧭"}</button>
+            ) : (
+              <>
+                <button onClick={() => zoomer(1.6)} aria-label="Zoomer">+</button>
+                <button onClick={() => zoomer(1 / 1.6)} aria-label="Dézoomer">−</button>
+                <button onClick={() => setVue({ x: 0, y: 0, k: 1 })} aria-label="Voir le monde entier">⤢</button>
+              </>
+            )}
           </div>
           {mode !== "aucun" && couleurs.seuils.length > 0 && "f" in modeInfo && (
-            <div className={s.legende} aria-label={`Légende : ${modeInfo.nom}`}>
+            <div className={s.legende} aria-label={`Légende : ${modeInfo.nom}`} style={globe ? { bottom: 44 } : undefined}>
               <b>{modeInfo.nom}</b>
               <div className={s.echelle}>{RAMPE.map(c => <span key={c} style={{ background: c }} />)}</div>
               <div style={{ display: "flex", justifyContent: "space-between", gap: 8, marginTop: 2 }}><span>moins</span><span>plus de {modeInfo.f(couleurs.seuils[4])}</span></div>
             </div>
           )}
           {survol && <div className={s.bulle} style={{ left: survol.x, top: survol.y }}>{survol.n}</div>}
-          {!choisi && carte && <div className={s.aide}>Glisse pour te déplacer, pince ou molette pour zoomer, touche un pays</div>}
+          {!choisi && carte && <div className={s.aide}>{globe ? "Fais tourner le globe, pince pour zoomer jusqu'aux rues, touche un pays" : "Glisse pour te déplacer, pince ou molette pour zoomer, touche un pays"}</div>}
         </div>
 
         {choisi && (
