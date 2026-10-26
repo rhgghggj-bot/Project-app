@@ -380,5 +380,238 @@ export const CHANSONS: Chanson[] = [
   },
 ]
 
+// ───────── Albums complets ─────────
+// Les albums sont lus via les playlists d'album OFFICIELLES de YouTube (identifiant « OLAK5uy_… »,
+// générées par YouTube pour les labels). On peut passer d'un titre à l'autre dans le lecteur.
+export type Titre = { t: string; note?: string }
+export type Album = {
+  id: string            // identifiant de la playlist d'album officielle (OLAK5uy_…), aussi clé des favoris / « appris »
+  titre: string
+  artiste: string
+  annee: number
+  label: string
+  nbTitres: number      // nombre de vidéos de la playlist officielle
+  vignette: string      // identifiant d'une vidéo de la playlist (miniature = pochette)
+  edition?: string      // précision sur l'édition lue
+  explicite?: boolean   // paroles explicites
+  couleur: string       // couleur de secours si la miniature ne charge pas
+  histoire: string
+  pourquoi: string
+  titres: Titre[]
+  titresNote?: string
+  mots: Mot[]
+  quiz: Question[]
+}
+
+export const ALBUMS: Album[] = [
+  {
+    id: "OLAK5uy_mEJ8cCMOkj4hse7QHbRajvO04lNc1Zxmc", titre: "Thriller", artiste: "Michael Jackson", annee: 1982, label: "Epic Records", nbTitres: 34, vignette: "RBrIKRjcxcg", couleur: "#7A1F2B",
+    edition: "Édition « Thriller 40 » (2022) : les 9 titres de l'album original, suivis de titres bonus.",
+    histoire: "Thriller est le sixième album de Michael Jackson. Il est sorti à la fin de 1982 chez Epic Records et a été produit par Quincy Jones, avec qui il avait déjà travaillé sur Off the Wall. L'album mélange pop, rock, funk et soul. Sept de ses neuf titres sont devenus des succès dans les classements américains. Cette lecture est l'édition anniversaire « Thriller 40 » : l'album original est au début, les bonus viennent ensuite.",
+    pourquoi: "Thriller est souvent cité comme l'album le plus vendu de tous les temps et il a reçu huit Grammy Awards en 1984. Il a aussi changé la place du clip vidéo dans la musique. Pour apprendre l'anglais, ses chansons sont claires, bien chantées et pleines d'expressions du quotidien.",
+    titres: [
+      { t: "Wanna Be Startin' Somethin'", note: "Ouverture funky de l'album, très rythmée, sur les rumeurs et les bavardages." },
+      { t: "Baby Be Mine" },
+      { t: "The Girl Is Mine", note: "Un duo avec Paul McCartney, avec un style plus doux et plus pop." },
+      { t: "Thriller", note: "Chanson-titre sur le thème des films d'horreur ; son clip de près de 14 minutes est devenu célèbre." },
+      { t: "Beat It", note: "Pop-rock avec un solo de guitare ; le titre raconte qu'il vaut mieux éviter une bagarre." },
+      { t: "Billie Jean", note: "Une histoire d'une femme qui prétend à tort que le narrateur est le père de son enfant." },
+      { t: "Human Nature" },
+      { t: "P.Y.T. (Pretty Young Thing)" },
+      { t: "The Lady in My Life" },
+    ],
+    titresNote: "Ce sont les 9 titres de l'album original. Après eux, l'édition Thriller 40 ajoute des titres bonus (démos, versions alternatives, etc.).",
+    mots: [
+      m("thriller", "film ou roman à suspense", "Une histoire qui fait peur ou qui tient en haleine. Ne pas confondre avec « chiller ».", "A2"),
+      m("best-selling", "le plus vendu", "« A best-selling album » = un album qui se vend énormément.", "B1"),
+      m("to release", "sortir (un disque), publier", "« The album was released in 1982 » = l'album est sorti en 1982.", "B1"),
+      m("a hit", "un tube, un succès", "« A hit single » = un single à succès.", "A2"),
+      m("to top the charts", "être numéro un des classements", "« The charts » = les classements musicaux.", "B1"),
+      m("Beat it!", "Dégage !", "Expression familière pour dire à quelqu'un de partir tout de suite.", "B1"),
+      m("a producer", "un producteur / une productrice", "La personne qui dirige la création du disque en studio.", "A2"),
+      m("record-breaking", "qui bat des records", "On le met devant un nom : « a record-breaking year ».", "B2"),
+      m("album of the year", "album de l'année", "Une des plus grandes récompenses des Grammy Awards.", "B1"),
+      m("legacy", "héritage", "Ce qu'un artiste laisse derrière lui. Attention : ce n'est pas « legal ».", "B2"),
+    ],
+    quiz: [
+      q("Qui a produit l'album Thriller ?", ["Quincy Jones", "Paul McCartney", "Prince", "Elton John"], 0, "Quincy Jones a produit Thriller, comme l'album précédent Off the Wall."),
+      q("Que veut dire « best-selling » ?", ["le mieux chanté", "le plus vendu", "le plus long", "le plus récent"], 1, "Best-selling = qui se vend le plus : un best-seller."),
+      q("Quel mot anglais veut dire « sortir (un disque) » ?", ["to release", "to relax", "to remove", "to remember"], 0, "To release = sortir, publier. « The album was released » = l'album est sorti."),
+      q("« Beat it ! » est une expression familière qui veut dire…", ["Bats-toi !", "Dégage !", "Fais-le encore !", "Chante plus fort !"], 1, "« Beat it ! » = va-t'en, dégage. Ce n'est pas du tout « battre » ici."),
+    ],
+  },
+  {
+    id: "OLAK5uy_lNgFWb1NBUl4UHgbs2Yii6ZSoWDCxBBdY", titre: "Ladies & Gentlemen: The Best of George Michael", artiste: "George Michael", annee: 1998, label: "Epic Records", nbTitres: 29, vignette: "SXDofh8KecE", couleur: "#1E3A5F",
+    edition: "La playlist officielle compte 29 titres (la compilation double de 1998, avec éventuellement des titres en plus selon l'édition).",
+    histoire: "George Michael est un chanteur britannique, né à Londres. Il a commencé dans le duo Wham! avec Andrew Ridgeley, puis il a eu une grande carrière en solo, notamment avec l'album Faith (1987). Ladies & Gentlemen: The Best of George Michael est une compilation sortie en 1998. C'est un double album : un disque de chansons plutôt calmes (« For the Heart ») et un autre de titres plus dansants (« For the Feet »).",
+    pourquoi: "C'est le meilleur moyen de découvrir toute sa carrière en un seul album, des ballades aux titres de danse. Sa voix claire et ses textes simples sont idéaux pour travailler l'anglais, surtout les thèmes de l'amour, de la liberté et de la confiance en soi.",
+    titres: [
+      { t: "Careless Whisper", note: "Une ballade célèbre, avec un saxophone très reconnaissable, sur un amour trahi et le regret." },
+      { t: "Father Figure", note: "Une chanson lente et douce sur la protection et la confiance dans une relation." },
+      { t: "Faith", note: "Titre phare de l'album du même nom, au son rock'n'roll des années 50." },
+      { t: "Freedom! '90", note: "Une chanson où il parle de sa liberté d'artiste et de sa façon de se voir." },
+      { t: "Jesus to a Child", note: "Un morceau calme et sincère, écrit après une perte très douloureuse." },
+      { t: "Fastlove", note: "Un titre dansant des années 90 sur l'envie d'amour rapide." },
+      { t: "Kissing a Fool" }, { t: "One More Try" }, { t: "Praying for Time" }, { t: "Outside" }, { t: "I Want Your Sex" },
+      { t: "Somebody to Love", note: "Reprise de Queen, chantée en live avec le groupe." },
+      { t: "Don't Let the Sun Go Down on Me", note: "Un duo avec Elton John." },
+      { t: "As" },
+    ],
+    titresNote: "Sélection de titres de la compilation (la playlist officielle en contient 29).",
+    mots: [
+      m("careless", "négligent, imprudent", "Se forme avec « care » + « -less » (sans). Le contraire : « careful » (prudent).", "B1"),
+      m("to whisper", "chuchoter", "Parler tout bas. Le nom : « a whisper ».", "B1"),
+      m("faith", "foi, confiance", "Peut être religieuse ou simplement la confiance en quelqu'un.", "B1"),
+      m("freedom", "liberté", "Nom formé sur « free ». Un mot clé en musique et en histoire.", "A2"),
+      m("a fool", "un idiot, un fou", "« To kiss a fool » reste un titre imagé ; « fool » est un peu fort en conversation.", "B1"),
+      m("to pray", "prier", "Au sens large : espérer très fort que quelque chose arrive.", "B1"),
+      m("a ballad", "une ballade, un morceau lent et romantique", "Le contraire d'un titre de danse.", "B1"),
+      m("a duet", "un duo", "Une chanson interprétée à deux voix.", "B1"),
+      m("the best of …", "le meilleur de …, une compilation", "« A best of » = un album avec les plus grands succès.", "A2"),
+      m("a dance floor", "une piste de danse", "Le sol où l'on danse dans un club.", "A2"),
+    ],
+    quiz: [
+      q("Avec quel groupe George Michael a-t-il commencé ?", ["Queen", "Wham!", "The Beatles", "Duran Duran"], 1, "George Michael a débuté dans le duo Wham! avec Andrew Ridgeley."),
+      q("« A ballad » est…", ["un morceau lent et romantique", "une danse rapide", "un instrument", "un concert gratuit"], 0, "Une ballade est généralement lente et émouvante."),
+      q("« To whisper » veut dire…", ["crier", "chuchoter", "siffler", "chanter faux"], 1, "To whisper = chuchoter, parler tout bas."),
+      q("« A duet » est une chanson chantée…", ["en groupe", "à deux voix", "sans musique", "en langue étrangère"], 1, "Duet vient de « duo » : deux personnes chantent ensemble."),
+    ],
+  },
+  {
+    id: "OLAK5uy_mvz7Tr6ZqTX0GKxE4lP5ifCaE9Sx-AEjc", titre: "The College Dropout", artiste: "Kanye West", annee: 2004, label: "Roc-A-Fella / Def Jam", nbTitres: 21, vignette: "OTZzjAU0Kg0", explicite: true, couleur: "#6B4423",
+    histoire: "The College Dropout est le premier album de Kanye West, sorti en février 2004. Avant d'être rappeur, Kanye était surtout un producteur très demandé. Son titre « Through the Wire » a été enregistré après un grave accident de voiture, alors qu'il avait la mâchoire immobilisée. L'album parle d'école, de famille, de foi et de la pression d'avoir une réussite sociale. Il contient aussi des petits sketchs (« skits ») entre les chansons.",
+    pourquoi: "L'album a été très bien accueilli par la critique et a fait connaître Kanye au grand public. Il a montré qu'un rap personnel, drôle et honnête pouvait plaire à beaucoup de monde. Son anglais est riche en expressions familières, parfait pour apprendre des mots du quotidien. Paroles explicites : il y a des mots crus et des thèmes adultes.",
+    titres: [
+      { t: "Intro" }, { t: "We Don't Care" }, { t: "Graduation Day" },
+      { t: "All Falls Down", note: "Un titre sur l'insécurité et la pression de l'argent et de l'image." },
+      { t: "I'll Fly Away" }, { t: "Spaceship" },
+      { t: "Jesus Walks", note: "Un des titres les plus célèbres, sur la foi, avec une rythmique de fanfare." },
+      { t: "Never Let Me Down" }, { t: "Get 'Em High" }, { t: "Workout Plan" }, { t: "The New Workout Plan" },
+      { t: "Slow Jamz" }, { t: "Breathe In Breathe Out" }, { t: "School Spirit" }, { t: "Two Words" },
+      { t: "Through the Wire", note: "Le premier gros succès, enregistré après son accident de voiture." },
+      { t: "Family Business", note: "Un morceau calme sur la famille et les souvenirs." },
+      { t: "Last Call", note: "Un long final où il raconte son parcours." },
+    ],
+    titresNote: "Titres principaux. L'album comprend aussi 3 courts sketchs (skits) entre les morceaux : 21 pistes en tout.",
+    mots: [
+      m("dropout", "personne qui abandonne ses études", "Vient de « to drop out » = abandonner (l'école, un cours).", "B1"),
+      m("to graduate", "obtenir son diplôme", "Aux États-Unis, « graduation » est la cérémonie de remise des diplômes.", "B1"),
+      m("college", "université (aux États-Unis)", "Faux ami : au Royaume-Uni, « college » peut être un lycée ou une école supérieure ; en France, un collège se dit « middle school ».", "A2"),
+      m("school spirit", "esprit d'école, fierté de son établissement", "Les élèves qui encouragent leur école, surtout dans le sport.", "B1"),
+      m("tuition", "frais de scolarité", "L'argent qu'on paie pour étudier à l'université.", "B2"),
+      m("a debut album", "un premier album", "« Debut » vient du français « début » mais se prononce [DAY-byoo].", "B1"),
+      m("to sample", "échantillonner (musique)", "Réutiliser un petit extrait d'un autre enregistrement dans un morceau.", "B2"),
+      m("a skit", "un petit sketch", "Une courte scène parlée ou drôle, entre deux chansons.", "B2"),
+      m("faith", "foi, confiance", "Parfois religieuse, parfois la confiance dans l'avenir.", "B1"),
+      m("success story", "histoire de réussite", "Parcours d'une personne qui réussit malgré les difficultés.", "B2"),
+    ],
+    quiz: [
+      q("Que veut dire « college dropout » ?", ["étudiant brillant", "personne qui abandonne ses études", "professeur d'université", "ancien président"], 1, "To drop out = abandonner ; a dropout = quelqu'un qui a arrêté ses études."),
+      q("« To graduate » signifie…", ["partir en vacances", "obtenir son diplôme", "redoubler", "commencer l'école"], 1, "To graduate = être diplômé."),
+      q("Quel est le premier album de Kanye West ?", ["The College Dropout", "Graduation", "Yeezus", "Late Registration"], 0, "The College Dropout (2004) est son premier album."),
+      q("« To sample » en musique veut dire…", ["goûter", "échantillonner un extrait", "effacer un son", "chanter en direct"], 1, "To sample = réutiliser un petit morceau d'un autre enregistrement."),
+    ],
+  },
+  {
+    id: "OLAK5uy_kDxtYFIll1LmZFnZGrhQLAyQ2T1SYgGtU", titre: "Late Registration", artiste: "Kanye West", annee: 2005, label: "Roc-A-Fella / Def Jam", nbTitres: 21, vignette: "Bwyu-SZ7g_E", explicite: true, couleur: "#3B3A6B",
+    histoire: "Late Registration est le deuxième album de Kanye West, sorti en 2005. Il l'a réalisé avec le musicien et producteur Jon Brion, ce qui explique les cordes et les instruments classiques qu'on entend. Le titre joue avec l'idée d'une inscription en retard à l'université, comme dans le premier album. « Diamonds from Sierra Leone » parle des diamants de la guerre, et « Gold Digger » est devenu un énorme succès.",
+    pourquoi: "L'album a été salué par la critique et a gagné un Grammy du meilleur album de rap. Il montre comment un rappeur peut inventer un son plus riche, avec orchestre et soul. C'est aussi un bon album pour les expressions de la vie quotidienne. Paroles explicites : il y a des mots crus et des thèmes adultes.",
+    titres: [
+      { t: "Wake Up Mr. West" }, { t: "Heard 'Em Say" }, { t: "Touch the Sky", note: "Un titre plein d'énergie, avec des cuivres, sur le goût du défi." },
+      { t: "Gold Digger", note: "Un grand succès : une chanson sur les gens intéressés par l'argent des autres." },
+      { t: "Drive Slow" }, { t: "My Way Home" }, { t: "Crack Music" }, { t: "Roses", note: "Un morceau émouvant sur la maladie d'un proche à l'hôpital." },
+      { t: "Bring Me Down" }, { t: "Addiction" },
+      { t: "Diamonds from Sierra Leone", note: "Sur les « diamants du sang » et ce qu'ils coûtent à certains pays." },
+      { t: "We Major" }, { t: "Hey Mama", note: "Une chanson d'amour envers sa mère." },
+      { t: "Celebration" }, { t: "Gone" }, { t: "Late" },
+    ],
+    titresNote: "Titres principaux. L'album comprend aussi des interludes (skits) et une version remix de « Diamonds from Sierra Leone » : 21 pistes en tout.",
+    mots: [
+      m("registration", "inscription", "À l'école ou pour un cours. « Late registration » = inscription tardive.", "B1"),
+      m("late", "en retard / tardif", "À ne pas confondre avec « latest » (le plus récent).", "A2"),
+      m("a gold digger", "personne intéressée par l'argent", "Expression familière : quelqu'un qui est en couple pour l'argent.", "B2"),
+      m("to touch the sky", "toucher le ciel", "Image pour dire viser très haut.", "B1"),
+      m("diamond", "diamant", "Ressemble au français mais se prononce [DAÏ-mond].", "A2"),
+      m("blood diamond", "diamant du sang", "Diamant vendu pour financer une guerre.", "B2"),
+      m("a sophomore album", "un deuxième album", "En américain, « sophomore » = en deuxième année ; ici, deuxième disque.", "B2"),
+      m("strings", "les cordes (violons, etc.)", "Les instruments à cordes d'un orchestre.", "B2"),
+      m("critical acclaim", "éloges de la critique", "Les journalistes spécialisés ont adoré l'album.", "B2"),
+      m("to celebrate", "fêter, célébrer", "Le nom : « a celebration ».", "A2"),
+    ],
+    quiz: [
+      q("Que veut dire « registration » ?", ["inscription", "récréation", "régime", "rédaction"], 0, "Registration = inscription (à l'école, à un événement)."),
+      q("« A gold digger » désigne…", ["un mineur d'or", "quelqu'un d'intéressé par l'argent", "un bijoutier", "un chercheur de trésors"], 1, "Au sens familier : quelqu'un qui cherche surtout l'argent d'autrui."),
+      q("« Late Registration » est le…", ["premier album de Kanye", "deuxième album de Kanye", "dernier album de Kanye", "premier album de Michael Jackson"], 1, "Late Registration (2005) est le deuxième album de Kanye West."),
+      q("Quel mot veut dire « diamant » ?", ["diamond", "dimension", "dinner", "disk"], 0, "Diamond = diamant."),
+    ],
+  },
+  {
+    id: "OLAK5uy_mvufvU5j2nouW_FVV7Z5feltvHCjUen84", titre: "808s & Heartbreak", artiste: "Kanye West", annee: 2008, label: "Roc-A-Fella / Def Jam", nbTitres: 12, vignette: "D58eeRRLqws", explicite: true, couleur: "#1F3F4A",
+    histoire: "808s & Heartbreak est le quatrième album de Kanye West, sorti en 2008. Le « 808 » est le nom d'une boîte à rythmes de marque Roland très utilisée en hip-hop. Kanye y chante beaucoup, souvent avec Auto-Tune, au lieu de seulement rapper. L'album a été réalisé après une période très difficile de sa vie : on y entend des thèmes de solitude, de rupture et de tristesse, sur des sons sobres et froids.",
+    pourquoi: "À sa sortie, l'album a surpris, puis il est devenu une grande référence : beaucoup d'artistes de pop et de hip-hop se sont inspirés de ce style plus émotionnel. Pour apprendre l'anglais, ses phrases courtes et ses mots de sentiments sont faciles à retenir. Paroles explicites : il y a des mots crus et des thèmes adultes.",
+    titres: [
+      { t: "Say You Will" }, { t: "Welcome to Heartbreak", note: "Un morceau lent où il parle de ce qu'on peut avoir et pourtant se sentir seul." },
+      { t: "Heartless", note: "Un des grands succès de l'album, sur une rupture, avec un rythme très simple." },
+      { t: "Amazing" }, { t: "Love Lockdown", note: "Le premier single, très rythmé, avec des tambours puissants." },
+      { t: "Paranoid" }, { t: "RoboCop" }, { t: "Street Lights" }, { t: "Bad News" }, { t: "See You in My Nightmares" }, { t: "Coldest Winter" },
+      { t: "Pinocchio Story (Freestyle / Live From Singapore)" },
+    ],
+    mots: [
+      m("heartbreak", "chagrin d'amour", "Heart (cœur) + break (casser). Adjectif : « heartbroken ».", "B1"),
+      m("heartless", "sans cœur, cruel", "Suffixe « -less » = sans.", "B1"),
+      m("a drum machine", "une boîte à rythmes", "Un appareil électronique qui joue des rythmes de batterie.", "B1"),
+      m("lockdown", "confinement, verrouillage", "Connu pendant la pandémie ; ici vient de « to lock down ».", "B1"),
+      m("a nightmare", "un cauchemar", "À ne pas confondre avec « a dream » (un rêve).", "B1"),
+      m("a street light", "un lampadaire", "Une lumière dans la rue la nuit.", "A2"),
+      m("paranoid", "méfiant, angoissé", "Qui pense que les autres lui veulent du mal.", "B2"),
+      m("bad news", "mauvaises nouvelles", "« News » est singulier en anglais : « the news is bad ».", "A2"),
+      m("lonely", "seul(e) et triste", "Différent de « alone » (simplement seul).", "B1"),
+      m("amazing", "extraordinaire", "Adjectif très courant pour dire « génial ».", "A2"),
+    ],
+    quiz: [
+      q("Que veut dire « heartbreak » ?", ["crise cardiaque", "chagrin d'amour", "battement de cœur", "joie"], 1, "Heartbreak = chagrin d'amour, cœur brisé."),
+      q("« A nightmare » est…", ["un rêve agréable", "un cauchemar", "une nuit blanche", "un réveil"], 1, "A nightmare = un mauvais rêve, un cauchemar."),
+      q("Le suffixe « -less » veut dire…", ["très", "sans", "encore", "moins"], 1, "-less = sans : heartless = sans cœur."),
+      q("« News » est…", ["pluriel", "singulier", "toujours au passé", "un verbe"], 1, "News est singulier en anglais : « the news is good »."),
+    ],
+  },
+  {
+    id: "OLAK5uy_m6VFZd8KNhbFoHGRhtzFakGNVSkMMGvbU", titre: "Yeezus", artiste: "Kanye West", annee: 2013, label: "Def Jam / Roc-A-Fella", nbTitres: 10, vignette: "uU9Fe-WXew4", explicite: true, couleur: "#2B2B2B",
+    histoire: "Yeezus est le sixième album de Kanye West, sorti en juin 2013. Il a été réalisé avec plusieurs producteurs dont le duo Daft Punk et Rick Rubin. Le son est très dur, minimaliste et électronique, loin de ses albums plus orchestrés. L'album ne contient que 10 titres et dure environ 40 minutes. À l'époque, la promotion a été très originale, sans publicité classique.",
+    pourquoi: "Yeezus est resté célèbre pour son audace : Kanye y a pris le risque de faire une musique brute et déroutante. Beaucoup d'artistes citent cet album comme une grande influence. Il est court, donc facile à écouter en entier. Paroles explicites : il y a des mots crus et des thèmes adultes.",
+    titres: [
+      { t: "On Sight", note: "L'ouverture, très agressive, avec des sons électroniques." },
+      { t: "Black Skinhead", note: "Un des titres les plus connus, avec un rythme de batterie répété." },
+      { t: "I Am a God" }, { t: "New Slaves" }, { t: "Hold My Liquor" }, { t: "I'm In It" },
+      { t: "Blood on the Leaves" }, { t: "Guilt Trip" }, { t: "Send It Up" },
+      { t: "Bound 2", note: "Le morceau de fin, plus doux, avec un son de soul des années 70." },
+    ],
+    mots: [
+      m("raw", "brut, cru", "Se dit d'un son, d'une émotion ou d'un aliment non préparé.", "B2"),
+      m("bold", "audacieux", "Quelqu'un qui prend des risques.", "B2"),
+      m("minimal", "minimaliste, réduit au strict nécessaire", "Peu d'instruments, peu de décors.", "B2"),
+      m("industrial", "industriel", "Style de musique dur, avec des sons de machines.", "B2"),
+      m("controversial", "qui fait polémique", "On dit d'un sujet ou d'une personne qui divise l'opinion.", "B2"),
+      m("on sight", "à vue, dès qu'on le voit", "« Shoot on sight » : tirer à vue. Ici titre de piste.", "B2"),
+      m("a guilt trip", "faire culpabiliser quelqu'un", "Expression familière : « to give someone a guilt trip ».", "B2"),
+      m("bound", "lié à, destiné à", "« Bound for » = en route vers. « Bound to » = obligé de.", "B2"),
+      m("to send up", "se moquer de, parodier", "Un « send-up » est une parodie (sens britannique).", "B2"),
+      m("blood", "sang", "Le pluriel n'existe pas ; « bleed » = saigner.", "A2"),
+    ],
+    quiz: [
+      q("Que veut dire « raw » ?", ["brut, cru", "rapide", "rouge", "rare"], 0, "Raw = brut, non travaillé."),
+      q("Un album « minimal » est…", ["très chargé", "réduit à l'essentiel", "très long", "très ancien"], 1, "Minimal = réduit à l'essentiel."),
+      q("« Controversial » veut dire…", ["controversé, qui divise", "très calme", "très célèbre", "contrôlé"], 0, "Controversial = qui provoque des débats."),
+      q("Combien de titres compte Yeezus ?", ["5", "10", "20", "30"], 1, "Yeezus compte 10 titres, pour environ 40 minutes."),
+    ],
+  },
+]
+
+export const ARTISTES_ALBUMS = Array.from(new Set(ALBUMS.map(a => a.artiste)))
+export const SPOTIFY_ALBUM = (a: Album) => `https://open.spotify.com/search/${encodeURIComponent(`${a.artiste} ${a.titre}`)}`
+export const APPLE_MUSIC_ALBUM = (a: Album) => `https://music.apple.com/search?term=${encodeURIComponent(`${a.artiste} ${a.titre}`)}`
+export const lecteurAlbum = (id: string) => `https://www.youtube-nocookie.com/embed/videoseries?list=${id}&rel=0&playsinline=1`
+export const vignetteAlbum = (a: Album) => `https://i.ytimg.com/vi/${a.vignette}/hqdefault.jpg`
+
 export const SPOTIFY = (c: Chanson) => `https://open.spotify.com/search/${encodeURIComponent(`${c.artiste} ${c.titre}`)}`
 export const APPLE_MUSIC = (c: Chanson) => `https://music.apple.com/search?term=${encodeURIComponent(`${c.artiste} ${c.titre}`)}`

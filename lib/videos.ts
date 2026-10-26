@@ -7,7 +7,7 @@ import { supabase } from "./supabase"
 import { memoriser, relire } from "./horsLigne"
 import type { VideoPerso } from "./videosPerso"
 
-export type Video = { id: string; titre: string; chaine: string; duree?: string; note?: string }
+export type Video = { id: string; titre: string; chaine: string; duree?: string; note?: string; liste?: string; image?: string }   // liste : album ou playlist YouTube
 export type Collection = { id: string; titre: string; sport: string; desc: string; videos: Video[] }
 
 export const COLLECTIONS: Collection[] = [
@@ -76,6 +76,13 @@ export function idYoutube(lien: string): string | null {
   return m ? m[1] : null
 }
 
+// Album ou playlist : identifiant après « list= » (liens YouTube et YouTube Music)
+export function idListe(lien: string): string | null {
+  const m = /[?&]list=([\w-]{10,})/.exec(lien.trim())
+  return m ? m[1] : null
+}
+export const lecteurListe = (liste: string) => `https://www.youtube-nocookie.com/embed/videoseries?list=${liste}&rel=0&playsinline=1&modestbranding=1`
+
 export const miniature = (id: string) => `https://i.ytimg.com/vi/${id}/hqdefault.jpg`
 export const lecteurYoutube = (id: string) => `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0&playsinline=1&modestbranding=1`
 
@@ -103,11 +110,12 @@ export async function enregistrerEtatVideos(uid: string, e: EtatVideos): Promise
 }
 
 // Titre et chaîne d'une vidéo ajoutée (service public oEmbed de YouTube)
-export async function infosYoutube(id: string): Promise<{ titre: string; chaine: string } | null> {
+export async function infosYoutube(id: string, liste?: string): Promise<{ titre: string; chaine: string; image?: string } | null> {
   try {
-    const r = await fetch(`https://www.youtube.com/oembed?format=json&url=${encodeURIComponent("https://www.youtube.com/watch?v=" + id)}`)
+    const url = liste ? "https://www.youtube.com/playlist?list=" + liste : "https://www.youtube.com/watch?v=" + id
+    const r = await fetch(`https://www.youtube.com/oembed?format=json&url=${encodeURIComponent(url)}`)
     if (!r.ok) return null
     const j = await r.json()
-    return { titre: String(j.title || "Vidéo YouTube"), chaine: String(j.author_name || "") }
+    return { titre: String(j.title || (liste ? "Album YouTube" : "Vidéo YouTube")), chaine: String(j.author_name || "").replace(/ - Topic$/, ""), image: typeof j.thumbnail_url === "string" ? j.thumbnail_url : undefined }
   } catch { return null }
 }
