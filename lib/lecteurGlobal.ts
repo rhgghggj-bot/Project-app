@@ -6,16 +6,19 @@
 import { useSyncExternalStore } from "react"
 
 export type Lecture = { src: string; titre: string; sousTitre?: string }
-type Etat = { lecture: Lecture | null; ancre: HTMLElement | null }
+type Etat = { lecture: Lecture | null; ancre: HTMLElement | null; liste: boolean }
 
-let etat: Etat = { lecture: null, ancre: null }
+let etat: Etat = { lecture: null, ancre: null, liste: false }
 const abonnes = new Set<() => void>()
 const changer = (e: Partial<Etat>) => { etat = { ...etat, ...e }; abonnes.forEach(f => f()) }
 
 export function jouer(l: Lecture) {
-  if (etat.lecture?.src !== l.src) changer({ lecture: l })
+  if (etat.lecture?.src !== l.src) changer({ lecture: l, liste: false })
 }
-export const arreter = () => changer({ lecture: null })
+export const arreter = () => changer({ lecture: null, liste: false })
+// Liste des titres (album, playlist) pour choisir ce qu'on écoute
+export const ouvrirListe = () => changer({ liste: true })
+export const fermerListe = () => changer({ liste: false })
 export const poserAncre = (el: HTMLElement) => changer({ ancre: el })
 export function retirerAncre(el: HTMLElement) { if (etat.ancre === el) changer({ ancre: null }) }
 
