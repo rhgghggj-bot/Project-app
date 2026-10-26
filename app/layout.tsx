@@ -10,6 +10,7 @@ import PageFrame from "./components/PageFrame";
 import Toaster from "./components/Toaster";
 import BandeauCookies from "./components/BandeauCookies";
 import SuiviErreurs from "./components/SuiviErreurs";
+import LecteurFlottant from "./components/LecteurFlottant";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
@@ -83,6 +84,7 @@ export default function RootLayout({
           <Toaster />
           <BandeauCookies />
           <SuiviErreurs />
+          <LecteurFlottant />
         </SplashWrapper>
         {/* Statistiques de visite et de vitesse anonymes, sans cookies
             (seulement sur Vercel, où les scripts existent) */}

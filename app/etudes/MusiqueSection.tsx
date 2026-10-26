@@ -1,4 +1,5 @@
 "use client"
+import EmplacementLecteur from "@/app/components/EmplacementLecteur"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { colors, radius } from "@/app/components/ui/tokens"
 import { lecteurYoutube, miniature, type EtatVideos } from "@/lib/videos"
@@ -193,8 +194,7 @@ function Fiche({ chanson: c, favori, apprise, onFavori, onApprise, onFermer }: {
   return (
     <Modale label={`${c.titre}, ${c.artiste}`} onFermer={onFermer}>
         <div style={{ position: "relative", width: "100%", aspectRatio: "16 / 9", background: "#000", borderRadius: 12, overflow: "hidden" }}>
-          <iframe src={lecteurYoutube(c.id)} title={`Clip officiel : ${c.titre}`} allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowFullScreen
-            referrerPolicy="strict-origin-when-cross-origin" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: 0 }} />
+          <EmplacementLecteur src={lecteurYoutube(c.id)} titre={c.titre} sousTitre={c.artiste} />
         </div>
         <h3 style={{ fontSize: 18, margin: "12px 0 2px", textWrap: "balance", overflowWrap: "anywhere" }}>{c.titre}</h3>
         <div style={{ fontSize: 13, color: "rgba(255,255,255,.7)" }}>{c.artiste} · {c.annee} · {c.style}{apprise ? " · ✓ Apprise" : ""}</div>
@@ -235,8 +235,7 @@ function FicheAlbum({ album: a, favori, appris, onFavori, onAppris, onFermer }: 
   return (
     <Modale label={`Album : ${a.titre}, ${a.artiste}`} onFermer={onFermer}>
       <div style={{ position: "relative", width: "100%", aspectRatio: "16 / 9", background: "#000", borderRadius: 12, overflow: "hidden" }}>
-        <iframe src={lecteurAlbum(a)} title={`Album officiel : ${a.titre}`} allow="encrypted-media; picture-in-picture; fullscreen" allowFullScreen
-          referrerPolicy="strict-origin-when-cross-origin" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: 0 }} />
+        <EmplacementLecteur src={lecteurAlbum(a)} titre={a.titre} sousTitre={`${a.artiste} · album`} />
       </div>
       <p style={{ fontSize: 12, color: "rgba(255,255,255,.6)", margin: "6px 0 0", lineHeight: 1.4 }}>
         {a.videos ? `Les ${a.videos.length} clips officiels s'enchaînent ; l'album complet (${a.nbTitres} titres) est sur Spotify ou Apple Music.` : <>Appuie sur lecture, puis utilise la liste du lecteur pour passer d&apos;un titre à l&apos;autre ({a.nbTitres} titres).</>}
