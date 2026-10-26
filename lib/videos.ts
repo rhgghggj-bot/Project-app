@@ -79,8 +79,8 @@ export function idYoutube(lien: string): string | null {
 export const miniature = (id: string) => `https://i.ytimg.com/vi/${id}/hqdefault.jpg`
 export const lecteurYoutube = (id: string) => `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0&playsinline=1&modestbranding=1`
 
-export type EtatVideos = { vues: Record<string, string>; favoris: string[]; perso: (Video & { collection: string })[]; entrainements: VideoPerso[] }
-export const ETAT_VIDE: EtatVideos = { vues: {}, favoris: [], perso: [], entrainements: [] }
+export type EtatVideos = { vues: Record<string, string>; favoris: string[]; perso: (Video & { collection: string })[]; entrainements: VideoPerso[]; musique?: { favoris: string[]; apprises: string[] } }
+export const ETAT_VIDE: EtatVideos = { vues: {}, favoris: [], perso: [], entrainements: [], musique: { favoris: [], apprises: [] } }
 
 const chemin = (uid: string) => `${uid}/videos/etat.json`
 
