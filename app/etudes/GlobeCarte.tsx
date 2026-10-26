@@ -17,6 +17,7 @@ type Props = {
   fond: "plan" | "satellite"
   onChoisir: (iso: string) => void
   onErreur: () => void
+  depart?: [number, number]                      // [longitude, latitude] du premier cadrage
 }
 
 type Geo = GeoJSON.FeatureCollection<GeoJSON.Polygon | GeoJSON.MultiPolygon, { iso: string }>
@@ -39,19 +40,20 @@ function cadre(f: Geo["features"][number]): [[number, number], [number, number]]
   return [[b.o, b.s], [b.e, b.n]]
 }
 
-export default function GlobeCarte({ couleurs, choisi, centrer, fond, onChoisir, onErreur }: Props) {
+export default function GlobeCarte({ couleurs, choisi, centrer, fond, onChoisir, onErreur, depart }: Props) {
   const conteneur = useRef<HTMLDivElement>(null)
   const carte = useRef<maplibregl.Map | null>(null)
   const geo = useRef<Geo | null>(null)
   const [pret, setPret] = useState(false)
   const rappels = useRef({ onChoisir, onErreur })
+  const departRef = useRef(depart)
   useEffect(() => { rappels.current = { onChoisir, onErreur } })
 
   // Création du globe (une seule fois)
   useEffect(() => {
     maplibregl.setWorkerUrl("/atlas/maplibre-gl-worker.mjs")
     const map = new maplibregl.Map({
-      container: conteneur.current!, style: STYLE, center: [8, 30], zoom: 1.4, attributionControl: { compact: true },
+      container: conteneur.current!, style: STYLE, center: departRef.current ?? [8, 30], zoom: departRef.current ? 2 : 1.4, attributionControl: { compact: true },
       maxPitch: 60, renderWorldCopies: false,
     })
     carte.current = map

@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import dynamic from "next/dynamic"
 import { chargerArticle, lienWikipedia, type ArticleWiki } from "@/lib/wikipedia"
+import { ficheEspece, type FicheEspece } from "@/lib/sciences"
 import s from "./atlas.module.css"
 
 // Globe 3D (MapLibre), chargé seulement quand on l'utilise
@@ -25,8 +26,12 @@ type Pays = {
 }
 type Carte = { w: number; h: number; pays: { iso: string; n: string; d: string; c: [number, number] }[] }
 type Donnees = { maj: string; sources: string; pays: Record<string, Pays> }
+// Nature (public/atlas/nature.json) : espèces observées (GBIF) et forêts (Banque mondiale)
+type Categorie = "CR" | "EN" | "VU"
+type NaturePays = { pl: number; an: number; me: [number, number, number]; tp: number[]; ma: number[]; oi: number[]; tm: [number, Categorie][]; fo?: Serie }
+type Nature = { maj: string; sources: string; especes: Record<string, [string | null, string]>; pays: Record<string, NaturePays> }
 
-const ONGLETS = ["Aperçu", "Économie", "Commerce", "Population", "Éducation", "Politique", "Histoire"] as const
+const ONGLETS = ["Aperçu", "Économie", "Commerce", "Population", "Éducation", "Nature", "Politique", "Histoire"] as const
 type Onglet = (typeof ONGLETS)[number]
 
 // ─── Mise en forme ───
@@ -145,7 +150,7 @@ function TexteWiki({ titre, sections: filtre, ouvrirTout }: { titre?: string; se
 }
 
 // ─── Fiche d'un pays ───
-function Fiche({ p, onglet }: { p: Pays; onglet: Onglet }) {
+function Fiche({ p, onglet, nature }: { p: Pays; onglet: Onglet; nature: { pays?: NaturePays; especes: Nature["especes"] } | null }) {
   const d = p.d
   const v = (k: string) => dernier(d[k])
   const rang = (k: string, nom: string) => p.rangs?.[k] ? <div className={s.ligne}><span>Rang mondial ({nom})</span><span>{p.rangs[k][0]}<sup>e</sup> sur {p.rangs[k][1]}</span></div> : null
@@ -300,6 +305,8 @@ function Fiche({ p, onglet }: { p: Pays; onglet: Onglet }) {
     )
   }
 
+  if (onglet === "Nature") return <FicheNature n={nature?.pays} especes={nature?.especes} />
+
   if (onglet === "Politique") return (
     <>
       {p.regime && <div className={s.ligne}><span>Régime</span><span>{p.regime.join(", ")}</span></div>}
@@ -329,6 +336,66 @@ function IntroWiki({ titre }: { titre?: string }) {
   return <div className={s.wiki}>{a.intro.slice(0, 4).map((p, i) => <p key={i}>{p}</p>)}<p className={s.source}>Texte : Wikipédia (CC BY-SA).</p></div>
 }
 
+// ─── Nature ───
+const CATEGORIES: Record<Categorie, { nom: string; c: string }> = {
+  CR: { nom: "En danger critique", c: "#B42318" }, EN: { nom: "En danger", c: "#E0661B" }, VU: { nom: "Vulnérable", c: "#C99A06" },
+}
+
+// Une espèce : nom, nom latin, et photo de Wikipédia chargée quand elle s'affiche
+function CarteEspece({ cle, especes, cat }: { cle: number; especes: Nature["especes"]; cat?: Categorie }) {
+  const [nom, sci] = especes[cle] ?? [null, "?"]
+  const [fiche, setFiche] = useState<{ pour: string; f: FicheEspece | null } | null>(null)
+  const el = useRef<HTMLAnchorElement>(null)
+  useEffect(() => {
+    let actif = true
+    const obs = new IntersectionObserver(([e]) => {
+      if (!e.isIntersecting) return
+      obs.disconnect()
+      ficheEspece(sci).then(f => { if (actif) setFiche({ pour: sci, f }) })
+    }, { rootMargin: "200px" })
+    if (el.current) obs.observe(el.current)
+    return () => { actif = false; obs.disconnect() }
+  }, [sci])
+  const f = fiche?.pour === sci ? fiche.f : null
+  return (
+    <a ref={el} className={s.espece} href={f?.url || `https://fr.wikipedia.org/wiki/${encodeURIComponent(sci)}`} target="_blank" rel="noopener noreferrer" title={f?.resume}>
+      {f?.image ? <img src={f.image} alt="" loading="lazy" onError={e => { e.currentTarget.style.visibility = "hidden" }} /> : <span className={s.especeVide} aria-hidden="true" />}
+      <span><b>{nom || (f && f.titre !== sci ? f.titre : sci)}</b><i>{sci}</i>{cat && <em style={{ background: CATEGORIES[cat].c }}>{CATEGORIES[cat].nom}</em>}</span>
+    </a>
+  )
+}
+
+function FicheNature({ n, especes }: { n?: NaturePays; especes?: Nature["especes"] }) {
+  if (!n || !especes) return <p className={s.vide}>Pas de données sur la nature pour ce territoire.</p>
+  const menacees = n.me[0] + n.me[1] + n.me[2]
+  const liste = (titre: string, cles: number[], explication?: string) => cles.length ? (
+    <><h3>{titre}</h3>{explication && <p className={s.note}>{explication}</p>}<div className={s.especes}>{cles.map(k => <CarteEspece key={k} cle={k} especes={especes} />)}</div></>
+  ) : null
+  return (
+    <>
+      <div className={s.chiffres}>
+        <Chiffre nom="Espèces de plantes observées" v={[2026, n.pl]} f={n => nf(n, 0)} />
+        <Chiffre nom="Espèces d'animaux observées" v={[2026, n.an]} f={n => nf(n, 0)} />
+        <Chiffre nom="Espèces menacées observées" v={[2026, menacees]} f={n => nf(n, 0)} />
+        <Chiffre nom="Forêts (part du territoire)" v={dernier(n.fo)} f={n => pct(n, 0)} />
+      </div>
+      <p className={s.note}>« Observées » : espèces dont au moins une observation est enregistrée dans GBIF (musées, scientifiques et citoyens). Un pays très étudié en compte plus : c&apos;est un bon indice de richesse, pas un recensement exact.</p>
+      {menacees > 0 && (
+        <>
+          <h3>Espèces menacées (liste rouge mondiale de l&apos;UICN)</h3>
+          {(Object.keys(CATEGORIES) as Categorie[]).map((c, i) => <div key={c} className={s.ligne}><span><i style={{ display: "inline-block", width: 10, height: 10, borderRadius: 3, background: CATEGORIES[c].c, marginRight: 6 }} />{CATEGORIES[c].nom}</span><span>{nf(n.me[i], 0)}</span></div>)}
+        </>
+      )}
+      <Evolution titre="Forêts : part du territoire (%)" serie={n.fo} f={n => nf(n, 0)} couleur="#2E8B57" />
+      {liste("Plantes les plus observées", n.tp)}
+      {liste("Mammifères les plus observés", n.ma)}
+      {liste("Oiseaux les plus observés", n.oi)}
+      {n.tm.length > 0 && <><h3>Espèces menacées que l&apos;on y observe</h3><div className={s.especes}>{n.tm.map(([k, c]) => <CarteEspece key={k} cle={k} especes={especes} cat={c} />)}</div></>}
+      <p className={s.source}>Espèces : GBIF.org (observations, liste rouge UICN). Forêts : Banque mondiale (FAO). Photos et résumés : Wikipédia.</p>
+    </>
+  )
+}
+
 // ─── Couleurs de la carte ───
 const MODES = [
   { id: "aucun", nom: "Régions" },
@@ -337,20 +404,26 @@ const MODES = [
   { id: "partExports", nom: "Part du commerce mondial", f: (n: number) => pct(n, 2), log: true },
   { id: "vaServ", nom: "Part des services", f: (n: number) => pct(n, 0) },
   { id: "diplBachelor", nom: "Adultes diplômés (bachelor)", f: (n: number) => pct(n, 0) },
+  { id: "natPlantes", nom: "Espèces de plantes", f: (n: number) => nf(n, 0), log: true },
+  { id: "natMenacees", nom: "Espèces menacées", f: (n: number) => nf(n, 0), log: true },
+  { id: "forets", nom: "Forêts", f: (n: number) => pct(n, 0) },
 ] as const
+export type ModeAtlas = (typeof MODES)[number]["id"]
 const RAMPE = ["#DCE8F7", "#B3CDEE", "#83ADE2", "#4F87D2", "#2861B5", "#14408A"]
 const COULEUR_REGION: Record<string, string> = {
   "Europe et Asie centrale": "#B9CDE5", "Asie de l'Est et Pacifique": "#C9DDBE", "Amérique latine et Caraïbes": "#E9D3B4", "Moyen-Orient et Afrique du Nord": "#E5C9A6",
   "Amérique du Nord": "#C8C3E2", "Asie du Sud": "#D8E2B0", "Afrique subsaharienne": "#E9C8C0",
 }
 
-export default function Atlas({ onFermer }: { onFermer: () => void }) {
+// depart : ouvrir l'atlas déjà colorié et tourné vers une région (onglet Sciences)
+export default function Atlas({ onFermer, depart }: { onFermer: () => void; depart?: { mode?: ModeAtlas; centre?: [number, number] } }) {
   const [carte, setCarte] = useState<Carte | null>(null)
   const [donnees, setDonnees] = useState<Donnees | null>(null)
   const [erreur, setErreur] = useState(false)
   const [choisi, setChoisi] = useState<string | null>(null)
   const [onglet, setOnglet] = useState<Onglet>("Aperçu")
-  const [mode, setMode] = useState<(typeof MODES)[number]["id"]>("aucun")
+  const [mode, setMode] = useState<ModeAtlas>(depart?.mode ?? "aucun")
+  const [nature, setNature] = useState<Nature | null>(null)
   const [vue, setVue] = useState({ x: 0, y: 0, k: 1 })
   const [survol, setSurvol] = useState<{ n: string; x: number; y: number } | null>(null)
   const [recherche, setRecherche] = useState("")
@@ -364,8 +437,15 @@ export default function Atlas({ onFermer }: { onFermer: () => void }) {
   const geste = useRef<{ depart: { x: number; y: number }; bouge: boolean; dist?: number; vue: typeof vue } | null>(null)
 
   useEffect(() => {
-    Promise.all([fetch("/atlas/carte.json").then(r => r.json()), fetch("/atlas/pays.json").then(r => r.json())])
-      .then(([c, d]) => { setCarte(c); setDonnees(d) }).catch(() => setErreur(true))
+    Promise.all([fetch("/atlas/carte.json").then(r => r.json()), fetch("/atlas/pays.json").then(r => r.json()), fetch("/atlas/nature.json").then(r => r.json()).catch(() => null)])
+      .then(([c, d, n]: [Carte, Donnees, Nature | null]) => {
+        // Les chiffres de nature rejoignent ceux du pays pour colorier la carte
+        if (n) for (const [iso, x] of Object.entries(n.pays)) {
+          const p = d.pays[iso]; if (!p) continue
+          p.d.natPlantes = [2026, x.pl]; p.d.natMenacees = [2026, x.me[0] + x.me[1] + x.me[2]]; if (x.fo) p.d.forets = x.fo
+        }
+        setCarte(c); setDonnees(d); setNature(n)
+      }).catch(() => setErreur(true))
     const echap = (e: KeyboardEvent) => { if (e.key === "Escape") onFermer() }
     window.addEventListener("keydown", echap)
     return () => window.removeEventListener("keydown", echap)
@@ -482,7 +562,7 @@ export default function Atlas({ onFermer }: { onFermer: () => void }) {
           onDoubleClick: (e: React.MouseEvent) => { const m = versCarte(e.clientX, e.clientY); zoomer(2, m.x, m.y) },
         })}>
           {globe ? (
-            <GlobeCarte couleurs={mode === "aucun" ? null : couleurs.res} choisi={choisi} centrer={centrerGlobe} fond={fond}
+            <GlobeCarte couleurs={mode === "aucun" ? null : couleurs.res} choisi={choisi} centrer={centrerGlobe} fond={fond} depart={depart?.centre}
               onChoisir={iso => choisir(iso)} onErreur={() => setGlobe(false)} />
           ) : erreur ? <p className={s.vide} style={{ padding: 20 }}>La carte n&apos;a pas pu être chargée. Vérifie ta connexion.</p>
             : !carte ? <div className="nx-skel" style={{ position: "absolute", inset: 16, borderRadius: 16 }} />
@@ -538,7 +618,7 @@ export default function Atlas({ onFermer }: { onFermer: () => void }) {
               </div>
             )}
             <div className={s.contenu} role="tabpanel">
-              {p ? <Fiche p={p} onglet={onglet} /> : <TexteWiki titre={nomChoisi || undefined} />}
+              {p ? <Fiche p={p} onglet={onglet} nature={nature && choisi ? { pays: nature.pays[choisi], especes: nature.especes } : null} /> : <TexteWiki titre={nomChoisi || undefined} />}
               {p && <p className={s.source}>Chiffres : {donnees?.sources}. Mise à jour {donnees?.maj}. L&apos;année de chaque chiffre est indiquée entre parenthèses.</p>}
             </div>
           </aside>

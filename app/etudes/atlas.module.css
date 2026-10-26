@@ -67,3 +67,14 @@
   .poignee { display: block; width: 100%; border: none; background: none; padding: 8px 0 0; cursor: pointer; }
   .poignee span { display: block; margin: 0 auto; width: 40px; height: 5px; border-radius: 3px; background: #C9D1DD; }
 }
+
+/* Nature : liste d'espèces avec photo */
+.note { font-size: 12.5px; color: #5B6577; line-height: 1.45; margin: 4px 0 10px; text-wrap: pretty; }
+.especes { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin-bottom: 8px; }
+.espece { display: flex; gap: 8px; align-items: center; padding: 6px; border: 1px solid #E3E7EE; border-radius: 12px; background: #fff; color: inherit; text-decoration: none; min-height: 56px; transition-property: border-color, box-shadow; transition-duration: 150ms; }
+.espece:hover { border-color: #B8C4D6; box-shadow: 0 1px 4px rgba(16, 24, 40, .08); }
+.espece img, .especeVide { width: 44px; height: 44px; border-radius: 8px; object-fit: cover; flex: none; background: #EEF2F6; outline: 1px solid rgba(0, 0, 0, .08); outline-offset: -1px; }
+.espece > span:last-child { display: flex; flex-direction: column; min-width: 0; font-size: 12.5px; line-height: 1.3; }
+.espece b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.espece i { color: #8A93A3; font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.espece em { font-style: normal; color: #fff; font-size: 10.5px; font-weight: 600; border-radius: 999px; padding: 1px 7px; margin-top: 3px; align-self: flex-start; }
