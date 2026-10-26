@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react"
 import { colors, radius } from "@/app/components/ui/tokens"
 import { toast } from "@/lib/toast"
 import MesEntrainements from "./MesEntrainements"
+import MusiqueSection from "./MusiqueSection"
 import {
   COLLECTIONS, ETAT_VIDE, chargerEtatVideos, enregistrerEtatVideos, idYoutube, infosYoutube, lecteurYoutube, miniature,
   type EtatVideos, type Video,
@@ -86,6 +87,8 @@ export default function VideosSection({ userId }: { userId: string }) {
       </section>
 
       <MesEntrainements userId={userId} etat={etat} maj={maj} />
+
+      <MusiqueSection etat={etat} maj={maj} />
 
       <div role="group" aria-label="Filtrer les vidéos" style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 6, marginBottom: 6, scrollbarWidth: "none" }}>
         <button style={puce(filtre === "toutes")} aria-pressed={filtre === "toutes"} onClick={() => setFiltre("toutes")}>Toutes</button>
