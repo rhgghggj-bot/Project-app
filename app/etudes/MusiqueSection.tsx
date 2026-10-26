@@ -9,7 +9,7 @@ import { ALBUMS, APPLE_MUSIC, APPLE_MUSIC_ALBUM, ARTISTES_ALBUMS, CHANSONS, DECE
 // Anglais en musique : clips officiels YouTube + fiches d'anglais (histoire, vocabulaire, quiz).
 // Aucune parole n'est affichée : les paroles complètes sont sur Spotify / Apple Music.
 type Onglet = "histoire" | "vocabulaire" | "quiz"
-type Filtre = "toutes" | "favorites" | Decennie
+type Filtre = "toutes" | "favorites" | Decennie | `artiste:${string}`
 type OngletAlbum = "album" | "titres" | "vocabulaire" | "quiz"
 type FiltreAlbum = "tous" | "favoris" | string   // « string » = nom d'un artiste
 const SEUIL_ALBUM = 3  // quiz d'album : 3 bonnes réponses sur 4
@@ -35,7 +35,10 @@ export default function MusiqueSection({ etat, maj }: { etat: EtatVideos; maj: (
   const fermerAlbum = useCallback(() => setAlbumOuvert(null), [])
 
   const decennies = DECENNIES.filter(d => CHANSONS.some(c => c.decennie === d))
-  const visibles = filtre === "toutes" ? CHANSONS : filtre === "favorites" ? CHANSONS.filter(c => favoris.includes(c.id)) : CHANSONS.filter(c => c.decennie === filtre)
+  // Artistes avec au moins 3 chansons : un filtre chacun
+  const artistes = [...new Set(CHANSONS.map(c => c.artiste))].filter(a => CHANSONS.filter(c => c.artiste === a).length >= 3)
+  const visibles = filtre === "toutes" ? CHANSONS : filtre === "favorites" ? CHANSONS.filter(c => favoris.includes(c.id))
+    : filtre.startsWith("artiste:") ? CHANSONS.filter(c => c.artiste === filtre.slice(8)) : CHANSONS.filter(c => c.decennie === filtre)
   const nbApprises = CHANSONS.filter(c => apprises.includes(c.id)).length
   const nbFavoris = CHANSONS.filter(c => favoris.includes(c.id)).length
   const albumsVisibles = filtreAlbum === "tous" ? ALBUMS : filtreAlbum === "favoris" ? ALBUMS.filter(a => favoris.includes(a.id)) : ALBUMS.filter(a => a.artiste === filtreAlbum)
@@ -98,6 +101,7 @@ export default function MusiqueSection({ etat, maj }: { etat: EtatVideos; maj: (
       <h3 id="titre-chansons" style={{ fontSize: 15, color: colors.navy, margin: "0 0 6px" }}>Chansons</h3>
       <div role="group" aria-label="Filtrer les chansons" style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 6, marginBottom: 8, scrollbarWidth: "none" }}>
         <button style={puce(filtre === "toutes")} aria-pressed={filtre === "toutes"} onClick={() => setFiltre("toutes")}>Toutes</button>
+        {artistes.map(a => <button key={a} style={puce(filtre === `artiste:${a}`)} aria-pressed={filtre === `artiste:${a}`} onClick={() => setFiltre(`artiste:${a}`)}>{a}</button>)}
         {decennies.map(d => <button key={d} style={puce(filtre === d)} aria-pressed={filtre === d} onClick={() => setFiltre(d)}>{d}</button>)}
         <button style={puce(filtre === "favorites")} aria-pressed={filtre === "favorites"} onClick={() => setFiltre("favorites")}>♥ Mes favorites{nbFavoris ? ` (${nbFavoris})` : ""}</button>
       </div>
@@ -218,7 +222,7 @@ function Fiche({ chanson: c, favori, apprise, onFavori, onApprise, onFermer }: {
 
         <div role="tabpanel" id="panneau-musique" aria-labelledby={`onglet-${onglet}`} style={{ background: "#fff", color: colors.text, borderRadius: radius.md, padding: 16 }}>
           {onglet === "histoire" && <Histoire c={c} />}
-          {onglet === "vocabulaire" && <Vocabulaire mots={c.mots} />}
+          {onglet === "vocabulaire" && <Vocabulaire mots={c.mots} langue={c.langue} />}
           {onglet === "quiz" && <Quiz quiz={c.quiz} seuil={SEUIL} succes="Cette chanson est marquée comme apprise." onTermine={score => { if (score >= SEUIL) onApprise() }} />}
         </div>
     </Modale>
@@ -305,14 +309,14 @@ function Histoire({ c }: { c: Chanson }) {
   )
 }
 
-function Vocabulaire({ mots }: { mots: Mot[] }) {
+function Vocabulaire({ mots, langue }: { mots: Mot[]; langue?: "fr" }) {
   const [cache, setCache] = useState(false)
   const [reveles, setReveles] = useState<string[]>([])
   const niveau: Record<string, string> = { A2: colors.green, B1: colors.blue, B2: colors.purple }
   return (
     <div>
       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
-        <p style={{ fontSize: 13, color: colors.textMuted, margin: 0, flex: "1 1 180px", lineHeight: 1.4 }}>{mots.length} mots et expressions à retenir (anglais → français).</p>
+        <p style={{ fontSize: 13, color: colors.textMuted, margin: 0, flex: "1 1 180px", lineHeight: 1.4 }}>{mots.length} mots et expressions à retenir ({langue === "fr" ? "argot → français courant" : "anglais → français"}).</p>
         <button aria-pressed={cache} onClick={() => { setCache(v => !v); setReveles([]) }}
           style={{ minHeight: 44, padding: "0 14px", borderRadius: 999, border: `1px solid ${cache ? colors.navy : colors.border}`, background: cache ? colors.navy : "#fff", color: cache ? "#fff" : colors.text, fontSize: 13, cursor: "pointer" }}>
           {cache ? "Traduction cachée" : "Cacher la traduction"}
@@ -325,7 +329,7 @@ function Vocabulaire({ mots }: { mots: Mot[] }) {
             <li key={mot.en} style={{ border: `1px solid ${colors.border}`, borderRadius: radius.sm, padding: "10px 12px", display: "flex", gap: 10, alignItems: "flex-start", flexWrap: "wrap" }}>
               <div style={{ flex: "1 1 200px", minWidth: 0 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                  <span lang="en" style={{ fontSize: 16, fontWeight: 700, color: colors.navy, overflowWrap: "anywhere" }}>{mot.en}</span>
+                  <span lang={langue ?? "en"} style={{ fontSize: 16, fontWeight: 700, color: colors.navy, overflowWrap: "anywhere" }}>{mot.en}</span>
                   <span style={{ fontSize: 11, fontWeight: 700, color: "#fff", background: niveau[mot.niveau], borderRadius: 999, padding: "1px 8px" }} title="Niveau">{mot.niveau}</span>
                 </div>
                 {visible ? (
