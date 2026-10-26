@@ -2,10 +2,12 @@
 import { useEffect, useRef, useState } from "react"
 import { arreter, fermerListe, ouvrirListe, useLecteur } from "@/lib/lecteurGlobal"
 import { useMediaQuery } from "@/lib/useStockage"
+import { useDeplacable } from "@/lib/deplacable"
 
 // Le lecteur lui-même : un seul iframe pour toute l'appli, jamais recréé tant
 // que la même vidéo joue. En grand, il se place sur l'emplacement de la fenêtre
-// ouverte ; sinon, petite barre en bas (au-dessus de la navigation).
+// ouverte ; sinon, petite barre en bas (au-dessus de la navigation), que l'on
+// peut déplacer en la glissant par sa poignée (⠿) ou par l'image.
 // Il est piloté par l'API officielle du lecteur YouTube : lecture / pause,
 // titre précédent / suivant, et choix d'un titre dans la liste de l'album.
 
@@ -50,6 +52,7 @@ export default function LecteurFlottant() {
   const [noms, setNoms] = useState<Record<string, string>>({})
   // Téléphone : moins de boutons, le titre ouvre la liste
   const etroit = useMediaQuery("(max-width: 430px)")
+  const { placement, poignee } = useDeplacable("lecteur-position", boite)
 
   // Suit la position de l'emplacement (défilement, rotation, animation d'ouverture)
   useEffect(() => {
@@ -102,10 +105,12 @@ export default function LecteurFlottant() {
         style={grand
           ? { position: "fixed", zIndex: 1250, borderRadius: 12, overflow: "hidden", background: "#000" }
           : { position: "fixed", zIndex: 1150, right: 8, left: "auto", top: "auto", bottom: "calc(80px + env(safe-area-inset-bottom))", width: "min(340px, calc(100vw - 16px))", height: "auto",
-              display: "flex", alignItems: "center", gap: 6, padding: "5px 4px 5px 5px", borderRadius: 12, background: "rgba(10,22,40,.96)", color: "#fff", boxShadow: "0 10px 28px -10px rgba(0,0,0,.55)" }}>
+              display: "flex", alignItems: "center", gap: 6, padding: "5px 4px 5px 0", borderRadius: 12, background: "rgba(10,22,40,.96)", color: "#fff", boxShadow: "0 10px 28px -10px rgba(0,0,0,.55)", ...placement }}>
+        {!grand && <div {...poignee} title="Glisse pour déplacer (double appui : remettre en bas)" aria-hidden="true"
+          style={{ ...poignee.style, width: 20, alignSelf: "stretch", marginRight: -4, display: "grid", placeItems: "center", color: "rgba(255,255,255,.45)", fontSize: 15, userSelect: "none" }}>⠿</div>}
         {/* YouTube met en pause un lecteur plus petit que 200 × 200 px : en petit, on garde
             l'iframe à sa taille normale (356 × 200) et on la réduit seulement à l'affichage */}
-        <div style={grand ? { position: "absolute", inset: 0 } : { position: "relative", width: MINI.l, height: MINI.h, flexShrink: 0, borderRadius: 6, overflow: "hidden", background: "#000" }}>
+        <div {...(grand ? {} : poignee)} style={grand ? { position: "absolute", inset: 0 } : { ...poignee.style, position: "relative", width: MINI.l, height: MINI.h, flexShrink: 0, borderRadius: 6, overflow: "hidden", background: "#000" }}>
           <iframe ref={cadre} key={lecture.src} src={avecApi(lecture.src)} title={lecture.titre} allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowFullScreen
             referrerPolicy="strict-origin-when-cross-origin"
             style={grand

@@ -4,6 +4,7 @@ import dynamic from "next/dynamic"
 import { colors, radius } from "@/app/components/ui/tokens"
 import { toast } from "@/lib/toast"
 import { lireNombre } from "@/lib/esprit"
+import { ecrireNombre, ouvrirCalculatrice } from "@/lib/calcul"
 import { CHAPITRES, HISTOIRE, type Chapitre, type Defi } from "@/lib/renaissance"
 import { CONTINENTS, NOTIONS, type Continent, type Espece } from "@/lib/biodiversite"
 import { ETAT_SCIENCES_VIDE, chargerSciences, enregistrerSciences, reponseJuste, type EtatSciences } from "@/lib/sciences"
@@ -331,6 +332,7 @@ function CarteDefi({ d, n, statut, noter }: { d: Defi; n: number; statut?: "ok" 
       {!resolu && (
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <button className="presse" onClick={verifier} style={boutonPrincipal}>Vérifier</button>
+          <button onClick={() => ouvrirCalculatrice(d.type === "nombre" ? n => { setSaisie(ecrireNombre(n)); setMessage(null) } : undefined)} style={boutonSecondaire}>🧮 Calculatrice</button>
           {!indice && <button onClick={() => setIndice(true)} style={boutonSecondaire}>💡 Indice</button>}
           {essais >= 2 && <button onClick={() => noter("vu")} style={boutonSecondaire}>Voir la solution</button>}
         </div>
