@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react"
 import { colors, radius } from "@/app/components/ui/tokens"
 import { toast } from "@/lib/toast"
 import MesEntrainements from "./MesEntrainements"
+import EmplacementLecteur from "@/app/components/EmplacementLecteur"
 import MusiqueSection from "./MusiqueSection"
 import {
   COLLECTIONS, ETAT_VIDE, chargerEtatVideos, enregistrerEtatVideos, idListe, idYoutube, infosYoutube, lecteurListe, lecteurYoutube, miniature,
@@ -168,8 +169,7 @@ function Lecteur({ ouverte, favori, onFavori, onChanger, onFermer }: {
           <button onClick={onFermer} aria-label="Fermer la vidéo" style={{ ...bouton, minWidth: 44, padding: 0, fontSize: 18 }}>✕</button>
         </div>
         <div style={{ position: "relative", width: "100%", aspectRatio: "16 / 9", background: "#000", borderRadius: 12, overflow: "hidden" }}>
-          <iframe key={v.id} src={v.liste ? lecteurListe(v.liste) : lecteurYoutube(v.id)} title={v.titre} allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowFullScreen
-            referrerPolicy="strict-origin-when-cross-origin" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: 0 }} />
+          <EmplacementLecteur src={v.liste ? lecteurListe(v.liste) : lecteurYoutube(v.id)} titre={v.titre} sousTitre={v.chaine} />
         </div>
         <h2 style={{ fontSize: 17, margin: "12px 0 2px", textWrap: "balance" }}>{v.titre}</h2>
         <div style={{ fontSize: 13, color: "rgba(255,255,255,.7)" }}>{v.chaine}{v.note ? ` · ${v.note}` : ""}</div>
