@@ -2,6 +2,7 @@
 import { useRef, useState } from "react"
 import { colors, radius } from "@/app/components/ui/tokens"
 import type { ChoixIA } from "./document"
+import { ouvrirCalculatrice } from "@/lib/calcul"
 
 export const champ: React.CSSProperties = { width: "100%", border: `0.5px solid ${colors.blueBorder}`, borderRadius: radius.sm, padding: "9px 10px", fontSize: "13px", color: colors.text, background: "#fff" }
 export const carte: React.CSSProperties = { background: "#fff", border: `0.5px solid ${colors.border}`, borderRadius: radius.md, padding: "14px", marginBottom: "12px" }
@@ -78,11 +79,12 @@ export function Exercice({ numero, enonce, solution }: { numero: number; enonce:
   return (
     <div style={{ borderTop: `0.5px solid ${colors.border}`, padding: "10px 0" }}>
       <div style={{ fontSize: "13px", color: colors.text, lineHeight: 1.5, whiteSpace: "pre-wrap" }}><b>Exercice {numero}.</b> {enonce}</div>
-      {vue ? (
-        <div style={{ fontSize: "12px", color: colors.textMuted, background: colors.greenLight, borderRadius: radius.sm, padding: "8px 10px", marginTop: "6px", lineHeight: 1.5, whiteSpace: "pre-wrap" }}>{solution}</div>
-      ) : (
-        <button onClick={() => setVue(true)} style={{ background: "none", border: "none", color: colors.blue, fontSize: "12px", cursor: "pointer", padding: "6px 0 0" }}>Voir la solution</button>
-      )}
+      {vue && <div style={{ fontSize: "12px", color: colors.textMuted, background: colors.greenLight, borderRadius: radius.sm, padding: "8px 10px", marginTop: "6px", lineHeight: 1.5, whiteSpace: "pre-wrap" }}>{solution}</div>}
+      <div style={{ display: "flex", gap: 16 }}>
+        {!vue && <button onClick={() => setVue(true)} style={{ background: "none", border: "none", color: colors.blue, fontSize: "12px", cursor: "pointer", padding: "6px 0 0", minHeight: 32 }}>Voir la solution</button>}
+        {/* Exercice avec des chiffres : la calculatrice à portée de main */}
+        {/\d/.test(enonce) && <button onClick={() => ouvrirCalculatrice()} style={{ background: "none", border: "none", color: colors.blue, fontSize: "12px", cursor: "pointer", padding: "6px 0 0", minHeight: 32 }}>🧮 Calculatrice</button>}
+      </div>
     </div>
   )
 }

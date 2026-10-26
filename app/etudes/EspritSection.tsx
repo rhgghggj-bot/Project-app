@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react"
 import { colors, radius } from "@/app/components/ui/tokens"
 import { toast } from "@/lib/toast"
+import { ecrireNombre, ouvrirCalculatrice } from "@/lib/calcul"
 import {
   AFFIRMATIONS, DEFIS_FERMI, ETAT_ESPRIT_VIDE, EXERCICES_MANIP, LECONS_PROBA, NIVEAUX_CONFIANCE, TECHNIQUES,
   bilanCalibration, chargerEsprit, ecartFermi, enregistrerEsprit, lireNombre, type EtatEsprit,
@@ -100,6 +101,7 @@ function Fermi({ etat, maj }: PropsPartie) {
           <input id="estimation" value={saisie} onChange={e => setSaisie(e.target.value)} inputMode="decimal" autoComplete="off" placeholder="Ton estimation (ex. 3 millions)"
             style={{ flex: "1 1 200px", minHeight: 44, borderRadius: 12, border: `1px solid ${colors.border}`, padding: "0 12px", fontSize: 16 }} />
           <span style={{ fontSize: 13, color: colors.textMuted }}>{d.unite}</span>
+          <button type="button" onClick={() => ouvrirCalculatrice(n => setSaisie(ecrireNombre(n)))} aria-label="Ouvrir la calculatrice" title="Calculatrice" style={{ ...boutonSecondaire, padding: "0 12px", fontSize: 18 }}>🧮</button>
           <button type="submit" style={boutonPrincipal}>Valider</button>
         </form>
       ) : (

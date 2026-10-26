@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { toast, confirmer } from "@/lib/toast"
 import { useChargement } from "@/lib/useChargement"
+import { ouvrirCalculatrice } from "@/lib/calcul"
 import { colors, radius } from "@/app/components/ui/tokens"
 import { carte, titreCarte } from "./Depot"
 import { PetitBouton } from "./CorrectionSection"
@@ -267,7 +268,8 @@ function Lecteur({ source, onFermer }: { source: Source; onFermer: () => void })
     <div style={{ position: "fixed", inset: 0, zIndex: 1100, background: "#fff", display: "flex", flexDirection: "column" }}>
       <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 14px", background: colors.navy, color: "#fff" }}>
         <button onClick={onFermer} style={{ background: "rgba(255,255,255,0.15)", color: "#fff", border: "none", borderRadius: radius.pill, padding: "6px 14px", fontSize: "13px", cursor: "pointer" }}>← Fermer</button>
-        <span style={{ fontSize: "13px", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{source.titre}</span>
+        <span style={{ flex: 1, minWidth: 0, fontSize: "13px", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{source.titre}</span>
+        <button onClick={() => ouvrirCalculatrice()} aria-label="Ouvrir la calculatrice" style={{ flexShrink: 0, background: "rgba(255,255,255,0.15)", color: "#fff", border: "none", borderRadius: radius.pill, padding: "6px 12px", fontSize: "13px", cursor: "pointer" }}>🧮 Calculatrice</button>
       </div>
       <CadreArtefact source={source} onErreur={onFermer} />
     </div>
