@@ -960,6 +960,7 @@ export type Album = {
   edition?: string      // précision sur l'édition lue
   explicite?: boolean   // paroles explicites
   videos?: string[]     // album absent de YouTube en version complète : clips officiels lus à la suite
+  langue?: "fr"         // album en français : le vocabulaire explique l'argot et les expressions
   couleur: string       // couleur de secours si la miniature ne charge pas
   histoire: string
   pourquoi: string
@@ -970,6 +971,64 @@ export type Album = {
 }
 
 export const ALBUMS: Album[] = [
+  // ───────── Les nouveautés demandées par l'élève (2026) ─────────
+  {
+    id: "PLWAaHexwnxeU", titre: "WpointM", artiste: "Tiakola", annee: 2026, label: "Album officiel (chaîne YouTube de Tiakola)", nbTitres: 17, vignette: "Hz1jKmk3Juw", couleur: "#3B2A1A", langue: "fr",
+    edition: "Les 17 titres de l'album, dans l'ordre, publiés par Tiakola sur sa chaîne officielle.",
+    histoire: "WpointM est sorti le 25 septembre 2026. C'est un album de 17 titres où Tiakola mélange rap, afro et mélodies chantées, sa marque de fabrique depuis Mélo (2022). Il invite des artistes de plusieurs pays : le Nigérian Rema sur « Best », la Britannique Jorja Smith sur « Jet Lag », le groupe congolais légendaire Zaïko Langa Langa sur « La Vie d'un Homme », mais aussi Bné et Theodora.",
+    pourquoi: "On y entend le lien entre le rap français et la musique congolaise et africaine : la rumba de Zaïko Langa Langa rencontre l'afrobeats de Rema et la soul anglaise de Jorja Smith. Un bon album pour comprendre comment le rap français se mélange au reste du monde.",
+    titres: [
+      { t: "Les misérables" }, { t: "Savage" }, { t: "Mode de vie" }, { t: "Mélo Décalé" },
+      { t: "Bottega", note: "Avec Kuluna, TVLM et Nooche." }, { t: "Juda" }, { t: "Best", note: "Avec Rema (Nigeria)." }, { t: "Cœur de pirate" },
+      { t: "Sans toi" }, { t: "WpointM", note: "Le morceau qui donne son nom à l'album." }, { t: "Vrai OG", note: "Avec Bné." }, { t: "Caméléon" },
+      { t: "La Vie d'un Homme", note: "Avec Zaïko Langa Langa, groupe mythique de rumba congolaise." }, { t: "AF1 Nouvo" },
+      { t: "Jet Lag", note: "Avec Jorja Smith (Royaume-Uni)." }, { t: "La Nocturne", note: "Avec Theodora." }, { t: "Mission" },
+    ],
+    mots: [
+      { en: "savage", fr: "sans pitié, impressionnant", explication: "Mot anglais repris dans le rap : quelqu'un de « savage » ne fait pas de cadeau, ou fait quelque chose de très fort.", niveau: "B1" },
+      { en: "OG", fr: "un ancien respecté", explication: "Abréviation de l'anglais « original gangster ». Un « vrai OG », c'est quelqu'un d'authentique, là depuis le début.", niveau: "B1" },
+      { en: "jet lag", fr: "décalage horaire", explication: "La fatigue après un long voyage en avion, quand ton corps n'est pas à l'heure du pays.", niveau: "A2" },
+      { en: "mélo", fr: "mélodie", explication: "Abréviation de « mélodie ». Tiakola en a fait sa signature (son premier album s'appelle Mélo).", niveau: "A2" },
+      { en: "décalé", fr: "original, inattendu", explication: "Qui ne fait pas comme les autres. En musique, aussi : à contretemps, pas sur le temps attendu.", niveau: "B1" },
+      { en: "AF1", fr: "Air Force 1", explication: "Un modèle de baskets Nike très célèbre, souvent cité dans le rap.", niveau: "A2" },
+      { en: "caméléon", fr: "personne qui s'adapte à tout", explication: "Comme l'animal qui change de couleur : quelqu'un qui change de style selon la situation.", niveau: "B1" },
+    ],
+    quiz: [
+      { question: "Que veut dire « jet lag » ?", choix: ["le décalage horaire", "un avion rapide", "un retard de train", "un voyage en bateau"], bonne: 0, explication: "La fatigue due au changement d'heure après un vol." },
+      { question: "Avec quel groupe congolais Tiakola chante-t-il sur « La Vie d'un Homme » ?", choix: ["Magic System", "Zaïko Langa Langa", "Tinariwen", "Les Nubians"], bonne: 1, explication: "Zaïko Langa Langa, groupe légendaire de la rumba congolaise." },
+      { question: "Combien de titres compte WpointM ?", choix: ["10", "12", "17", "25"], bonne: 2, explication: "17 titres." },
+      { question: "Que veut dire « un vrai OG » ?", choix: ["un débutant", "un ancien respecté", "un policier", "un voleur"], bonne: 1, explication: "Quelqu'un d'authentique, qui est là depuis le début." },
+    ],
+  },
+  {
+    id: "bts-arirang", titre: "ARIRANG", artiste: "BTS", annee: 2026, label: "Big Hit Music", nbTitres: 14, vignette: "b4iVv91Z6lY", couleur: "#1E2A44",
+    videos: ["b4iVv91Z6lY", "diBO0gMuTXo", "_gyultVTesk", "GEk4jHwfFTA", "eJXL4-4m5nY"],
+    edition: "Les 5 clips officiels de l'album s'enchaînent (SWIM, Hooligan, 2.0, NORMAL, Merry Go Round). L'album complet (14 titres) est sur Spotify ou Apple Music.",
+    histoire: "ARIRANG est sorti le 20 mars 2026. C'est le premier album de BTS au complet depuis Proof (2022), après la pause pendant laquelle les sept membres ont fait leur service militaire en Corée du Sud. Le titre principal est « SWIM », et l'album se termine par « Into the Sun ».",
+    pourquoi: "L'album porte le nom d'« Arirang », une chanson populaire coréenne vieille de plusieurs siècles, que presque tous les Coréens connaissent. C'est une façon pour BTS de revenir en rappelant d'où ils viennent, tout en restant un groupe mondial.",
+    titres: [
+      { t: "Body to Body" }, { t: "Hooligan", note: "Clip officiel." }, { t: "Aliens" }, { t: "FYA" }, { t: "2.0", note: "Clip officiel." },
+      { t: "No. 29", note: "Un interlude." }, { t: "SWIM", note: "Le titre principal, avec son clip officiel." }, { t: "Merry Go Round", note: "Clip officiel." },
+      { t: "Normal", note: "Clip officiel." }, { t: "Like Animals" }, { t: "they don't know 'bout us" }, { t: "One More Night" }, { t: "Please" },
+      { t: "Into the Sun", note: "Le morceau qui ferme l'album." },
+    ],
+    mots: [
+      { en: "to swim", fr: "nager", explication: "Verbe irrégulier : swim, swam, swum.", niveau: "A2" },
+      { en: "hooligan", fr: "voyou", explication: "Quelqu'un de bruyant et violent, souvent utilisé pour les supporters de foot violents.", niveau: "B1" },
+      { en: "alien", fr: "extraterrestre / étranger", explication: "Deux sens : un être venu d'une autre planète, ou une personne étrangère (sens administratif).", niveau: "B1" },
+      { en: "merry-go-round", fr: "manège", explication: "Le carrousel de la fête foraine. Au sens figuré : quelque chose qui tourne en rond.", niveau: "B2" },
+      { en: "one more night", fr: "une nuit de plus", explication: "« One more » = encore un, un de plus.", niveau: "A2" },
+      { en: "like animals", fr: "comme des animaux", explication: "« Like » + nom = comme… (comparaison).", niveau: "A2" },
+      { en: "they don't know 'bout us", fr: "ils ne savent rien de nous", explication: "« 'Bout » est la forme orale de « about ».", niveau: "B1" },
+      { en: "into the sun", fr: "vers le soleil", explication: "« Into » indique un mouvement vers l'intérieur de quelque chose.", niveau: "B1" },
+    ],
+    quiz: [
+      { question: "Quel est le titre principal d'ARIRANG ?", choix: ["Dynamite", "SWIM", "Butter", "Hooligan"], bonne: 1, explication: "« SWIM »." },
+      { question: "D'où vient le nom « Arirang » ?", choix: ["d'une ville coréenne", "d'une chanson populaire coréenne", "du nom d'un membre", "d'un film"], bonne: 1, explication: "Une chanson traditionnelle coréenne connue de presque tous les Coréens." },
+      { question: "Que veut dire « merry-go-round » ?", choix: ["un manège", "un rond-point", "une fête", "un cercle d'amis"], bonne: 0, explication: "Le carrousel de la fête foraine." },
+      { question: "Quel est le passé de « to swim » ?", choix: ["swimmed", "swam", "swum", "swim"], bonne: 1, explication: "swim, swam, swum." },
+    ],
+  },
   {
     id: "OLAK5uy_mEJ8cCMOkj4hse7QHbRajvO04lNc1Zxmc", titre: "Thriller", artiste: "Michael Jackson", annee: 1982, label: "Epic Records", nbTitres: 34, vignette: "RBrIKRjcxcg", couleur: "#7A1F2B",
     edition: "Édition « Thriller 40 » (2022) : les 9 titres de l'album original, suivis de titres bonus.",

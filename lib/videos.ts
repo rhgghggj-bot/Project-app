@@ -7,7 +7,7 @@ import { supabase } from "./supabase"
 import { memoriser, relire } from "./horsLigne"
 import type { VideoPerso } from "./videosPerso"
 
-export type Video = { id: string; titre: string; chaine: string; duree?: string; note?: string; liste?: string; image?: string }   // liste : album ou playlist YouTube
+export type Video = { id: string; titre: string; chaine: string; duree?: string; note?: string; liste?: string; image?: string; insta?: string }   // liste : album ou playlist YouTube ; insta : publication Instagram
 export type Collection = { id: string; titre: string; sport: string; desc: string; videos: Video[] }
 
 export const COLLECTIONS: Collection[] = [
@@ -81,6 +81,13 @@ export function idListe(lien: string): string | null {
   const m = /[?&]list=([\w-]{10,})/.exec(lien.trim())
   return m ? m[1] : null
 }
+// Publication Instagram (photo, vidéo ou reel) : code après /p/, /reel/ ou /tv/
+export function idInstagram(lien: string): { code: string; compte?: string } | null {
+  const m = /instagram\.com\/(?:([\w.]+)\/)?(?:p|reels?|tv)\/([\w-]{5,})/.exec(lien.trim())
+  return m ? { code: m[2], compte: m[1] && !["p", "reel", "reels", "tv"].includes(m[1]) ? m[1] : undefined } : null
+}
+// Intégration officielle d'Instagram (le compte de l'artiste reste la source)
+export const lecteurInstagram = (code: string) => `https://www.instagram.com/p/${code}/embed/captioned/`
 export const lecteurListe = (liste: string) => `https://www.youtube-nocookie.com/embed/videoseries?list=${liste}&rel=0&playsinline=1&modestbranding=1`
 
 export const miniature = (id: string) => `https://i.ytimg.com/vi/${id}/hqdefault.jpg`

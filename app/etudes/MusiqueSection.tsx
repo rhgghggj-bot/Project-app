@@ -289,7 +289,7 @@ function FicheAlbum({ album: a, favori, appris, onFavori, onAppris, onFermer }: 
             <p style={{ fontSize: 12, color: colors.textFaint, margin: "8px 0 0", lineHeight: 1.4 }}>Nexia n&apos;affiche pas les paroles : elles sont sur Spotify et Apple Music.</p>
           </div>
         )}
-        {onglet === "vocabulaire" && <Vocabulaire mots={a.mots} />}
+        {onglet === "vocabulaire" && <Vocabulaire mots={a.mots} langue={a.langue} />}
         {onglet === "quiz" && <Quiz quiz={a.quiz} seuil={SEUIL_ALBUM} succes="Cet album est marqué comme appris." onTermine={score => { if (score >= SEUIL_ALBUM) onAppris() }} />}
       </div>
     </Modale>
