@@ -82,7 +82,7 @@ export default function MusiqueSection({ etat, maj }: { etat: EtatVideos; maj: (
                 {a.explicite && <span style={{ position: "absolute", right: 6, top: 6, background: "rgba(0,0,0,.75)", color: "#fff", fontSize: 10.5, borderRadius: 4, padding: "1px 5px" }}>Explicit</span>}
               </button>
               <div style={{ padding: "6px 8px 6px 10px", display: "flex", alignItems: "center", gap: 4 }}>
-                <div style={{ fontSize: 12, color: colors.textMuted, flex: 1, minWidth: 0, lineHeight: 1.3 }}>{a.nbTitres} titres</div>
+                <div style={{ fontSize: 12, color: colors.textMuted, flex: 1, minWidth: 0, lineHeight: 1.3 }}>{a.videos ? `${a.videos.length} clips · ${a.nbTitres} titres` : `${a.nbTitres} titres`}</div>
                 <button onClick={() => basculerFavori(a.id)} aria-pressed={fav} aria-label={fav ? `Retirer ${a.titre} des favoris` : `Ajouter ${a.titre} aux favoris`}
                   style={{ minWidth: 44, minHeight: 44, border: "none", background: "none", cursor: "pointer", fontSize: 18, color: fav ? "#E11D48" : colors.textFaint }}>
                   {fav ? "♥" : "♡"}
@@ -235,11 +235,11 @@ function FicheAlbum({ album: a, favori, appris, onFavori, onAppris, onFermer }: 
   return (
     <Modale label={`Album : ${a.titre}, ${a.artiste}`} onFermer={onFermer}>
       <div style={{ position: "relative", width: "100%", aspectRatio: "16 / 9", background: "#000", borderRadius: 12, overflow: "hidden" }}>
-        <iframe src={lecteurAlbum(a.id)} title={`Album officiel : ${a.titre}`} allow="encrypted-media; picture-in-picture; fullscreen" allowFullScreen
+        <iframe src={lecteurAlbum(a)} title={`Album officiel : ${a.titre}`} allow="encrypted-media; picture-in-picture; fullscreen" allowFullScreen
           referrerPolicy="strict-origin-when-cross-origin" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: 0 }} />
       </div>
       <p style={{ fontSize: 12, color: "rgba(255,255,255,.6)", margin: "6px 0 0", lineHeight: 1.4 }}>
-        Appuie sur lecture, puis utilise la liste du lecteur pour passer d&apos;un titre à l&apos;autre ({a.nbTitres} titres).
+        {a.videos ? `Les ${a.videos.length} clips officiels s'enchaînent ; l'album complet (${a.nbTitres} titres) est sur Spotify ou Apple Music.` : <>Appuie sur lecture, puis utilise la liste du lecteur pour passer d&apos;un titre à l&apos;autre ({a.nbTitres} titres).</>}
       </p>
       <h3 style={{ fontSize: 18, margin: "10px 0 2px", textWrap: "balance", overflowWrap: "anywhere" }}>{a.titre}</h3>
       <div style={{ fontSize: 13, color: "rgba(255,255,255,.7)" }}>{a.artiste} · {a.annee} · {a.label}{a.explicite ? " · paroles explicites" : ""}{appris ? " · ✓ Appris" : ""}</div>

@@ -394,6 +394,7 @@ export type Album = {
   vignette: string      // identifiant d'une vidéo de la playlist (miniature = pochette)
   edition?: string      // précision sur l'édition lue
   explicite?: boolean   // paroles explicites
+  videos?: string[]     // album absent de YouTube en version complète : clips officiels lus à la suite
   couleur: string       // couleur de secours si la miniature ne charge pas
   histoire: string
   pourquoi: string
@@ -576,6 +577,43 @@ export const ALBUMS: Album[] = [
     ],
   },
   {
+    id: "mbdtf", titre: "My Beautiful Dark Twisted Fantasy", artiste: "Kanye West", annee: 2010, label: "Def Jam / Roc-A-Fella", nbTitres: 13, vignette: "Bm5iA4Zupek", explicite: true, couleur: "#7A1F1F",
+    videos: ["PeFGaXCYktg", "L53gjP-TtGE", "HAfFfqiYLp0", "Bm5iA4Zupek"],
+    edition: "L'album complet n'est pas proposé en version officielle sur YouTube : ici, les 4 clips officiels (Dark Fantasy, POWER, All of the Lights, Runaway) s'enchaînent. Pour les 13 titres, utilise Spotify ou Apple Music.",
+    histoire: "My Beautiful Dark Twisted Fantasy est le cinquième album de Kanye West, sorti le 22 novembre 2010. Après la polémique des MTV Video Music Awards de 2009, où il avait interrompu Taylor Swift, Kanye s'est éloigné du public et a enregistré une grande partie de l'album à Hawaï, entouré de nombreux musiciens et producteurs. On y entend notamment Rihanna, Kid Cudi, Jay-Z, Nicki Minaj, Pusha T, Rick Ross, Bon Iver et Elton John au piano. Le titre Runaway est accompagné d'un court-métrage d'environ 35 minutes réalisé par Kanye.",
+    pourquoi: "C'est souvent cité comme l'un des meilleurs albums de hip-hop de l'histoire : il a gagné le Grammy du meilleur album de rap et figure très haut dans les classements des plus grands albums de tous les temps. Il mélange rap, rock, soul et musique orchestrale, avec beaucoup d'invités. Paroles explicites : il y a des mots crus et des thèmes adultes.",
+    titres: [
+      { t: "Dark Fantasy", note: "L'ouverture, avec un chœur et une voix de conte au début." },
+      { t: "Gorgeous" },
+      { t: "POWER", note: "Il reprend un extrait du groupe de rock King Crimson ; le clip est un tableau animé d'environ 1 minute 40." },
+      { t: "All of the Lights (Interlude)" },
+      { t: "All of the Lights", note: "Avec Rihanna et Kid Cudi, et beaucoup d'autres voix ; un énorme son de cuivres." },
+      { t: "Monster", note: "Célèbre pour le couplet de Nicki Minaj." },
+      { t: "So Appalled" }, { t: "Devil in a New Dress" },
+      { t: "Runaway", note: "Le cœur de l'album : plus de 9 minutes, avec Pusha T, et une longue fin au violoncelle et à la voix déformée." },
+      { t: "Hell of a Life" }, { t: "Blame Game" },
+      { t: "Lost in the World", note: "Construit à partir d'une chanson de Bon Iver (« Woods »)." },
+      { t: "Who Will Survive in America", note: "La fin, avec un extrait d'un poème de Gil Scott-Heron." },
+    ],
+    mots: [
+      { en: "twisted", fr: "tordu, dérangé", explication: "Se dit de quelque chose de déformé, ou d'une idée bizarre et sombre.", niveau: "B1" },
+      { en: "gorgeous", fr: "magnifique, superbe", explication: "Plus fort que « beautiful » ; très courant à l'oral.", niveau: "A2" },
+      { en: "appalled", fr: "consterné, scandalisé", explication: "Choqué par quelque chose de très mal.", niveau: "B2" },
+      { en: "a runaway", fr: "un fugueur, quelqu'un qui s'enfuit", explication: "Le verbe « to run away » veut dire s'enfuir.", niveau: "B1" },
+      { en: "the blame game", fr: "le jeu des reproches", explication: "Quand chacun accuse l'autre au lieu de régler le problème.", niveau: "B2" },
+      { en: "to make a toast", fr: "porter un toast", explication: "Lever son verre en l'honneur de quelque chose ou de quelqu'un.", niveau: "B1" },
+      { en: "fame", fr: "la célébrité", explication: "Le fait d'être connu de tous ; l'adjectif est « famous ».", niveau: "A2" },
+      { en: "to survive", fr: "survivre", explication: "Continuer à vivre ou à exister malgré les difficultés.", niveau: "A2" },
+      { en: "an outcast", fr: "un exclu, un paria", explication: "Une personne rejetée par le groupe ou la société.", niveau: "B2" },
+    ],
+    quiz: [
+      { question: "Que veut dire « appalled » ?", choix: ["ravi", "consterné", "fatigué", "pressé"], bonne: 1, explication: "« Appalled » = choqué, scandalisé." },
+      { question: "« The blame game », c'est…", choix: ["un jeu vidéo", "un jeu des reproches", "un match retour", "un jeu de cartes"], bonne: 1, explication: "Chacun rejette la faute sur l'autre." },
+      { question: "En quelle année l'album est-il sorti ?", choix: ["2004", "2007", "2010", "2013"], bonne: 2, explication: "Le 22 novembre 2010." },
+      { question: "Quel titre est accompagné d'un court-métrage d'environ 35 minutes ?", choix: ["POWER", "Monster", "Runaway", "Gorgeous"], bonne: 2, explication: "Runaway, réalisé par Kanye West lui-même." },
+    ],
+  },
+  {
     id: "OLAK5uy_m6VFZd8KNhbFoHGRhtzFakGNVSkMMGvbU", titre: "Yeezus", artiste: "Kanye West", annee: 2013, label: "Def Jam / Roc-A-Fella", nbTitres: 10, vignette: "uU9Fe-WXew4", explicite: true, couleur: "#2B2B2B",
     histoire: "Yeezus est le sixième album de Kanye West, sorti en juin 2013. Il a été réalisé avec plusieurs producteurs dont le duo Daft Punk et Rick Rubin. Le son est très dur, minimaliste et électronique, loin de ses albums plus orchestrés. L'album ne contient que 10 titres et dure environ 40 minutes. À l'époque, la promotion a été très originale, sans publicité classique.",
     pourquoi: "Yeezus est resté célèbre pour son audace : Kanye y a pris le risque de faire une musique brute et déroutante. Beaucoup d'artistes citent cet album comme une grande influence. Il est court, donc facile à écouter en entier. Paroles explicites : il y a des mots crus et des thèmes adultes.",
@@ -610,7 +648,9 @@ export const ALBUMS: Album[] = [
 export const ARTISTES_ALBUMS = Array.from(new Set(ALBUMS.map(a => a.artiste)))
 export const SPOTIFY_ALBUM = (a: Album) => `https://open.spotify.com/search/${encodeURIComponent(`${a.artiste} ${a.titre}`)}`
 export const APPLE_MUSIC_ALBUM = (a: Album) => `https://music.apple.com/search?term=${encodeURIComponent(`${a.artiste} ${a.titre}`)}`
-export const lecteurAlbum = (id: string) => `https://www.youtube-nocookie.com/embed/videoseries?list=${id}&rel=0&playsinline=1`
+export const lecteurAlbum = (a: Album) => a.videos?.length
+  ? `https://www.youtube-nocookie.com/embed/${a.videos[0]}?playlist=${a.videos.slice(1).join(",")}&rel=0&playsinline=1`
+  : `https://www.youtube-nocookie.com/embed/videoseries?list=${a.id}&rel=0&playsinline=1`
 export const vignetteAlbum = (a: Album) => `https://i.ytimg.com/vi/${a.vignette}/hqdefault.jpg`
 
 export const SPOTIFY = (c: Chanson) => `https://open.spotify.com/search/${encodeURIComponent(`${c.artiste} ${c.titre}`)}`
