@@ -1,5 +1,6 @@
 "use client"
 import EmplacementLecteur from "@/app/components/EmplacementLecteur"
+import { ouvrirListe } from "@/lib/lecteurGlobal"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { colors, radius } from "@/app/components/ui/tokens"
 import { lecteurYoutube, miniature, type EtatVideos } from "@/lib/videos"
@@ -237,9 +238,12 @@ function FicheAlbum({ album: a, favori, appris, onFavori, onAppris, onFermer }: 
       <div style={{ position: "relative", width: "100%", aspectRatio: "16 / 9", background: "#000", borderRadius: 12, overflow: "hidden" }}>
         <EmplacementLecteur src={lecteurAlbum(a)} titre={a.titre} sousTitre={`${a.artiste} · album`} />
       </div>
-      <p style={{ fontSize: 12, color: "rgba(255,255,255,.6)", margin: "6px 0 0", lineHeight: 1.4 }}>
-        {a.videos ? `Les ${a.videos.length} clips officiels s'enchaînent ; l'album complet (${a.nbTitres} titres) est sur Spotify ou Apple Music.` : <>Appuie sur lecture, puis utilise la liste du lecteur pour passer d&apos;un titre à l&apos;autre ({a.nbTitres} titres).</>}
-      </p>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "8px 0 0", flexWrap: "wrap" }}>
+        <button onClick={ouvrirListe} style={{ minHeight: 40, padding: "0 14px", borderRadius: 999, border: "1px solid rgba(255,255,255,.3)", background: "rgba(255,255,255,.1)", color: "#fff", fontSize: 13.5, fontWeight: 600, cursor: "pointer" }}>☰ Choisir un titre</button>
+        <span style={{ fontSize: 12, color: "rgba(255,255,255,.6)", lineHeight: 1.4, flex: "1 1 180px" }}>
+          {a.videos ? `Les ${a.videos.length} clips officiels s'enchaînent ; l'album complet (${a.nbTitres} titres) est sur Spotify ou Apple Music.` : "La musique continue quand tu fermes cette fenêtre."}
+        </span>
+      </div>
       <h3 style={{ fontSize: 18, margin: "10px 0 2px", textWrap: "balance", overflowWrap: "anywhere" }}>{a.titre}</h3>
       <div style={{ fontSize: 13, color: "rgba(255,255,255,.7)" }}>{a.artiste} · {a.annee} · {a.label}{a.explicite ? " · paroles explicites" : ""}{appris ? " · ✓ Appris" : ""}</div>
 
