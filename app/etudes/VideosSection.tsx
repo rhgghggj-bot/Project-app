@@ -6,7 +6,7 @@ import MesEntrainements from "./MesEntrainements"
 import EmplacementLecteur from "@/app/components/EmplacementLecteur"
 import MusiqueSection from "./MusiqueSection"
 import {
-  COLLECTIONS, ETAT_VIDE, chargerEtatVideos, enregistrerEtatVideos, idInstagram, idListe, idYoutube, infosYoutube, lecteurInstagram, lecteurListe, lecteurYoutube, miniature,
+  COLLECTIONS, ETAT_VIDE, chargerEtatVideos, enregistrerEtatVideos, idListe, idYoutube, infosYoutube, lecteurListe, lecteurYoutube, miniature,
   type EtatVideos, type Video,
 } from "@/lib/videos"
 
@@ -39,20 +39,11 @@ export default function VideosSection({ userId }: { userId: string }) {
 
   async function ajouter(e: React.FormEvent) {
     e.preventDefault()
-    // Publication Instagram (ex. un freestyle publié seulement sur le compte de l'artiste)
-    const insta = idInstagram(lien)
-    if (insta) {
-      const id = `insta:${insta.code}`
-      if (etatRef.current.perso.some(v => v.id === id)) return toast("Déjà dans « Mes vidéos »", "info")
-      maj(st => ({ ...st, perso: [{ id, insta: insta.code, titre: insta.compte ? `Publication de @${insta.compte}` : "Publication Instagram", chaine: "Instagram", collection: PERSO }, ...st.perso] }))
-      setLien(""); setFiltre(PERSO)
-      return toast("Publication Instagram ajoutée", "success")
-    }
     // Un lien d'album ou de playlist (YouTube ou YouTube Music) s'ajoute en entier
     const video = idYoutube(lien), liste = idListe(lien)
     const estListe = !!liste && (!video || /playlist\?|music\.youtube/.test(lien))
     const id = estListe ? `liste:${liste}` : video
-    if (!id) return toast("Colle un lien YouTube (vidéo, album, playlist) ou un lien de publication Instagram", "error")
+    if (!id) return toast("Colle un lien YouTube : une vidéo, ou un album / une playlist (lien avec « list= »)", "error")
     if (etatRef.current.perso.some(v => v.id === id)) return toast("Déjà dans « Mes vidéos »", "info")
     setAjout(true)
     const infos = await infosYoutube(video ?? "", estListe ? liste! : undefined)
@@ -91,7 +82,7 @@ export default function VideosSection({ userId }: { userId: string }) {
         </div>
         <form onSubmit={ajouter} style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <label htmlFor="lien-video" style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}>Lien d&apos;une vidéo YouTube</label>
-          <input id="lien-video" value={lien} onChange={e => setLien(e.target.value)} placeholder="Colle un lien YouTube (vidéo, album) ou Instagram" inputMode="url" autoComplete="off"
+          <input id="lien-video" value={lien} onChange={e => setLien(e.target.value)} placeholder="Colle un lien YouTube : vidéo ou album" inputMode="url" autoComplete="off"
             style={{ flex: "1 1 220px", minWidth: 0, minHeight: 44, borderRadius: 12, border: "none", padding: "0 14px", fontSize: 16, background: "#fff", color: colors.text }} />
           <button type="submit" disabled={ajout || !lien.trim()} style={{ minHeight: 44, padding: "0 16px", borderRadius: 12, border: "none", background: "#fff", color: colors.navy, fontWeight: 700, fontSize: 14, cursor: "pointer", opacity: ajout || !lien.trim() ? 0.6 : 1 }}>
             {ajout ? "Ajout…" : "Ajouter"}
@@ -120,9 +111,7 @@ export default function VideosSection({ userId }: { userId: string }) {
                 <button onClick={() => { setOuverte({ video: v, liste: g.videos }); marquerVue(v.id) }} aria-label={`Regarder : ${v.titre}`}
                   style={{ position: "relative", border: "none", padding: 0, cursor: "pointer", background: "#0A1628", aspectRatio: "16 / 9" }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  {v.insta
-                    ? <span aria-hidden="true" style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, #F58529, #DD2A7B 50%, #8134AF)", display: "grid", placeItems: "center", color: "#fff", fontSize: 13, fontWeight: 700 }}>Instagram</span>
-                    : <img src={v.image ?? miniature(v.id)} alt="" loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />}
+                  <img src={v.image ?? miniature(v.id)} alt="" loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                   <span aria-hidden="true" style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center" }}>
                     <span style={{ width: 48, height: 48, borderRadius: "50%", background: "rgba(10,22,40,.75)", display: "grid", placeItems: "center" }}>
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z" /></svg>
@@ -179,24 +168,15 @@ function Lecteur({ ouverte, favori, onFavori, onChanger, onFermer }: {
         <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 8 }}>
           <button onClick={onFermer} aria-label="Fermer la vidéo" style={{ ...bouton, minWidth: 44, padding: 0, fontSize: 18 }}>✕</button>
         </div>
-        {v.insta ? (
-          // Instagram ne se lit pas en arrière-plan : la publication s'affiche ici, avec son intégration officielle
-          <>
-            <iframe src={lecteurInstagram(v.insta)} title={v.titre} allow="autoplay; encrypted-media; fullscreen" allowFullScreen
-              style={{ display: "block", width: "100%", maxWidth: 420, height: "min(72vh, 720px)", margin: "0 auto", border: 0, borderRadius: 12, background: "#fff" }} />
-            <p style={{ fontSize: 12, color: "rgba(255,255,255,.65)", textAlign: "center", margin: "6px 0 0" }}>Le son s&apos;arrête quand tu fermes la fenêtre : Instagram ne permet pas l&apos;écoute en continu.</p>
-          </>
-        ) : (
-          <div style={{ position: "relative", width: "100%", aspectRatio: "16 / 9", background: "#000", borderRadius: 12, overflow: "hidden" }}>
-            <EmplacementLecteur src={v.liste ? lecteurListe(v.liste) : lecteurYoutube(v.id)} titre={v.titre} sousTitre={v.chaine} />
-          </div>
-        )}
+        <div style={{ position: "relative", width: "100%", aspectRatio: "16 / 9", background: "#000", borderRadius: 12, overflow: "hidden" }}>
+          <EmplacementLecteur src={v.liste ? lecteurListe(v.liste) : lecteurYoutube(v.id)} titre={v.titre} sousTitre={v.chaine} />
+        </div>
         <h2 style={{ fontSize: 17, margin: "12px 0 2px", textWrap: "balance" }}>{v.titre}</h2>
         <div style={{ fontSize: 13, color: "rgba(255,255,255,.7)" }}>{v.chaine}{v.note ? ` · ${v.note}` : ""}</div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
           {precedente && <button style={bouton} onClick={() => onChanger(precedente)}>← Précédente</button>}
           <button style={{ ...bouton, color: favori ? "#FF8FA3" : "#fff" }} onClick={onFavori} aria-pressed={favori}>{favori ? "♥ Favori" : "♡ Favori"}</button>
-          <a href={v.insta ? `https://www.instagram.com/p/${v.insta}/` : `https://www.youtube.com/watch?v=${v.id}`} target="_blank" rel="noopener noreferrer" style={{ ...bouton, display: "inline-flex", alignItems: "center", textDecoration: "none" }}>{v.insta ? "Ouvrir sur Instagram" : "Ouvrir sur YouTube"}</a>
+          <a href={`https://www.youtube.com/watch?v=${v.id}`} target="_blank" rel="noopener noreferrer" style={{ ...bouton, display: "inline-flex", alignItems: "center", textDecoration: "none" }}>Ouvrir sur YouTube</a>
           {suivante && <button style={{ ...bouton, background: "#fff", color: "#0A1628", fontWeight: 700 }} onClick={() => onChanger(suivante)}>Suivante →</button>}
         </div>
       </div>
