@@ -9,6 +9,7 @@ import { CHAPITRES, HISTOIRE, type Chapitre, type Defi } from "@/lib/renaissance
 import { CONTINENTS, NOTIONS, type Continent, type Espece } from "@/lib/biodiversite"
 import { ETAT_SCIENCES_VIDE, chargerSciences, enregistrerSciences, reponseJuste, type EtatSciences } from "@/lib/sciences"
 import type { ModeAtlas } from "./Atlas"
+import SchemaGraine from "./SchemasGraine"
 
 // Onglet « Sciences » : la biodiversité (continents, et le globe colorié par
 // nombre d'espèces) et « Projet Graine », une histoire où l'on reconstruit la
@@ -261,6 +262,7 @@ function VueChapitre({ c, etat, maj, retour, suivant }: { c: Chapitre; etat: Eta
         <section key={x.titre} style={{ ...carte, borderLeft: `4px solid ${COULEUR_MATIERE[c.matieres[0]] ?? colors.blue}` }}>
           <div style={{ fontWeight: 700, fontSize: 15.5, marginBottom: 6 }}>🔬 {x.titre}</div>
           {x.texte.map((p, i) => <p key={i} style={texte}>{p}</p>)}
+          {x.schema && <SchemaGraine id={x.schema} />}
           {x.formule && <div style={{ fontFamily: "ui-monospace, Menlo, monospace", fontSize: 15, background: "#F3F5F9", borderRadius: 8, padding: "10px 12px", overflowX: "auto" }}>{x.formule}</div>}
         </section>
       ))}

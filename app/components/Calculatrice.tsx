@@ -93,7 +93,7 @@ export default function Calculatrice() {
         </div>
       </div>
       {voirHistorique && (
-        <div style={{ background: "#09121F", borderRadius: 12, padding: "6px 8px", marginBottom: 8, maxHeight: 170, overflowY: "auto" }}>
+        <div style={{ background: "#09121F", borderRadius: 12, padding: "6px 8px", marginBottom: 8, maxHeight: 260, overflowY: "auto" }}>
           {historique.length === 0 ? <div style={{ fontSize: 12.5, color: "rgba(255,255,255,.55)", padding: 6 }}>Pas encore de calcul.</div> : (
             <>
               {historique.map((h, k) => (
@@ -108,7 +108,8 @@ export default function Calculatrice() {
           )}
         </div>
       )}
-      {!reduite && <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 5 }}>
+      {/* L'historique prend la place des touches : la calculatrice reste dans l'écran du téléphone */}
+      {!reduite && !voirHistorique && <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 5 }}>
         {TOUCHES.map(k => (
           <button key={k.t} onClick={() => appuyer(k)} aria-label={k.nom ?? k.t}
             style={{ ...touche, fontSize: k.type === "fn" ? 14.5 : 17,
