@@ -16,6 +16,11 @@ const TOUCHES: { t: string; ins?: string; nom?: string; type?: "op" | "fn" | "eg
   { t: "x²", ins: "²", type: "fn", nom: "Au carré" }, { t: "xʸ", ins: "^", type: "fn", nom: "Puissance" }, { t: "log", ins: "log(", type: "fn" }, { t: "ln", ins: "ln(", type: "fn" }, { t: "%", type: "fn", nom: "Pour cent" },
 ]
 
+const CLE_HISTORIQUE = "calculatrice-historique"
+function lireHistorique(): { e: string; r: string }[] {
+  try { const v = JSON.parse(localStorage.getItem(CLE_HISTORIQUE) || "[]"); return Array.isArray(v) ? v.slice(0, 10) : [] } catch { return [] }
+}
+
 export default function Calculatrice() {
   const { ouverte, utiliser } = useSyncExternalStore(abonnerCalculatrice, lireCalculatrice, lireCalculatrice)
   const boite = useRef<HTMLDivElement>(null)
@@ -26,6 +31,9 @@ export default function Calculatrice() {
   const [degres, setDegres] = useState(true)
   const [erreur, setErreur] = useState(false)
   const [reduite, setReduite] = useState(false)   // seulement l'écran : on voit mieux la page derrière
+  // Les 10 derniers calculs, gardés sur l'appareil
+  const [historique, setHistorique] = useState<{ e: string; r: string }[]>(lireHistorique)
+  const [voirHistorique, setVoirHistorique] = useState(false)
 
   if (!ouverte) return null
 
@@ -50,6 +58,7 @@ export default function Calculatrice() {
       const r = calculer(expr, degres)
       if (!isFinite(r)) throw new Error("infini")
       setAvant(`${expr} =`); setExpr(ecrireNombre(r)); setFini(true)
+      if (expr !== ecrireNombre(r)) setHistorique(h => { const n = [{ e: expr, r: ecrireNombre(r) }, ...h].slice(0, 10); try { localStorage.setItem(CLE_HISTORIQUE, JSON.stringify(n)) } catch { /* historique non gardé */ } return n })
     } catch { setErreur(true) }
   }
 
@@ -67,6 +76,8 @@ export default function Calculatrice() {
         </div>
         <button onClick={() => setDegres(d => !d)} aria-label={degres ? "Angles en degrés (toucher pour radians)" : "Angles en radians (toucher pour degrés)"}
           style={{ minHeight: 32, padding: "0 10px", borderRadius: 999, border: "1px solid rgba(255,255,255,.25)", background: "transparent", color: "#9EC2FF", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>{degres ? "DEG" : "RAD"}</button>
+        <button onClick={() => setVoirHistorique(v => !v)} aria-label="Derniers calculs" aria-expanded={voirHistorique}
+          style={{ width: 36, height: 40, borderRadius: 999, border: "none", background: voirHistorique ? "rgba(255,255,255,.15)" : "transparent", color: "rgba(255,255,255,.75)", fontSize: 16, cursor: "pointer" }}>🕘</button>
         <button onClick={() => setReduite(r => !r)} aria-label={reduite ? "Afficher les touches" : "Réduire la calculatrice"} aria-expanded={!reduite}
           style={{ width: 36, height: 40, borderRadius: 999, border: "none", background: "transparent", color: "rgba(255,255,255,.75)", fontSize: 16, cursor: "pointer" }}>{reduite ? "▴" : "▾"}</button>
         <button onClick={fermerCalculatrice} aria-label="Fermer la calculatrice" style={{ width: 40, height: 40, borderRadius: 999, border: "none", background: "transparent", color: "rgba(255,255,255,.75)", fontSize: 16, cursor: "pointer" }}>✕</button>
@@ -81,7 +92,24 @@ export default function Calculatrice() {
           {erreur ? "Calcul impossible, vérifie l'écriture" : !fini && apercu != null && expr !== ecrireNombre(apercu) ? `= ${ecrireNombre(apercu)}` : ""}
         </div>
       </div>
-      {!reduite && <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 5 }}>
+      {voirHistorique && (
+        <div style={{ background: "#09121F", borderRadius: 12, padding: "6px 8px", marginBottom: 8, maxHeight: 260, overflowY: "auto" }}>
+          {historique.length === 0 ? <div style={{ fontSize: 12.5, color: "rgba(255,255,255,.55)", padding: 6 }}>Pas encore de calcul.</div> : (
+            <>
+              {historique.map((h, k) => (
+                <button key={k} onClick={() => { setExpr(h.r); setAvant(`${h.e} =`); setFini(true); setVoirHistorique(false) }} title="Reprendre ce résultat"
+                  style={{ display: "block", width: "100%", textAlign: "right", background: "none", border: "none", color: "#fff", padding: "6px 4px", cursor: "pointer", borderBottom: "1px solid rgba(255,255,255,.08)", fontVariantNumeric: "tabular-nums" }}>
+                  <span style={{ display: "block", fontSize: 11.5, color: "rgba(255,255,255,.5)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{h.e} =</span>
+                  <span style={{ fontSize: 15, fontWeight: 600 }}>{h.r}</span>
+                </button>
+              ))}
+              <button onClick={() => { setHistorique([]); try { localStorage.removeItem(CLE_HISTORIQUE) } catch { /* rien */ } }} style={{ background: "none", border: "none", color: "#FFB4C0", fontSize: 12, padding: "6px 4px", cursor: "pointer" }}>Effacer l&apos;historique</button>
+            </>
+          )}
+        </div>
+      )}
+      {/* L'historique prend la place des touches : la calculatrice reste dans l'écran du téléphone */}
+      {!reduite && !voirHistorique && <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 5 }}>
         {TOUCHES.map(k => (
           <button key={k.t} onClick={() => appuyer(k)} aria-label={k.nom ?? k.t}
             style={{ ...touche, fontSize: k.type === "fn" ? 14.5 : 17,

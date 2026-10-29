@@ -3,6 +3,7 @@ import { useMemo, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { toast, confirmer } from "@/lib/toast"
 import { useChargement } from "@/lib/useChargement"
+import { ouvrirCalculatrice } from "@/lib/calcul"
 import { useMaintenant } from "@/lib/useMaintenant"
 import { colors, radius } from "@/app/components/ui/tokens"
 import { SYSTEMES, formaterNote, moyennePonderee, noteNecessaire, type Echelle, type Pays } from "@/lib/etudes"
@@ -343,7 +344,10 @@ function NoteNecessaire({ notes, matieres, matiereInitiale, pays }: { notes: Not
   const couleur = !r ? colors.textMuted : r.statut === "impossible" ? colors.red : r.statut === "acquis" ? colors.green : r.note >= s.max - (s.max - s.suffisant) / 3 ? "#B45309" : colors.blue
   return (
     <div style={{ background: "#fff", border: `0.5px solid ${colors.border}`, borderRadius: radius.md, padding: "12px", marginTop: "10px" }}>
-      <div style={{ fontSize: "13px", fontWeight: 600, color: colors.text, marginBottom: 8 }}>Quelle note me faut-il ?</div>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+        <div style={{ flex: 1, fontSize: "13px", fontWeight: 600, color: colors.text }}>Quelle note me faut-il ?</div>
+        <button onClick={() => ouvrirCalculatrice()} style={{ background: "none", border: "none", color: colors.blue, fontSize: "12px", cursor: "pointer", padding: "4px 0", minHeight: 32 }}>🧮 Calculatrice</button>
+      </div>
       <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr 1fr", gap: 8 }}>
         <label><span style={etiquette}>Matière</span>
           <select value={matiere} onChange={e => setMatiere(e.target.value)} style={champ}>

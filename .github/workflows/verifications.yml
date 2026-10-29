@@ -1,0 +1,32 @@
+# Vérifications automatiques à chaque envoi de code : style (lint), types,
+# tests (calculatrice, jeu Esprit, contenu) et construction du site.
+name: Vérifications
+
+on:
+  push:
+    branches: [main, "claude/**"]
+  pull_request:
+
+jobs:
+  verifier:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Style (lint)
+        run: npm run lint -- --quiet
+      - name: Types
+        run: npx tsc --noEmit -p .
+      - name: Tests
+        run: npm test
+      - name: Construction du site
+        run: npm run build
+        env:
+          # Valeurs factices : la construction n'appelle pas Supabase
+          NEXT_PUBLIC_SUPABASE_URL: https://exemple.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: cle-factice

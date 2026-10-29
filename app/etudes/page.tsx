@@ -1,5 +1,6 @@
 "use client"
 import { useState } from "react"
+import dynamic from "next/dynamic"
 import { memoriser, relire } from "@/lib/horsLigne"
 import SectionHeader from "@/app/components/ui/SectionHeader"
 import Button from "@/app/components/ui/Button"
@@ -17,12 +18,17 @@ import NotesSection from "./NotesSection"
 import CorrectionSection from "./CorrectionSection"
 import RevisionSection from "./RevisionSection"
 import Donnees from "./Donnees"
-import ArtefactsSection from "./ArtefactsSection"
-import CarnetSection, { type ActionCarnet } from "./CarnetSection"
-import BibliothequeSection from "./BibliothequeSection"
-import VideosSection from "./VideosSection"
-import EspritSection from "./EspritSection"
-import SciencesSection from "./SciencesSection"
+import type { ActionCarnet } from "./CarnetSection"
+
+// Chaque onglet n'est chargé que lorsqu'on l'ouvre : la page s'affiche plus vite
+// (les livres, la musique, Esprit et Sciences contiennent beaucoup de contenu).
+const chargement = () => <div className="nx-skel" style={{ height: 240, borderRadius: 16 }} />
+const ArtefactsSection = dynamic(() => import("./ArtefactsSection"), { loading: chargement })
+const CarnetSection = dynamic(() => import("./CarnetSection"), { loading: chargement })
+const BibliothequeSection = dynamic(() => import("./BibliothequeSection"), { loading: chargement })
+const VideosSection = dynamic(() => import("./VideosSection"), { loading: chargement })
+const EspritSection = dynamic(() => import("./EspritSection"), { loading: chargement })
+const SciencesSection = dynamic(() => import("./SciencesSection"), { loading: chargement })
 import { CURSUS, descriptionNiveau, matieresProposees, trouverNiveau } from "@/lib/cursus"
 
 type Onglet = "notes" | "corriger" | "reviser" | "carnet" | "livres" | "videos" | "esprit" | "sciences" | "artefacts"

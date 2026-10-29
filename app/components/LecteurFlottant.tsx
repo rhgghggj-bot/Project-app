@@ -52,7 +52,10 @@ export default function LecteurFlottant() {
   const [noms, setNoms] = useState<Record<string, string>>({})
   // Téléphone : moins de boutons, le titre ouvre la liste
   const etroit = useMediaQuery("(max-width: 430px)")
-  const { placement, poignee } = useDeplacable("lecteur-position", boite)
+  const { placement, poignee, aBouge, recadrer } = useDeplacable("lecteur-position", boite)
+  // Bulle : le lecteur réduit à un petit rond (on le rouvre en le touchant)
+  const [bulle, setBulle] = useState(() => { try { return localStorage.getItem("lecteur-bulle") === "1" } catch { return false } })
+  const changerBulle = (v: boolean) => { setBulle(v); try { localStorage.setItem("lecteur-bulle", v ? "1" : "0") } catch { /* réglage non gardé */ } recadrer() }
 
   // Suit la position de l'emplacement (défilement, rotation, animation d'ouverture)
   useEffect(() => {
@@ -98,26 +101,35 @@ export default function LecteurFlottant() {
   const plusieurs = info.ids.length > 1
   const bouton: React.CSSProperties = { flexShrink: 0, width: etroit ? 36 : 40, height: 40, borderRadius: 999, border: "none", background: "transparent", color: "#fff", fontSize: 17, cursor: "pointer", display: "grid", placeItems: "center" }
   const titreEnCours = info.titre || lecture.titre
+  const enBulle = !grand && bulle
 
   return (
     <>
       <div role="region" aria-label={grand ? "Lecteur" : `Lecture en cours : ${titreEnCours}`} ref={boite}
+        {...(enBulle ? { ...poignee, onClick: () => { if (!aBouge()) changerBulle(false) } } : {})}
         style={grand
           ? { position: "fixed", zIndex: 1250, borderRadius: 12, overflow: "hidden", background: "#000" }
+          : enBulle
+          ? { ...poignee.style, position: "fixed", zIndex: 1150, right: 12, left: "auto", top: "auto", bottom: "calc(84px + env(safe-area-inset-bottom))", width: 58, height: 58, padding: 0, borderRadius: 999, overflow: "hidden",
+              background: "#0A1628", boxShadow: info.joue ? "0 0 0 3px #2B7FFF, 0 10px 24px -8px rgba(0,0,0,.6)" : "0 0 0 3px rgba(255,255,255,.6), 0 10px 24px -8px rgba(0,0,0,.6)", ...placement }
           : { position: "fixed", zIndex: 1150, right: 8, left: "auto", top: "auto", bottom: "calc(80px + env(safe-area-inset-bottom))", width: "min(340px, calc(100vw - 16px))", height: "auto",
               display: "flex", alignItems: "center", gap: 6, padding: "5px 4px 5px 0", borderRadius: 12, background: "rgba(10,22,40,.96)", color: "#fff", boxShadow: "0 10px 28px -10px rgba(0,0,0,.55)", ...placement }}>
-        {!grand && <div {...poignee} title="Glisse pour déplacer (double appui : remettre en bas)" aria-hidden="true"
+        {enBulle && <span aria-hidden="true" style={{ position: "absolute", inset: 0, zIndex: 1, display: "grid", placeItems: "center", background: "rgba(10,22,40,.35)", color: "#fff", fontSize: 20, pointerEvents: "none" }}>{info.joue ? "♪" : "▶"}</span>}
+        {enBulle && <button onClick={e => { e.stopPropagation(); changerBulle(false) }} aria-label={`Ouvrir le lecteur : ${titreEnCours}`} style={{ position: "absolute", inset: 0, zIndex: 2, opacity: 0, border: "none", cursor: "pointer", pointerEvents: "none" }} />}
+        {!grand && !enBulle && <div {...poignee} title="Glisse pour déplacer (double appui : remettre en bas)" aria-hidden="true"
           style={{ ...poignee.style, width: 20, alignSelf: "stretch", marginRight: -4, display: "grid", placeItems: "center", color: "rgba(255,255,255,.45)", fontSize: 15, userSelect: "none" }}>⠿</div>}
         {/* YouTube met en pause un lecteur plus petit que 200 × 200 px : en petit, on garde
             l'iframe à sa taille normale (356 × 200) et on la réduit seulement à l'affichage */}
-        <div {...(grand ? {} : poignee)} style={grand ? { position: "absolute", inset: 0 } : { ...poignee.style, position: "relative", width: MINI.l, height: MINI.h, flexShrink: 0, borderRadius: 6, overflow: "hidden", background: "#000" }}>
+        <div {...(grand || enBulle ? {} : poignee)} style={grand ? { position: "absolute", inset: 0 } : enBulle ? { position: "absolute", inset: 0, pointerEvents: "none" } : { ...poignee.style, position: "relative", width: MINI.l, height: MINI.h, flexShrink: 0, borderRadius: 6, overflow: "hidden", background: "#000" }}>
           <iframe ref={cadre} key={lecture.src} src={avecApi(lecture.src)} title={lecture.titre} allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowFullScreen
             referrerPolicy="strict-origin-when-cross-origin"
             style={grand
               ? { position: "absolute", inset: 0, width: "100%", height: "100%", border: 0 }
+              : enBulle
+              ? { position: "absolute", left: (58 - 356 * (58 / 200)) / 2, top: 0, width: 356, height: 200, border: 0, transform: `scale(${58 / 200})`, transformOrigin: "0 0", pointerEvents: "none" }
               : { position: "absolute", left: 0, top: 0, width: 356, height: 200, border: 0, transform: `scale(${MINI.l / 356})`, transformOrigin: "0 0", pointerEvents: "none" }} />
         </div>
-        {!grand && (
+        {!grand && !enBulle && (
           <>
             <button onClick={() => (plusieurs ? ouvrirListe() : undefined)} disabled={!plusieurs} aria-label={plusieurs ? "Choisir un titre" : undefined}
               style={{ flex: 1, minWidth: 0, textAlign: "left", background: "none", border: "none", color: "#fff", padding: "0 2px", cursor: plusieurs ? "pointer" : "default" }}>
@@ -130,6 +142,7 @@ export default function LecteurFlottant() {
             <button onClick={() => (info.joue ? p()?.pauseVideo() : p()?.playVideo())} aria-label={info.joue ? "Pause" : "Lecture"} style={{ ...bouton, fontSize: 18 }}>{info.joue ? "⏸" : "▶"}</button>
             {plusieurs && <button onClick={() => p()?.nextVideo()} aria-label="Titre suivant" style={bouton}>⏭</button>}
             {plusieurs && !etroit && <button onClick={ouvrirListe} aria-label="Choisir un titre" style={bouton}>☰</button>}
+            <button onClick={() => changerBulle(true)} aria-label="Réduire en bulle" title="Réduire en bulle" style={{ ...bouton, fontSize: 15 }}>●</button>
             <button onClick={arreter} aria-label="Arrêter la lecture" style={{ ...bouton, fontSize: 15, color: "rgba(255,255,255,.75)" }}>✕</button>
           </>
         )}

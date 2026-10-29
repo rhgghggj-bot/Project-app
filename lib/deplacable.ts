@@ -20,7 +20,8 @@ function lire(cle: string): Pos | null {
 
 export function useDeplacable(cle: string, el: React.RefObject<HTMLElement | null>) {
   const [pos, setPos] = useState<Pos | null>(() => lire(cle))
-  const geste = useRef<{ dx: number; dy: number; bouge: boolean } | null>(null)
+  const geste = useRef<{ dx: number; dy: number; x0: number; y0: number; bouge: boolean } | null>(null)
+  const vientDeBouger = useRef(false)   // pour ne pas prendre la fin d'un glissement pour un appui
   const place = pos != null
 
   // Écran tourné ou fenêtre réduite : l'élément reste visible
@@ -35,18 +36,22 @@ export function useDeplacable(cle: string, el: React.RefObject<HTMLElement | nul
     onPointerDown(e: React.PointerEvent) {
       if (!el.current || (e.pointerType === "mouse" && e.button !== 0)) return
       const r = el.current.getBoundingClientRect()
-      geste.current = { dx: e.clientX - r.left, dy: e.clientY - r.top, bouge: false }
+      geste.current = { dx: e.clientX - r.left, dy: e.clientY - r.top, x0: e.clientX, y0: e.clientY, bouge: false }
+      vientDeBouger.current = false
       e.currentTarget.setPointerCapture(e.pointerId)
     },
     onPointerMove(e: React.PointerEvent) {
       const g = geste.current
       if (!g) return
+      // Petit tremblement du doigt : ce n'est pas encore un glissement
+      if (!g.bouge && Math.hypot(e.clientX - g.x0, e.clientY - g.y0) < 6) return
       g.bouge = true
       setPos(borner(el.current, e.clientX - g.dx, e.clientY - g.dy))
     },
     onPointerUp() {
       const g = geste.current
       geste.current = null
+      vientDeBouger.current = !!g?.bouge
       if (!g?.bouge) return
       setPos(p => { try { if (p) localStorage.setItem(cle, JSON.stringify(p)) } catch { /* sans stockage : position oubliée au rechargement */ } return p })
     },
@@ -60,5 +65,7 @@ export function useDeplacable(cle: string, el: React.RefObject<HTMLElement | nul
 
   // Style à appliquer à l'élément quand il a été déplacé
   const placement: React.CSSProperties | null = pos ? { left: pos.x, top: pos.y, right: "auto", bottom: "auto" } : null
-  return { placement, poignee }
+  // Après un changement de taille (ex. barre → bulle), on reste dans l'écran
+  const recadrer = () => requestAnimationFrame(() => setPos(p => (p ? borner(el.current, p.x, p.y) : p)))
+  return { placement, poignee, aBouge: () => vientDeBouger.current, recadrer }
 }

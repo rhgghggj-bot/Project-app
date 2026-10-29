@@ -14,6 +14,8 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Scripts des skills Claude Code : outillage, pas le code de l'appli
     ".claude/**",
+    // Bibliothèques fournies telles quelles (lecteur PDF) : pas notre code
+    "public/pdfjs/**",
   ]),
 ]);
 

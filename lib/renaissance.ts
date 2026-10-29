@@ -9,7 +9,8 @@ export type Defi =
 export type Chapitre = {
   id: string; numero: number; titre: string; matieres: Matiere[]; niveau: 1 | 2 | 3 | 4
   recit: string[]                                   // paragraphes de l'histoire (3 à 6)
-  science: { titre: string; texte: string[]; formule?: string }[]   // 1 à 3 encadrés
+  science: { titre: string; texte: string[]; formule?: string; schema?: string }[]   // 1 à 3 encadrés
+  // schema : identifiant d'un schéma de app/etudes/SchemasGraine.tsx
   experience?: string                               // une expérience SANS danger à faire chez soi
   defis: Defi[]                                     // 2 à 4 défis
   securite?: string
@@ -62,7 +63,7 @@ export const HISTOIRE: { titre: string; accroche: string; personnages: Personnag
   ],
 }
 
-// Les seize chapitres, du plus simple au plus avancé
+// Les vingt-quatre chapitres, du plus simple au plus avancé
 export const CHAPITRES: Chapitre[] = [
   // 1. L'eau
   {
@@ -88,6 +89,7 @@ export const CHAPITRES: Chapitre[] = [
       },
       {
         titre: "Filtrer n'est pas désinfecter",
+        schema: "filtre-eau",
         texte: [
           "Un filtre en couches (gravier, sable fin, charbon de bois) retient les particules visibles : feuilles, terre, algues. L'eau devient plus claire et moins sale au goût.",
           "Mais les microbes sont beaucoup trop petits : une bactérie mesure environ un millième de millimètre et peut traverser un filtre simple. Pour les détruire, on utilise la chaleur : à gros bouillons, pendant au moins une minute (trois minutes en haute montagne), l'eau devient bien plus sûre. Ensuite on la laisse refroidir dans un récipient propre.",
@@ -163,6 +165,7 @@ export const CHAPITRES: Chapitre[] = [
     science: [
       {
         titre: "Le triangle du feu",
+        schema: "triangle-feu",
         texte: [
           "Pour qu'un feu existe, il faut trois éléments réunis : un combustible (ce qui brûle : bois, cire, gaz), un comburant (le dioxygène de l'air, qui représente environ 21 % de l'air) et de la chaleur pour démarrer la réaction.",
           "Retire un seul de ces trois éléments et le feu meurt. Couvrir une flamme la prive de dioxygène, l'arroser lui enlève sa chaleur, et retirer le bois lui enlève son combustible. Souffler sur des braises leur apporte du dioxygène frais : elles rougissent.",
@@ -254,6 +257,7 @@ export const CHAPITRES: Chapitre[] = [
     science: [
       {
         titre: "L'ombre, une horloge et une boussole",
+        schema: "gnomon",
         texte: [
           "Le Soleil semble traverser le ciel parce que la Terre tourne sur elle-même : un tour complet de 360° en 24 heures, soit 15° par heure. Un bâton vertical, appelé gnomon, projette une ombre qui tourne comme l'aiguille d'une horloge.",
           "En Suisse (hémisphère nord), à midi solaire, le Soleil est exactement au sud et l'ombre est la plus courte, pointant vers le nord. Marquer le bout de l'ombre plusieurs fois dans la journée suffit pour tracer une ligne nord-sud.",
@@ -262,6 +266,7 @@ export const CHAPITRES: Chapitre[] = [
       },
       {
         titre: "L'étoile Polaire et la latitude",
+        schema: "etoile-polaire",
         texte: [
           "L'étoile Polaire est presque exactement dans l'axe de rotation de la Terre : elle semble immobile dans le ciel du nord. Sa hauteur au-dessus de l'horizon est égale à la latitude du lieu où l'on se trouve.",
           "Au pôle Nord, elle est au-dessus de nos têtes (90°) ; à l'équateur, elle est à ras de l'horizon (0°). Le Jura se trouve vers 46,5° de latitude nord : l'étoile y apparaît à 46,5° de hauteur. L'angle entre Polaris et le zénith (le point juste au-dessus de la tête) vaut donc 90° moins la latitude.",
@@ -335,6 +340,7 @@ export const CHAPITRES: Chapitre[] = [
     science: [
       {
         titre: "Le théorème de Pythagore",
+        schema: "triangle-345",
         texte: [
           "Dans un triangle qui a un angle droit (un triangle rectangle), le plus grand côté, l'hypoténuse, est en face de l'angle droit. Son carré est égal à la somme des carrés des deux autres côtés.",
           "Cette propriété marche dans les deux sens : si trois longueurs vérifient a² + b² = c², alors le triangle est rectangle. C'est ce qui permet de contrôler un angle droit avec une simple corde.",
@@ -421,6 +427,7 @@ export const CHAPITRES: Chapitre[] = [
     science: [
       {
         titre: "Le levier et les moments",
+        schema: "levier",
         texte: [
           "Un levier est une barre qui tourne autour d'un point fixe, le pivot. Chaque force qui s'applique sur la barre tend à la faire tourner : on mesure cet effet par le moment, égal à la force multipliée par la distance au pivot.",
           "Le levier est en équilibre quand le moment d'un côté est égal au moment de l'autre. Pour soulever une charge lourde proche du pivot, il suffit d'une petite force loin du pivot.",
@@ -517,6 +524,7 @@ export const CHAPITRES: Chapitre[] = [
     science: [
       {
         titre: "Les triangles semblables",
+        schema: "triangles-semblables",
         texte: [
           "Deux triangles sont semblables s'ils ont les mêmes angles : l'un est un agrandissement ou une réduction de l'autre. Leurs côtés sont alors proportionnels : le rapport entre deux côtés correspondants est toujours le même.",
           "Au même instant, le Soleil éclaire tous les objets avec la même inclinaison. Un bâton et un arbre forment donc deux triangles semblables avec leurs ombres : hauteur de l'arbre / ombre de l'arbre = hauteur du bâton / ombre du bâton.",
@@ -602,6 +610,7 @@ export const CHAPITRES: Chapitre[] = [
     science: [
       {
         titre: "La calcination du calcaire",
+        schema: "cycle-chaux",
         texte: [
           "Le calcaire est surtout formé de carbonate de calcium (CaCO₃). Chauffé très fort, il se décompose : il donne de la chaux vive (oxyde de calcium, CaO) et un gaz, le dioxyde de carbone (CO₂), qui s'échappe dans l'air.",
           "C'est pour cela que la pierre devient plus légère. Rien ne disparaît pourtant : la masse de départ est égale à la masse des produits. Les masses molaires aident à compter : M(Ca) = 40 g/mol, M(C) = 12 g/mol, M(O) = 16 g/mol. Donc M(CaCO₃) = 100 g/mol, M(CaO) = 56 g/mol et M(CO₂) = 44 g/mol.",
@@ -686,6 +695,7 @@ export const CHAPITRES: Chapitre[] = [
     science: [
       {
         titre: "La molécule de savon : une tête et une queue",
+        schema: "molecule-savon",
         texte: [
           "Une molécule de savon a une « tête » hydrophile (qui aime l'eau) et une « queue » hydrophobe (qui fuit l'eau mais s'accroche à la graisse). Dans l'eau savonneuse, les queues entourent les gouttes de graisse, les têtes restent tournées vers l'eau : la graisse est emportée au rinçage.",
           "Le savon se forme par une réaction appelée saponification : une graisse réagit avec une base forte pour donner du savon et de la glycérine. Cette réaction utilise des produits dangereux, c'est pourquoi on ne la tente pas sans formation.",
@@ -693,6 +703,7 @@ export const CHAPITRES: Chapitre[] = [
       },
       {
         titre: "L'échelle du pH",
+        schema: "echelle-ph",
         texte: [
           "Le pH mesure l'acidité d'une solution. L'eau pure est neutre (pH 7). En dessous de 7 on est acide (citron, vinaigre), au-dessus de 7 on est basique (savon, bicarbonate).",
           "L'échelle est logarithmique : chaque unité de pH correspond à une concentration en ions H₃O⁺ divisée ou multipliée par 10. Un pH de 5 est donc 100 fois plus acide qu'un pH de 7. Le lien est : pH = −log [H₃O⁺], avec [H₃O⁺] en mol/L.",
@@ -774,6 +785,7 @@ export const CHAPITRES: Chapitre[] = [
       },
       {
         titre: "La croissance exponentielle",
+        schema: "croissance-levure",
         texte: [
           "Quand une population double à intervalles réguliers, on parle de croissance exponentielle. Si N₀ est le nombre de départ et n le nombre de doublements, alors N = N₀ × 2ⁿ.",
           "Au début, la croissance semble lente, puis elle explose. Dans la nature, elle s'arrête quand la nourriture manque ou que les déchets s'accumulent. Pour trouver n quand on connaît le facteur de multiplication F, on utilise le logarithme en base 2 : n = log₂(F).",
@@ -859,6 +871,7 @@ export const CHAPITRES: Chapitre[] = [
       },
       {
         titre: "Les lentilles convergentes",
+        schema: "lentille",
         texte: [
           "Une lentille bombée au centre dévie les rayons vers un même point appelé foyer. La distance entre la lentille et ce point s'appelle la distance focale f. C'est ainsi qu'une loupe concentre la lumière du Soleil et qu'une lentille forme une image sur un écran.",
           "Pour un objet à la distance d₀ de la lentille, l'image nette se forme à la distance dᵢ donnée par la formule des lentilles minces (distances mesurées en mètres ou en centimètres).",
@@ -948,6 +961,7 @@ export const CHAPITRES: Chapitre[] = [
     science: [
       {
         titre: "Minerai, oxyde et réduction",
+        schema: "reduction-fer",
         texte: [
           "Un minerai est une roche qui contient un métal combiné à d'autres éléments. Le minerai de fer contient souvent de l'oxyde de fer, par exemple Fe₂O₃, de la même famille que la rouille. Extraire le métal, c'est le réduire : lui retirer l'oxygène.",
           "Le carbone peut jouer ce rôle. Dans la réaction, le carbone s'empare de l'oxygène et forme du dioxyde de carbone, tandis que le fer métallique est libéré. La masse totale est conservée : tout ce qui entre se retrouve en sortie.",
@@ -1033,6 +1047,7 @@ export const CHAPITRES: Chapitre[] = [
     science: [
       {
         titre: "Comment fonctionne une pile ?",
+        schema: "pile-volta",
         texte: [
           "Dans une pile, deux métaux différents (ici le zinc du clou et le cuivre de la pièce) plongent dans un liquide qui conduit l'électricité (le jus acide du citron). Le zinc a plus tendance à perdre des électrons que le cuivre : il les cède et les électrons circulent dans le fil, du zinc vers le cuivre. C'est un courant électrique.",
           "Une pile à citron produit environ 0,9 V. Pour augmenter la tension, on branche plusieurs éléments en série : les tensions s'additionnent. En parallèle, la tension reste la même, mais la pile dure plus longtemps.",
@@ -1119,6 +1134,7 @@ export const CHAPITRES: Chapitre[] = [
       },
       {
         titre: "L'induction électromagnétique",
+        schema: "induction",
         texte: [
           "Lorsque le flux magnétique à travers une bobine varie (par exemple parce qu'on approche ou éloigne un aimant), une tension apparaît dans la bobine. C'est l'induction. Sans variation, il n'y a aucune tension, même avec un aimant très puissant.",
           "La tension moyenne induite dans une bobine de N spires est égale à N fois la variation du flux, divisée par la durée de cette variation : |e| = N × ΔΦ / Δt, avec Φ en webers (Wb), t en secondes et e en volts. Dans un alternateur, des aimants tournent devant des bobines : la tension change de sens à chaque demi-tour, d'où le courant alternatif.",
@@ -1199,6 +1215,7 @@ export const CHAPITRES: Chapitre[] = [
     science: [
       {
         titre: "La pression : une force répartie",
+        schema: "piston",
         texte: [
           "La pression est la force exercée sur une surface : P = F / S. L'unité est le pascal (Pa), égal à 1 newton par mètre carré. La pression atmosphérique au niveau de la mer vaut environ 100 000 Pa (1 bar).",
           "Plus la surface est grande, plus la même pression produit une force importante. Dans une cocotte-minute, la pression augmente et l'eau ne bout qu'à plus de 100 °C : la cuisson est plus rapide. Cette hausse de la température d'ébullition avec la pression est exploitée par les machines à vapeur.",
@@ -1207,6 +1224,7 @@ export const CHAPITRES: Chapitre[] = [
       },
       {
         titre: "Rendement et limite de Carnot",
+        schema: "machine-thermique",
         texte: [
           "Le rendement d'une machine compare ce qu'elle fournit (le travail utile W) à ce qu'elle reçoit (la chaleur Q) : η = W / Q. Il est toujours inférieur à 100 %, car une partie de la chaleur est inévitablement rejetée vers la source froide.",
           "Sadi Carnot a montré qu'une machine qui fonctionne entre une source chaude (température T_c) et une source froide (T_f), en kelvins, ne peut pas dépasser le rendement η_max = 1 − T_f / T_c. Les températures en kelvins sont égales aux °C plus 273.",
@@ -1386,6 +1404,7 @@ export const CHAPITRES: Chapitre[] = [
     science: [
       {
         titre: "Les ondes électromagnétiques",
+        schema: "onde",
         texte: [
           "Les ondes radio, la lumière visible, les rayons X sont toutes des ondes électromagnétiques. Elles se déplacent dans le vide à la même vitesse, c ≈ 3 × 10⁸ m/s. Elles se distinguent par leur fréquence f (en hertz, Hz) ou, de façon équivalente, par leur longueur d'onde λ (en mètres).",
           "La relation entre les trois : c = λ × f. Plus la fréquence est grande, plus la longueur d'onde est petite. Une station FM à 100 MHz (100 millions de hertz) a une longueur d'onde d'environ 3 m.",
@@ -1461,5 +1480,709 @@ export const CHAPITRES: Chapitre[] = [
       "En 1865, James Clerk Maxwell prédit par le calcul l'existence d'ondes électromagnétiques voyageant à la vitesse de la lumière. En 1887-1888, Heinrich Hertz les produit et les détecte dans son laboratoire : l'unité de fréquence porte son nom. Guglielmo Marconi réalise ses premières liaisons sans fil en 1895, puis relie la Cornouailles (Angleterre) à Terre-Neuve (Canada) en décembre 1901. La radio est née, et avec elle la communication moderne.",
     suite:
       "La voix de l'observatoire de la mer propose un rendez-vous au printemps : leurs équipes, leurs cartes, leurs machines. Le voyage sera long, mais Inès sourit en refermant le Carnet. Un jour, elle y écrira la dernière ligne : « Le projet Graine est devenu une forêt. »",
+  },
+
+  // 17. Statistiques : le grenier commun
+  {
+    id: "recoltes",
+    numero: 17,
+    titre: "Le grenier commun",
+    matieres: ["Maths", "Biologie"],
+    niveau: 3,
+    recit: [
+      "Au printemps, un convoi arrive à la Combe : une douzaine de silhouettes fatiguées, un chariot chargé de caisses, et une femme au regard vif qui se présente : « Soline, ingénieure de l'Observatoire de la mer. Nous avons marché neuf jours sur votre signal. » Anselme ouvre les bras, Maëlle apporte de l'eau chaude. Pour la première fois depuis le réveil, il y a plus de monde que de bols.",
+      "Mais la joie dure jusqu'au premier repas. Douze bouches de plus à nourrir, et le grenier de la Combe est à moitié vide. Anselme pose sur la table cinq sacs de blé, un par champ, et ils ne pèsent pas pareil. « Le champ du haut a donné soixante-deux kilos, celui du bas trente-huit. Alors, on partage comment ? » Les voix montent. Mathis lâche son « Prouve-le » : « Prouve-moi que le champ du haut est meilleur, et pas juste chanceux cette année. »",
+      "Inès sort le Carnet et trace cinq barres dans la poussière, une par champ. « Pour comparer, on résume. La moyenne : on additionne tout et on divise par le nombre de champs. » Elle calcule en silence. « Cinquante kilos par champ. Mais deux champs sont loin de cinquante. Il faut aussi mesurer à quel point les récoltes s'écartent de la moyenne. Cela s'appelle l'écart-type. »",
+      "Soline hoche la tête : « À l'Observatoire, on a appris ce que ça veut dire à nos dépens. Une année, tous les champs étaient proches de la moyenne et tout allait bien. L'année suivante, la grêle a frappé un seul versant : la moyenne a baissé, mais surtout l'écart a explosé. » Pour savoir quelle réserve garder en prévision des mauvaises années, il faut les deux nombres. Le groupe se met au calcul, un bol de soupe à la main, pendant que dehors le ciel se couvre d'un gris inquiétant.",
+    ],
+    science: [
+      {
+        titre: "Moyenne et médiane",
+        texte: [
+          "La moyenne se calcule en additionnant toutes les valeurs, puis en divisant par leur nombre. Elle résume une série par un seul nombre « typique ».",
+          "La médiane est la valeur du milieu quand on range les nombres du plus petit au plus grand : la moitié des valeurs est en dessous, l'autre moitié au-dessus. Contrairement à la moyenne, elle bouge à peine si une valeur est extrême (une récolte détruite par la grêle, par exemple).",
+        ],
+        formule: "moyenne = (x₁ + x₂ + … + xₙ) / n",
+      },
+      {
+        titre: "L'écart-type : mesurer la dispersion",
+        schema: "histogramme-recoltes",
+        texte: [
+          "Deux séries peuvent avoir la même moyenne et être très différentes : 49, 50, 51 et 20, 50, 80 ont toutes deux 50 pour moyenne. L'écart-type mesure la dispersion : plus il est grand, plus les valeurs sont éloignées de la moyenne.",
+          "On calcule l'écart de chaque valeur à la moyenne, on met ces écarts au carré, on fait leur moyenne (c'est la variance), puis on prend la racine carrée pour revenir à la même unité que les données.",
+        ],
+        formule: "σ = √( Σ (xᵢ − m)² / n )",
+      },
+    ],
+    experience:
+      "Prends un dé et lance-le 20 fois en notant chaque résultat. Calcule la moyenne (elle devrait être proche de 3,5), puis trouve la médiane en rangeant les résultats du plus petit au plus grand. Recommence avec 20 autres lancers : la moyenne change un peu d'une série à l'autre. Plus tu lances, plus elle se rapproche de 3,5.",
+    defis: [
+      {
+        type: "nombre",
+        question: "Les cinq champs ont donné 38, 46, 50, 54 et 62 kg. Quelle est la récolte moyenne par champ, en kg ?",
+        reponse: 50,
+        tolerance: 0.01,
+        unite: "kg",
+        indice: "Additionne les cinq valeurs, puis divise par 5.",
+        solution: ["Somme : 38 + 46 + 50 + 54 + 62 = 250 kg", "Moyenne : 250 / 5 = 50 kg"],
+      },
+      {
+        type: "nombre",
+        question: "Calcule l'écart-type, en kg, de la série 38, 46, 50, 54 et 62 kg (de moyenne 50 kg).",
+        reponse: 8,
+        tolerance: 0.01,
+        unite: "kg",
+        indice: "Écarts à la moyenne, au carré, puis moyenne de ces carrés, puis racine carrée.",
+        solution: [
+          "Écarts à la moyenne : −12, −4, 0, +4, +12",
+          "Carrés : 144, 16, 0, 16, 144 ; leur somme vaut 320",
+          "Variance : 320 / 5 = 64",
+          "Écart-type : √64 = 8 kg",
+        ],
+      },
+      {
+        type: "nombre",
+        question: "Sept familles ont mis en réserve 12, 7, 9, 15, 4, 11 et 8 sacs. Quelle est la médiane de cette série ?",
+        reponse: 9,
+        tolerance: 0.01,
+        indice: "Range d'abord les nombres dans l'ordre croissant, puis prends celui du milieu.",
+        solution: [
+          "Dans l'ordre : 4, 7, 8, 9, 11, 12, 15",
+          "Il y a 7 valeurs : la médiane est la 4e, soit 9 sacs.",
+        ],
+      },
+      {
+        type: "choix",
+        question:
+          "Deux villages ont la même récolte moyenne de 50 kg par champ. L'écart-type vaut 2 kg dans le premier et 15 kg dans le second. Lequel court le plus de risques de manquer de blé une mauvaise année ?",
+        options: [
+          "Le premier, car son écart-type est plus petit",
+          "Le second, car ses récoltes sont très irrégulières",
+          "Aucun, car la moyenne est la même",
+          "Impossible à savoir sans connaître les noms des champs",
+        ],
+        bonne: 1,
+        indice: "Un grand écart-type veut dire des champs très différents : certains très mauvais.",
+        solution: [
+          "La moyenne est la même, mais pas la dispersion.",
+          "Avec un écart-type de 15 kg, certains champs peuvent donner bien moins que 50 kg : le risque de mauvaise année est plus grand.",
+          "Le premier village a des récoltes régulières, donc plus prévisibles.",
+        ],
+      },
+    ],
+    enVrai:
+      "À partir des années 1850, l'infirmière britannique Florence Nightingale utilise des diagrammes statistiques pour montrer que, pendant la guerre de Crimée, la plupart des soldats meurent de maladies et non de blessures. Ses graphiques convainquent le gouvernement d'améliorer l'hygiène des hôpitaux. Dès les années 1830, le Belge Adolphe Quetelet appliquait la moyenne aux mesures humaines avec son idée d'« homme moyen ». Et c'est en 1893 que le mathématicien britannique Karl Pearson introduit le terme « écart type » (standard deviation).",
+    suite:
+      "Le soir, alors que le conseil vote enfin un partage, Anselme dépose sur la table un sachet de pois séchés : certains ronds comme des perles, d'autres fripés comme de petits cerveaux. « Mon grand-père disait que ces pois cachent un secret. Les parents sont ronds, et pourtant les petits sortent parfois ridés. Expliquez-moi ça, les savants. »",
+  },
+
+  // 18. Génétique : les pois d'Anselme
+  {
+    id: "genetique",
+    numero: 18,
+    titre: "Les pois d'Anselme",
+    matieres: ["Biologie", "Maths"],
+    niveau: 3,
+    recit: [
+      "Le lendemain, Lina et Anselme s'installent dans le potager avec le sachet de pois. Elle les trie sur un drap : les ronds à gauche, les ridés à droite. « Si je plante deux pois ronds, je devrais obtenir des pois ronds, non ? » — « Pas toujours, répond Anselme avec un sourire en coin. Ça fait des générations que je le vois. »",
+      "Mathis, bien sûr, refuse de croire sans preuve. Lina décide donc de mener l'enquête : d'abord isoler des lignées pures, c'est-à-dire des plants qui, croisés entre eux, donnent toujours des pois ronds, ou toujours des pois ridés. Puis les croiser. Il faudra attendre la récolte, et Sève rappelle dans un grésillement qu'un homme avait fait exactement cela il y a très longtemps.",
+      "Quelques semaines plus tard, premier résultat : tous les pois de la première génération sont ronds. Pas un seul ridé ! Mathis triomphe un instant : « Donc les ridés n'existent plus. » Lina sourit et plante ces pois ronds ensemble. La deuxième génération pousse. Quand les gousses s'ouvrent, tout le monde se penche. Sur 200 pois, des ridés sont revenus. Un quart environ.",
+      "Inès comprend la première : chaque pois porte deux exemplaires de l'information, un venant de chaque parent. Le « rond » (R) l'emporte sur le « ridé » (r) quand les deux sont présents. Un pois Rr paraît rond, mais peut transmettre r. Elle dessine un tableau de quatre cases. « Si les deux parents sont Rr, il y a quatre combinaisons possibles, toutes aussi probables. » Un silence. Puis Mathis murmure : « Trois sur quatre... et un sur quatre. Ça colle. »",
+    ],
+    science: [
+      {
+        titre: "Gènes, allèles, dominant et récessif",
+        texte: [
+          "Chaque être vivant possède, pour un caractère donné (la forme d'un pois, par exemple), deux versions du gène appelées allèles : une venue de chaque parent. Un allèle dominant (noté R) s'exprime même s'il est présent en un seul exemplaire ; un allèle récessif (noté r) ne s'exprime que s'il est présent en deux exemplaires.",
+          "Un pois RR et un pois Rr sont donc tous deux ronds, mais seul rr est ridé. Un individu Rr est « porteur » : il cache un allèle qu'il peut transmettre à ses descendants.",
+        ],
+      },
+      {
+        titre: "Probabilités et carré de Punnett",
+        schema: "carre-punnett",
+        texte: [
+          "Une probabilité est un nombre entre 0 et 1 (ou entre 0 % et 100 %). Quand tous les cas sont aussi probables, P = cas favorables / cas possibles. Pour deux événements indépendants (qui ne s'influencent pas), on multiplie leurs probabilités.",
+          "Le carré de Punnett est un tableau qui liste tous les croisements possibles des cellules reproductrices. Pour Rr × Rr : RR, Rr, Rr, rr. Chaque case a une probabilité de 1/4 : on obtient donc 3/4 de pois ronds et 1/4 de pois ridés.",
+        ],
+        formule: "P = cas favorables / cas possibles",
+      },
+    ],
+    experience:
+      "Prends deux pièces de monnaie, une pour chaque parent « Rr » : pile = R, face = r. Lance les deux pièces ensemble 40 fois et note à chaque fois si le pois est « rond » (au moins un pile) ou « ridé » (deux faces). Après 40 lancers, tu obtiens environ 30 pois ronds et 10 ridés. Plus tu lances, plus tu te rapproches de 3 sur 4.",
+    defis: [
+      {
+        type: "nombre",
+        question: "On croise deux pois Rr. Quelle est la probabilité, en pourcentage, que le descendant soit ridé (rr) ?",
+        reponse: 25,
+        tolerance: 0.01,
+        unite: "%",
+        indice: "Dans le carré de Punnett, combien de cases sur 4 sont rr ?",
+        solution: ["Le carré donne RR, Rr, Rr, rr.", "Une case sur quatre est rr : 1/4 = 25 %."],
+      },
+      {
+        type: "nombre",
+        question: "On sème 200 graines issues d'un croisement Rr × Rr. Combien de pois ronds peut-on attendre environ ?",
+        reponse: 150,
+        tolerance: 0.01,
+        indice: "Les pois ronds représentent 3/4 des descendants (RR et Rr).",
+        solution: ["Part des ronds : 3/4 = 0,75", "200 × 0,75 = 150 pois ronds (et 50 ridés)."],
+      },
+      {
+        type: "nombre",
+        question:
+          "On tire au hasard deux descendants de ce croisement. Quelle est la probabilité, en pourcentage, que les deux soient ridés ? (les tirages sont indépendants)",
+        reponse: 6.25,
+        tolerance: 0.01,
+        unite: "%",
+        indice: "Probabilité d'un pois ridé : 1/4. Pour deux événements indépendants, on multiplie.",
+        solution: ["P = 1/4 × 1/4 = 1/16", "1/16 = 0,0625, soit 6,25 %."],
+      },
+      {
+        type: "choix",
+        question: "On croise un pois RR (rond, lignée pure) avec un pois rr (ridé, lignée pure). Que sont les descendants de la première génération ?",
+        options: ["Tous ridés", "Tous ronds (Rr)", "La moitié ronds, la moitié ridés", "Ni ronds ni ridés"],
+        bonne: 1,
+        indice: "Le parent RR donne toujours R, le parent rr donne toujours r. Quel allèle domine ?",
+        solution: [
+          "Chaque descendant reçoit R d'un parent et r de l'autre : il est Rr.",
+          "R est dominant : tous les descendants sont ronds.",
+          "L'allèle r est caché, mais il réapparaîtra à la génération suivante.",
+        ],
+      },
+    ],
+    securite:
+      "Ne refais pas ça chez toi : ne mange jamais de graines de semence du commerce, souvent traitées avec des produits toxiques, ni de plantes que tu ne connais pas parfaitement.",
+    enVrai:
+      "Entre 1856 et 1863, le moine et botaniste Gregor Mendel cultive des dizaines de milliers de plants de pois dans le jardin de son monastère de Brünn (aujourd'hui Brno, en Tchéquie). Il compte soigneusement : pour la forme des graines, il obtient à la deuxième génération 5 474 pois ronds et 1 850 ridés, soit un rapport proche de 3 pour 1. Il publie ses résultats en 1866, mais personne n'en saisit la portée. Ce n'est qu'en 1900 que trois botanistes, Hugo de Vries, Carl Correns et Erich von Tschermak, redécouvrent ses lois, bien après la mort de Mendel en 1884.",
+    suite:
+      "Les récoltes s'annoncent bonnes. Soline, elle, ne dit presque rien depuis trois jours. Elle étale devant Inès une carte jaunie de l'Observatoire. « Cette carte est fausse, dit-elle. Les rivières ne coulent plus où elles étaient dessinées, et il manque une vallée entière. Pour rejoindre vos voisins du sud, il faut la refaire. »",
+  },
+
+  // 19. Cartographie : dessiner le pays
+  {
+    id: "cartes",
+    numero: 19,
+    titre: "Dessiner le pays",
+    matieres: ["Maths"],
+    niveau: 3,
+    recit: [
+      "Soline déploie sa carte sur la table : des lignes tremblantes, des noms effacés, une échelle presque illisible dans un coin. « Mon père me l'a donnée avant de mourir. Elle montre trois communautés au sud : un moulin, une forge, un village de pêcheurs. Mais la rivière ici n'existe plus... » Basile pose son doigt sur une tache : « Et ça, c'est quoi ? » — « Peut-être une vallée. Peut-être un bol de soupe renversé. »",
+      "Inès comprend qu'on ne peut pas se lancer sans carte fiable. Mais comment mesurer un pays entier ? « On ne mesure pas tout. On mesure quelques distances et quelques angles, puis on calcule le reste. » Elle plante deux piquets sur la berge, à cent mètres l'un de l'autre. De l'autre côté de l'eau, un grand chêne.",
+      "Basile vise le chêne depuis chaque piquet avec une planchette graduée. Les deux visées forment deux angles avec la ligne qui relie les piquets. Mathis plisse les yeux : « Tu ne peux pas connaître la distance sans traverser. » — « Si, répond Inès. Un côté et deux angles déterminent un triangle entier. Il n'existe qu'un seul triangle possible. »",
+      "Elle trace ensuite le triangle sur une feuille, en réduisant tout dans la même proportion : un centimètre sur le papier pour dix mètres sur le terrain. « Voilà une échelle. Si je garde la même pour toutes les distances, la carte sera juste. » Soline sourit pour la première fois depuis son arrivée. Sur la carte neuve, trois croix apparaissent. La route du sud est enfin tracée, et elle passe le doigt dessus comme on caresse un animal.",
+    ],
+    science: [
+      {
+        titre: "L'échelle d'une carte",
+        texte: [
+          "L'échelle d'une carte est le rapport entre une longueur sur la carte et la longueur réelle correspondante, exprimées dans la même unité. Une échelle de 1 : 25 000 signifie que 1 cm sur la carte représente 25 000 cm sur le terrain, soit 250 m.",
+          "C'est de la proportionnalité : si on double la distance sur la carte, on double la distance réelle. Plus le nombre après les deux-points est petit (1 : 10 000), plus la carte est détaillée ; plus il est grand (1 : 100 000), plus elle couvre de territoire avec peu de détails.",
+        ],
+        formule: "distance réelle = distance sur la carte × dénominateur de l'échelle",
+      },
+      {
+        titre: "La triangulation",
+        schema: "triangulation",
+        texte: [
+          "Pour mesurer une distance qu'on ne peut pas parcourir, on mesure une base (une distance accessible) et deux angles vers la cible. Un côté et deux angles suffisent à fixer un triangle.",
+          "Si l'on vise un point P depuis deux points A et B, avec des angles α et β à la base AB de longueur d, la hauteur h du triangle (la distance perpendiculaire de P à la base) vaut h = d × tan α × tan β / (tan α + tan β). Avec α = β = 45°, tan 45° = 1 et h = d / 2.",
+        ],
+        formule: "h = d × tan α × tan β / (tan α + tan β)",
+      },
+    ],
+    experience:
+      "Mesure la longueur et la largeur d'une pièce de ta maison avec un mètre, puis dessine son plan sur une feuille quadrillée à l'échelle 1 : 50 (1 cm sur le papier pour 50 cm dans la pièce). Une pièce de 4 m sur 3 m devient un rectangle de 8 cm sur 6 cm. Place ensuite les meubles à la même échelle.",
+    defis: [
+      {
+        type: "nombre",
+        question: "Sur la carte de Soline, l'échelle est de 1 : 25 000. Deux villages sont séparés de 8 cm. Quelle est la distance réelle, en kilomètres ?",
+        reponse: 2,
+        tolerance: 0.01,
+        unite: "km",
+        indice: "Multiplie par 25 000, puis convertis les centimètres en kilomètres (1 km = 100 000 cm).",
+        solution: ["8 × 25 000 = 200 000 cm", "200 000 cm = 2 000 m = 2 km"],
+      },
+      {
+        type: "nombre",
+        question: "La route du sud mesure 7,5 km. Quelle longueur dessine-t-on, en centimètres, sur une carte à l'échelle 1 : 50 000 ?",
+        reponse: 15,
+        tolerance: 0.01,
+        unite: "cm",
+        indice: "Convertis 7,5 km en centimètres, puis divise par 50 000.",
+        solution: ["7,5 km = 750 000 cm", "750 000 / 50 000 = 15 cm"],
+      },
+      {
+        type: "nombre",
+        question:
+          "Inès plante deux piquets distants de 100 m. Depuis chacun, l'angle de visée vers le chêne, avec la ligne des piquets, est de 45°. À quelle distance perpendiculaire de cette ligne se trouve le chêne, en mètres ?",
+        reponse: 50,
+        tolerance: 0.01,
+        unite: "m",
+        indice: "h = d × tan α × tan β / (tan α + tan β), avec tan 45° = 1.",
+        solution: ["h = 100 × 1 × 1 / (1 + 1)", "h = 100 / 2 = 50 m"],
+      },
+      {
+        type: "choix",
+        question: "Quelle carte montre le plus de détails sur une petite zone ?",
+        options: ["1 : 1 000 000", "1 : 100 000", "1 : 10 000", "Toutes autant"],
+        bonne: 2,
+        indice: "Plus le dénominateur est petit, moins on réduit la réalité.",
+        solution: [
+          "Sur une carte au 1 : 10 000, 1 cm représente 100 m.",
+          "Sur une carte au 1 : 1 000 000, 1 cm représente 10 km.",
+          "La première montre donc beaucoup plus de détails sur une petite zone.",
+        ],
+      },
+    ],
+    enVrai:
+      "En 1617, le Néerlandais Willebrord Snellius mesure la distance entre deux villes de son pays en enchaînant des triangles dont il mesure les angles : c'est l'une des premières grandes applications de la triangulation. Au XVIIIe siècle, la famille Cassini réalise la première carte générale de France fondée sur cette méthode (publiée de 1756 à 1789). Entre 1792 et 1798, Delambre et Méchain mesurent l'arc de méridien entre Dunkerque et Barcelone pour définir le mètre. En Suisse, le général Guillaume-Henri Dufour dirige de 1845 à 1865 la première carte topographique du pays entier, au 1 : 100 000.",
+    suite:
+      "Avec la carte neuve, les messagers partent vers le sud. Trois semaines plus tard, des marchands de la forge et du moulin arrivent à la Combe. Ils veulent du blé ; on leur propose des lentilles. Ils veulent des poules ; on leur offre des outils. La dispute éclate : personne ne s'entend sur ce que « vaut » chaque chose. Anselme se gratte la barbe : « Il nous faudrait une langue commune pour les prix. »",
+  },
+
+  // 20. Économie : le prix des choses
+  {
+    id: "monnaie",
+    numero: 20,
+    titre: "Le prix des choses",
+    matieres: ["Maths"],
+    niveau: 3,
+    recit: [
+      "Le marché improvisé de la Combe est un joyeux désordre. Tobias, un forgeron venu du sud, veut du blé. Maëlle lui propose des herbes séchées. « Je n'ai pas besoin d'herbes, j'ai besoin de blé ! » De l'autre côté, les pêcheurs veulent des couteaux, mais le forgeron veut du poisson... seulement le mardi.",
+      "Basile compte sur ses doigts : trois poules valent deux sacs de blé, un sac de blé vaut six pots de miel, mais du miel, personne n'en veut cette semaine. Chaque échange exige que chacun possède exactement ce que l'autre désire : le troc devient un casse-tête. Mathis soupire : « Pourquoi pas une chose que tout le monde accepte et qu'on pourrait échanger contre n'importe quoi ? »",
+      "Inès sort une poignée de jetons d'argile cuits au four de Basile, tous marqués d'un trait. « Une monnaie. Un jeton est une unité de valeur : une poule vaut quatre jetons, un sac de blé six. » Mathis objecte : « Et si quelqu'un fabrique mille jetons en cachette ? » Silence. « Alors ils ne vaudront plus rien, répond Inès. Une monnaie ne marche que si les jetons restent rares, et si tout le monde y croit. »",
+      "Soline, qui tenait l'économat de l'Observatoire, explique un second principe : quand le blé est rare et que beaucoup de gens en veulent, son prix monte ; quand il y en a trop, il baisse. Le groupe fixe un prix d'essai et note chaque jour combien de sacs sont offerts et demandés. Peu à peu, le prix glisse vers un point où personne ne repart avec des sacs invendus ni les mains vides.",
+      "Reste une question que pose Lina : un voisin veut emprunter mille jetons pour acheter une meule. Combien doit-il rendre dans trois ans ? On convient d'un intérêt de 5 % par an. Mais Mathis fait le calcul et lève un sourcil : « Ce n'est pas 150 jetons de plus. C'est un peu plus. » Pourquoi ?",
+    ],
+    science: [
+      {
+        titre: "Troc, monnaie et valeur",
+        texte: [
+          "Dans le troc, on échange un bien contre un autre : il faut que chacun veuille exactement ce que l'autre offre. Une monnaie règle le problème en servant de moyen d'échange, d'unité de compte (on exprime tous les prix avec elle) et de réserve de valeur (on peut la garder pour plus tard).",
+          "Une bonne monnaie est reconnue de tous, facile à transporter, divisible et difficile à falsifier. Si on en fabrique beaucoup sans produire plus de biens, les prix montent : c'est l'inflation.",
+        ],
+      },
+      {
+        titre: "Offre, demande et prix d'équilibre",
+        schema: "offre-demande",
+        texte: [
+          "La demande est la quantité que les acheteurs veulent acheter : elle diminue quand le prix monte. L'offre est la quantité que les producteurs veulent vendre : elle augmente quand le prix monte.",
+          "Le prix d'équilibre est celui où l'offre égale la demande : il n'y a ni invendus ni pénurie. Si le prix est trop haut, des invendus restent et le prix baisse ; s'il est trop bas, la pénurie le fait monter.",
+        ],
+        formule: "offre = demande",
+      },
+      {
+        titre: "Les intérêts composés",
+        texte: [
+          "Un intérêt est le prix à payer pour emprunter de l'argent. Avec des intérêts composés, les intérêts d'une année sont ajoutés au capital, et rapportent à leur tour des intérêts l'année suivante.",
+          "Pour un capital C placé au taux t (en écriture décimale : 5 % = 0,05) pendant n années, le montant final est C × (1 + t)ⁿ. C'est une croissance exponentielle, comme celle des levures.",
+        ],
+        formule: "C_final = C × (1 + t)ⁿ",
+      },
+    ],
+    experience:
+      "Organise un petit marché en famille ou entre amis : chacun reçoit 10 jetons (des haricots secs) et quelques objets à vendre (bonbons, images). Fixez les prix, échangez, puis changez le prix d'un objet très demandé et observe comment les ventes évoluent. Tu viens de faire de l'économie !",
+    defis: [
+      {
+        type: "nombre",
+        question: "Un voisin emprunte 1 000 jetons à 5 % d'intérêts composés par an. Combien doit-il rendre au bout de 3 ans, en jetons (arrondi à l'unité) ?",
+        reponse: 1158,
+        tolerance: 0.01,
+        unite: "jetons",
+        indice: "Multiplie le capital par 1,05 pour chaque année, donc par 1,05³.",
+        solution: [
+          "C_final = 1 000 × 1,05³",
+          "1,05³ = 1,157625",
+          "C_final ≈ 1 157,6, soit 1 158 jetons (et non 1 150 : les intérêts rapportent des intérêts).",
+        ],
+      },
+      {
+        type: "nombre",
+        question: "Un sac de blé vaut 1,5 poule (2 sacs valent 3 poules) et une poule vaut 4 jetons. Combien de jetons valent 5 sacs de blé ?",
+        reponse: 30,
+        tolerance: 0.01,
+        unite: "jetons",
+        indice: "Trouve d'abord la valeur d'un sac en jetons.",
+        solution: ["1 sac = 1,5 poule = 1,5 × 4 = 6 jetons", "5 sacs = 5 × 6 = 30 jetons"],
+      },
+      {
+        type: "nombre",
+        question:
+          "Sur le marché, la demande est Qd = 200 − 20 p et l'offre Qs = 40 + 20 p (p = prix d'un sac en jetons). Quel est le prix d'équilibre, en jetons ?",
+        reponse: 4,
+        tolerance: 0.01,
+        unite: "jetons",
+        indice: "À l'équilibre, offre = demande : résous 200 − 20 p = 40 + 20 p.",
+        solution: [
+          "200 − 20 p = 40 + 20 p",
+          "160 = 40 p, donc p = 4 jetons",
+          "Vérification : demande 200 − 80 = 120 et offre 40 + 80 = 120 sacs.",
+        ],
+      },
+      {
+        type: "choix",
+        question: "Une sécheresse détruit une partie des récoltes de blé (l'offre diminue) alors que la demande reste la même. Que devient le prix du blé ?",
+        options: ["Il baisse", "Il monte", "Il ne change pas", "Il devient nul"],
+        bonne: 1,
+        indice: "Il y a moins de blé pour autant d'acheteurs.",
+        solution: [
+          "Quand l'offre diminue, le blé devient plus rare.",
+          "Les acheteurs sont prêts à payer plus pour en obtenir : le prix monte.",
+        ],
+      },
+    ],
+    enVrai:
+      "Les premières pièces de monnaie connues apparaissent en Lydie (dans l'actuelle Turquie) vers 600 av. J.-C., en électrum, un alliage naturel d'or et d'argent. Bien avant, des sociétés utilisaient des coquillages, du sel ou des lingots. En 1683, le mathématicien bâlois Jacques Bernoulli étudie les intérêts composés et rencontre au passage le nombre e. En 1776, l'économiste écossais Adam Smith publie « La Richesse des nations » et décrit comment les prix naissent de la rencontre de l'offre et de la demande.",
+    suite:
+      "Le marché prospère, et le blé afflue : des centaines de sacs à moudre. Moudre à bras prend des journées entières et use les épaules. Basile regarde le torrent qui dévale la pente sous la Combe, mousseux et indifférent. « Pourquoi ce n'est pas lui qui travaille à notre place ? »",
+  },
+
+  // 21. Énergie hydraulique : la roue du torrent
+  {
+    id: "hydraulique",
+    numero: 21,
+    titre: "La roue du torrent",
+    matieres: ["Physique", "Maths"],
+    niveau: 3,
+    recit: [
+      "Le torrent de la Combe dévale la pente, bruyant, glacé, indifférent. Basile passe des heures assis au bord, à lancer des brindilles et à les regarder filer. « Il y a de l'énergie là-dedans, répète-t-il. Je la sens. Je ne sais juste pas encore la compter. »",
+      "Avec Soline, il construit une première roue à aubes en planches de mélèze. L'eau, détournée par un petit canal, tombe d'une hauteur de plusieurs mètres sur les pales. La roue grince, hésite, puis se met à tourner dans un ronronnement régulier. Les enfants applaudissent. Mathis, lui, demande combien de blé elle moudra par jour. Personne ne sait répondre.",
+      "Inès s'accroupit près du canal. « Pour savoir ce qu'elle peut fournir, il faut savoir combien d'énergie l'eau libère. Une masse m située à une hauteur h possède une énergie potentielle E = m × g × h. En tombant, l'eau la cède à la roue. » Elle fait le calcul pour un mètre cube, mille kilos d'eau qui tombent de cinq mètres, et le résultat la fait siffler.",
+      "Mais ce qui compte pour une machine, c'est l'énergie fournie chaque seconde : la puissance. « Deux cents kilos d'eau par seconde, ça donne combien ? » demande Basile. Inès calcule, puis tempère : aucune roue ne récupère toute l'énergie. Une partie se perd en éclaboussures, en fuites et en frottements. Il faudra mesurer le rendement.",
+      "Cette nuit-là, un orage éclate sur la montagne. Vers minuit, un bruit sourd réveille le camp : le torrent gonflé charrie des troncs, des pierres, de la boue. Basile court dans le noir vers le canal, une lanterne à la main. Il tire la vanne de bois de toutes ses forces, juste avant qu'un tronc ne percute la roue. La structure tremble... et tient.",
+    ],
+    science: [
+      {
+        titre: "L'énergie potentielle de pesanteur",
+        schema: "moulin-eau",
+        texte: [
+          "Un objet de masse m situé à la hauteur h possède une énergie potentielle de pesanteur E = m × g × h, en joules (J), avec m en kg, h en m et g = 9,81 N/kg. En tombant, cette énergie se transforme en énergie de mouvement, que la roue récupère.",
+          "Doubler la hauteur de chute double l'énergie disponible ; doubler la masse d'eau aussi.",
+        ],
+        formule: "E = m × g × h",
+      },
+      {
+        titre: "Puissance et rendement",
+        texte: [
+          "La puissance est l'énergie fournie par seconde : P = E / t, en watts (W). Un watt, c'est un joule par seconde. Pour un débit de q kilos d'eau par seconde qui tombent de la hauteur h, la puissance théorique est P = q × g × h.",
+          "Le rendement η est le rapport entre la puissance utile et la puissance reçue. Une bonne roue à aubes a un rendement de l'ordre de 50 à 70 % : le reste est perdu en frottements, éclaboussures et fuites.",
+        ],
+        formule: "P = E / t   et   η = P_utile / P_reçue",
+      },
+    ],
+    experience:
+      "Avec un adulte, plante quatre cuillères en plastique autour d'un bouchon de grand flacon, traverse-le d'une baguette en bois posée sur deux supports, et place cette petite roue sous un robinet qui coule doucement, au-dessus de l'évier. Observe comment sa vitesse change quand tu la rapproches ou l'éloignes du robinet : plus l'eau tombe de haut, plus la roue tourne vite.",
+    defis: [
+      {
+        type: "nombre",
+        question: "Un mètre cube d'eau (1 000 kg) tombe d'une hauteur de 5 m. Quelle énergie libère-t-il, en joules ? (g = 9,81 N/kg)",
+        reponse: 49050,
+        tolerance: 0.01,
+        unite: "J",
+        indice: "E = m × g × h.",
+        solution: ["E = 1 000 × 9,81 × 5", "E = 49 050 J, soit environ 49 kJ."],
+      },
+      {
+        type: "nombre",
+        question: "Le torrent fournit 200 kg d'eau par seconde sur une chute de 5 m. Quelle est la puissance théorique, en watts ? (g = 9,81 N/kg)",
+        reponse: 9810,
+        tolerance: 0.01,
+        unite: "W",
+        indice: "En une seconde, 200 kg tombent : P = q × g × h.",
+        solution: ["P = 200 × 9,81 × 5", "P = 9 810 W, soit environ 9,8 kW."],
+      },
+      {
+        type: "nombre",
+        question: "La roue a un rendement de 60 %. Avec la puissance théorique de 9 810 W, quelle puissance utile fournit-elle, en watts ?",
+        reponse: 5886,
+        tolerance: 0.01,
+        unite: "W",
+        indice: "Puissance utile = rendement × puissance reçue (60 % = 0,6).",
+        solution: ["P_utile = 0,6 × 9 810", "P_utile = 5 886 W, soit environ 5,9 kW."],
+      },
+      {
+        type: "choix",
+        question: "On double la hauteur de chute en gardant le même débit d'eau. Que devient la puissance théorique ?",
+        options: ["Elle reste la même", "Elle double", "Elle est multipliée par 4", "Elle est divisée par 2"],
+        bonne: 1,
+        indice: "Dans P = q × g × h, la hauteur h est un simple facteur.",
+        solution: [
+          "P = q × g × h est proportionnelle à h.",
+          "Si h double, P double aussi.",
+        ],
+      },
+    ],
+    securite:
+      "Ne refais pas ça chez toi : ne t'approche jamais seul(e) d'un torrent, d'un canal ou d'une roue en mouvement. Même un courant faible peut te faire tomber, et une roue peut écraser. Ne construis rien au bord d'un cours d'eau sans adulte expérimenté.",
+    enVrai:
+      "Les Romains décrivent des moulins à eau dès le Ier siècle av. J.-C. (l'ingénieur Vitruve en parle). Près d'Arles, le site de Barbegal (IIe siècle ap. J.-C.) alignait seize roues sur une pente. Au Moyen Âge, le Domesday Book, enquête menée en 1086, recense plus de 5 600 moulins à eau en Angleterre. Vers 1830, le Français Benoît Fourneyron met au point une turbine hydraulique efficace, et en 1882 la première centrale hydroélectrique entre en service à Appleton, dans le Wisconsin (États-Unis).",
+    suite:
+      "Au retour du calme, le ciel se dégage, d'une pureté stupéfiante. Soline sort de ses caisses deux lentilles polies, une grande et une petite. « À l'Observatoire, on regarde le ciel depuis toujours. Ce soir, on va le regarder de plus près. »",
+  },
+
+  // 22. Optique : les lunes de Jupiter
+  {
+    id: "jupiter",
+    numero: 22,
+    titre: "Les lunes de Jupiter",
+    matieres: ["Physique", "Maths"],
+    niveau: 4,
+    recit: [
+      "Le ciel, après l'orage, est d'une pureté qu'Inès n'avait jamais vue : pas une lumière à des kilomètres, des milliers d'étoiles. Soline étale sur la table deux lentilles polies, l'une large comme une assiette à dessert, l'autre petite comme une bille. « À l'Observatoire, on les garde depuis toujours. Mais on n'a jamais eu le tube pour les assembler. »",
+      "Basile creuse un long tube dans du bois de tilleul et le noircit à l'intérieur avec de la suie pour éviter les reflets. La grande lentille d'un côté, c'est l'objectif ; la petite de l'autre, c'est l'oculaire. Après plusieurs essais pour régler la distance qui les sépare, Mathis colle son œil à l'oculaire et reste silencieux, la bouche ouverte. « La Lune..., dit-il enfin. Elle a des cratères. »",
+      "Soline tourne alors la lunette vers un point très brillant qui ne scintille pas. « Jupiter. » Autour de la planète, quatre petits points alignés. Inès note leur position dans le Carnet. Le lendemain soir, elle recommence : les points ont changé de place, l'un a même disparu. « Ils bougent..., souffle-t-elle. Ils tournent autour de Jupiter. » Un autre monde, avec ses propres lunes.",
+      "Mathis, qui n'a plus de « Prouve-le » à opposer, en trouve un autre : « Et si quelqu'un voulait vérifier ça sans lunette ? » Soline sourit : « Quelqu'un a fait mieux. Il a utilisé ces lunes pour mesurer la vitesse de la lumière. » Inès calcule la distance de Jupiter, la divise par 300 000 km/s, et pâlit : la lumière qu'elle voit est partie il y a plus d'une demi-heure. Elle regarde dans le passé.",
+    ],
+    science: [
+      {
+        titre: "La lunette astronomique",
+        schema: "lunette",
+        texte: [
+          "Une lunette astronomique associe deux lentilles convergentes : l'objectif, de grand diamètre et de grande distance focale, forme une petite image de l'astre ; l'oculaire, de petite distance focale, sert de loupe pour agrandir cette image.",
+          "Le grossissement vaut G = f_objectif / f_oculaire. Mais le plus important est la quantité de lumière captée : elle est proportionnelle à l'aire de l'objectif, donc au carré de son diamètre. Doubler le diamètre, c'est capter quatre fois plus de lumière.",
+        ],
+        formule: "G = f_objectif / f_oculaire",
+      },
+      {
+        titre: "La vitesse finie de la lumière",
+        texte: [
+          "La lumière voyage très vite, mais pas instantanément : c ≈ 300 000 km/s. La lumière du Soleil met environ 8 minutes à nous parvenir, celle de Jupiter plus de 30 minutes (selon la position des planètes).",
+          "En observant le ciel, on regarde donc toujours dans le passé : l'image d'un astre est celle qu'il avait quand la lumière en est partie. Pour calculer le temps de trajet, on utilise t = d / c.",
+        ],
+        formule: "t = d / c",
+      },
+    ],
+    experience:
+      "Dans une pièce un peu sombre, tiens une loupe entre une lampe allumée, loin de toi, et une feuille blanche. Éloigne ou rapproche la feuille jusqu'à ce que l'image de la lampe soit nette : la distance loupe-feuille est la distance focale de la loupe. Ne dirige JAMAIS une loupe, une lunette ou des jumelles vers le Soleil.",
+    defis: [
+      {
+        type: "nombre",
+        question: "La lunette de Basile a un objectif de distance focale 800 mm et un oculaire de distance focale 20 mm. Quel est son grossissement ?",
+        reponse: 40,
+        tolerance: 0.01,
+        indice: "G = f_objectif / f_oculaire, avec les mêmes unités.",
+        solution: ["G = 800 / 20", "G = 40 : les objets paraissent 40 fois plus grands."],
+      },
+      {
+        type: "nombre",
+        question:
+          "L'objectif a un diamètre de 6 cm, la pupille de l'œil dans le noir environ 6 mm. Combien de fois plus de lumière capte l'objectif ?",
+        reponse: 100,
+        tolerance: 0.01,
+        indice: "La lumière captée est proportionnelle à l'aire, donc au carré du diamètre.",
+        solution: [
+          "Rapport des diamètres : 60 mm / 6 mm = 10",
+          "Rapport des aires : 10² = 100",
+          "L'objectif capte 100 fois plus de lumière que l'œil.",
+        ],
+      },
+      {
+        type: "nombre",
+        question:
+          "Quand elle est au plus près, Jupiter est à environ 600 millions de km. Combien de minutes la lumière met-elle pour nous parvenir ? (c = 300 000 km/s ; arrondi à 0,1 min)",
+        reponse: 33.3,
+        tolerance: 0.02,
+        unite: "min",
+        indice: "t = d / c en secondes, puis divise par 60.",
+        solution: [
+          "t = 600 000 000 / 300 000 = 2 000 s",
+          "2 000 / 60 ≈ 33,3 minutes",
+        ],
+      },
+      {
+        type: "choix",
+        question: "Pourquoi la position des points lumineux autour de Jupiter change-t-elle d'une nuit à l'autre ?",
+        options: [
+          "La lunette tremble",
+          "Ce sont des lunes qui tournent autour de Jupiter",
+          "Jupiter fait clignoter ses étoiles",
+          "Les étoiles proches se déplacent très vite",
+        ],
+        bonne: 1,
+        indice: "Les points restent toujours près de Jupiter et se déplacent avec elle.",
+        solution: [
+          "Ces points sont des lunes qui orbitent autour de Jupiter.",
+          "D'une nuit à l'autre, elles changent de place, passent devant ou derrière la planète.",
+        ],
+      },
+    ],
+    securite:
+      "Ne refais pas ça chez toi : ne regarde JAMAIS le Soleil avec une lunette, des jumelles, une loupe ou un télescope. La lumière concentrée peut brûler la rétine en une fraction de seconde et rendre aveugle de façon définitive. Observe uniquement la nuit.",
+    enVrai:
+      "En 1608, le lunettier néerlandais Hans Lippershey dépose une demande de brevet pour une lunette qui rapproche les objets. En 1609-1610, Galilée en construit une, la pointe vers le ciel et découvre le 7 janvier 1610 trois petits astres près de Jupiter, bientôt quatre : Io, Europe, Ganymède et Callisto. Il publie en mars 1610 le « Sidereus Nuncius » (Le Messager céleste). En 1676, à Paris, le Danois Ole Rømer remarque que les éclipses d'Io arrivent en retard quand Jupiter est plus loin de la Terre : il en déduit que la lumière a une vitesse finie.",
+    suite:
+      "À l'automne, Lina arpente le champ d'orge, l'air préoccupé. Les épis sont maigres et jaunes, la récolte plus faible que l'an dernier alors que le temps était parfait. « La terre est fatiguée, dit-elle. Elle a donné, et personne ne lui a rien rendu. »",
+  },
+
+  // 23. Azote et engrais : la terre fatiguée
+  {
+    id: "azote",
+    numero: 23,
+    titre: "La terre fatiguée",
+    matieres: ["Biologie", "Chimie", "Maths"],
+    niveau: 3,
+    recit: [
+      "Les feuilles de l'orge sont jaune pâle, les tiges courtes. Lina s'accroupit dans le champ, les doigts enfoncés dans la terre. « Il n'y a pas de maladie, pas de manque d'eau. La terre est épuisée. » Anselme grimace : « Depuis trois ans, on sème de l'orge au même endroit. »",
+      "Dans le Carnet, une page est soulignée trois fois : les plantes ont besoin d'azote pour fabriquer leurs protéines et leur chlorophylle. L'air en contient 78 %, mais sous forme de N₂, une molécule si solide que les plantes ne peuvent pas l'utiliser. Seules certaines bactéries savent la casser. « Alors d'où vient l'azote du sol ? » demande Mathis. « D'eux, justement. Et de ce que les êtres vivants rendent en mourant. »",
+      "Lina se souvient des lentilles qui poussaient près de l'abri. Elle en déterre une touffe : sur les racines, de petites boules blanches, les nodules. Elle en coupe une, et l'intérieur est rose. Des bactéries y vivent et transforment l'azote de l'air en une forme que la plante peut utiliser. « Ces plantes-là nourrissent le sol au lieu de l'épuiser ! »",
+      "Le groupe réorganise les champs en trois soles : l'une en céréales, la deuxième en légumineuses (lentilles, pois, fèves), la troisième au repos, où paissent les chèvres qui y laissent leur fumier. Chaque année, on tourne. « Et le compost ? » demande Basile. « Les feuilles, les épluchures, le fumier : en se décomposant, tout rend son azote au sol. Rien ne se perd, tout circule. »",
+    ],
+    science: [
+      {
+        titre: "Le cycle de l'azote",
+        schema: "cycle-azote",
+        texte: [
+          "L'azote (N) est un élément indispensable à la vie : il entre dans les protéines et dans l'ADN. Dans l'air, il se trouve sous forme de diazote N₂, très stable, que la plupart des êtres vivants ne peuvent pas utiliser.",
+          "Des bactéries, notamment celles qui vivent dans les racines des légumineuses (pois, lentilles, trèfle), le « fixent » : elles le transforment en ammonium, puis d'autres bactéries produisent des nitrates, que les racines absorbent. Les animaux mangent les plantes ; déchets et cadavres sont décomposés et rendent l'azote au sol ; d'autres bactéries en renvoient une partie dans l'air.",
+        ],
+        formule: "N₂ (air) → NH₄⁺ → NO₃⁻ → protéines",
+      },
+      {
+        titre: "La rotation des cultures",
+        texte: [
+          "Cultiver toujours la même plante épuise le sol de son azote et d'autres éléments nutritifs. Avec l'assolement triennal, on divise les terres en trois parts (les soles) : une céréale, une légumineuse et une jachère (repos). Chaque année, les cultures tournent.",
+          "Une récolte emporte de l'azote hors du champ : il faut le rendre au sol, par les légumineuses, le compost ou le fumier. Les engrais modernes apportent de l'azote en plus, mais en excès ils polluent les nappes et les rivières.",
+        ],
+      },
+    ],
+    experience:
+      "Fais germer des lentilles ou des haricots dans deux pots : l'un rempli de terre de jardin, l'autre de coton humide uniquement. Arrose les deux avec de l'eau seulement. Après deux semaines, compare : la plante du coton cesse de grandir et jaunit plus vite, faute d'éléments nutritifs. Note tes observations dans un carnet.",
+    defis: [
+      {
+        type: "nombre",
+        question: "L'air contient 78 % de diazote. Quel volume de diazote y a-t-il dans 50 m³ d'air, en m³ ?",
+        reponse: 39,
+        tolerance: 0.01,
+        unite: "m³",
+        indice: "Calcule 78 % de 50.",
+        solution: ["78 % = 0,78", "0,78 × 50 = 39 m³"],
+      },
+      {
+        type: "nombre",
+        question:
+          "Un champ sans rotation perd 15 % de son azote disponible chaque année. S'il en contient 200 unités au départ, combien en reste-t-il après 2 ans ?",
+        reponse: 144.5,
+        tolerance: 0.01,
+        unite: "unités",
+        indice: "Chaque année, il reste 85 % : multiplie par 0,85, deux fois.",
+        solution: [
+          "Après 1 an : 200 × 0,85 = 170",
+          "Après 2 ans : 170 × 0,85 = 144,5 unités",
+          "Autre écriture : 200 × 0,85² = 144,5.",
+        ],
+      },
+      {
+        type: "nombre",
+        question:
+          "Un village possède 90 hectares et applique l'assolement triennal (une sole sur trois en jachère). Combien d'hectares sont cultivés chaque année ?",
+        reponse: 60,
+        tolerance: 0.01,
+        unite: "ha",
+        indice: "Chaque sole occupe un tiers des terres. Combien de soles sont cultivées ?",
+        solution: ["Chaque sole : 90 / 3 = 30 ha", "Deux soles cultivées : 2 × 30 = 60 ha"],
+      },
+      {
+        type: "choix",
+        question: "Pourquoi cultiver des lentilles ou des pois enrichit-il la terre en azote ?",
+        options: [
+          "Leurs feuilles produisent de l'azote par photosynthèse",
+          "Des bactéries de leurs racines transforment l'azote de l'air en une forme utilisable",
+          "Elles absorbent tout l'azote du sol",
+          "Elles font fuir les insectes",
+        ],
+        bonne: 1,
+        indice: "Pense aux petites boules blanches sur les racines.",
+        solution: [
+          "Dans les nodules des racines vivent des bactéries qui fixent le diazote de l'air.",
+          "Cet azote devient utilisable par la plante et, après sa mort, par le sol.",
+        ],
+      },
+    ],
+    securite:
+      "Ne refais pas ça chez toi : ne fabrique jamais d'engrais chimique et ne mélange pas de produits de jardinage ou d'entretien entre eux : certains mélanges dégagent des gaz toxiques ou peuvent exploser. Contente-toi de compost et de fumier bien décomposé, et lave-toi les mains après avoir touché la terre.",
+    enVrai:
+      "L'assolement triennal se répand en Europe du Nord à partir du IXe siècle et augmente les récoltes. En 1838, le Français Jean-Baptiste Boussingault montre que des légumineuses semblent puiser de l'azote dans l'air ; en 1886-1888, les Allemands Hermann Hellriegel et Hermann Wilfarth prouvent le rôle des bactéries des nodules, que le Néerlandais Martinus Beijerinck isole en 1888. En 1909, Fritz Haber réussit à fabriquer de l'ammoniac à partir du diazote de l'air et de l'hydrogène ; Carl Bosch l'industrialise à partir de 1913. On estime aujourd'hui que près de la moitié de l'azote de notre alimentation vient de cette synthèse.",
+    suite:
+      "Cette nuit-là, la voix de Sève, tendue, réveille tout le monde. « Archives... sauvegardées. Treize mille ouvrages, tous les cours, toutes les cartes. Mais le disque se dégrade. Il vous reste quatre mois pour tout copier sur un support qui survive. »",
+  },
+
+  // 24. Écriture, imprimerie et binaire : le Grand Livre
+  {
+    id: "ecriture",
+    numero: 24,
+    titre: "Le Grand Livre",
+    matieres: ["Maths", "Physique"],
+    niveau: 3,
+    recit: [
+      "Sève parle depuis l'écran de l'abri, d'une voix tendue : le dernier disque qui contient les archives de l'ancien monde se dégrade. Médecine, mathématiques, cartes, cours, musiques... « Il me reste peut-être quatre mois. Après, tout sera perdu. »",
+      "Quarante personnes de la Combe et de l'Observatoire se réunissent dans le grand hall. Comment sauver tant de savoir, sans électricité fiable ? Mathis propose de tout recopier à la main. Soline calcule : un copiste met deux mois pour un livre. « Il nous faudrait des siècles. »",
+      "Basile, lui, tourne autour du pressoir à raisin de la Combe. Il taille des lettres en relief dans de petits blocs de bois dur, les aligne dans un cadre, les enduit d'une encre de suie et d'huile, puis écrase une feuille dessus avec la grande vis. Une page est imprimée, puis dix, puis cent : toujours les mêmes lettres, remises dans un autre ordre pour la page suivante.",
+      "Pendant ce temps, Sève, réparée au fil des mois, explique comment elle stocke tout : en 0 et en 1. « Un interrupteur est éteint ou allumé : un bit. Huit bits forment un octet, qui donne 256 combinaisons, assez pour chaque lettre. La lettre A est le nombre 65, soit 01000001. » Mathis, à court de « Prouve-le », se contente de murmurer : « Alors tout est nombres. »",
+      "Au bout de l'hiver, la première page sort de la presse, encore humide, parfaitement lisible. Inès ouvre le Carnet à la dernière page et écrit : « Le projet Graine est devenu une forêt. » Elle sourit, puis ajoute en dessous : « Une forêt, ça continue de pousser. »",
+    ],
+    science: [
+      {
+        titre: "De l'écriture à l'imprimerie",
+        texte: [
+          "Écrire permet de conserver et de transmettre le savoir au-delà d'une génération. Mais copier à la main est lent et fait des erreurs. L'imprimerie à caractères mobiles utilise des lettres séparées et réutilisables, qu'on assemble en page, qu'on encre et qu'on presse sur le papier : une fois la page composée, on peut en tirer des centaines d'exemplaires identiques.",
+          "Un livre imprimé coûte donc beaucoup moins cher et les erreurs de copie disparaissent presque. C'est ainsi que la science a pu circuler et être vérifiée par d'autres.",
+        ],
+      },
+      {
+        titre: "Le binaire : tout avec des 0 et des 1",
+        schema: "binaire",
+        texte: [
+          "Dans le système binaire, on n'utilise que deux chiffres, 0 et 1. En partant de la droite, chaque case vaut deux fois la précédente : 1, 2, 4, 8, 16, 32, 64, 128... Pour lire un nombre binaire, on additionne les valeurs des cases où il y a un 1 : 101101 = 32 + 8 + 4 + 1 = 45.",
+          "Un bit est un 0 ou un 1. Avec n bits, on peut écrire 2ⁿ nombres différents. Un octet (8 bits) en donne 256, assez pour coder chaque lettre, chiffre ou signe : la lettre A est 65, soit 01000001. Textes, images et musiques peuvent ainsi être stockés en suites de bits.",
+        ],
+        formule: "n bits → 2ⁿ combinaisons",
+      },
+    ],
+    experience:
+      "Écris ton prénom en binaire avec un code simple : A = 1, B = 2, C = 3... Z = 26. Écris ensuite chaque nombre en binaire (par exemple C = 3 = 11 et L = 12 = 1100). Échange le message codé avec un ami, qui devra le décoder avec la même table.",
+    defis: [
+      {
+        type: "nombre",
+        question: "Convertis le nombre binaire 101101 en nombre décimal.",
+        reponse: 45,
+        tolerance: 0.01,
+        indice: "Les cases valent 32, 16, 8, 4, 2, 1 en partant de la gauche. Additionne celles qui contiennent un 1.",
+        solution: ["101101 : cases 32, 8, 4 et 1 à 1", "32 + 8 + 4 + 1 = 45"],
+      },
+      {
+        type: "choix",
+        question: "Quelle est l'écriture binaire du nombre 25 ?",
+        options: ["10011", "11001", "11100", "10101"],
+        bonne: 1,
+        indice: "Décompose 25 en 16, 8, 4, 2 et 1.",
+        solution: [
+          "25 = 16 + 8 + 1",
+          "Cases 16, 8 et 1 à 1 ; cases 4 et 2 à 0 : 11001.",
+          "Vérification : 10011 = 19, 11100 = 28, 10101 = 21.",
+        ],
+      },
+      {
+        type: "nombre",
+        question: "Combien de symboles différents peut-on coder avec un octet (8 bits) ?",
+        reponse: 256,
+        tolerance: 0.01,
+        indice: "Avec n bits, on a 2ⁿ combinaisons.",
+        solution: ["2⁸ = 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 = 256"],
+      },
+      {
+        type: "nombre",
+        question:
+          "Une page contient 2 000 caractères, codés chacun sur 1 octet. Combien de kilooctets (1 ko = 1 000 octets) faut-il pour un livre de 300 pages ?",
+        reponse: 600,
+        tolerance: 0.01,
+        unite: "ko",
+        indice: "Calcule d'abord le nombre d'octets du livre, puis convertis.",
+        solution: ["300 × 2 000 = 600 000 octets", "600 000 / 1 000 = 600 ko"],
+      },
+    ],
+    enVrai:
+      "Les plus anciennes écritures connues apparaissent à Sumer (Mésopotamie) vers 3300 av. J.-C., avec des signes imprimés dans l'argile. Vers 1450, à Mayence, Johannes Gutenberg met au point l'imprimerie à caractères mobiles ; sa Bible à 42 lignes sort vers 1455. En 1703, le philosophe et mathématicien Leibniz publie son arithmétique binaire. En 1948, Claude Shannon fonde la théorie de l'information et le mot « bit » se répand. Le code ASCII, qui donne 65 à la lettre A, est normalisé en 1963.",
+    suite:
+      "Fin du premier tome du Carnet. Mais en refermant le livre, Inès entend la voix de Sève : « Signal détecté. Nouvelle fréquence. Source : très loin, vers l'est. » Elle sourit. Une forêt, ça continue de pousser.",
   },
 ]

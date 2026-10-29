@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { colors, radius } from "@/app/components/ui/tokens"
 import { toast } from "@/lib/toast"
 import { ecrireNombre, ouvrirCalculatrice } from "@/lib/calcul"
+import { LEGAL } from "@/lib/legal"
 import {
   AFFIRMATIONS, DEFIS_FERMI, ETAT_ESPRIT_VIDE, EXERCICES_MANIP, LECONS_PROBA, NIVEAUX_CONFIANCE, TECHNIQUES,
   chargerEsprit, enregistrerEsprit, lireNombre, type Affirmation, type DefiFermi, type EtatEsprit,
@@ -58,11 +59,28 @@ function construire(mode: ModeJeu, vus: Record<string, number>): Question[] {
   return tirer(EXERCICES_MANIP, vus, NOMBRE_QUESTIONS.manip).map(e => ({ type: "manip", id: e.id, e, options: optionsManip(e) }))
 }
 
+// Partager un score (WhatsApp, SMS… via le menu de partage du téléphone, sinon copie)
+async function partager(texte: string) {
+  const message = `${texte}\n${LEGAL.site}`
+  try {
+    if (navigator.share) { await navigator.share({ text: message }); return }
+    await navigator.clipboard.writeText(message)
+    toast("Score copié : colle-le dans un message", "success")
+  } catch { /* partage annulé */ }
+}
+const texteScore = (mode: ModeJeu, score: number, justes: number, total: number) =>
+  `🧠 Nexia · ${NOM_MODE[mode]}${mode === "jour" ? ` du ${new Date().toLocaleDateString("fr-CH")}` : ""} : ${score} points (${justes}/${total} bonnes réponses). Tu fais mieux ?`
+
+// Mode zen : pas de chrono, et la partie ne compte pas pour les records
+function lireZen() { try { return localStorage.getItem("esprit-zen") === "1" } catch { return false } }
+
 type Ecran = { type: "accueil" } | { type: "jeu"; mode: ModeJeu; cle: number } | { type: "apprendre"; quoi: "lecons" | "techniques" | "forer" | "bilan" }
 
 export default function EspritSection({ userId }: { userId: string }) {
   const [etat, setEtat] = useState<EtatEsprit | null>(null)
   const [ecran, setEcran] = useState<Ecran>({ type: "accueil" })
+  const [zen, setZen] = useState(lireZen)
+  const basculerZen = () => setZen(z => { try { localStorage.setItem("esprit-zen", z ? "0" : "1") } catch { /* réglage non gardé */ } return !z })
   const etatRef = useRef<EtatEsprit>(ETAT_ESPRIT_VIDE)
 
   useEffect(() => {
@@ -84,15 +102,15 @@ export default function EspritSection({ userId }: { userId: string }) {
   const jeu = etat.jeu ?? JEU_VIDE
 
   if (ecran.type === "jeu") return (
-    <Jeu key={ecran.cle} mode={ecran.mode} jeu={jeu} onFin={majJeu}
+    <Jeu key={ecran.cle} mode={ecran.mode} zen={zen && ecran.mode !== "jour"} jeu={jeu} onFin={majJeu}
       onRejouer={() => setEcran({ type: "jeu", mode: ecran.mode, cle: Date.now() })} onQuitter={() => setEcran({ type: "accueil" })} />
   )
   if (ecran.type === "apprendre") return <Apprendre quoi={ecran.quoi} jeu={jeu} retour={() => setEcran({ type: "accueil" })} />
-  return <Accueil jeu={jeu} jouer={mode => setEcran({ type: "jeu", mode, cle: Date.now() })} apprendre={quoi => setEcran({ type: "apprendre", quoi })} />
+  return <Accueil jeu={jeu} zen={zen} basculerZen={basculerZen} jouer={mode => setEcran({ type: "jeu", mode, cle: Date.now() })} apprendre={quoi => setEcran({ type: "apprendre", quoi })} />
 }
 
 // ─── Accueil : niveau, défi du jour, modes, dernières parties ───
-function Accueil({ jeu, jouer, apprendre }: { jeu: EtatJeu; jouer: (m: ModeJeu) => void; apprendre: (q: "lecons" | "techniques" | "forer" | "bilan") => void }) {
+function Accueil({ jeu, zen, basculerZen, jouer, apprendre }: { jeu: EtatJeu; zen: boolean; basculerZen: () => void; jouer: (m: ModeJeu) => void; apprendre: (q: "lecons" | "techniques" | "forer" | "bilan") => void }) {
   const nv = niveau(jeu.xp)
   const serie = serieJours(jeu.jours)
   const jourFait = jeu.duJour?.date === jourISO()
@@ -125,9 +143,20 @@ function Accueil({ jeu, jouer, apprendre }: { jeu: EtatJeu; jouer: (m: ModeJeu) 
                 : "10 questions mélangées, les mêmes pour tout le monde aujourd'hui. Seul ton premier essai compte : compare ton score avec tes amis."}
             </div>
           </div>
-          <button className="presse" onClick={() => jouer("jour")} style={jourFait ? boutonSecondaire : { ...boutonPrincipal, background: "#B7791F" }}>{jourFait ? "Rejouer pour s'entraîner" : "Relever le défi"}</button>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {jourFait && <button className="presse" onClick={() => partager(`📅 Défi du jour Nexia du ${new Date().toLocaleDateString("fr-CH")} : ${jeu.duJour!.score} points. Tu fais mieux ?`)} style={{ ...boutonPrincipal, background: "#B7791F" }}>📤 Partager</button>}
+            <button className="presse" onClick={() => jouer("jour")} style={jourFait ? boutonSecondaire : { ...boutonPrincipal, background: "#B7791F" }}>{jourFait ? "Rejouer pour s'entraîner" : "Relever le défi"}</button>
+          </div>
         </div>
       </section>
+
+      <label style={{ ...carte, display: "flex", alignItems: "center", gap: 12, cursor: "pointer", padding: "12px 16px" }}>
+        <input type="checkbox" checked={zen} onChange={basculerZen} style={{ width: 22, height: 22, accentColor: colors.blue, flexShrink: 0 }} />
+        <span style={{ flex: 1 }}>
+          <b style={{ fontSize: 14.5 }}>🧘 Mode zen</b>
+          <span style={{ display: "block", fontSize: 12.5, color: colors.textMuted, lineHeight: 1.4 }}>Pas de chrono, pour t&apos;entraîner tranquillement. Les parties zen ne comptent pas pour les records (le défi du jour garde toujours son chrono).</span>
+        </span>
+      </label>
 
       {MODES.map(m => (
         <section key={m.id} style={{ ...carte, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
@@ -169,7 +198,7 @@ function Accueil({ jeu, jouer, apprendre }: { jeu: EtatJeu; jouer: (m: ModeJeu) 
 // ─── Une partie ───
 type Retour = { points: number; juste: boolean; temps: boolean; texte: React.ReactNode }
 
-function Jeu({ mode, jeu, onFin, onRejouer, onQuitter }: { mode: ModeJeu; jeu: EtatJeu; onFin: (j: EtatJeu) => void; onRejouer: () => void; onQuitter: () => void }) {
+function Jeu({ mode, zen, jeu, onFin, onRejouer, onQuitter }: { mode: ModeJeu; zen: boolean; jeu: EtatJeu; onFin: (j: EtatJeu) => void; onRejouer: () => void; onQuitter: () => void }) {
   const [questions] = useState(() => construire(mode, jeu.vus))
   const [i, setI] = useState(0)
   const [score, setScore] = useState(0)
@@ -199,23 +228,24 @@ function Jeu({ mode, jeu, onFin, onRejouer, onQuitter }: { mode: ModeJeu; jeu: E
 
   // Chrono : à zéro, la question est perdue
   useEffect(() => {
-    if (retour || fin) return
+    if (retour || fin || zen) return
     const t = setInterval(() => {
       const n = Date.now()
       setMaintenant(n)
       if (n - debut >= limite * 1000) repondreRef.current({ points: 0, juste: false, temps: true, texte: "⏱️ Temps écoulé !" }, q?.type === "proba" ? [0.5, 0] : undefined)
     }, 250)
     return () => clearInterval(t)
-  }, [retour, fin, debut, limite, q])
+  }, [retour, fin, debut, limite, q, zen])
 
   function suivante() {
     if (i + 1 < questions.length) { setI(i + 1); setRetour(null); const n = Date.now(); setDebut(n); setMaintenant(n); return }
     const max = questions.length * 100
     const r = finirPartie(jeu, mode, score, max, questions.map(x => x.id), calib)
     const ancien = jeu.records[mode] ?? 0
-    // Le défi du jour ne compte qu'au premier essai
-    onFin(mode === "jour" && jeu.duJour?.date === jourISO() ? { ...r.jeu, records: jeu.records } : r.jeu)
-    setFin({ record: r.record && !(mode === "jour" && jeu.duJour?.date === jourISO()), xp: r.xp, ancien, nv: niveau(r.jeu.xp).n })
+    // Le défi du jour ne compte qu'au premier essai ; les parties zen ne comptent pas pour les records
+    const horsRecord = zen || (mode === "jour" && jeu.duJour?.date === jourISO())
+    onFin(horsRecord ? { ...r.jeu, records: jeu.records, duJour: jeu.duJour } : r.jeu)
+    setFin({ record: r.record && !horsRecord, xp: r.xp, ancien, nv: niveau(r.jeu.xp).n })
   }
 
   if (fin) {
@@ -230,7 +260,7 @@ function Jeu({ mode, jeu, onFin, onRejouer, onQuitter }: { mode: ModeJeu; jeu: E
           <div style={{ fontSize: 44, fontWeight: 800, fontVariantNumeric: "tabular-nums", lineHeight: 1 }}>{score}</div>
           <div style={{ fontSize: 13.5, color: "rgba(255,255,255,.8)", marginTop: 4 }}>points · {justes}/{questions.length} bonnes réponses</div>
           <div role="status" style={{ fontSize: 16, fontWeight: 700, marginTop: 12 }}>
-            {fin.record ? (fin.ancien ? `🎉 Nouveau record ! (ancien : ${fin.ancien})` : "🎉 Premier record !") : `🏆 Record : ${Math.max(fin.ancien, score)}${fin.ancien > score ? ` · encore ${fin.ancien - score + 1} points pour le battre` : ""}`}
+            {zen ? "🧘 Partie zen (hors record)" : fin.record ? (fin.ancien ? `🎉 Nouveau record ! (ancien : ${fin.ancien})` : "🎉 Premier record !") : `🏆 Record : ${Math.max(fin.ancien, score)}${fin.ancien > score ? ` · encore ${fin.ancien - score + 1} points pour le battre` : ""}`}
           </div>
           <div style={{ fontSize: 13.5, marginTop: 6 }}>+{fin.xp} XP{monte ? ` · ⬆️ Niveau ${fin.nv} : ${niveau(jeu.xp + fin.xp).nom} !` : ""}</div>
         </section>
@@ -242,13 +272,14 @@ function Jeu({ mode, jeu, onFin, onRejouer, onQuitter }: { mode: ModeJeu; jeu: E
         )}
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <button className="presse" onClick={onRejouer} style={boutonPrincipal}>🔁 Rejouer (nouvelles questions)</button>
+          {!zen && <button className="presse" onClick={() => partager(texteScore(mode, score, justes, questions.length))} style={boutonSecondaire}>📤 Partager mon score</button>}
           <button onClick={onQuitter} style={boutonSecondaire}>Accueil</button>
         </div>
       </div>
     )
   }
 
-  const fraction = reste / limite
+  const fraction = zen ? 1 : reste / limite
   return (
     <div>
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
@@ -257,10 +288,12 @@ function Jeu({ mode, jeu, onFin, onRejouer, onQuitter }: { mode: ModeJeu; jeu: E
         {serie >= 2 && <div title="Bonnes réponses d'affilée" style={{ fontSize: 13, fontWeight: 700, color: "#C2410C" }}>🔥 ×{serie}</div>}
         <div style={{ fontSize: 15, fontWeight: 800, fontVariantNumeric: "tabular-nums" }}>{score} pts</div>
       </div>
+      {zen ? <div style={{ fontSize: 12.5, color: colors.textMuted, marginBottom: 10 }}>🧘 Mode zen : prends ton temps</div> : <>
       <div role="timer" aria-label={`${Math.ceil(reste)} secondes restantes`} style={{ height: 8, background: "#EEF1F5", borderRadius: 999, overflow: "hidden", marginBottom: 4 }}>
         <div style={{ height: "100%", width: `${(retour ? 0 : fraction) * 100}%`, background: fraction < 0.25 ? "#D9485F" : fraction < 0.5 ? "#E0A100" : "#3FA34D", transition: "width 250ms linear, background-color 250ms" }} />
       </div>
       <div style={{ fontSize: 12, color: fraction < 0.25 && !retour ? "#B42318" : colors.textMuted, textAlign: "right", marginBottom: 10, fontVariantNumeric: "tabular-nums" }}>{retour ? " " : `${Math.ceil(reste)} s`}</div>
+      </>}
 
       <div style={carte}>
         {q.type === "fermi" && <QFermi key={q.id} d={q.d} repondu={!!retour} repondre={repondre} />}
