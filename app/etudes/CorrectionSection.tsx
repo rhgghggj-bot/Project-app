@@ -3,6 +3,7 @@ import { useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { toast, confirmer } from "@/lib/toast"
 import { useChargement } from "@/lib/useChargement"
+import { ouvrirCalculatrice } from "@/lib/calcul"
 import { colors, radius } from "@/app/components/ui/tokens"
 import { CorrectionSchema, SYSTEMES, consigneCorrection, formaterNote, quizValide, type Correction, type Echelle, type Pays, systemeDeEchelle } from "@/lib/etudes"
 import { analyserDocument, deposerFichier, lienFichier, type ReglagesIA } from "./document"
@@ -124,7 +125,10 @@ function DetailCorrection({ ev, userId, onSupprimer }: { ev: EvaluationCorrigee;
 
       {c.erreurs.length > 0 && (
         <div style={{ marginBottom: "10px" }}>
-          <div style={titreCarte}>Correction détaillée</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ ...titreCarte, flex: 1 }}>Correction détaillée</div>
+            <button onClick={() => ouvrirCalculatrice()} style={{ background: "none", border: "none", color: colors.blue, fontSize: "12px", cursor: "pointer", padding: "4px 0", minHeight: 32 }}>🧮 Calculatrice</button>
+          </div>
           {c.erreurs.map((e, i) => (
             <div key={i} style={{ border: `0.5px solid ${colors.redBorder}`, borderRadius: radius.sm, padding: "10px 12px", marginBottom: "8px" }}>
               <div style={{ fontSize: "12px", fontWeight: 500, color: colors.text, marginBottom: "4px" }}>{e.question} <span style={{ fontWeight: 400, color: colors.textFaint }}>· {e.notion}</span></div>
